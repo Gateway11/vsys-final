@@ -1,19 +1,30 @@
 LOCAL_PATH:= $(call my-dir)
 
-#https://github.com/flame/blis.git
-#configure auto
-CBLAS_RELATIVE_PATH := ../3rd-party/blis/frame/compat/cblas
+#https://www.netlib.org/lapack
+#https://github.com/Reference-LAPACK/lapack
+#https://blog.csdn.net/u012815193/article/details/108777014
+#cmake ..  \
+    -DCMAKE_SYSTEM_NAME=Android \
+    -DCMAKE_TOOLCHAIN_FILE=../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
+    -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+    -DCMAKE_SYSTEM_VERSION=21 \
+    -DCMAKE_ANDROID_STL_TYPE=c++_static \
+    -DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=4.9 \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_Fortran_COMPILER=aarch64-linux-android-gfortran
+
+CBLAS_RELATIVE_PATH := ../3rd-party/CBLAS
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blas
-LOCAL_SRC_FILES := $(shell find -L ../3rd-party/BLAS2/SRC -name "*.c")
+LOCAL_SRC_FILES := $(shell find -L ../BLAS2/SRC -name "*.c")
 
 #the inclusion of BLASWRAP caused unresolved symbols for TooN
 LOCAL_CFLAGS    := -O3 -fPIC -DNO_BLAS_WRAP -Wno-logical-op-parentheses
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE    := blis
+LOCAL_MODULE    := cblas #$(shell basename `dirname $(LOCAL_PATH)`)
 LOCAL_SRC_FILES := \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dger.c \
@@ -48,18 +59,13 @@ LOCAL_SRC_FILES := \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dspr.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_globals.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_xerbla.c \
-    $(CBLAS_RELATIVE_PATH)/../../thread/bli_pthread.h
 
-LOCAL_C_INCLUDES := \
-    ../3rd-party/$(TARGET_ARCH_ABI)/include/blis \
-    ../3rd-party/blis \
-    ../3rd-party/blis/frame/thread \
-    ../3rd-party/blis/frame/include
+LOCAL_C_INCLUDES := $(CBLAS_RELATIVE_PATH)/include
 
-LOCAL_CFLAGS := -O2 -O3 -fomit-frame-pointer -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE -DBLIS_IS_BUILDING_LIBRARY -DBLIS_ENABLE_CBLAS #-fvisibility=hidden
+LOCAL_CFLAGS := -O2 -O3 -fomit-frame-pointer -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE -DBLIS_IS_BUILDING_LIBRARY #-fvisibility=hidden
 
 LOCAL_STATIC_LIBRARIES := blas
 LOCAL_LDLIBS := -lm -ldl
 
-#include $(BUILD_SHARED_LIBRARY)
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
+#include $(BUILD_STATIC_LIBRARY)
