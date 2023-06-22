@@ -11,15 +11,15 @@ LOCAL_SHARED_LIBRARIES := r2ssp ztvad
 LOCAL_STATIC_LIBRARIES := fftw blis
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a) 
-LOCAL_ARM_NEON := true
-EXTRA_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"                                           
-EXTRA_LDFLAGS="-Wl,--fix-cortex-a8 "
+LOCAL_ARM_NEON  := true
+EXTRA_CFLAGS    := -march=armv7-a -mfloat-abi=softfp -mfpu=neon-fp16 #-mfpu=neon
+EXTRA_LDFLAGS   := -Wl,--fix-cortex-a8
 endif
 
 LOCAL_LDLIBS := -llog
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a) 
-EXTRA_LDFLAGS="-Wl"
+EXTRA_LDFLAGS := -Wl
 endif
 
 LOCAL_LDFLAGS+= "-Wl,--start-group" $(LIBS) "-Wl,--end-group" -ldl  -fopenmp 
