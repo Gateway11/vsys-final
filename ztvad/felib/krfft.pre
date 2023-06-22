@@ -1,0 +1,40 @@
+/****************************
+*
+* 语音识别工具包
+* 2012年2月22日 柯登峰
+*
+****************************/
+#ifndef _KRFFT_PRE_2009_OCT_28_BY_KDF_
+#define _KRFFT_PRE_2009_OCT_28_BY_KDF_
+
+/* Bit-reversed look-up table nested class */
+template<typename flt_t>
+class BitReversedLUT
+{
+	public:
+		explicit			BitReversedLUT (const int nbr_bits);
+		~BitReversedLUT ();
+		const long *	get_ptr () const
+		{
+			return (_ptr);
+		}
+	private:
+		long *			_ptr;
+};
+
+/* Trigonometric look-up table nested class */
+template<typename flt_t>
+class	TrigoLUT
+{
+	public:
+		explicit			TrigoLUT (const int nbr_bits);
+		~TrigoLUT ();
+		const flt_t	*	get_ptr (const int level) const
+		{
+			return (_ptr + (1L << (level - 1)) - 4);
+		};
+	private:
+		flt_t	*			_ptr;
+};
+
+#endif //_KRFFT_PRE_2009_OCT_28_BY_KDF_

@@ -1,0 +1,10 @@
+*.xcworkspace
+*.xcodeproj
+.DS_Store
+*libs*
+blis
+gemmlowp
+DEBUG
+RELEASE
+obj
+bin

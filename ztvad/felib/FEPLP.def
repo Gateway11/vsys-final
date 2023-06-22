@@ -1,0 +1,11 @@
+LIBRARY	"FEPLP"
+
+EXPORTS
+	OpenFE
+	RunFE
+	CloseFE
+	WarpFE
+	ResetFE
+	ContinueFE
+	NormDiffFE
+	
