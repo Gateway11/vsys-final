@@ -128,13 +128,11 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/kaldi-pitch \
     #$(LOCAL_PATH)/blis/include/blis \
     
-#LOCAL_CFLAGS += -DWEBRTC_POSIX -DFE_USE_NE10_FFT
-LOCAL_CFLAGS += -DWEBRTC_POSIX
+LOCAL_CFLAGS += -DWEBRTC_POSIX #-DFE_USE_NE10_FFT
 
 LOCAL_CPP_FEATURES += exceptions
 
-#LOCAL_STATIC_LIBRARIES := cpufeatures fftw blis ne10
-LOCAL_STATIC_LIBRARIES := cpufeatures fftw blis
+LOCAL_STATIC_LIBRARIES := cpufeatures fftw blis #ne10
 
 LOCAL_SHARED_LIBRARIES := libcutils libdl r2ssp
 
