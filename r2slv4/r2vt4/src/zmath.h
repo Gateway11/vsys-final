@@ -1,0 +1,150 @@
+﻿//
+//  zmath.h
+//  r2vt4
+//
+//  Created by hadoop on 3/6/17.
+//  Copyright © 2017 hadoop. All rights reserved.
+//
+
+#ifndef __r2vt4__zmath__
+#define __r2vt4__zmath__
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <pthread.h>
+#include <limits>
+#include <float.h>
+#include <stdarg.h>
+
+#include <sys/stat.h>
+#include <dirent.h>
+
+
+
+
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <list>
+
+#if defined(__arm__) || defined(__aarch64__)
+#define __ARM_ARCH_ARM__
+#endif
+
+#ifdef __ARM_ARCH_ARM__
+#include <fftw3.h>
+#include <blis/blis.h>
+#include <blis/cblas.h>
+#else
+#include <xmmintrin.h>
+#include "mkl_cblas.h"
+#include "mkl_lapacke.h"
+#include "fftw/fftw3.h"
+#endif
+
+
+#define   Z_TF_NNET
+
+#define  AUDIO_SAMPLE_RATE  16000
+#define  AUDIO_FRAME_MS  10
+#define  AUDIO_AEC_FRAME_MS  16
+#define  BFSL_MIN_DIS     0.52f      //30 degree
+
+#define Z_PI	3.14159265f
+#define Z_2PI   6.283185307179586476925286766559005
+#define Z_LOG_2PI 1.8378770664093454835606594728112
+#define Z_FLT_MAX  1.0e+20F
+#define Z_FLT_MIN  1.0e-20F
+
+#define LZERO	(-1.0E10f)		/* ~log(0) */
+#define LSMALL	(-0.5E10f)		/* log values < LSMALL are set to LZERO */
+#define LEXPZ	(-20.0f)		/* 1.0 + exp(z) == 1.0, log(FLT_EPSILON) */
+
+
+#if defined(__ARM_ARCH_ARM__) && (defined(ANDROID) || defined(__ANDROID__))
+#include <android/log.h>
+#define ZLOG_INFO(...) {__android_log_print(ANDROID_LOG_INFO, "RKUPL_r2audio", __VA_ARGS__);}
+#define ZLOG_ERROR(...) {__android_log_print(ANDROID_LOG_ERROR, "RKUPL_r2audio", __VA_ARGS__);}
+#else
+#include <unistd.h>
+#include <sys/time.h>
+#include <time.h>
+#define ZLOG_INFO(...){__dx_logtime_print('I', "RKUPL_r2audio"); printf(__VA_ARGS__); printf("\n");}
+#define ZLOG_ERROR(...){__dx_logtime_print('E', "RKUPL_r2audio"); printf(__VA_ARGS__); printf("\n");}
+#define __dx_logtime_print(level, tag) \
+	struct timeval tv; \
+	struct tm ltm; \
+	gettimeofday(&tv, NULL); \
+	localtime_r(&tv.tv_sec, &ltm); \
+	printf("%02d-%02d %02d:%02d:%02d.%03d  %04d %c %s: ", \
+			ltm.tm_mon, ltm.tm_mday, \
+			ltm.tm_hour, ltm.tm_min, ltm.tm_sec, \
+			tv.tv_usec / 1000, getpid(), level, tag);
+#endif
+
+
+#ifdef __ARM_ARCH_ARM__
+#define DEBUG_FILE_LOCATION "/data/debug"
+//#define Z_MEM_DEBUG
+#else
+#define DEBUG_FILE_LOCATION "/Users/Shared/R2AudioDebug"
+//#define Z_MEM_DEBUG
+#endif
+
+
+#ifndef zmax
+#define zmax(a,b)    (((a) > (b)) ? (a) : (b))
+#define zmin(a,b)    (((a) < (b)) ? (a) : (b))
+#endif
+
+
+#ifndef  Z_MEM_DEBUG
+
+#define  Z_SAFE_NEW(p,type,...) new type(__VA_ARGS__);
+#define  Z_SAFE_NEW_AR1(p,type,dim1) (type*)z_new_ar1(sizeof(type),dim1);
+#define  Z_SAFE_NEW_AR2(p,type,dim1,dim2) (type**)z_new_ar2(sizeof(type),dim1,dim2);
+#define  Z_SAFE_NEW_SSE_AR1(p,type,dim1) (type*)z_new_sse_ar1(sizeof(type),dim1,16);
+#define  Z_SAFE_NEW_SSE_AR2(p,type,dim1,dim2) (type**)z_new_sse_ar2(sizeof(type),dim1,dim2,16);
+
+#define  Z_SAFE_NEW_SSE_AR1_A64(p,type,dim1,dim2) (type**)z_new_sse_ar1(sizeof(type),dim1,64) ;
+#define  Z_SAFE_NEW_SSE_AR2_A64(p,type,dim1,dim2) (type**)z_new_sse_ar2(sizeof(type),dim1,dim2,64) ;
+
+#define  Z_SAFE_DEL(p)  do {if(p) { delete p ;p = NULL; } } while (0);
+#define  Z_SAFE_DEL_AR1(p)	do {if(p) { delete [] p; p = NULL; } } while (0);
+#define  Z_SAFE_DEL_AR2(p)	do {if(p) {Z_SAFE_DEL_AR1(p[0]); Z_SAFE_DEL_AR1(p); } } while (0);
+#define  Z_SAFE_DEL_SSE_AR1(p)	do {if(p) { delete [] p; p = NULL; } } while (0);
+#define  Z_SAFE_DEL_SSE_AR2(p)	do {if(p) {Z_SAFE_DEL_SSE_AR1(p[0]); Z_SAFE_DEL_AR1(p); } } while (0);
+
+#define  Z_PRINT_MEM_INFO()
+
+#else
+
+#define  Z_SAFE_NEW(p,type,...) new type(__VA_ARGS__) ; z_mem_insert(p,1,__FILE__,__LINE__) ;z_mem_insert(p,1,__FILE__,__LINE__)
+#define  Z_SAFE_NEW_AR1(p,type,dim1) (type*)z_new_ar1(sizeof(type),dim1) ; z_mem_insert(p,sizeof(type)* dim1,__FILE__,__LINE__) ;
+#define  Z_SAFE_NEW_AR2(p,type,dim1,dim2) (type**)z_new_ar2(sizeof(type),dim1,dim2) ; z_mem_insert(p,sizeof(type)* dim1 * dim2,__FILE__,__LINE__) ;
+#define  Z_SAFE_NEW_SSE_AR1(p,type,dim1) (type*)z_new_sse_ar1(sizeof(type),dim1,16); z_mem_insert(p,sizeof(type)* dim1,__FILE__,__LINE__) ;
+#define  Z_SAFE_NEW_SSE_AR2(p,type,dim1,dim2) (type**)z_new_sse_ar2(sizeof(type),dim1,dim2,16) ; z_mem_insert(p,sizeof(type)* dim1 * dim2,__FILE__,__LINE__) ;
+
+#define  Z_SAFE_NEW_SSE_AR1_A64(p,type,dim1,dim2) (type**)z_new_sse_ar1(sizeof(type),dim1,64) ; z_mem_insert(p,sizeof(type)* dim1 * dim2,__FILE__,__LINE__) ;
+#define  Z_SAFE_NEW_SSE_AR2_A64(p,type,dim1,dim2) (type**)z_new_sse_ar2(sizeof(type),dim1,dim2,64) ; z_mem_insert(p,sizeof(type)* dim1 * dim2,__FILE__,__LINE__) ;
+
+#define  Z_SAFE_DEL(p)  do {if(p) {z_mem_erase(p), delete p ;p = NULL; } } while (0);
+#define  Z_SAFE_DEL_AR1(p)	do {if(p) { z_mem_erase(p); delete [] p; p = NULL; } } while (0);
+#define  Z_SAFE_DEL_AR2(p)	do {if(p) { z_mem_erase(p); delete [] p[0] ; delete [] p ; p = NULL; } } while (0);
+#define  Z_SAFE_DEL_SSE_AR1(p)	do {if(p) { z_mem_erase(p); delete [] p; p = NULL; } } while (0);
+#define  Z_SAFE_DEL_SSE_AR2(p)	do {if(p) { z_mem_erase(p); delete [] p[0] ; delete [] p ; p = NULL ; } } while (0);
+
+#define  Z_PRINT_MEM_INFO() z_mem_print() ;
+
+#endif
+
+#include "zutil.h"
+
+#endif /* __r2vt4__zmath__ */
