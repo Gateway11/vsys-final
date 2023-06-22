@@ -1,0 +1,12 @@
+*.xcworkspace
+*.xcodeproj
+.DS_Store
+*libs*
+blis
+gemmlowp
+DEBUG
+RELEASE
+obj
+bin
+3rd-party/armeabi-v7a/blis-new
+3rd-party/fftw*
