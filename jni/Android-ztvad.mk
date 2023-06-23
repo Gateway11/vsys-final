@@ -75,15 +75,12 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../ztvad/kaldi-pitch \
     $(LOCAL_PATH)/../3rd-party/$(TARGET_ARCH_ABI)/include \
     
-LOCAL_CFLAGS += -DWEBRTC_POSIX #-DFE_USE_NE10_FFT
-
-LOCAL_CPP_FEATURES += exceptions
-
 LOCAL_STATIC_LIBRARIES := cpufeatures fftw blis #ne10
-
 LOCAL_SHARED_LIBRARIES := r2ssp #blis
-
 LOCAL_LDLIBS := -llog -lm -ldl
+
+LOCAL_CFLAGS += -DWEBRTC_POSIX #-DFE_USE_NE10_FFT
+LOCAL_CPP_FEATURES += exceptions
 
 include $(BUILD_SHARED_LIBRARY)
 

@@ -4,8 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := libr2vt
 LOCAL_SRC_FILES := $(shell find -L ../r2slv4/r2vt4/src -name "*.c*")
 
-LOCAL_C_INCLUDES := \
-    ../3rd-party/$(TARGET_ARCH_ABI)/include 
+LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/include 
 
 LOCAL_SHARED_LIBRARIES := r2ssp ztvad 
 LOCAL_STATIC_LIBRARIES := fftw blis

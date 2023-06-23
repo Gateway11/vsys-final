@@ -11,3 +11,12 @@ bin
 3rd-party/armeabi-v7a/blis-new
 3rd-party/fftw*
 .vscode
+.metadata/
+.DS_Store
+.settings
+.classpath
+.project
+proguard-project.txt
+project.properties
+gen/
+!3rd-party/armeabi-v7a/libs
