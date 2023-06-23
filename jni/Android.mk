@@ -10,6 +10,9 @@ endef
 include $(CLEAR_VARS)
 LOCAL_MODULE    := fftw
 LOCAL_SRC_FILES := ../3rd-party/$(TARGET_ARCH_ABI)/libs/libfftw3f.a
+#$(shell test -f ../3rd-party/fftw-3.3.10/build/libfftw3.so && echo yes)
+#LOCAL_SRC_FILES := ../3rd-party/fftw-3.3.10/build/libfftw3.so
+#include $(PREBUILT_SHARED_LIBRARY)
 include $(PREBUILT_STATIC_LIBRARY)
 #include Android-fftw3.mk
 
