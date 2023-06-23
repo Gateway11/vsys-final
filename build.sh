@@ -10,6 +10,22 @@ if [ ! -d blis ]; then
     mkdir armeabi-v7a/blis-new
     find blis -name *.h -exec cp {} ./armeabi-v7a/blis-new \;
     find ./armeabi-v7a/blis-new -name "test*" | xargs rm -rf
+
+    cd blis
+    export NDK=../../../toolbox/ndk-r21
+    export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64
+    
+    ./configure CC=$TOOLCHAIN/bin/clang AR=$TOOLCHAIN/bin/aarch64-linux-android-ar arm64 #ARMV7
+    make V=1 \
+        TARGET=CORTEXA57 \
+        ONLY_CBLAS=1 \
+        CC=$TOOLCHAIN/bin/aarch64-linux-android29-clang \
+        AR=$TOOLCHAIN/bin/aarch64-linux-android-ar \
+        HOSTCC=gcc \
+        CFLAGS=-D__ANDROID_API__=29 \
+        -j4
+
+    cd ..
 fi
 EOF
 
