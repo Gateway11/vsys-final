@@ -2,6 +2,7 @@
 
 cd 3rd-party
 
+:<<EOF
 if [ ! -d blis ]; then
     git clone git@github.com:flame/blis.git
     configure auto
@@ -25,6 +26,7 @@ if [ ! -d fftw-3.3.10 ]; then
 
     cd ../..
 fi
+EOF
 
 cd ../jni
 
