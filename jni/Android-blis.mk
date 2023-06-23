@@ -56,7 +56,7 @@ LOCAL_C_INCLUDES := \
     ../3rd-party/blis/frame/thread \
     ../3rd-party/blis/frame/include
 
-LOCAL_CFLAGS := -O2 -O3 -fomit-frame-pointer -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -D_DARWIN_C_SOURCE -DBLIS_IS_BUILDING_LIBRARY -DBLIS_ENABLE_CBLAS #-fvisibility=hidden
+LOCAL_CFLAGS := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L -Iinclude/arm64 -I./frame/include -DBLIS_IS_BUILDING_LIBRARY -DBLIS_ENABLE_CBLAS #-fvisibility=hidden 
 
 LOCAL_STATIC_LIBRARIES := blas
 LOCAL_LDLIBS := -lm -ldl

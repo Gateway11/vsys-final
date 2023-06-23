@@ -13,14 +13,15 @@ if [ ! -d blis ]; then
 
     cd blis
     export NDK=../../../toolbox/ndk-r21
-    export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64
+    export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
     
-    ./configure CC=$TOOLCHAIN/bin/clang AR=$TOOLCHAIN/bin/aarch64-linux-android-ar arm64 #ARMV7
+    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib arm64 #ARMV7
     make V=1 \
         TARGET=CORTEXA57 \
         ONLY_CBLAS=1 \
-        CC=$TOOLCHAIN/bin/aarch64-linux-android29-clang \
-        AR=$TOOLCHAIN/bin/aarch64-linux-android-ar \
+        CC=$TOOLCHAIN/aarch64-linux-android29-clang \
+        AR=$TOOLCHAIN/aarch64-linux-android-ar \
+        RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib \
         HOSTCC=gcc \
         CFLAGS=-D__ANDROID_API__=29 \
         -j4
