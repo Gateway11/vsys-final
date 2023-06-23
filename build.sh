@@ -16,6 +16,10 @@ if [ ! -d blis ]; then
     export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
     
     ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib arm64 #ARMV7
+    sed -i '' s/:=\ Darwin/:=\ Linux/g config.mk
+    sed -i '' s/LIBPTHREAD/#LIBPTHREAD/g config.mk
+    sed -i '' s/LDFLAGS\ +=/#LDFLAGS\ +=/g common.mk
+
     make V=1 \
         TARGET=CORTEXA57 \
         ONLY_CBLAS=1 \
@@ -36,7 +40,7 @@ if [ ! -d fftw-3.3.10 ]; then
     rm *.tar.gz
 
     cd fftw-3.3.10
-    sed -i '' s/single-precision\"\ OFF/single-precision\"\ ON/g `grep "single-precision\"" -rl  ./`
+    sed -i '' s/single-precision\"\ OFF/single-precision\"\ ON/g CMakeLists.txt
 
     mkdir build
     cd build
