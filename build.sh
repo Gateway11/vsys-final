@@ -11,6 +11,7 @@ if [ ! -d blis ]; then
     find blis -name *.h -exec cp {} ./armeabi-v7a/blis-new \;
     find ./armeabi-v7a/blis-new -name "test*" | xargs rm -rf
 fi
+EOF
 
 if [ ! -d fftw-3.3.10 ]; then
     wget https://www.fftw.org/fftw-3.3.10.tar.gz
@@ -18,6 +19,8 @@ if [ ! -d fftw-3.3.10 ]; then
     rm *.tar.gz
 
     cd fftw-3.3.10
+    sed -i '' s/single-precision\"\ OFF/single-precision\"\ ON/g `grep "single-precision\"" -rl  ./`
+
     mkdir build
     cd build
     cmake .. \
@@ -28,7 +31,6 @@ if [ ! -d fftw-3.3.10 ]; then
 
     cd ../..
 fi
-EOF
 
 cd ../jni
 
