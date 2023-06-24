@@ -10,6 +10,39 @@ LOCAL_SRC_FILES := $(shell find -L ../3rd-party/BLAS2/SRC -name "*.c")
 
 #the inclusion of BLASWRAP caused unresolved symbols for TooN
 LOCAL_CFLAGS    := -O3 -fPIC -DNO_BLAS_WRAP -Wno-logical-op-parentheses
+#include $(BUILD_STATIC_LIBRARY)
+
+MY_LOCAL_CFLAGS := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -I../3rd-party/blis/include/arm64 -I../3rd-party/blis/frame/include -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden #-DBLIS_IN_REF_KERNEL=1
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := ref_kernels_firestorm
+LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
+LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -march=armv8-a -D_GNU_SOURCE -DBLIS_CNAME=firestorm -DBLIS_IN_REF_KERNEL=1
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := ref_kernels_thunderx2
+LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
+LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -mcpu=thunderx2t99 -D_GNU_SOURCE -DBLIS_CNAME=thunderx2 -DBLIS_IN_REF_KERNEL=1
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := ref_kernels_cortexa57
+LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
+LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -mcpu=cortex-a57 -D_GNU_SOURCE -DBLIS_CNAME=cortexa57 -DBLIS_IN_REF_KERNEL=1
+
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := ref_kernels_cortexa53
+LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
+LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -mcpu=cortex-a53 -D_GNU_SOURCE -DBLIS_CNAME=cortexa53 -DBLIS_IN_REF_KERNEL=1
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := ref_kernels_generic
+LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
+LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -O3 -funsafe-math-optimizations -ffp-contract=fast -DBLIS_CNAME=generic -DBLIS_IN_REF_KERNEL=1
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -341,7 +374,8 @@ LOCAL_SRC_FILES := \
     ../3rd-party/blis/frame/util/bli_util_tapi_ex.c \
     ../3rd-party/blis/frame/util/bli_util_unb_var1.c \
 
-    #$(CBLAS_RELATIVE_PATH)/src/cblas_sger.c \
+#LOCAL_SRC_FILES := \
+    $(CBLAS_RELATIVE_PATH)/src/cblas_sger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sdot.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dgemm.c \
@@ -375,7 +409,8 @@ LOCAL_SRC_FILES := \
     $(CBLAS_RELATIVE_PATH)/src/cblas_globals.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_xerbla.c
 
-LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new ../3rd-party/blis/include/arm64 ../3rd-party/blis/frame/include
+LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new
+LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -D_GNU_SOURCE -DBLIS_ENABLE_CBLAS 
 
 #LOCAL_C_INCLUDES := \
     ../3rd-party/$(TARGET_ARCH_ABI)/include/blis \
@@ -383,9 +418,7 @@ LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new ../3rd-party/blis/i
     ../3rd-party/blis/frame/thread \
     ../3rd-party/blis/frame/include
 
-LOCAL_CFLAGS := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L -Iinclude/arm64 -I./frame/include -DBLIS_IS_BUILDING_LIBRARY -DBLIS_ENABLE_CBLAS #-fvisibility=hidden 
-
-#LOCAL_STATIC_LIBRARIES := blas
+LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic #blas
 LOCAL_LDLIBS := -lm -ldl
 
 include $(BUILD_SHARED_LIBRARY)
