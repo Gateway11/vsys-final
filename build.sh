@@ -43,7 +43,7 @@ if [ ! -d fftw-3.3.10 ]; then
     mkdir build && cd build
     cmake .. \
         -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
-        -DANDROID_ABI=armeabi-v7a \
+        -DANDROID_ABI=arm64-v8a \
         -DANDROID_PLATFORM=android-29
     
     #make -j8
