@@ -10,10 +10,11 @@ LOCAL_SRC_FILES := $(shell find -L ../3rd-party/BLAS2/SRC -name "*.c")
 
 #the inclusion of BLASWRAP caused unresolved symbols for TooN
 LOCAL_CFLAGS    := -O3 -fPIC -DNO_BLAS_WRAP -Wno-logical-op-parentheses
-#include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
 
 LOCAL_CFLAGS_COMMON := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -I../3rd-party/blis/include/arm64 -I../3rd-party/blis/frame/include -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
 LOCAL_CFLAGS_REF_KERNELS := $(LOCAL_CFLAGS_COMMON) -O3 -funsafe-math-optimizations -ffp-contract=fast -DBLIS_IN_REF_KERNEL=1
+
 LOCAL_SRC_FILES_REF_KERNELS := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
 
 include $(CLEAR_VARS)
@@ -48,6 +49,8 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blis
+#find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c"
+#find -L ../3rd-party/blis/frame ! -path "*old*" ! -path "*other*" -name "*.c"
 LOCAL_SRC_FILES := \
     ../3rd-party/blis/config/cortexa53/bli_cntx_init_cortexa53.c \
     ../3rd-party/blis/config/cortexa57/bli_cntx_init_cortexa57.c \
@@ -375,7 +378,7 @@ LOCAL_SRC_FILES := \
     ../3rd-party/blis/frame/util/bli_util_tapi_ex.c \
     ../3rd-party/blis/frame/util/bli_util_unb_var1.c \
 
-#LOCAL_SRC_FILES := \
+LOCAL_SRC_FILES += \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sdot.c \
@@ -410,7 +413,7 @@ LOCAL_SRC_FILES := \
     $(CBLAS_RELATIVE_PATH)/src/cblas_globals.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_xerbla.c
 
-#LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new
+LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new
 LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -DBLIS_ENABLE_CBLAS
 
 #LOCAL_C_INCLUDES := \
@@ -419,8 +422,8 @@ LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -DBLIS_ENABLE_CBLAS
     ../3rd-party/blis/frame/thread \
     ../3rd-party/blis/frame/include
 
-LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic #blas
+LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic blas
 LOCAL_LDLIBS := -lm -ldl
 
-include $(BUILD_SHARED_LIBRARY)
-#include $(BUILD_STATIC_LIBRARY)
+#include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
