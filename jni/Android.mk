@@ -17,8 +17,8 @@ include Android-fftw3.mk
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blis
 LOCAL_SRC_FILES := ../3rd-party/$(TARGET_ARCH_ABI)/libs/libblis.a
-include $(PREBUILT_STATIC_LIBRARY)
-#include Android-blis.mk
+#include $(PREBUILT_STATIC_LIBRARY)
+include Android-blis.mk
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := r2ssp

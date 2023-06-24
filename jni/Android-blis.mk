@@ -411,19 +411,13 @@ LOCAL_SRC_FILES += \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sspr.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dspr.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_globals.c \
+    $(CBLAS_RELATIVE_PATH)/src/cblas_sgemm.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_xerbla.c
 
-LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new
 LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -DBLIS_ENABLE_CBLAS
-
-#LOCAL_C_INCLUDES := \
-    ../3rd-party/$(TARGET_ARCH_ABI)/include/blis \
-    ../3rd-party/blis \
-    ../3rd-party/blis/frame/thread \
-    ../3rd-party/blis/frame/include
-
-LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic blas
 LOCAL_LDLIBS := -lm -ldl
 
-#include $(BUILD_SHARED_LIBRARY)
-include $(BUILD_STATIC_LIBRARY)
+LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic blas
+
+include $(BUILD_SHARED_LIBRARY)
+#include $(BUILD_STATIC_LIBRARY)

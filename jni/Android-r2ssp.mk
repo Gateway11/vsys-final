@@ -126,6 +126,7 @@ LOCAL_SRC_FILES += $(call all-named-files-under,*.S, ../r2ssp/third_party/openma
 LOCAL_CFLAGS += -DWEBRTC_ANDROID -DWEBRTC_THREAD_RR -DWEBRTC_CLOCK_TYPE_REALTIME -DWEBRTC_POSIX -DWEBRTC_ARCH_ARM -DWEBRTC_ARCH_ARM_NEON -DWEBRTC_ARCH_ARM_V7 -DHAVE_CONFIG_H
 else
 LOCAL_SRC_FILES += $(call all-named-files-under,*.S, ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/arm64)
+LOCAL_SRC_FILES += $(call all-named-files-under,*.c, ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/arm64)
 LOCAL_CFLAGS += -DWEBRTC_ANDROID -DWEBRTC_THREAD_RR -DWEBRTC_CLOCK_TYPE_REALTIME -DWEBRTC_POSIX -DWEBRTC_ARCH_ARM -DWEBRTC_ARCH_ARM64_NEON -DDL_ARM_NEON -DHAVE_CONFIG_H
 endif
 
@@ -134,9 +135,10 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../r2ssp/speexdsp \
     $(LOCAL_PATH)/../r2ssp/speexdsp/include \
     $(LOCAL_PATH)/../r2ssp/third_party/openmax_dl \
-    $(LOCAL_PATH)/../3rd-party/$(TARGET_ARCH_ABI)/include \
+    $(LOCAL_PATH)/../3rd-party/armeabi-v7a/include \
     
-LOCAL_STATIC_LIBRARIES := fftw blis
+LOCAL_STATIC_LIBRARIES := fftw #blis
+LOCAL_SHARED_LIBRARIES := blis
 LOCAL_LDLIBS := -llog -lm -ldl
 
 LOCAL_CPP_FEATURES += exceptions 

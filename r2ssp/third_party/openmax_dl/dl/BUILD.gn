@@ -1,0 +1,732 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/config/android/config.gni")
+import("//build/config/arm.gni")
+
+declare_args() {
+  # Default FFT support
+  pffft = false
+  pffft_simd_disable = false
+  kissfft = false
+  ckfft = false
+  ffmpeg = false
+  ne10 = false
+  ne10_arm64_inline_asm = false
+  # Override this value to build with small float FFT tables
+  openmax_big_float_fft = true
+  if (current_cpu == "arm") {
+    # Optional other FFT packages for testing.
+    pffft = true
+    kissfft = true
+    ckfft = true
+    ffmpeg = true
+    # Only RFFT works.  Don't know why
+    #ne10 = true
+  }
+  if (current_cpu == "arm64") {
+    pffft = true
+    kissfft = false
+    ckfft = true
+    ffmpeg = false
+    # Only RFFT works.  Don't know why
+    ne10 = true
+  }
+  if (current_cpu == "x86" || current_cpu == "x64") {
+    pffft = true
+    kissfft = false
+    ckfft = false
+    ffmpeg = false
+    # Only RFFT works.  Don't know why
+    ne10 = false
+  }
+  if (current_cpu == "mipsel") {
+    pffft = true
+  }
+}
+
+config("dl_config") {
+  include_dirs = [ ".." ]
+  # Needed to link ffmpeg assembly files into executable.
+  if (current_cpu == "arm") {
+    ldflags = [ "-Wl,-z,notext" ]
+  }
+  if (current_cpu == "arm") {
+    if (arm_use_neon) {
+      # Enable build-time NEON selection.
+      defines = [ "DL_ARM_NEON" ]
+    } else if (arm_optionally_use_neon) {
+      # Enable run-time NEON selection.
+      defines = [ "DL_ARM_NEON_OPTIONAL" ]
+    }
+  } else if (current_cpu == "arm64") {
+    # Enable build-time NEON selection.
+    defines = [ "DL_ARM_NEON" ]
+  }
+}
+
+config("no_integrated_as") {
+  if (current_cpu == "arm" && is_clang) {
+    # TODO(hans): Enable integrated-as (crbug.com/917355).
+    # Once that's fixed, also stop removing assembler_debug_dir from configs.
+    asmflags = [ "-fno-integrated-as" ]
+    if (is_android) {
+      rebased_android_toolchain_root =
+          rebase_path(android_toolchain_root, root_build_dir)
+
+      # Else /usr/bin/as gets picked up.
+      asmflags += [ "-B${rebased_android_toolchain_root}/bin" ]
+    }
+  }
+}
+
+static_library("dl") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
+  sources = [
+    "api/omxtypes.h",
+    "sp/api/omxSP.h",
+    "sp/src/armSP_FFT_F32TwiddleTable.c",
+  ]
+
+  cflags = []
+  deps = []
+  defines = []
+
+  if (openmax_big_float_fft) {
+    defines += [ "BIG_FFT_TABLE" ]
+  }
+
+  if (current_cpu == "arm" || current_cpu == "arm64") {
+    sources += [
+      # Common files that are used by both arm and arm64 code.
+      "api/arm/armOMX.h",
+      "api/arm/omxtypes_s.h",
+      "sp/api/armSP.h",
+      "sp/src/arm/armSP_FFT_S32TwiddleTable.c",
+      "sp/src/arm/omxSP_FFTGetBufSize_C_FC32.c",
+      "sp/src/arm/omxSP_FFTGetBufSize_C_SC32.c",
+      "sp/src/arm/omxSP_FFTGetBufSize_R_F32.c",
+      "sp/src/arm/omxSP_FFTGetBufSize_R_S32.c",
+      "sp/src/arm/omxSP_FFTInit_C_FC32.c",
+      "sp/src/arm/omxSP_FFTInit_R_F32.c",
+    ]
+  }
+
+  if (current_cpu == "arm") {
+    sources += [
+      # Common files that are used by both the NEON and non-NEON code.
+      "api/armCOMM_s.h",
+      "sp/src/arm/omxSP_FFTGetBufSize_C_SC16.c",
+      "sp/src/arm/omxSP_FFTGetBufSize_R_S16.c",
+      "sp/src/arm/omxSP_FFTGetBufSize_R_S16S32.c",
+      "sp/src/arm/omxSP_FFTInit_C_SC16.c",
+      "sp/src/arm/omxSP_FFTInit_C_SC32.c",
+      "sp/src/arm/omxSP_FFTInit_R_S16.c",
+      "sp/src/arm/omxSP_FFTInit_R_S16S32.c",
+      "sp/src/arm/omxSP_FFTInit_R_S32.c",
+    ]
+
+    deps += [
+      ":openmax_dl_armv7",
+      ":openmax_dl_neon",
+    ]
+  }
+
+  if (current_cpu == "arm64") {
+    sources += [
+      "api/arm/arm64COMM_s.h",
+
+      # Complex floating-point FFT
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix2_fs_s.S",
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix2_ls_s.S",
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix2_s.S",
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix4_fs_s.S",
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix4_ls_s.S",
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix4_s.S",
+      "sp/src/arm/arm64/armSP_FFT_CToC_FC32_Radix8_fs_s.S",
+      "sp/src/arm/arm64/omxSP_FFTFwd_CToC_FC32.c",
+      "sp/src/arm/arm64/omxSP_FFTInv_CToC_FC32.c",
+
+      # Real floating-point FFT
+      "sp/src/arm/arm64/ComplexToRealFixup.S",
+      "sp/src/arm/arm64/armSP_FFTInv_CCSToR_F32_preTwiddleRadix2_s.S",
+      "sp/src/arm/arm64/omxSP_FFTFwd_RToCCS_F32.c",
+      "sp/src/arm/arm64/omxSP_FFTInv_CCSToR_F32.c",
+    ]
+  }
+
+  if (current_cpu == "x86" || current_cpu == "x64") {
+    if (is_posix || is_fuchsia) {
+      cflags += [ "-msse2" ]
+    }
+
+    sources += [
+      # Real 32-bit floating-point FFT.
+      "sp/api/x86SP.h",
+      "sp/src/x86/omxSP_FFTFwd_RToCCS_F32_Sfs.c",
+      "sp/src/x86/omxSP_FFTGetBufSize_R_F32.c",
+      "sp/src/x86/omxSP_FFTInit_R_F32.c",
+      "sp/src/x86/omxSP_FFTInv_CCSToR_F32_Sfs.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix2_fs.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix2_ls.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix2_ls_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix2_ms.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix4_fs.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix4_fs_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix4_ls.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix4_ls_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix4_ms.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Fwd_Radix4_ms_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix2_fs.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix2_ls.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix2_ls_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix2_ms.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix4_fs.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix4_fs_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix4_ls.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix4_ls_sse.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix4_ms.c",
+      "sp/src/x86/x86SP_FFT_CToC_FC32_Inv_Radix4_ms_sse.c",
+      "sp/src/x86/x86SP_FFT_F32_radix2_kernel.c",
+      "sp/src/x86/x86SP_FFT_F32_radix4_kernel.c",
+      "sp/src/x86/x86SP_SSE_Math.h",
+    ]
+  }
+
+  if (current_cpu == "mipsel") {
+    cflags += [ "-std=c99" ]
+    sources -= [ "sp/src/armSP_FFT_F32TwiddleTable.c" ]
+
+    sources += [
+      "sp/api/mipsSP.h",
+      "sp/src/mips/mips_FFTFwd_RToCCS_F32_complex.c",
+      "sp/src/mips/mips_FFTFwd_RToCCS_F32_real.c",
+      "sp/src/mips/mips_FFTInv_CCSToR_F32_complex.c",
+      "sp/src/mips/mips_FFTInv_CCSToR_F32_real.c",
+      "sp/src/mips/omxSP_FFTFwd_RToCCS_F32_Sfs.c",
+      "sp/src/mips/omxSP_FFTGetBufSize_R_F32.c",
+      "sp/src/mips/omxSP_FFTInit_R_F32.c",
+      "sp/src/mips/omxSP_FFTInv_CCSToR_F32_Sfs.c",
+      "sp/src/mips/omxSP_FFT_F32TwiddleTable.c",
+    ]
+  }
+}
+
+if (current_cpu == "arm") {
+  # Non-NEON implementation of FFT. This library is NOT
+  # standalone. Applications must link with openmax_dl.
+  static_library("openmax_dl_armv7") {
+    configs += [
+      ":dl_config",
+      ":no_integrated_as",
+    ]
+    configs -= [ "//build/config/compiler:assembler_debug_dir" ]
+    visibility = [ ":*" ]
+
+    sources = [
+      # Complex floating-point FFT
+      "sp/src/arm/armv7/armSP_FFT_CToC_FC32_Radix2_fs_unsafe_s.S",
+      "sp/src/arm/armv7/armSP_FFT_CToC_FC32_Radix4_fs_unsafe_s.S",
+      "sp/src/arm/armv7/armSP_FFT_CToC_FC32_Radix4_unsafe_s.S",
+      "sp/src/arm/armv7/armSP_FFT_CToC_FC32_Radix8_fs_unsafe_s.S",
+      "sp/src/arm/armv7/omxSP_FFTFwd_CToC_FC32_Sfs_s.S",
+      "sp/src/arm/armv7/omxSP_FFTInv_CToC_FC32_Sfs_s.S",
+
+      # Real floating-point FFT
+      "sp/src/arm/armv7/armSP_FFTInv_CCSToR_F32_preTwiddleRadix2_unsafe_s.S",
+      "sp/src/arm/armv7/omxSP_FFTFwd_RToCCS_F32_Sfs_s.S",
+      "sp/src/arm/armv7/omxSP_FFTInv_CCSToR_F32_Sfs_s.S",
+    ]
+    if (arm_optionally_use_neon) {
+      # Run-time NEON detection.
+      deps = [
+        "//third_party/android_sdk:cpu_features",
+      ]
+
+      # To get the __android_log_print routine
+      libs = [ "log" ]
+
+      # Detection routine
+      sources += [ "sp/src/arm/detect.c" ]
+    }
+  }
+
+  # NEON implementation of FFT. This library is NOT
+  # standalone. Applications must link with openmax_dl.
+  static_library("openmax_dl_neon") {
+    configs += [
+      ":dl_config",
+      ":no_integrated_as",
+    ]
+    configs -= [ "//build/config/compiler:assembler_debug_dir" ]
+    visibility = [ ":*" ]
+
+    if (!arm_use_neon) {
+      configs -= [ "//build/config/compiler:compiler_arm_fpu" ]
+      asmflags = [ "-mfpu=neon" ]
+    }
+
+    sources = [
+      # Complex 32-bit fixed-point FFT.
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix2_fs_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix2_ls_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix2_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix4_fs_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix4_ls_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix4_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC32_Radix8_fs_unsafe_s.S",
+      "sp/src/arm/neon/omxSP_FFTFwd_CToC_SC32_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CToC_SC32_Sfs_s.S",
+
+      # Real 32-bit fixed-point FFT
+      "sp/src/arm/neon/armSP_FFTInv_CCSToR_S32_preTwiddleRadix2_unsafe_s.S",
+      "sp/src/arm/neon/omxSP_FFTFwd_RToCCS_S32_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CCSToR_S32_Sfs_s.S",
+
+      # Complex 16-bit fixed-point FFT
+      "sp/src/arm/neon/armSP_FFTInv_CCSToR_S16_preTwiddleRadix2_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix2_fs_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix2_ls_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix2_ps_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix2_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix4_fs_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix4_ls_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix4_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_SC16_Radix8_fs_unsafe_s.S",
+      "sp/src/arm/neon/omxSP_FFTFwd_CToC_SC16_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CToC_SC16_Sfs_s.S",
+
+      # Real 16-bit fixed-point FFT
+      "sp/src/arm/neon/omxSP_FFTFwd_RToCCS_S16S32_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTFwd_RToCCS_S16_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CCSToR_S16_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CCSToR_S32S16_Sfs_s.S",
+
+      # Complex floating-point FFT
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix2_fs_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix2_ls_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix2_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix4_fs_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix4_ls_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix4_unsafe_s.S",
+      "sp/src/arm/neon/armSP_FFT_CToC_FC32_Radix8_fs_unsafe_s.S",
+      "sp/src/arm/neon/omxSP_FFTFwd_CToC_FC32_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CToC_FC32_Sfs_s.S",
+
+      # Real floating-point FFT
+      "sp/src/arm/neon/armSP_FFTInv_CCSToR_F32_preTwiddleRadix2_unsafe_s.S",
+      "sp/src/arm/neon/omxSP_FFTFwd_RToCCS_F32_Sfs_s.S",
+      "sp/src/arm/neon/omxSP_FFTInv_CCSToR_F32_Sfs_s.S",
+    ]
+  }
+
+  if (kissfft && current_cpu == "arm") {
+    static_library("kissfft") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [ "../third_party/other-fft/kiss_fft130" ]
+      sources = [
+        "../third_party/other-fft/kiss_fft130/_kiss_fft_guts.h",
+        "../third_party/other-fft/kiss_fft130/kiss_fft.c",
+        "../third_party/other-fft/kiss_fft130/kiss_fft.h",
+        "../third_party/other-fft/kiss_fft130/kiss_fft_bfly2_neon.S",
+        "../third_party/other-fft/kiss_fft130/kiss_fft_bfly4_neon.S",
+        "../third_party/other-fft/kiss_fft130/tools/kiss_fftr.c",
+        "../third_party/other-fft/kiss_fft130/tools/kiss_fftr.h",
+      ]
+    }
+  }
+
+
+  if (ffmpeg) {
+    source_set("ffmpeg-avcodec") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [
+        "../third_party/other-fft/ffmpeg",
+      ]
+      sources = [
+        "../third_party/other-fft/ffmpeg/config.h",
+
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/cpu.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/fft_init_arm.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/fft_neon.S",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/mdct_neon.S",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/rdft_neon.S",
+        "../third_party/other-fft/ffmpeg/libavcodec/avfft.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/avfft.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/dct.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/fft.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/fft.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/fft-internal.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/mdct.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/rdft.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/rdft.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/synth_filter.h",
+      ]
+    }
+    source_set("ffmpeg-avutil") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [
+        "../third_party/other-fft/ffmpeg"
+      ]
+      sources = [
+        "../third_party/other-fft/ffmpeg/libavutil/attributes.h",
+        "../third_party/other-fft/ffmpeg/libavutil/avconfig.h",
+        "../third_party/other-fft/ffmpeg/libavutil/avutil.h",
+        "../third_party/other-fft/ffmpeg/libavutil/bswap.h",
+        "../third_party/other-fft/ffmpeg/libavutil/common.h",
+        "../third_party/other-fft/ffmpeg/libavutil/cpu.c",
+        "../third_party/other-fft/ffmpeg/libavutil/cpu.h",
+        "../third_party/other-fft/ffmpeg/libavutil/dict.h",
+        "../third_party/other-fft/ffmpeg/libavutil/error.h",
+        "../third_party/other-fft/ffmpeg/libavutil/intfloat.h",
+        "../third_party/other-fft/ffmpeg/libavutil/intfloat_readwrite.h",
+        "../third_party/other-fft/ffmpeg/libavutil/intreadwrite.h",
+        "../third_party/other-fft/ffmpeg/libavutil/log.h",
+        "../third_party/other-fft/ffmpeg/libavutil/mathematics.h",
+        "../third_party/other-fft/ffmpeg/libavutil/mem.c",
+        "../third_party/other-fft/ffmpeg/libavutil/mem.h",
+        "../third_party/other-fft/ffmpeg/libavutil/old_pix_fmts.h",
+        "../third_party/other-fft/ffmpeg/libavutil/opt.h",
+        "../third_party/other-fft/ffmpeg/libavutil/pixfmt.h",
+        "../third_party/other-fft/ffmpeg/libavutil/rational.h",
+        "../third_party/other-fft/ffmpeg/libavutil/samplefmt.h",
+        "../third_party/other-fft/ffmpeg/libavutil/version.h",
+      ]
+    }
+    source_set("ffpmeg-avutilarm") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      sources = [
+        "../third_party/other-fft/ffmpeg/libavutil/arm/asm.S",
+        "../third_party/other-fft/ffmpeg/libavutil/arm/cpu.c",
+        "../third_party/other-fft/ffmpeg/libavutil/arm/cpu.h",
+      ]
+    }
+  }
+
+
+}
+
+if (pffft) {
+  static_library("pffft") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+    defines = []
+    if (current_cpu == "x86" || current_cpu == "x64") {
+      defines += [ "_M_IX86"]
+    }
+    if (!arm_use_neon || pffft_simd_disable == true || current_cpu == "mipsel") {
+      # Turn off simd support since pffft doesn't support MIPS
+      # SIMD. (But the OpenMAX DL versino didn't either
+      defines += [ "PFFFT_SIMD_DISABLE" ]
+    }
+    sources = [
+      "../third_party/other-fft/pffft/pffft.c",
+      "../third_party/other-fft/pffft/pffft.h",
+    ]
+  }
+}
+
+if (ckfft) {
+  static_library("ckfft") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+    include_dirs = [
+      "../third_party/other-fft/ckfft",
+      "../third_party/other-fft/ckfft/src",
+      "../third_party/other-fft/ckfft/inc"
+    ]
+    deps = [
+      "//third_party/android_sdk:cpu_features",
+    ]
+    sources = [
+      "../third_party/other-fft/ckfft/inc/ckfft/ckfft.h",
+      "../third_party/other-fft/ckfft/src/ckfft/ckfft.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/context.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/context.h",
+      "../third_party/other-fft/ckfft/src/ckfft/debug.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/debug.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_default.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_default.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_neon.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_neon.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.h",
+      "../third_party/other-fft/ckfft/src/ckfft/math_util.h",
+      "../third_party/other-fft/ckfft/src/ckfft/platform.h",
+    ]
+  }
+}
+
+if (ne10) {
+  static_library("ne10") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+    include_dirs = [
+      "../third_party/other-fft/Ne10/inc",
+      "../third_party/other-fft/Ne10/common"
+    ]
+    defines = [ "_ARM_HAVE_NEON" ]
+    if (current_cpu == "arm") {
+      cflags = [
+        "-mfpu=neon",
+        "-funsafe-math-optimizations",
+      ]
+    }
+    sources = [
+      #"../third_party/other-fft/Ne10/common/NE10_mask_table.c",
+      #"../third_party/other-fft/Ne10/common/NE10_mask_table.h"
+      #"../third_party/other-fft/Ne10/inc/NE10_types.h",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_cfft.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_cfft_init.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_cfft.neon.s",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_fir.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_fir_init.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_fir.neon.s",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_iir.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_iir_init.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_iir.neon.s",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_init_dsp.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_rfft.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_rfft_init.c",
+      #"../third_party/other-fft/Ne10/modules/dsp/NE10_rfft.neon.c",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_common_varibles.h",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_cplx_ops.h",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_debug_macro.h",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_generic_float32.c",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_generic_float32.neonintrinsic.cpp",
+      "../third_party/other-fft/Ne10/inc/NE10_dsp.h",
+      "../third_party/other-fft/Ne10/inc/NE10_types.h",
+      "../third_party/other-fft/Ne10/inc/NE10_macros.h",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft.c",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft.h",
+      "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.c",
+    ]
+    if (current_cpu == "arm") {
+      sources += [
+          "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.neon.c",
+          "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.neon_s.S",
+      ]
+    }
+    if (current_cpu == "arm64") {
+      sources += [
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.neonintrinsic.c",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_rfft_float32.c",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_rfft_float32.neonintrinsic.c",
+      ]
+    }
+  }
+}
+
+# Testing stuff
+static_library("test_utilities") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
+  sources = [
+    "sp/src/test/aligned_ptr.c",
+    "sp/src/test/compare.c",
+    "sp/src/test/gensig.c",
+    "sp/src/test/test_util.c",
+    "sp/src/test/test_util_fft.c",
+    "sp/src/test/compare.h",
+    "sp/src/test/gensig.h",
+  ]
+}
+
+executable("test_float_fft") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
+  sources = [
+    "sp/src/test/test_float_fft.c",
+    "sp/src/test/support/float_fft_neon.c",
+  ]
+
+  deps = [
+    ":dl",
+    ":test_utilities",
+ ]
+}
+
+executable("test_float_rfft") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
+
+  sources = [
+    "sp/src/test/test_float_rfft.c",
+    "sp/src/test/support/float_rfft_neon.c",
+    "sp/src/test/support/float_rfft_thresholds.h",
+  ]
+
+  deps = [
+    ":dl",
+    ":test_utilities",
+ ]
+
+}
+
+executable("test_fft_time") {
+  deps = []
+  defines = []
+
+  deps += [
+    ":dl",
+    ":test_utilities",
+  ]
+
+  sources = [
+    "sp/src/test/test_fft_time.c",
+    "sp/src/test/timing_util.h",
+  ]
+
+  if (openmax_big_float_fft) {
+    defines += [ "BIG_FFT_TABLE" ]
+  }
+
+  if (kissfft && current_cpu == "arm") {
+    defines += [
+      "HAVE_KISSFFT",
+      "__ARM_HAVE_NEON"
+    ]
+    sources += [
+      "sp/src/test/fft_time_kissfft.c",
+      "sp/src/test/fft_time_kissfft.h"
+    ]
+    deps += [ ":kissfft" ]
+  }
+
+  if (pffft) {
+    defines += [ "HAVE_PFFFT" ]
+    sources += [
+      "sp/src/test/fft_time_pffft.c",
+      "sp/src/test/fft_time_pffft.h"
+    ]
+    deps += [ ":pffft" ]
+  }
+
+  if (ckfft) {
+    defines += [ "HAVE_CKFFT" ]
+    if (arm_use_neon) {
+      defines += [ "CKFFT_ARM_NEON" ]
+    }
+    sources += [
+      "sp/src/test/fft_time_ckfft.c",
+      "sp/src/test/fft_time_ckfft.h"
+    ]
+    deps += [ ":ckfft" ]
+  }
+
+  if (ffmpeg) {
+    defines += [ "HAVE_FFMPEG" ]
+    sources += [
+      "sp/src/test/fft_time_ffmpeg.c",
+      "sp/src/test/fft_time_ffmpeg.h"
+    ]
+    deps += [
+      ":ffmpeg-avcodec",
+      ":ffmpeg-avutil",
+    ]
+  }
+
+  if (ne10) {
+    defines += [ "HAVE_NE10" ]
+    sources += [
+      "sp/src/test/fft_time_ne10.c",
+      "sp/src/test/fft_time_ne10.h"
+    ]
+    deps += [
+      ":ne10"
+    ]
+  }
+
+  if (!arm_use_neon) {
+    defines += [ "ARM_VFP_TEST" ]
+  }
+}
