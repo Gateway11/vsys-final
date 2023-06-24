@@ -108,7 +108,7 @@ LOCAL_SRC_FILES := \
     ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/omxSP_FFTInit_R_F32.c \
     ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/omxSP_FFTInit_R_S32.c \
     ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/armSP_FFT_S32TwiddleTable.c \
-    ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/armSP_FFT_F32TwiddleTable.c \
+    ../r2ssp/third_party/openmax_dl/dl/sp/src/armSP_FFT_F32TwiddleTable.c \
     ../r2ssp/webrtc/modules/audio_processing/aec/aec_core_neon.c \
     ../r2ssp/webrtc/modules/audio_processing/aec/aec_rdft_neon.c \
     ../r2ssp/webrtc/modules/audio_processing/aecm/aecm_core_neon.c \
