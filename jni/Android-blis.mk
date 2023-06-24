@@ -377,8 +377,169 @@ LOCAL_SRC_FILES := \
     ../3rd-party/blis/frame/util/bli_util_tapi_ba.c \
     ../3rd-party/blis/frame/util/bli_util_tapi_ex.c \
     ../3rd-party/blis/frame/util/bli_util_unb_var1.c \
-
-LOCAL_SRC_FILES += \
+    ../3rd-party/blis/frame/compat/cblas/f77_sub/f77_amax_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/f77_sub/f77_asum_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/f77_sub/f77_dot_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/f77_sub/f77_nrm2_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_caxpy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ccopy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cdotc_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cdotu_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cgbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cgemm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cgemv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cgerc.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cgeru.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_chbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_chemm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_chemv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cher.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cher2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cher2k.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cherk.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_chpmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_chpr.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_chpr2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cscal.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_csscal.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_cswap.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_csymm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_csyr2k.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_csyrk.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctbsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctpmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctpsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctrmm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctrmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctrsm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ctrsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dasum.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_daxpy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dcopy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ddot.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dgbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dgemm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dgemv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dger.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dnrm2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_drot.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_drotg.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_drotm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_drotmg.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dscal.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsdot.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dspmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dspr.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dspr2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dswap.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsymm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsymv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsyr.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsyr2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsyr2k.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dsyrk.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtbsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtpmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtpsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtrmm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtrmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtrsm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dtrsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dzasum.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_dznrm2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_globals.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_icamax.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_idamax.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_isamax.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_izamax.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sasum.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_saxpy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_scasum.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_scnrm2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_scopy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sdot.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sdsdot.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sgbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sgemm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sgemv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sger.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_snrm2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_srot.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_srotg.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_srotm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_srotmg.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sscal.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sspmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sspr.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sspr2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_sswap.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssymm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssymv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssyr.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssyr2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssyr2k.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ssyrk.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_stbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_stbsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_stpmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_stpsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_strmm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_strmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_strsm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_strsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_xerbla.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zaxpy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zcopy.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zdotc_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zdotu_sub.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zdscal.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zgbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zgemm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zgemv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zgerc.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zgeru.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zhbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zhemm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zhemv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zher.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zher2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zher2k.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zherk.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zhpmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zhpr.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zhpr2.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zscal.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zswap.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zsymm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zsyr2k.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_zsyrk.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztbmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztbsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztpmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztpsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztrmm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztrmv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztrsm.c \
+    ../3rd-party/blis/frame/compat/cblas/src/cblas_ztrsv.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_caxpby.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_cgemm3m.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_cgemm_batch.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_cgemmt.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_daxpby.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_dgemm_batch.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_dgemmt.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_saxpby.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_sgemm_batch.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_sgemmt.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_zaxpby.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_zgemm3m.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_zgemm_batch.c \
+    ../3rd-party/blis/frame/compat/cblas/src/extra/cblas_zgemmt.c \
+#LOCAL_SRC_FILES += \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_dger.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sdot.c \
@@ -414,10 +575,10 @@ LOCAL_SRC_FILES += \
     $(CBLAS_RELATIVE_PATH)/src/cblas_sgemm.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_xerbla.c
 
-LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE
+LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -I../3rd-party/blis/frame/compat/cblas/src
 LOCAL_LDLIBS := -lm -ldl
 
-LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic blas
+LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic #blas
 
 include $(BUILD_SHARED_LIBRARY)
 #include $(BUILD_STATIC_LIBRARY)

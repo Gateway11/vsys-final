@@ -9,14 +9,11 @@ if [ ! -d blis ]; then
     export NDK=../../../toolbox/ndk-r21
     export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
     
-    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib arm64 #--enable-cblas #ARMV7
+    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib --enable-cblas arm64 #ARMV7
     sed -i '' s/:=\ Darwin/:=\ Linux/g config.mk
     sed -i '' s/LIBPTHREAD/#LIBPTHREAD/g config.mk
     sed -i '' s/LDFLAGS\ +=/#LDFLAGS\ +=/g common.mk
 
-    # What to do?
-    sed -i '' s/\ F77_sdot_sub/\ \\/\\/F77_sdot_sub/g frame/compat/cblas/src/cblas_sdot.c
-    sed -i '' s/\ F77_ddot_sub/\ \\/\\/F77_ddot_sub/g frame/compat/cblas/src/cblas_ddot.c
 :<<EOF
     cd blis && make V=1 \
         TARGET=CORTEXA57 \
