@@ -10,7 +10,7 @@
     export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
 
     ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib arm64 #ARMV7
-    python ./build/flatten-headers.py -l -v1 xxxx // see build.sh
+    python ./build/flatten-headers.py -l -v1 xxxx // please see build.sh
 
     cd ../../jni
 

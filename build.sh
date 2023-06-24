@@ -55,4 +55,4 @@ fi
 
 cd ../jni
 
-ndk-build
+ndk-build -j8

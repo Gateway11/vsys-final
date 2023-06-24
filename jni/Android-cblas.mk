@@ -17,7 +17,7 @@ CBLAS_RELATIVE_PATH := ../3rd-party/CBLAS
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blas
-LOCAL_SRC_FILES := $(shell find -L ../BLAS2/SRC -name "*.c")
+LOCAL_SRC_FILES := $(shell find -L ../BLAS-OLD/SRC -name "*.c")
 
 #the inclusion of BLASWRAP caused unresolved symbols for TooN
 LOCAL_CFLAGS    := -O3 -fPIC -DNO_BLAS_WRAP -Wno-logical-op-parentheses
