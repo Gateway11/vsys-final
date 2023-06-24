@@ -417,7 +417,7 @@ LOCAL_SRC_FILES += \
 LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE
 LOCAL_LDLIBS := -lm -ldl
 
-LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic #blas
+LOCAL_STATIC_LIBRARIES := ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic blas
 
 include $(BUILD_SHARED_LIBRARY)
 #include $(BUILD_STATIC_LIBRARY)
