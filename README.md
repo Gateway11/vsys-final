@@ -1,6 +1,7 @@
 # vsys-final
 
 # blis in android
+# https://github.com/xianyi/OpenBLAS/wiki/How-to-build-OpenBLAS-for-Android
 
 cd 3rd-party/blis
 
