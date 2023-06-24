@@ -12,37 +12,38 @@ LOCAL_SRC_FILES := $(shell find -L ../3rd-party/BLAS2/SRC -name "*.c")
 LOCAL_CFLAGS    := -O3 -fPIC -DNO_BLAS_WRAP -Wno-logical-op-parentheses
 #include $(BUILD_STATIC_LIBRARY)
 
-MY_LOCAL_CFLAGS := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -I../3rd-party/blis/include/arm64 -I../3rd-party/blis/frame/include -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden #-DBLIS_IN_REF_KERNEL=1
+LOCAL_CFLAGS_COMMON := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -I../3rd-party/blis/include/arm64 -I../3rd-party/blis/frame/include -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
+LOCAL_CFLAGS_REF_KERNELS := $(LOCAL_CFLAGS_COMMON) -O3 -funsafe-math-optimizations -ffp-contract=fast -DBLIS_IN_REF_KERNEL=1
+LOCAL_SRC_FILES_REF_KERNELS := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_firestorm
-LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
-LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -march=armv8-a -D_GNU_SOURCE -DBLIS_CNAME=firestorm -DBLIS_IN_REF_KERNEL=1
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -march=armv8-a -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=firestorm
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_thunderx2
-LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
-LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -mcpu=thunderx2t99 -D_GNU_SOURCE -DBLIS_CNAME=thunderx2 -DBLIS_IN_REF_KERNEL=1
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -mcpu=thunderx2t99 -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=thunderx2
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_cortexa57
-LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
-LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -mcpu=cortex-a57 -D_GNU_SOURCE -DBLIS_CNAME=cortexa57 -DBLIS_IN_REF_KERNEL=1
-
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -mcpu=cortex-a57 -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=cortexa57
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_cortexa53
-LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
-LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -mcpu=cortex-a53 -D_GNU_SOURCE -DBLIS_CNAME=cortexa53 -DBLIS_IN_REF_KERNEL=1
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_CFLAGS := $(LOCAL_CFLAGS_REF_KERNELS) -mcpu=cortex-a53 -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=cortexa53
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_generic
-LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
-LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -O3 -funsafe-math-optimizations -ffp-contract=fast -DBLIS_CNAME=generic -DBLIS_IN_REF_KERNEL=1
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -DBLIS_CNAME=generic
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -409,8 +410,8 @@ LOCAL_SRC_FILES := \
     $(CBLAS_RELATIVE_PATH)/src/cblas_globals.c \
     $(CBLAS_RELATIVE_PATH)/src/cblas_xerbla.c
 
-LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new
-LOCAL_CFLAGS := $(MY_LOCAL_CFLAGS) -D_GNU_SOURCE -DBLIS_ENABLE_CBLAS 
+#LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/blis-new
+LOCAL_CFLAGS := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -DBLIS_ENABLE_CBLAS
 
 #LOCAL_C_INCLUDES := \
     ../3rd-party/$(TARGET_ARCH_ABI)/include/blis \
