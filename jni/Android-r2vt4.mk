@@ -17,9 +17,9 @@ endif
 LOCAL_LDLIBS    := -llog
 LOCAL_LDFLAGS   := "-Wl,--start-group" $(LIBS) "-Wl,--end-group" -ldl  -fopenmp 
 
-LOCAL_C_INCLUDES := ../3rd-party/$(TARGET_ARCH_ABI)/include 
+LOCAL_C_INCLUDES := ../3rd-party/armeabi-v7a/include 
 
-LOCAL_SHARED_LIBRARIES := r2ssp ztvad 
-LOCAL_STATIC_LIBRARIES := fftw blis
+LOCAL_SHARED_LIBRARIES := r2ssp ztvad blis
+LOCAL_STATIC_LIBRARIES := fftw #blis
 
 include $(BUILD_SHARED_LIBRARY)

@@ -432,42 +432,6 @@ LOCAL_SRC_FILES := \
     ../3rd-party/fftw-3.3.10/simd-support/sse2.c \
     ../3rd-party/fftw-3.3.10/simd-support/taint.c \
     ../3rd-party/fftw-3.3.10/simd-support/vsx.c \
-    ../3rd-party/fftw-3.3.10/libbench2/after-ccopy-from.c \
-    ../3rd-party/fftw-3.3.10/libbench2/after-ccopy-to.c \
-    ../3rd-party/fftw-3.3.10/libbench2/after-hccopy-from.c \
-    ../3rd-party/fftw-3.3.10/libbench2/after-hccopy-to.c \
-    ../3rd-party/fftw-3.3.10/libbench2/after-rcopy-from.c \
-    ../3rd-party/fftw-3.3.10/libbench2/after-rcopy-to.c \
-    ../3rd-party/fftw-3.3.10/libbench2/allocate.c \
-    ../3rd-party/fftw-3.3.10/libbench2/aset.c \
-    ../3rd-party/fftw-3.3.10/libbench2/bench-cost-postprocess.c \
-    ../3rd-party/fftw-3.3.10/libbench2/bench-exit.c \
-    ../3rd-party/fftw-3.3.10/libbench2/bench-main.c \
-    ../3rd-party/fftw-3.3.10/libbench2/can-do.c \
-    ../3rd-party/fftw-3.3.10/libbench2/caset.c \
-    ../3rd-party/fftw-3.3.10/libbench2/dotens2.c \
-    ../3rd-party/fftw-3.3.10/libbench2/info.c \
-    ../3rd-party/fftw-3.3.10/libbench2/main.c \
-    ../3rd-party/fftw-3.3.10/libbench2/mflops.c \
-    ../3rd-party/fftw-3.3.10/libbench2/mp.c \
-    ../3rd-party/fftw-3.3.10/libbench2/my-getopt.c \
-    ../3rd-party/fftw-3.3.10/libbench2/ovtpvt.c \
-    ../3rd-party/fftw-3.3.10/libbench2/pow2.c \
-    ../3rd-party/fftw-3.3.10/libbench2/problem.c \
-    ../3rd-party/fftw-3.3.10/libbench2/report.c \
-    ../3rd-party/fftw-3.3.10/libbench2/speed.c \
-    ../3rd-party/fftw-3.3.10/libbench2/tensor.c \
-    ../3rd-party/fftw-3.3.10/libbench2/timer.c \
-    ../3rd-party/fftw-3.3.10/libbench2/util.c \
-    ../3rd-party/fftw-3.3.10/libbench2/verify-dft.c \
-    ../3rd-party/fftw-3.3.10/libbench2/verify-lib.c \
-    ../3rd-party/fftw-3.3.10/libbench2/verify-r2r.c \
-    ../3rd-party/fftw-3.3.10/libbench2/verify-rdft2.c \
-    ../3rd-party/fftw-3.3.10/libbench2/verify.c \
-    ../3rd-party/fftw-3.3.10/libbench2/zero.c \
-    ../3rd-party/fftw-3.3.10/tests/bench.c \
-    ../3rd-party/fftw-3.3.10/tests/hook.c \
-    ../3rd-party/fftw-3.3.10/tests/fftw-bench.c
 
 #cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON \
     -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \

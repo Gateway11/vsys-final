@@ -119,7 +119,6 @@ LOCAL_SRC_FILES := \
     ../r2ssp/webrtc/common_audio/resampler/sinc_resampler_neon.cc \
     ../r2ssp/webrtc/common_audio/fir_filter_neon.cc
 
-#https://android.googlesource.com/platform/external/chromium_org/third_party/openmax_dl
 #http://aospxref.com/android-5.1.1_r9/xref/external/chromium_org/third_party/openmax_dl
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 LOCAL_SRC_FILES += $(call all-named-files-under,*.S, ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/armv7)
