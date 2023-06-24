@@ -28,7 +28,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_cortexa53
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
-LOCAL_CFLAGS := $(LOCAL_CFLAGS_REF_KERNELS) -mcpu=cortex-a53 -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=cortexa53
+LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -mcpu=cortex-a53 -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=cortexa53
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
