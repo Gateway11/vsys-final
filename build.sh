@@ -9,7 +9,7 @@ if [ ! -d blis ]; then
     export NDK=../../../toolbox/ndk-r21
     export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
     
-    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib arm64 #ARMV7
+    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib arm64 #--enable-cblas #ARMV7
     sed -i '' s/:=\ Darwin/:=\ Linux/g config.mk
     sed -i '' s/LIBPTHREAD/#LIBPTHREAD/g config.mk
     sed -i '' s/LDFLAGS\ +=/#LDFLAGS\ +=/g common.mk
