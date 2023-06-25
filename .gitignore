@@ -1,7 +1,7 @@
 *.xcworkspace
 *.xcodeproj
 .DS_Store
-*libs*
+*libs
 blis
 gemmlowp
 DEBUG
