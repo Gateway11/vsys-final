@@ -433,11 +433,6 @@ LOCAL_SRC_FILES := \
     ../3rd-party/fftw-3.3.10/simd-support/taint.c \
     ../3rd-party/fftw-3.3.10/simd-support/vsx.c \
 
-#cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON \
-    -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
-    -DANDROID_ABI=armeabi-v7a \
-    -DANDROID_PLATFORM=android-29
-
 LOCAL_C_INCLUDES := ../3rd-party/fftw-3.3.10 ../3rd-party/fftw-3.3.10/api ../3rd-party/fftw-3.3.10/build
 
 LOCAL_CFLAGS := -DFFTW_DLL -Dfftw3f_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -mthumb -Wformat -Werror=format-security -fPIC #-Oz -DNDEBUG

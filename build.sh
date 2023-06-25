@@ -39,7 +39,7 @@ if [ ! -d fftw-3.3.10 ]; then
     sed -i '' s/single-precision\"\ OFF/single-precision\"\ ON/g CMakeLists.txt
 
     mkdir build && cd build
-    cmake .. \
+    cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
         -DANDROID_ABI=arm64-v8a \
         -DANDROID_PLATFORM=android-29

@@ -39,11 +39,11 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blis
 LOCAL_SRC_FILES := \
-    ../3rd-party/blis/config/cortexa53/bli_cntx_init_cortexa53.c \
-    ../3rd-party/blis/config/cortexa57/bli_cntx_init_cortexa57.c \
     ../3rd-party/blis/config/firestorm/bli_cntx_init_firestorm.c \
-    ../3rd-party/blis/config/generic/bli_cntx_init_generic.c \
     ../3rd-party/blis/config/thunderx2/bli_cntx_init_thunderx2.c \
+    ../3rd-party/blis/config/cortexa57/bli_cntx_init_cortexa57.c \
+    ../3rd-party/blis/config/cortexa53/bli_cntx_init_cortexa53.c \
+    ../3rd-party/blis/config/generic/bli_cntx_init_generic.c \
 
 LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c")
 LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/frame ! -path "*old*" ! -path "*other*" ! -path "*attic*" ! -path "*amd*" -name "*.c")
