@@ -75,13 +75,13 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../ztvad/kaldi-pitch \
     $(LOCAL_PATH)/../3rd-party/armeabi-v7a/include \
     
-LOCAL_STATIC_LIBRARIES := cpufeatures fftw #blis #ne10
+LOCAL_STATIC_LIBRARIES := cpufeatures fftw #blis
 LOCAL_SHARED_LIBRARIES := r2ssp blis
 LOCAL_LDLIBS := -llog -lm -ldl
 
-LOCAL_CFLAGS += -DWEBRTC_POSIX #-DFE_USE_NE10_FFT
+LOCAL_CFLAGS += -DWEBRTC_POSIX
 LOCAL_CPP_FEATURES += exceptions
 
 include $(BUILD_SHARED_LIBRARY)
 
-$(call import-module,android/cpufeatures)
+$(call import-module, android/cpufeatures)
