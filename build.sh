@@ -3,24 +3,24 @@
 cd 3rd-party
 
 if [ ! -d blis ]; then
-    git clone git@github.com:flame/blis.git
+    git clone https://github.com/flame/blis.git
 
     cd blis
-    export NDK=../../../toolbox/ndk-r21
-    export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
+    export NDK_BUNDLE=../../../*/*
+    export TOOLCHAIN=$NDK_BUNDLE/toolchains/llvm/prebuilt/$(uname | tr A-Z a-z)-x86_64/bin
     
-    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib --enable-cblas arm64 #ARMV7
+    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/llvm-ar RANLIB=$TOOLCHAIN/llvm-ranlib --enable-cblas arm64 #ARMV7
+:<<EOF
     sed -i '' s/:=\ Darwin/:=\ Linux/g config.mk
     sed -i '' s/LIBPTHREAD/#LIBPTHREAD/g config.mk
     sed -i '' s/LDFLAGS\ +=/#LDFLAGS\ +=/g common.mk
 
-:<<EOF
     make V=1 \
         TARGET=CORTEXA57 \
         ONLY_CBLAS=1 \
         CC=$TOOLCHAIN/aarch64-linux-android29-clang \
-        AR=$TOOLCHAIN/aarch64-linux-android-ar \
-        RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib \
+        AR=$TOOLCHAIN/llvm-ar \
+        RANLIB=$TOOLCHAIN/llvm-ranlib \
         HOSTCC=gcc \
         CFLAGS=-D__ANDROID_API__=29 \
         -j8
@@ -36,14 +36,12 @@ if [ ! -d fftw-3.3.10 ]; then
     rm *.tar.gz
 
     cd fftw-3.3.10
-    sed -i '' s/single-precision\"\ OFF/single-precision\"\ ON/g CMakeLists.txt
-
     mkdir build && cd build
-    cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON \
+    cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_FLOAT=ON \
         -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
         -DANDROID_ABI=arm64-v8a \
         -DANDROID_PLATFORM=android-29
-    
+
     #make -j8
     cd ../..
 fi

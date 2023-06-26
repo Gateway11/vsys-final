@@ -11,7 +11,7 @@ EXTRA_LDFLAGS   := -Wl,--fix-cortex-a8
 endif
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a) 
-EXTRA_LDFLAGS   := -Wl
+EXTRA_LDFLAGS   := "-Wl"
 endif
 
 LOCAL_LDLIBS    := -llog
