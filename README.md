@@ -6,10 +6,10 @@
 
     cd 3rd-party/blis
 
-    export NDK=../../../toolbox/ndk-r21
-    export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin
-
-    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/aarch64-linux-android-ar RANLIB=$TOOLCHAIN/aarch64-linux-android-ranlib --enable-cblas arm64 #ARMV7
+    export NDK_BUNDLE=../../../*/*
+    export TOOLCHAIN=$NDK_BUNDLE/toolchains/llvm/prebuilt/$(uname | tr A-Z a-z)-x86_64/bin
+    
+    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/llvm-ar RANLIB=$TOOLCHAIN/llvm-ranlib --enable-cblas arm64
     python ./build/flatten-headers.py -l -v1 xxxx // please see build.sh
 
     cd ../../jni

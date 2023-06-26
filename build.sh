@@ -11,9 +11,10 @@ if [ ! -d blis ]; then
     
     ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/llvm-ar RANLIB=$TOOLCHAIN/llvm-ranlib --enable-cblas arm64 #ARMV7
 :<<EOF
-    sed -i '' s/:=\ Darwin/:=\ Linux/g config.mk
-    sed -i '' s/LIBPTHREAD/#LIBPTHREAD/g config.mk
-    sed -i '' s/LDFLAGS\ +=/#LDFLAGS\ +=/g common.mk
+    sed -i.bak s/:=\ Darwin/:=\ Linux/g config.mk
+    sed -i.bak s/LIBPTHREAD/#LIBPTHREAD/g config.mk
+    sed -i.bak s/LDFLAGS\ +=/#LDFLAGS\ +=/g common.mk
+    rm *.bak
 
     make V=1 \
         TARGET=CORTEXA57 \
