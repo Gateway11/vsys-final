@@ -9,7 +9,7 @@ if [ ! -d blis ]; then
     export NDK_BUNDLE=../../../*/*
     export TOOLCHAIN=$NDK_BUNDLE/toolchains/llvm/prebuilt/$(uname | tr A-Z a-z)-x86_64/bin
     
-    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/llvm-ar RANLIB=$TOOLCHAIN/llvm-ranlib --enable-cblas arm64 #ARMV7
+    ./configure CC=$TOOLCHAIN/clang AR=$TOOLCHAIN/llvm-ar RANLIB=$TOOLCHAIN/llvm-ranlib --enable-cblas arm64
 :<<EOF
     sed -i.bak s/:=\ Darwin/:=\ Linux/g config.mk
     sed -i.bak s/LIBPTHREAD/#LIBPTHREAD/g config.mk
