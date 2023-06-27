@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := ../3rd-party/$(TARGET_ARCH_ABI)/libs/libr2ssp.so
 include Android-r2ssp.mk
 
 include Android-ztvad.mk
-
-#include Android-r2vt4.mk
+include Android-r2vt4.mk
 
 #include $(call all-subdir-makefiles)
+#include $(call all-named-files-under, *.mk, .)
