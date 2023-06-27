@@ -466,7 +466,7 @@ namespace __r2vt4__ {
       
     }
     
-#elif defined __aarch64__
+#elif defined( __aarch64__) && __ANDROID_API__ <= 26
     
     for (int m = 0 ; m < M ; m ++) {
       

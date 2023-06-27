@@ -15,7 +15,7 @@ EXTRA_LDFLAGS   := "-Wl"
 endif
 
 LOCAL_LDLIBS    := -llog
-LOCAL_LDFLAGS   := "-Wl,--start-group" $(LIBS) "-Wl,--end-group" -ldl  -fopenmp #-DUSE_ARM_NEON
+LOCAL_LDFLAGS   := "-Wl,--start-group" $(LIBS) "-Wl,--end-group" -ldl  -fopenmp
 
 LOCAL_C_INCLUDES := ../3rd-party/armeabi-v7a/include 
 

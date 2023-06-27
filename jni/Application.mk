@@ -1,6 +1,6 @@
 #APP_ABI                 := armeabi-v7a #arm64-v8a
 APP_ABI                 := arm64-v8a
-APP_CFLAGS              := -O3
+APP_CFLAGS              := -O3 -D__ANDROID_API__=29
 APP_CPPFLAGS            := -std=c++11 -frtti -Wno-register #-fpermissive
 APP_PLATFORM            := android-29
 APP_STL                 := c++_static
