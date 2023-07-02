@@ -29,6 +29,7 @@ if [ ! -d fftw-3.3.10 ]; then
 
     cd fftw-3.3.10
     mkdir build && cd build
+    #./configure --prefix=. --enable-shared --enable-float --disable-fortran
     cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_FLOAT=ON \
         -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
         -DANDROID_ABI=arm64-v8a \
