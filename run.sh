@@ -39,11 +39,6 @@ if [ ! -d fftw-3.3.10 ]; then
     cd ../..
 fi
 
-if [ ! -d activation/data/lujnan_G_0020.16000.4.16bit.pcm ]; then
-    7z x ./activation/data/lujnan_G_0020.16000.4.16bit.pcm.7z -oactivation/data
-    #rm activation/data/lujnan_G_0020.16000.4.16bit.pcm.7z
-fi
-
 cd ../jni
 
 ndk-build -j8
