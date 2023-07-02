@@ -19,3 +19,4 @@ gen/
 *.o
 model
 workdir_cn
+a.out
