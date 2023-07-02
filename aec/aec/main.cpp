@@ -37,18 +37,19 @@ int main(int argc, const char * argv[]) {
         speex_preprocess_ctl(dens[i], SPEEX_PREPROCESS_SET_ECHO_STATE, echo_states[i]);
     }
     
-    sem_t *proc_flag, *sync_flag;
+    sem_t *proc_sem, *sync_sem;
 #if defined(__APPLE__) && defined(__MACH__)
-    sem_unlink("sem_aec_process");
-    sem_unlink("sem_aec_sync");
-    proc_flag = sem_open("sem_aec_process", O_CREAT|O_EXCL, 0644, 0);
-    sync_flag = sem_open("sem_aec_sync", O_CREAT|O_EXCL, 0644, 0);
+#define __STR(x) #x
+    sem_unlink(__STR(proc_sem));
+    sem_unlink(__STR(sync_sem));
+    proc_sem = sem_open(__STR(proc_sem), O_CREAT | O_EXCL, 0644, 0);
+    sync_sem = sem_open(__STR(sync_sem), O_CREAT | O_EXCL, 0644, 0);
 #elif
-    sem_t proc_flag_, sync_flag_;
-    sem_init(&proc_flag_, 0, 0);
-    sem_init(&sync_flag_, 0, 0);
-    proc_flag = &proc_flag_;
-    sync_flag = &sync_flag_;
+    sem_t __proc_sem, __sync_sem;
+    sem_init(&__proc_sem, 0, 0);
+    sem_init(&__sync_sem, 0, 0);
+    proc_sem = &__proc_sem;
+    sync_sem = &__sync_sem;
 #endif
     
     std::vector<std::thread> threads;
@@ -62,7 +63,7 @@ int main(int argc, const char * argv[]) {
     for (uint32_t i = 0; i < num_mics; i++) {
         threads.emplace_back([&]{
             while (true) {
-                sem_wait(proc_flag);
+                sem_wait(proc_sem);
                 if(thread_exit.load()) break;
                 
                 uint32_t task = tasks.fetch_sub(1, std::memory_order_seq_cst) - 1;
@@ -70,7 +71,7 @@ int main(int argc, const char * argv[]) {
                 speex_echo_cancellation(echo_states[task], input + task * frame_size,
                                         input + frame_size * num_mics, output + task * frame_size);
                 speex_preprocess_run(dens[task], output + task * frame_size);
-                sem_post(sync_flag);
+                sem_post(sync_sem);
             }
         });
     }
@@ -92,8 +93,8 @@ int main(int argc, const char * argv[]) {
         }
         
         tasks.store(num_mics, std::memory_order_release);
-        mfor_each(0, num_mics, [&proc_flag]{sem_post(proc_flag);});
-        mfor_each(0, num_mics, [&sync_flag]{sem_wait(sync_flag);});
+        mfor_each(0, num_mics, [&proc_sem]{sem_post(proc_sem);});
+        mfor_each(0, num_mics, [&sync_sem]{sem_wait(sync_sem);});
         
         for (uint32_t i = 0; i < num_mics; i++) {
             for (uint32_t j = 0; j < frame_size; j++) {
@@ -103,16 +104,16 @@ int main(int argc, const char * argv[]) {
         output_stream.write((char *)data, num_mics * frame_size * sizeof(short));
     }
     thread_exit = true;
-    mfor_each(0, num_mics, [&proc_flag]{sem_post(proc_flag);});
+    mfor_each(0, num_mics, [&proc_sem]{sem_post(proc_sem);});
     std::for_each(threads.begin(), threads.end(), [](std::thread& thread){thread.join();});
 #if defined(__APPLE__) && defined(__MACH__)
-    sem_close(proc_flag);
-    sem_close(sync_flag);
-    sem_unlink("sem_aec_process");
-    sem_unlink("sem_aec_sync");
+    sem_close(proc_sem);
+    sem_close(sync_sem);
+    sem_unlink(__STR(proc_sem));
+    sem_unlink(__STR(sync_sem));
 #else
-    sem_destroy(proc_flag);
-    sem_destroy(sync_flag);
+    sem_destroy(proc_sem);
+    sem_destroy(sync_sem);
 #endif
     for (uint32_t i = 0; i < num_mics; i++) {
         speex_echo_state_destroy(echo_states[i]);
