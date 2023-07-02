@@ -51,6 +51,7 @@ struct sockaddr_rpmsg {
 #if __has_include(<android/log.h>)
 #warning "ddddddddddddddd %s"__cplusplus
 #endif
+//#if __STDC_VERSION__ ==  201112L
 
 int output = open("/data/test.txt", O_WRONLY|O_CREAT|O_APPEND, S_IWUSR|S_IRGRP|S_IROTH);
 int main(int argc, const char * argv[]) {
@@ -84,32 +85,33 @@ int main(int argc, const char * argv[]) {
     }
 #endif
 #if 1
-    //linux server tcp/udp
     struct sockaddr_in servaddr, recvaddr, cliaddr;
-    int32_t receive, client, ret;
-    socklen_t cliaddr_len = sizeof(cliaddr);
+    int32_t receive, listenfd, client, clientfd, ret;
+    socklen_t clilen = sizeof(cliaddr);
 
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    //servaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    //servaddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     servaddr.sin_port = htons(2333);
 
     uint32_t* buf[1024], str[64];
 
-    if ((receive = socket(AF_INET, SOCK_STREAM, 0)) != -1) {
+    for (int32_t s = socket(AF_INET, SOCK_STREAM, 0), _m = 1; _m; _m--, s > 0 && close(s)) {
     //if ((receive = socket(AF_INET, SOCK_DGRAM, 0)) != -1) {
-        if (bind(receive, (struct sockaddr *)&servaddr, sizeof(struct sockaddr_in)) == 0) {
-            listen(recv_socket, 20);
+        if (bind(s, (struct sockaddr *)&servaddr, sizeof(struct sockaddr_in)) == 0) {
+            listen(s, 20);
             while (true) {
-                client = accept(receive, (struct sockaddr *)&cliaddr, &cliaddr_len)));
-                //ret = recvfrom(receive, &buf, 1024, 0,(struct sockaddr *)&cliaddr, &cliaddr_len);
-                //ret = sendto(receive, &ret, sizeof(ret), 0, (sockaddr *)&cliaddr, sizeof(sockaddr_in));
+                client = accept(s, (struct sockaddr *)&cliaddr, &clilen)));
+                //ret = recvfrom(s, &buf, 1024, 0,(struct sockaddr *)&cliaddr, &clilen);
+                //ret = sendto(s, &ret, sizeof(ret), 0, (sockaddr *)&cliaddr, sizeof(sockaddr_in));
                 printf("received from %s at PORT %d\n", inet_ntop(AF_INET, 
                             &cliaddr.sin_addr, str, sizeof(str)), ntohs(cliaddr.sin_port));
                 while (true) {
-                    read(receive, buf, len);        //socket read
+                    read(s, buf, len);        //socket read
                     //ret = write(output, buf, n);    //file IO
-                    write(receive, &ret, 4);        //socket write
+                    write(s, &ret, 4);        //socket write
                 }
             }
         }

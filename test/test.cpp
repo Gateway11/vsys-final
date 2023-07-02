@@ -212,7 +212,7 @@ int main() {
 
     }
 #if 0
-    for (int s = socket(AF_INET, SOCK_STREAM, 0), _m = 1; _m; _m--, s && close(s)) {
+    for (int s = socket(AF_INET, SOCK_STREAM, 0), _m = 1; _m; _m--, s > 0 && close(s)) {
 
     }
 
