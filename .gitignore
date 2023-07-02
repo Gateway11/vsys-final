@@ -1,7 +1,7 @@
 #*.xcworkspace
 #*.xcodeproj
 .DS_Store
-*libs
+libs
 blis
 gemmlowp
 DEBUG
@@ -21,3 +21,6 @@ gen/
 !3rd-party/armeabi-v7a/libs
 *.pcm
 !activation/data/*.pcm
+*.o
+model
+workdir_cn
