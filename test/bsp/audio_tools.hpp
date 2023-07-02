@@ -70,6 +70,8 @@ void easy_write(char* tag, uint32_t session, uint32_t pid, uint32_t device, uint
 #include <map>
 #include <mutex>
 #include <fstream>
+//__BEGIN_CDECLS
+//__END_CDECLS
 
 #ifdef __cplusplus
 extern "C"{

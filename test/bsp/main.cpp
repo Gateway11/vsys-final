@@ -123,8 +123,6 @@ int main(int argc, const char * argv[]) {
     std::for_each(threads.begin(), threads.end(), [](std::thread& thread){thread.join();});
 #endif
 #if 0
-    i2c_write(0, NULL);
-
     uint32_t sample_rate = 44100;
     uint32_t num_channels = 2;
     uint32_t num_samples = sample_rate * num_channels * sizeof(short) / 100;
