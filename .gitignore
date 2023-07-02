@@ -1,5 +1,5 @@
-*.xcworkspace
-*.xcodeproj
+#*.xcworkspace
+#*.xcodeproj
 .DS_Store
 *libs
 blis
@@ -19,3 +19,4 @@ proguard-project.txt
 project.properties
 gen/
 !3rd-party/armeabi-v7a/libs
+*.pcm

@@ -38,6 +38,7 @@ if [ ! -d fftw-3.3.10 ]; then
     cd ../..
 fi
 
+#7z x ./data/lujnan_G_0020.16000.4.16bit.pcm.7z -odata
 cd ../jni
 
 ndk-build -j8
