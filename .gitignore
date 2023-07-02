@@ -20,3 +20,4 @@ project.properties
 gen/
 !3rd-party/armeabi-v7a/libs
 *.pcm
+!activation/data/*.pcm
