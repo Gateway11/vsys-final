@@ -74,10 +74,8 @@ endif
 include $(CLEAR_VARS)
 LOCAL_MODULE := librkvacti_jni
 LOCAL_CPP_EXTENSION := .cc
-LOCAL_SRC_FILES := \
-	$(LOCAL_PATH)/android/jni/com_rokid_openvoice_VoiceActivation.cc
-LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/include
+LOCAL_SRC_FILES := $(LOCAL_PATH)/android/jni/com_rokid_openvoice_VoiceActivation.cc
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_CPPFLAGS := -std=c++11
 LOCAL_LDLIBS := -llog
 LOCAL_SHARED_LIBRARIES := librkvacti

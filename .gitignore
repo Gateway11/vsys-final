@@ -19,8 +19,8 @@ proguard-project.txt
 project.properties
 gen/
 !3rd-party/armeabi-v7a/libs
-*.pcm
-!activation/data/*.pcm
+!*/data/*.pcm
+aec/data/lujnan_G_0020.16000.4.16bit.pcm
 *.o
 model
 workdir_cn
