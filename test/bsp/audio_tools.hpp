@@ -16,26 +16,27 @@
 #include <pthread.h>
 #include <vector>
 
-#define FILE_NAME_SIZE 128
 typedef struct output_desc {
     int output;
+#define FILE_NAME_SIZE 128
     char path[FILE_NAME_SIZE];
     void *next;
 } output_desc_t;
 
 const char* path = "~/Desktop/audio_tools";
+static output_desc* outputs = NULL;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static output_desc* outputs = NULL;
-void easy_write(char* tag, uint32_t session, uint32_t pid, uint32_t device, uint32_t sample_rate,
-           uint32_t num_channels, uint32_t bits, char* data, size_t size, bool close) {
+void easy_write(char* tag, uint32_t session, uint32_t device, uint32_t sample_rate,
+           uint32_t num_channels, uint32_t bits, const char* data, size_t size) {
     pthread_mutex_lock(&mutex);
+
     output_desc_t* current_output = NULL;
     char str[FILE_NAME_SIZE];
     memset(str, 0, FILE_NAME_SIZE);
     
-    sprintf(str, "%s/%s.session%d.pid%d.%#x_%d_%d_%dbit.pcm",
-            path, tag, session, pid, device, sample_rate, num_channels, bits);
+    sprintf(str, "%s/%s.session%d.%#x_%d_%d_%dbit.pcm",
+            path, tag, session, device, sample_rate, num_channels, bits);
     
     current_output = outputs;
     while(current_output != NULL){
