@@ -20,7 +20,7 @@
 #define CHANNEL_NUM 1
 #define AUDIO_TYPE float
 
-std::ifstream pcm_in("./data/sounds/pcm_16k_32f_1.pcm", std::ios::in | std::ios::binary);
+std::ifstream pcm_in("./data/baomao_M_0020.16000.1.float.pcm", std::ios::in | std::ios::binary);
 char buff[8192];
 
 void test_activation(){
