@@ -29,100 +29,6 @@
 		5B3970BA2028013400B41305 /* cpu_relax.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970B92028013400B41305 /* cpu_relax.h */; };
 		5B3970C02028014400B41305 /* aec_wrap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970BC2028014300B41305 /* aec_wrap.cpp */; };
 		5B3970C12028014400B41305 /* aec_wrap.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970BE2028014300B41305 /* aec_wrap.h */; };
-		5B3971412028060100B41305 /* zcomp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970D52028060000B41305 /* zcomp.cpp */; };
-		5B3971422028060100B41305 /* zcomp.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970D62028060000B41305 /* zcomp.h */; };
-		5B3971432028060100B41305 /* zcomp_activation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970D72028060000B41305 /* zcomp_activation.cpp */; };
-		5B3971442028060100B41305 /* zcomp_activation.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970D82028060000B41305 /* zcomp_activation.h */; };
-		5B3971452028060100B41305 /* zcomp_affine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970D92028060000B41305 /* zcomp_affine.cpp */; };
-		5B3971462028060100B41305 /* zcomp_affine.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970DA2028060000B41305 /* zcomp_affine.h */; };
-		5B3971472028060100B41305 /* zcomp_linear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970DB2028060000B41305 /* zcomp_linear.cpp */; };
-		5B3971482028060100B41305 /* zcomp_linear.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970DC2028060000B41305 /* zcomp_linear.h */; };
-		5B3971492028060100B41305 /* zcomp_lstm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970DD2028060000B41305 /* zcomp_lstm.cpp */; };
-		5B39714A2028060100B41305 /* zcomp_lstm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970DE2028060000B41305 /* zcomp_lstm.h */; };
-		5B39714B2028060100B41305 /* zcomp_lstm_cell.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970DF2028060000B41305 /* zcomp_lstm_cell.cpp */; };
-		5B39714C2028060100B41305 /* zcomp_lstm_cell.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970E02028060000B41305 /* zcomp_lstm_cell.h */; };
-		5B39714D2028060100B41305 /* znnet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970E12028060000B41305 /* znnet.cpp */; };
-		5B39714E2028060100B41305 /* znnet.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970E22028060000B41305 /* znnet.h */; };
-		5B39714F2028060100B41305 /* zmacro.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970E32028060000B41305 /* zmacro.h */; };
-		5B3971502028060100B41305 /* fa_fir.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970E52028060000B41305 /* fa_fir.cpp */; };
-		5B3971512028060100B41305 /* fa_fir.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970E62028060000B41305 /* fa_fir.h */; };
-		5B3971522028060100B41305 /* fa_resample.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970E72028060000B41305 /* fa_resample.cpp */; };
-		5B3971532028060100B41305 /* fa_resample.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970E82028060000B41305 /* fa_resample.h */; };
-		5B3971542028060100B41305 /* zrsapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970E92028060000B41305 /* zrsapi.cpp */; };
-		5B3971552028060100B41305 /* zrsapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970EA2028060000B41305 /* zrsapi.h */; };
-		5B3971562028060100B41305 /* zrsmem2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970EB2028060000B41305 /* zrsmem2.cpp */; };
-		5B3971572028060100B41305 /* zrsmem2.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970EC2028060000B41305 /* zrsmem2.h */; };
-		5B3971582028060100B41305 /* zrssto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970ED2028060000B41305 /* zrssto.cpp */; };
-		5B3971592028060100B41305 /* zrssto.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970EE2028060000B41305 /* zrssto.h */; };
-		5B39715A2028060100B41305 /* spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970F02028060000B41305 /* spline.cpp */; };
-		5B39715B2028060100B41305 /* spline.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970F12028060000B41305 /* spline.h */; };
-		5B39715C2028060100B41305 /* zslapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970F22028060000B41305 /* zslapi.cpp */; };
-		5B39715D2028060100B41305 /* zslapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970F32028060000B41305 /* zslapi.h */; };
-		5B39715E2028060100B41305 /* zslmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970F42028060000B41305 /* zslmem.cpp */; };
-		5B39715F2028060100B41305 /* zslmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970F52028060000B41305 /* zslmem.h */; };
-		5B3971602028060100B41305 /* zaudapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970F72028060000B41305 /* zaudapi.cpp */; };
-		5B3971612028060100B41305 /* zaudapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970F82028060000B41305 /* zaudapi.h */; };
-		5B3971622028060100B41305 /* zutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970F92028060000B41305 /* zutil.cpp */; };
-		5B3971632028060100B41305 /* zcmat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970FB2028060000B41305 /* zcmat.cpp */; };
-		5B3971642028060100B41305 /* zcmat.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970FC2028060000B41305 /* zcmat.h */; };
-		5B3971652028060100B41305 /* zmat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970FD2028060000B41305 /* zmat.cpp */; };
-		5B3971662028060100B41305 /* zmat.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970FE2028060000B41305 /* zmat.h */; };
-		5B3971672028060100B41305 /* zmat_neon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970FF2028060000B41305 /* zmat_neon.cpp */; };
-		5B3971682028060100B41305 /* zmat_neon.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971002028060000B41305 /* zmat_neon.h */; };
-		5B3971692028060100B41305 /* zvec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971012028060000B41305 /* zvec.cpp */; };
-		5B39716A2028060100B41305 /* zvec.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971022028060000B41305 /* zvec.h */; };
-		5B39716B2028060100B41305 /* zphosto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971052028060000B41305 /* zphosto.cpp */; };
-		5B39716C2028060100B41305 /* zphosto.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971062028060000B41305 /* zphosto.h */; };
-		5B39716D2028060100B41305 /* zsildet3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971072028060000B41305 /* zsildet3.cpp */; };
-		5B39716E2028060100B41305 /* zsildet3.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971082028060000B41305 /* zsildet3.h */; };
-		5B39716F2028060100B41305 /* zvtdet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971092028060000B41305 /* zvtdet.cpp */; };
-		5B3971702028060100B41305 /* zvtdet.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39710A2028060000B41305 /* zvtdet.h */; };
-		5B3971712028060100B41305 /* zvtapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39710B2028060000B41305 /* zvtapi.cpp */; };
-		5B3971722028060100B41305 /* zvtapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39710C2028060000B41305 /* zvtapi.h */; };
-		5B3971732028060100B41305 /* zvtmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39710D2028060000B41305 /* zvtmem.cpp */; };
-		5B3971742028060100B41305 /* zvtmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39710E2028060000B41305 /* zvtmem.h */; };
-		5B3971752028060100B41305 /* zvtsto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39710F2028060000B41305 /* zvtsto.cpp */; };
-		5B3971762028060100B41305 /* zvtsto.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971102028060000B41305 /* zvtsto.h */; };
-		5B3971772028060100B41305 /* zcfapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971122028060000B41305 /* zcfapi.cpp */; };
-		5B3971782028060100B41305 /* zcfapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971132028060000B41305 /* zcfapi.h */; };
-		5B3971792028060100B41305 /* zcfmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971142028060000B41305 /* zcfmem.cpp */; };
-		5B39717A2028060100B41305 /* zcfmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971152028060000B41305 /* zcfmem.h */; };
-		5B39717B2028060100B41305 /* zutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971162028060000B41305 /* zutil.h */; };
-		5B39717C2028060100B41305 /* zg2papi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971182028060000B41305 /* zg2papi.cpp */; };
-		5B39717D2028060100B41305 /* zg2papi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971192028060000B41305 /* zg2papi.h */; };
-		5B39717E2028060100B41305 /* zfftr2c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39711B2028060100B41305 /* zfftr2c.cpp */; };
-		5B39717F2028060100B41305 /* zfftr2c.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39711C2028060100B41305 /* zfftr2c.h */; };
-		5B3971802028060100B41305 /* zfftr2r.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39711D2028060100B41305 /* zfftr2r.cpp */; };
-		5B3971812028060100B41305 /* zfftr2r.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39711E2028060100B41305 /* zfftr2r.h */; };
-		5B3971822028060100B41305 /* zinput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971202028060100B41305 /* zinput.cpp */; };
-		5B3971832028060100B41305 /* zinput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971212028060100B41305 /* zinput.h */; };
-		5B3971842028060100B41305 /* zoutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971222028060100B41305 /* zoutput.cpp */; };
-		5B3971852028060100B41305 /* zoutput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971232028060100B41305 /* zoutput.h */; };
-		5B3971862028060100B41305 /* zbf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971262028060100B41305 /* zbf.cpp */; };
-		5B3971872028060100B41305 /* zbf.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971272028060100B41305 /* zbf.h */; };
-		5B3971882028060100B41305 /* zdirty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971282028060100B41305 /* zdirty.cpp */; };
-		5B3971892028060100B41305 /* zdirty.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971292028060100B41305 /* zdirty.h */; };
-		5B39718A2028060100B41305 /* zns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39712A2028060100B41305 /* zns.cpp */; };
-		5B39718B2028060100B41305 /* zns.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39712B2028060100B41305 /* zns.h */; };
-		5B39718C2028060100B41305 /* zsl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39712C2028060100B41305 /* zsl.cpp */; };
-		5B39718D2028060100B41305 /* zsl.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39712D2028060100B41305 /* zsl.h */; };
-		5B39718E2028060100B41305 /* zvad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39712E2028060100B41305 /* zvad.cpp */; };
-		5B39718F2028060100B41305 /* zvad.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39712F2028060100B41305 /* zvad.h */; };
-		5B3971902028060100B41305 /* zvt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971302028060100B41305 /* zvt.cpp */; };
-		5B3971912028060100B41305 /* zvt.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971312028060100B41305 /* zvt.h */; };
-		5B3971922028060100B41305 /* zvbvapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971322028060100B41305 /* zvbvapi.cpp */; };
-		5B3971932028060100B41305 /* zvbvapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971332028060100B41305 /* zvbvapi.h */; };
-		5B3971942028060100B41305 /* zvbvmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971342028060100B41305 /* zvbvmem.cpp */; };
-		5B3971952028060100B41305 /* zvbvmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971352028060100B41305 /* zvbvmem.h */; };
-		5B3971962028060100B41305 /* zmath.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971362028060100B41305 /* zmath.h */; };
-		5B3971972028060100B41305 /* zfea1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3971382028060100B41305 /* zfea1.cpp */; };
-		5B3971982028060100B41305 /* zfea1.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971392028060100B41305 /* zfea1.h */; };
-		5B3971992028060100B41305 /* zfea2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39713A2028060100B41305 /* zfea2.cpp */; };
-		5B39719A2028060100B41305 /* zfea2.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39713B2028060100B41305 /* zfea2.h */; };
-		5B39719B2028060100B41305 /* zfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39713C2028060100B41305 /* zfilter.cpp */; };
-		5B39719C2028060100B41305 /* zfilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B39713D2028060100B41305 /* zfilter.h */; };
-		5B39719D2028060100B41305 /* zbuff.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B39713F2028060100B41305 /* zbuff.cpp */; };
-		5B39719E2028060100B41305 /* zbuff.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971402028060100B41305 /* zbuff.h */; };
 		5B3971A02028061500B41305 /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
 		5B3971AB2028072200B41305 /* libactivation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B397084202800E400B41305 /* libactivation.a */; };
 		5B3971AC2028075100B41305 /* libmkl_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A22028063400B41305 /* libmkl_core.a */; };
@@ -198,6 +104,100 @@
 		5B8F86E12028B50D004A883C /* audio_converter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8F86DE2028B50C004A883C /* audio_converter.cpp */; };
 		5B8F86E22028B50D004A883C /* audio_converter.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B8F86DF2028B50C004A883C /* audio_converter.h */; };
 		5B8F86E32028B50D004A883C /* buf_manager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B8F86E02028B50C004A883C /* buf_manager.h */; };
+		5B94E54F2A52FD2C00A125AE /* zaudapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4E22A52FD2A00A125AE /* zaudapi.cpp */; };
+		5B94E5502A52FD2C00A125AE /* zaudapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4E32A52FD2A00A125AE /* zaudapi.h */; };
+		5B94E5512A52FD2C00A125AE /* zrsmem2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4E52A52FD2B00A125AE /* zrsmem2.cpp */; };
+		5B94E5522A52FD2C00A125AE /* zrsapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4E62A52FD2B00A125AE /* zrsapi.h */; };
+		5B94E5532A52FD2C00A125AE /* fa_fir.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4E72A52FD2B00A125AE /* fa_fir.h */; };
+		5B94E5542A52FD2C00A125AE /* fa_fir.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4E82A52FD2B00A125AE /* fa_fir.cpp */; };
+		5B94E5552A52FD2C00A125AE /* zrssto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4E92A52FD2B00A125AE /* zrssto.cpp */; };
+		5B94E5562A52FD2C00A125AE /* zrsapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4EA2A52FD2B00A125AE /* zrsapi.cpp */; };
+		5B94E5572A52FD2C00A125AE /* fa_resample.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4EB2A52FD2B00A125AE /* fa_resample.cpp */; };
+		5B94E5582A52FD2C00A125AE /* zrssto.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4EC2A52FD2B00A125AE /* zrssto.h */; };
+		5B94E5592A52FD2C00A125AE /* zrsmem2.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4ED2A52FD2B00A125AE /* zrsmem2.h */; };
+		5B94E55A2A52FD2C00A125AE /* fa_resample.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4EE2A52FD2B00A125AE /* fa_resample.h */; };
+		5B94E55B2A52FD2C00A125AE /* zcomp_affine.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4F02A52FD2B00A125AE /* zcomp_affine.h */; };
+		5B94E55C2A52FD2C00A125AE /* zcomp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4F12A52FD2B00A125AE /* zcomp.cpp */; };
+		5B94E55D2A52FD2C00A125AE /* zcomp.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4F22A52FD2B00A125AE /* zcomp.h */; };
+		5B94E55E2A52FD2C00A125AE /* zcomp_linear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4F32A52FD2B00A125AE /* zcomp_linear.cpp */; };
+		5B94E55F2A52FD2C00A125AE /* znnet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4F42A52FD2B00A125AE /* znnet.cpp */; };
+		5B94E5602A52FD2C00A125AE /* zcomp_activation.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4F52A52FD2B00A125AE /* zcomp_activation.h */; };
+		5B94E5612A52FD2C00A125AE /* zcomp_activation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4F62A52FD2B00A125AE /* zcomp_activation.cpp */; };
+		5B94E5622A52FD2C00A125AE /* znnet.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4F72A52FD2B00A125AE /* znnet.h */; };
+		5B94E5632A52FD2C00A125AE /* zcomp_affine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4F82A52FD2B00A125AE /* zcomp_affine.cpp */; };
+		5B94E5642A52FD2C00A125AE /* zcomp_lstm_cell.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4F92A52FD2B00A125AE /* zcomp_lstm_cell.cpp */; };
+		5B94E5652A52FD2C00A125AE /* zcomp_linear.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4FA2A52FD2B00A125AE /* zcomp_linear.h */; };
+		5B94E5662A52FD2C00A125AE /* zcomp_lstm_cell.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4FB2A52FD2B00A125AE /* zcomp_lstm_cell.h */; };
+		5B94E5672A52FD2C00A125AE /* zcomp_lstm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E4FC2A52FD2B00A125AE /* zcomp_lstm.cpp */; };
+		5B94E5682A52FD2C00A125AE /* zcomp_lstm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4FD2A52FD2B00A125AE /* zcomp_lstm.h */; };
+		5B94E5692A52FD2C00A125AE /* zg2papi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E4FF2A52FD2B00A125AE /* zg2papi.h */; };
+		5B94E56A2A52FD2C00A125AE /* zg2papi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5002A52FD2B00A125AE /* zg2papi.cpp */; };
+		5B94E56B2A52FD2C00A125AE /* zvtmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5022A52FD2B00A125AE /* zvtmem.h */; };
+		5B94E56C2A52FD2C00A125AE /* zvtapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5032A52FD2B00A125AE /* zvtapi.h */; };
+		5B94E56D2A52FD2C00A125AE /* zvtmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5042A52FD2B00A125AE /* zvtmem.cpp */; };
+		5B94E56E2A52FD2C00A125AE /* zvtsto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5052A52FD2B00A125AE /* zvtsto.cpp */; };
+		5B94E56F2A52FD2C00A125AE /* zvtdet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5072A52FD2B00A125AE /* zvtdet.cpp */; };
+		5B94E5702A52FD2C00A125AE /* zvtdet.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5082A52FD2B00A125AE /* zvtdet.h */; };
+		5B94E5712A52FD2C00A125AE /* zphosto.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5092A52FD2B00A125AE /* zphosto.h */; };
+		5B94E5722A52FD2C00A125AE /* zsildet3.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E50A2A52FD2B00A125AE /* zsildet3.h */; };
+		5B94E5732A52FD2C00A125AE /* zphosto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E50B2A52FD2B00A125AE /* zphosto.cpp */; };
+		5B94E5742A52FD2C00A125AE /* zsildet3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E50C2A52FD2B00A125AE /* zsildet3.cpp */; };
+		5B94E5752A52FD2C00A125AE /* zvtapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E50D2A52FD2B00A125AE /* zvtapi.cpp */; };
+		5B94E5762A52FD2C00A125AE /* zvtsto.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E50E2A52FD2B00A125AE /* zvtsto.h */; };
+		5B94E5772A52FD2C00A125AE /* zutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E50F2A52FD2B00A125AE /* zutil.cpp */; };
+		5B94E5782A52FD2C00A125AE /* zfea2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5112A52FD2B00A125AE /* zfea2.cpp */; };
+		5B94E5792A52FD2C00A125AE /* zfea1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5122A52FD2B00A125AE /* zfea1.cpp */; };
+		5B94E57A2A52FD2C00A125AE /* zfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5132A52FD2B00A125AE /* zfilter.cpp */; };
+		5B94E57B2A52FD2C00A125AE /* zfilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5142A52FD2B00A125AE /* zfilter.h */; };
+		5B94E57C2A52FD2C00A125AE /* zfea1.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5152A52FD2B00A125AE /* zfea1.h */; };
+		5B94E57D2A52FD2C00A125AE /* zfea2.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5162A52FD2B00A125AE /* zfea2.h */; };
+		5B94E57E2A52FD2C00A125AE /* zmacro.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5172A52FD2B00A125AE /* zmacro.h */; };
+		5B94E57F2A52FD2C00A125AE /* zbuff.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E51A2A52FD2B00A125AE /* zbuff.h */; };
+		5B94E5802A52FD2C00A125AE /* zbuff.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E51B2A52FD2B00A125AE /* zbuff.cpp */; };
+		5B94E5812A52FD2C00A125AE /* zslapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E51D2A52FD2B00A125AE /* zslapi.h */; };
+		5B94E5822A52FD2C00A125AE /* spline.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E51E2A52FD2B00A125AE /* spline.h */; };
+		5B94E5832A52FD2C00A125AE /* zslmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E51F2A52FD2B00A125AE /* zslmem.h */; };
+		5B94E5842A52FD2C00A125AE /* zslapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5202A52FD2B00A125AE /* zslapi.cpp */; };
+		5B94E5852A52FD2C00A125AE /* zslmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5212A52FD2B00A125AE /* zslmem.cpp */; };
+		5B94E5862A52FD2C00A125AE /* spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5222A52FD2B00A125AE /* spline.cpp */; };
+		5B94E5872A52FD2C00A125AE /* zvbvmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5242A52FD2B00A125AE /* zvbvmem.h */; };
+		5B94E5882A52FD2C00A125AE /* zvbvmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5252A52FD2B00A125AE /* zvbvmem.cpp */; };
+		5B94E5892A52FD2C00A125AE /* zvbvapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5262A52FD2B00A125AE /* zvbvapi.h */; };
+		5B94E58A2A52FD2C00A125AE /* zns.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5282A52FD2B00A125AE /* zns.h */; };
+		5B94E58B2A52FD2C00A125AE /* zvt.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5292A52FD2B00A125AE /* zvt.h */; };
+		5B94E58C2A52FD2C00A125AE /* zsl.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E52A2A52FD2B00A125AE /* zsl.h */; };
+		5B94E58D2A52FD2C00A125AE /* zvad.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E52B2A52FD2B00A125AE /* zvad.h */; };
+		5B94E58E2A52FD2C00A125AE /* zbf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E52C2A52FD2B00A125AE /* zbf.cpp */; };
+		5B94E58F2A52FD2C00A125AE /* zvt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E52D2A52FD2B00A125AE /* zvt.cpp */; };
+		5B94E5902A52FD2C00A125AE /* zns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E52E2A52FD2B00A125AE /* zns.cpp */; };
+		5B94E5912A52FD2C00A125AE /* zdirty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E52F2A52FD2B00A125AE /* zdirty.cpp */; };
+		5B94E5922A52FD2C00A125AE /* zdirty.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5302A52FD2B00A125AE /* zdirty.h */; };
+		5B94E5932A52FD2C00A125AE /* zsl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5312A52FD2B00A125AE /* zsl.cpp */; };
+		5B94E5942A52FD2C00A125AE /* zbf.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5322A52FD2B00A125AE /* zbf.h */; };
+		5B94E5952A52FD2C00A125AE /* zvad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5332A52FD2B00A125AE /* zvad.cpp */; };
+		5B94E5962A52FD2C00A125AE /* zvbvapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5342A52FD2B00A125AE /* zvbvapi.cpp */; };
+		5B94E5972A52FD2C00A125AE /* zfftr2r.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5362A52FD2C00A125AE /* zfftr2r.h */; };
+		5B94E5982A52FD2C00A125AE /* zfftr2c.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5372A52FD2C00A125AE /* zfftr2c.h */; };
+		5B94E5992A52FD2C00A125AE /* zfftr2r.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5382A52FD2C00A125AE /* zfftr2r.cpp */; };
+		5B94E59A2A52FD2C00A125AE /* zfftr2c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5392A52FD2C00A125AE /* zfftr2c.cpp */; };
+		5B94E59B2A52FD2C00A125AE /* zmath.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E53A2A52FD2C00A125AE /* zmath.h */; };
+		5B94E59C2A52FD2C00A125AE /* zmat_neon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E53C2A52FD2C00A125AE /* zmat_neon.cpp */; };
+		5B94E59D2A52FD2C00A125AE /* zmat.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E53D2A52FD2C00A125AE /* zmat.h */; };
+		5B94E59E2A52FD2C00A125AE /* zvec.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E53E2A52FD2C00A125AE /* zvec.h */; };
+		5B94E59F2A52FD2C00A125AE /* zcmat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E53F2A52FD2C00A125AE /* zcmat.cpp */; };
+		5B94E5A02A52FD2C00A125AE /* zvec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5402A52FD2C00A125AE /* zvec.cpp */; };
+		5B94E5A12A52FD2C00A125AE /* zcmat.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5412A52FD2C00A125AE /* zcmat.h */; };
+		5B94E5A22A52FD2C00A125AE /* zmat_neon.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5422A52FD2C00A125AE /* zmat_neon.h */; };
+		5B94E5A32A52FD2C00A125AE /* zmat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5432A52FD2C00A125AE /* zmat.cpp */; };
+		5B94E5A42A52FD2C00A125AE /* zoutput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5452A52FD2C00A125AE /* zoutput.h */; };
+		5B94E5A52A52FD2C00A125AE /* zoutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5462A52FD2C00A125AE /* zoutput.cpp */; };
+		5B94E5A62A52FD2C00A125AE /* zinput.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5472A52FD2C00A125AE /* zinput.h */; };
+		5B94E5A72A52FD2C00A125AE /* zinput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E5482A52FD2C00A125AE /* zinput.cpp */; };
+		5B94E5A82A52FD2C00A125AE /* zutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E5492A52FD2C00A125AE /* zutil.h */; };
+		5B94E5A92A52FD2C00A125AE /* zcfmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E54B2A52FD2C00A125AE /* zcfmem.cpp */; };
+		5B94E5AA2A52FD2C00A125AE /* zcfmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E54C2A52FD2C00A125AE /* zcfmem.h */; };
+		5B94E5AB2A52FD2C00A125AE /* zcfapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E54D2A52FD2C00A125AE /* zcfapi.h */; };
+		5B94E5AC2A52FD2C00A125AE /* zcfapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E54E2A52FD2C00A125AE /* zcfapi.cpp */; };
 		5BA3DDEA206379BE00AF4F15 /* simple_wave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BA3DDE9206379BE00AF4F15 /* simple_wave.cpp */; };
 /* End PBXBuildFile section */
 
@@ -267,100 +267,6 @@
 		5B3970BC2028014300B41305 /* aec_wrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aec_wrap.cpp; sourceTree = "<group>"; };
 		5B3970BE2028014300B41305 /* aec_wrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aec_wrap.h; sourceTree = "<group>"; };
 		5B3970C92028057100B41305 /* libr2vt4.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libr2vt4.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B3970D52028060000B41305 /* zcomp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp.cpp; sourceTree = "<group>"; };
-		5B3970D62028060000B41305 /* zcomp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp.h; sourceTree = "<group>"; };
-		5B3970D72028060000B41305 /* zcomp_activation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_activation.cpp; sourceTree = "<group>"; };
-		5B3970D82028060000B41305 /* zcomp_activation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_activation.h; sourceTree = "<group>"; };
-		5B3970D92028060000B41305 /* zcomp_affine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_affine.cpp; sourceTree = "<group>"; };
-		5B3970DA2028060000B41305 /* zcomp_affine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_affine.h; sourceTree = "<group>"; };
-		5B3970DB2028060000B41305 /* zcomp_linear.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_linear.cpp; sourceTree = "<group>"; };
-		5B3970DC2028060000B41305 /* zcomp_linear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_linear.h; sourceTree = "<group>"; };
-		5B3970DD2028060000B41305 /* zcomp_lstm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_lstm.cpp; sourceTree = "<group>"; };
-		5B3970DE2028060000B41305 /* zcomp_lstm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_lstm.h; sourceTree = "<group>"; };
-		5B3970DF2028060000B41305 /* zcomp_lstm_cell.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_lstm_cell.cpp; sourceTree = "<group>"; };
-		5B3970E02028060000B41305 /* zcomp_lstm_cell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_lstm_cell.h; sourceTree = "<group>"; };
-		5B3970E12028060000B41305 /* znnet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = znnet.cpp; sourceTree = "<group>"; };
-		5B3970E22028060000B41305 /* znnet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = znnet.h; sourceTree = "<group>"; };
-		5B3970E32028060000B41305 /* zmacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zmacro.h; path = ../../../workspace/r2slv4/r2vt4/src/zmacro.h; sourceTree = "<group>"; };
-		5B3970E52028060000B41305 /* fa_fir.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fa_fir.cpp; sourceTree = "<group>"; };
-		5B3970E62028060000B41305 /* fa_fir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_fir.h; sourceTree = "<group>"; };
-		5B3970E72028060000B41305 /* fa_resample.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fa_resample.cpp; sourceTree = "<group>"; };
-		5B3970E82028060000B41305 /* fa_resample.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_resample.h; sourceTree = "<group>"; };
-		5B3970E92028060000B41305 /* zrsapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrsapi.cpp; sourceTree = "<group>"; };
-		5B3970EA2028060000B41305 /* zrsapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrsapi.h; sourceTree = "<group>"; };
-		5B3970EB2028060000B41305 /* zrsmem2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrsmem2.cpp; sourceTree = "<group>"; };
-		5B3970EC2028060000B41305 /* zrsmem2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrsmem2.h; sourceTree = "<group>"; };
-		5B3970ED2028060000B41305 /* zrssto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrssto.cpp; sourceTree = "<group>"; };
-		5B3970EE2028060000B41305 /* zrssto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrssto.h; sourceTree = "<group>"; };
-		5B3970F02028060000B41305 /* spline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = spline.cpp; sourceTree = "<group>"; };
-		5B3970F12028060000B41305 /* spline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = spline.h; sourceTree = "<group>"; };
-		5B3970F22028060000B41305 /* zslapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zslapi.cpp; sourceTree = "<group>"; };
-		5B3970F32028060000B41305 /* zslapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zslapi.h; sourceTree = "<group>"; };
-		5B3970F42028060000B41305 /* zslmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zslmem.cpp; sourceTree = "<group>"; };
-		5B3970F52028060000B41305 /* zslmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zslmem.h; sourceTree = "<group>"; };
-		5B3970F72028060000B41305 /* zaudapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zaudapi.cpp; sourceTree = "<group>"; };
-		5B3970F82028060000B41305 /* zaudapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zaudapi.h; sourceTree = "<group>"; };
-		5B3970F92028060000B41305 /* zutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zutil.cpp; path = ../../../workspace/r2slv4/r2vt4/src/zutil.cpp; sourceTree = "<group>"; };
-		5B3970FB2028060000B41305 /* zcmat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcmat.cpp; sourceTree = "<group>"; };
-		5B3970FC2028060000B41305 /* zcmat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcmat.h; sourceTree = "<group>"; };
-		5B3970FD2028060000B41305 /* zmat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zmat.cpp; sourceTree = "<group>"; };
-		5B3970FE2028060000B41305 /* zmat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zmat.h; sourceTree = "<group>"; };
-		5B3970FF2028060000B41305 /* zmat_neon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zmat_neon.cpp; sourceTree = "<group>"; };
-		5B3971002028060000B41305 /* zmat_neon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zmat_neon.h; sourceTree = "<group>"; };
-		5B3971012028060000B41305 /* zvec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvec.cpp; sourceTree = "<group>"; };
-		5B3971022028060000B41305 /* zvec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvec.h; sourceTree = "<group>"; };
-		5B3971052028060000B41305 /* zphosto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zphosto.cpp; sourceTree = "<group>"; };
-		5B3971062028060000B41305 /* zphosto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zphosto.h; sourceTree = "<group>"; };
-		5B3971072028060000B41305 /* zsildet3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsildet3.cpp; sourceTree = "<group>"; };
-		5B3971082028060000B41305 /* zsildet3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsildet3.h; sourceTree = "<group>"; };
-		5B3971092028060000B41305 /* zvtdet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtdet.cpp; sourceTree = "<group>"; };
-		5B39710A2028060000B41305 /* zvtdet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtdet.h; sourceTree = "<group>"; };
-		5B39710B2028060000B41305 /* zvtapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtapi.cpp; sourceTree = "<group>"; };
-		5B39710C2028060000B41305 /* zvtapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtapi.h; sourceTree = "<group>"; };
-		5B39710D2028060000B41305 /* zvtmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtmem.cpp; sourceTree = "<group>"; };
-		5B39710E2028060000B41305 /* zvtmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtmem.h; sourceTree = "<group>"; };
-		5B39710F2028060000B41305 /* zvtsto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtsto.cpp; sourceTree = "<group>"; };
-		5B3971102028060000B41305 /* zvtsto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtsto.h; sourceTree = "<group>"; };
-		5B3971122028060000B41305 /* zcfapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcfapi.cpp; sourceTree = "<group>"; };
-		5B3971132028060000B41305 /* zcfapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcfapi.h; sourceTree = "<group>"; };
-		5B3971142028060000B41305 /* zcfmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcfmem.cpp; sourceTree = "<group>"; };
-		5B3971152028060000B41305 /* zcfmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcfmem.h; sourceTree = "<group>"; };
-		5B3971162028060000B41305 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zutil.h; path = ../../../workspace/r2slv4/r2vt4/src/zutil.h; sourceTree = "<group>"; };
-		5B3971182028060000B41305 /* zg2papi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zg2papi.cpp; sourceTree = "<group>"; };
-		5B3971192028060000B41305 /* zg2papi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zg2papi.h; sourceTree = "<group>"; };
-		5B39711B2028060100B41305 /* zfftr2c.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfftr2c.cpp; sourceTree = "<group>"; };
-		5B39711C2028060100B41305 /* zfftr2c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfftr2c.h; sourceTree = "<group>"; };
-		5B39711D2028060100B41305 /* zfftr2r.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfftr2r.cpp; sourceTree = "<group>"; };
-		5B39711E2028060100B41305 /* zfftr2r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfftr2r.h; sourceTree = "<group>"; };
-		5B3971202028060100B41305 /* zinput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zinput.cpp; sourceTree = "<group>"; };
-		5B3971212028060100B41305 /* zinput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zinput.h; sourceTree = "<group>"; };
-		5B3971222028060100B41305 /* zoutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zoutput.cpp; sourceTree = "<group>"; };
-		5B3971232028060100B41305 /* zoutput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zoutput.h; sourceTree = "<group>"; };
-		5B3971262028060100B41305 /* zbf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zbf.cpp; sourceTree = "<group>"; };
-		5B3971272028060100B41305 /* zbf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zbf.h; sourceTree = "<group>"; };
-		5B3971282028060100B41305 /* zdirty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zdirty.cpp; sourceTree = "<group>"; };
-		5B3971292028060100B41305 /* zdirty.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zdirty.h; sourceTree = "<group>"; };
-		5B39712A2028060100B41305 /* zns.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zns.cpp; sourceTree = "<group>"; };
-		5B39712B2028060100B41305 /* zns.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zns.h; sourceTree = "<group>"; };
-		5B39712C2028060100B41305 /* zsl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsl.cpp; sourceTree = "<group>"; };
-		5B39712D2028060100B41305 /* zsl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsl.h; sourceTree = "<group>"; };
-		5B39712E2028060100B41305 /* zvad.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvad.cpp; sourceTree = "<group>"; };
-		5B39712F2028060100B41305 /* zvad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvad.h; sourceTree = "<group>"; };
-		5B3971302028060100B41305 /* zvt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvt.cpp; sourceTree = "<group>"; };
-		5B3971312028060100B41305 /* zvt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvt.h; sourceTree = "<group>"; };
-		5B3971322028060100B41305 /* zvbvapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvbvapi.cpp; sourceTree = "<group>"; };
-		5B3971332028060100B41305 /* zvbvapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvbvapi.h; sourceTree = "<group>"; };
-		5B3971342028060100B41305 /* zvbvmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvbvmem.cpp; sourceTree = "<group>"; };
-		5B3971352028060100B41305 /* zvbvmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvbvmem.h; sourceTree = "<group>"; };
-		5B3971362028060100B41305 /* zmath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zmath.h; path = ../../../workspace/r2slv4/r2vt4/src/zmath.h; sourceTree = "<group>"; };
-		5B3971382028060100B41305 /* zfea1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfea1.cpp; sourceTree = "<group>"; };
-		5B3971392028060100B41305 /* zfea1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfea1.h; sourceTree = "<group>"; };
-		5B39713A2028060100B41305 /* zfea2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfea2.cpp; sourceTree = "<group>"; };
-		5B39713B2028060100B41305 /* zfea2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfea2.h; sourceTree = "<group>"; };
-		5B39713C2028060100B41305 /* zfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfilter.cpp; sourceTree = "<group>"; };
-		5B39713D2028060100B41305 /* zfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfilter.h; sourceTree = "<group>"; };
-		5B39713F2028060100B41305 /* zbuff.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zbuff.cpp; sourceTree = "<group>"; };
-		5B3971402028060100B41305 /* zbuff.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zbuff.h; sourceTree = "<group>"; };
 		5B3971A12028063400B41305 /* libztvad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libztvad.a; path = ../../workspace/thirdlib/mac/lib/libztvad.a; sourceTree = "<group>"; };
 		5B3971A22028063400B41305 /* libmkl_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_core.a; path = ../../workspace/thirdlib/mac/lib/libmkl_core.a; sourceTree = "<group>"; };
 		5B3971A32028063400B41305 /* libr2ssp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libr2ssp.a; path = ../../workspace/thirdlib/mac/lib/libr2ssp.a; sourceTree = "<group>"; };
@@ -436,6 +342,101 @@
 		5B8F86DE2028B50C004A883C /* audio_converter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = audio_converter.cpp; path = activation/audio_converter.cpp; sourceTree = SOURCE_ROOT; };
 		5B8F86DF2028B50C004A883C /* audio_converter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio_converter.h; path = activation/audio_converter.h; sourceTree = SOURCE_ROOT; };
 		5B8F86E02028B50C004A883C /* buf_manager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buf_manager.h; path = activation/buf_manager.h; sourceTree = SOURCE_ROOT; };
+		5B94E4E22A52FD2A00A125AE /* zaudapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zaudapi.cpp; sourceTree = "<group>"; };
+		5B94E4E32A52FD2A00A125AE /* zaudapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zaudapi.h; sourceTree = "<group>"; };
+		5B94E4E52A52FD2B00A125AE /* zrsmem2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrsmem2.cpp; sourceTree = "<group>"; };
+		5B94E4E62A52FD2B00A125AE /* zrsapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrsapi.h; sourceTree = "<group>"; };
+		5B94E4E72A52FD2B00A125AE /* fa_fir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_fir.h; sourceTree = "<group>"; };
+		5B94E4E82A52FD2B00A125AE /* fa_fir.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fa_fir.cpp; sourceTree = "<group>"; };
+		5B94E4E92A52FD2B00A125AE /* zrssto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrssto.cpp; sourceTree = "<group>"; };
+		5B94E4EA2A52FD2B00A125AE /* zrsapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zrsapi.cpp; sourceTree = "<group>"; };
+		5B94E4EB2A52FD2B00A125AE /* fa_resample.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fa_resample.cpp; sourceTree = "<group>"; };
+		5B94E4EC2A52FD2B00A125AE /* zrssto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrssto.h; sourceTree = "<group>"; };
+		5B94E4ED2A52FD2B00A125AE /* zrsmem2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zrsmem2.h; sourceTree = "<group>"; };
+		5B94E4EE2A52FD2B00A125AE /* fa_resample.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_resample.h; sourceTree = "<group>"; };
+		5B94E4F02A52FD2B00A125AE /* zcomp_affine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_affine.h; sourceTree = "<group>"; };
+		5B94E4F12A52FD2B00A125AE /* zcomp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp.cpp; sourceTree = "<group>"; };
+		5B94E4F22A52FD2B00A125AE /* zcomp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp.h; sourceTree = "<group>"; };
+		5B94E4F32A52FD2B00A125AE /* zcomp_linear.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_linear.cpp; sourceTree = "<group>"; };
+		5B94E4F42A52FD2B00A125AE /* znnet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = znnet.cpp; sourceTree = "<group>"; };
+		5B94E4F52A52FD2B00A125AE /* zcomp_activation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_activation.h; sourceTree = "<group>"; };
+		5B94E4F62A52FD2B00A125AE /* zcomp_activation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_activation.cpp; sourceTree = "<group>"; };
+		5B94E4F72A52FD2B00A125AE /* znnet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = znnet.h; sourceTree = "<group>"; };
+		5B94E4F82A52FD2B00A125AE /* zcomp_affine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_affine.cpp; sourceTree = "<group>"; };
+		5B94E4F92A52FD2B00A125AE /* zcomp_lstm_cell.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_lstm_cell.cpp; sourceTree = "<group>"; };
+		5B94E4FA2A52FD2B00A125AE /* zcomp_linear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_linear.h; sourceTree = "<group>"; };
+		5B94E4FB2A52FD2B00A125AE /* zcomp_lstm_cell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_lstm_cell.h; sourceTree = "<group>"; };
+		5B94E4FC2A52FD2B00A125AE /* zcomp_lstm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcomp_lstm.cpp; sourceTree = "<group>"; };
+		5B94E4FD2A52FD2B00A125AE /* zcomp_lstm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcomp_lstm.h; sourceTree = "<group>"; };
+		5B94E4FF2A52FD2B00A125AE /* zg2papi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zg2papi.h; sourceTree = "<group>"; };
+		5B94E5002A52FD2B00A125AE /* zg2papi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zg2papi.cpp; sourceTree = "<group>"; };
+		5B94E5022A52FD2B00A125AE /* zvtmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtmem.h; sourceTree = "<group>"; };
+		5B94E5032A52FD2B00A125AE /* zvtapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtapi.h; sourceTree = "<group>"; };
+		5B94E5042A52FD2B00A125AE /* zvtmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtmem.cpp; sourceTree = "<group>"; };
+		5B94E5052A52FD2B00A125AE /* zvtsto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtsto.cpp; sourceTree = "<group>"; };
+		5B94E5072A52FD2B00A125AE /* zvtdet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtdet.cpp; sourceTree = "<group>"; };
+		5B94E5082A52FD2B00A125AE /* zvtdet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtdet.h; sourceTree = "<group>"; };
+		5B94E5092A52FD2B00A125AE /* zphosto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zphosto.h; sourceTree = "<group>"; };
+		5B94E50A2A52FD2B00A125AE /* zsildet3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsildet3.h; sourceTree = "<group>"; };
+		5B94E50B2A52FD2B00A125AE /* zphosto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zphosto.cpp; sourceTree = "<group>"; };
+		5B94E50C2A52FD2B00A125AE /* zsildet3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsildet3.cpp; sourceTree = "<group>"; };
+		5B94E50D2A52FD2B00A125AE /* zvtapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvtapi.cpp; sourceTree = "<group>"; };
+		5B94E50E2A52FD2B00A125AE /* zvtsto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvtsto.h; sourceTree = "<group>"; };
+		5B94E50F2A52FD2B00A125AE /* zutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zutil.cpp; path = ../../r2slv4/r2vt4/src/zutil.cpp; sourceTree = "<group>"; };
+		5B94E5112A52FD2B00A125AE /* zfea2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfea2.cpp; sourceTree = "<group>"; };
+		5B94E5122A52FD2B00A125AE /* zfea1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfea1.cpp; sourceTree = "<group>"; };
+		5B94E5132A52FD2B00A125AE /* zfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfilter.cpp; sourceTree = "<group>"; };
+		5B94E5142A52FD2B00A125AE /* zfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfilter.h; sourceTree = "<group>"; };
+		5B94E5152A52FD2B00A125AE /* zfea1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfea1.h; sourceTree = "<group>"; };
+		5B94E5162A52FD2B00A125AE /* zfea2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfea2.h; sourceTree = "<group>"; };
+		5B94E5172A52FD2B00A125AE /* zmacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zmacro.h; path = ../../r2slv4/r2vt4/src/zmacro.h; sourceTree = "<group>"; };
+		5B94E5182A52FD2B00A125AE /* zmath */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = zmath; path = ../../r2slv4/r2vt4/src/zmath; sourceTree = "<group>"; };
+		5B94E51A2A52FD2B00A125AE /* zbuff.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zbuff.h; sourceTree = "<group>"; };
+		5B94E51B2A52FD2B00A125AE /* zbuff.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zbuff.cpp; sourceTree = "<group>"; };
+		5B94E51D2A52FD2B00A125AE /* zslapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zslapi.h; sourceTree = "<group>"; };
+		5B94E51E2A52FD2B00A125AE /* spline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = spline.h; sourceTree = "<group>"; };
+		5B94E51F2A52FD2B00A125AE /* zslmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zslmem.h; sourceTree = "<group>"; };
+		5B94E5202A52FD2B00A125AE /* zslapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zslapi.cpp; sourceTree = "<group>"; };
+		5B94E5212A52FD2B00A125AE /* zslmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zslmem.cpp; sourceTree = "<group>"; };
+		5B94E5222A52FD2B00A125AE /* spline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = spline.cpp; sourceTree = "<group>"; };
+		5B94E5242A52FD2B00A125AE /* zvbvmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvbvmem.h; sourceTree = "<group>"; };
+		5B94E5252A52FD2B00A125AE /* zvbvmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvbvmem.cpp; sourceTree = "<group>"; };
+		5B94E5262A52FD2B00A125AE /* zvbvapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvbvapi.h; sourceTree = "<group>"; };
+		5B94E5282A52FD2B00A125AE /* zns.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zns.h; sourceTree = "<group>"; };
+		5B94E5292A52FD2B00A125AE /* zvt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvt.h; sourceTree = "<group>"; };
+		5B94E52A2A52FD2B00A125AE /* zsl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsl.h; sourceTree = "<group>"; };
+		5B94E52B2A52FD2B00A125AE /* zvad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvad.h; sourceTree = "<group>"; };
+		5B94E52C2A52FD2B00A125AE /* zbf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zbf.cpp; sourceTree = "<group>"; };
+		5B94E52D2A52FD2B00A125AE /* zvt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvt.cpp; sourceTree = "<group>"; };
+		5B94E52E2A52FD2B00A125AE /* zns.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zns.cpp; sourceTree = "<group>"; };
+		5B94E52F2A52FD2B00A125AE /* zdirty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zdirty.cpp; sourceTree = "<group>"; };
+		5B94E5302A52FD2B00A125AE /* zdirty.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zdirty.h; sourceTree = "<group>"; };
+		5B94E5312A52FD2B00A125AE /* zsl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsl.cpp; sourceTree = "<group>"; };
+		5B94E5322A52FD2B00A125AE /* zbf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zbf.h; sourceTree = "<group>"; };
+		5B94E5332A52FD2B00A125AE /* zvad.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvad.cpp; sourceTree = "<group>"; };
+		5B94E5342A52FD2B00A125AE /* zvbvapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvbvapi.cpp; sourceTree = "<group>"; };
+		5B94E5362A52FD2C00A125AE /* zfftr2r.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfftr2r.h; sourceTree = "<group>"; };
+		5B94E5372A52FD2C00A125AE /* zfftr2c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zfftr2c.h; sourceTree = "<group>"; };
+		5B94E5382A52FD2C00A125AE /* zfftr2r.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfftr2r.cpp; sourceTree = "<group>"; };
+		5B94E5392A52FD2C00A125AE /* zfftr2c.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zfftr2c.cpp; sourceTree = "<group>"; };
+		5B94E53A2A52FD2C00A125AE /* zmath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zmath.h; path = ../../r2slv4/r2vt4/src/zmath.h; sourceTree = "<group>"; };
+		5B94E53C2A52FD2C00A125AE /* zmat_neon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zmat_neon.cpp; sourceTree = "<group>"; };
+		5B94E53D2A52FD2C00A125AE /* zmat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zmat.h; sourceTree = "<group>"; };
+		5B94E53E2A52FD2C00A125AE /* zvec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zvec.h; sourceTree = "<group>"; };
+		5B94E53F2A52FD2C00A125AE /* zcmat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcmat.cpp; sourceTree = "<group>"; };
+		5B94E5402A52FD2C00A125AE /* zvec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zvec.cpp; sourceTree = "<group>"; };
+		5B94E5412A52FD2C00A125AE /* zcmat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcmat.h; sourceTree = "<group>"; };
+		5B94E5422A52FD2C00A125AE /* zmat_neon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zmat_neon.h; sourceTree = "<group>"; };
+		5B94E5432A52FD2C00A125AE /* zmat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zmat.cpp; sourceTree = "<group>"; };
+		5B94E5452A52FD2C00A125AE /* zoutput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zoutput.h; sourceTree = "<group>"; };
+		5B94E5462A52FD2C00A125AE /* zoutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zoutput.cpp; sourceTree = "<group>"; };
+		5B94E5472A52FD2C00A125AE /* zinput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zinput.h; sourceTree = "<group>"; };
+		5B94E5482A52FD2C00A125AE /* zinput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zinput.cpp; sourceTree = "<group>"; };
+		5B94E5492A52FD2C00A125AE /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zutil.h; path = ../../r2slv4/r2vt4/src/zutil.h; sourceTree = "<group>"; };
+		5B94E54B2A52FD2C00A125AE /* zcfmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcfmem.cpp; sourceTree = "<group>"; };
+		5B94E54C2A52FD2C00A125AE /* zcfmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcfmem.h; sourceTree = "<group>"; };
+		5B94E54D2A52FD2C00A125AE /* zcfapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcfapi.h; sourceTree = "<group>"; };
+		5B94E54E2A52FD2C00A125AE /* zcfapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcfapi.cpp; sourceTree = "<group>"; };
 		5BA3DDDD2063798700AF4F15 /* libutil.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libutil.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BA3DDE8206379B100AF4F15 /* simple_wave.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = simple_wave.h; sourceTree = "<group>"; };
 		5BA3DDE9206379BE00AF4F15 /* simple_wave.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = simple_wave.cpp; sourceTree = "<group>"; };
@@ -543,8 +544,8 @@
 		5B39706D202800CF00B41305 = {
 			isa = PBXGroup;
 			children = (
+				5B94E4E02A52FD0600A125AE /* r2vt4 */,
 				5B397085202800E400B41305 /* activation */,
-				5B3970CA2028057100B41305 /* r2vt4 */,
 				5B3971B620280A8200B41305 /* speex */,
 				5B8F86CF2028968B004A883C /* common_audio */,
 				5BA3DDDE2063798700AF4F15 /* util */,
@@ -633,240 +634,6 @@
 				5B3970BE2028014300B41305 /* aec_wrap.h */,
 			);
 			path = include;
-			sourceTree = "<group>";
-		};
-		5B3970CA2028057100B41305 /* r2vt4 */ = {
-			isa = PBXGroup;
-			children = (
-				5B3970F62028060000B41305 /* aud */,
-				5B39713E2028060100B41305 /* buff */,
-				5B3971112028060000B41305 /* cf */,
-				5B3970D42028060000B41305 /* dnn */,
-				5B3971372028060100B41305 /* fea */,
-				5B39711A2028060100B41305 /* fft */,
-				5B3971172028060000B41305 /* g2p */,
-				5B39711F2028060100B41305 /* io */,
-				5B3970FA2028060000B41305 /* mat */,
-				5B3970E42028060000B41305 /* rs */,
-				5B3970EF2028060000B41305 /* sl */,
-				5B3971242028060100B41305 /* vbv */,
-				5B3971032028060000B41305 /* vt */,
-				5B3970E32028060000B41305 /* zmacro.h */,
-				5B3971362028060100B41305 /* zmath.h */,
-				5B3970F92028060000B41305 /* zutil.cpp */,
-				5B3971162028060000B41305 /* zutil.h */,
-			);
-			path = r2vt4;
-			sourceTree = "<group>";
-		};
-		5B3970D42028060000B41305 /* dnn */ = {
-			isa = PBXGroup;
-			children = (
-				5B3970D52028060000B41305 /* zcomp.cpp */,
-				5B3970D62028060000B41305 /* zcomp.h */,
-				5B3970D72028060000B41305 /* zcomp_activation.cpp */,
-				5B3970D82028060000B41305 /* zcomp_activation.h */,
-				5B3970D92028060000B41305 /* zcomp_affine.cpp */,
-				5B3970DA2028060000B41305 /* zcomp_affine.h */,
-				5B3970DB2028060000B41305 /* zcomp_linear.cpp */,
-				5B3970DC2028060000B41305 /* zcomp_linear.h */,
-				5B3970DD2028060000B41305 /* zcomp_lstm.cpp */,
-				5B3970DE2028060000B41305 /* zcomp_lstm.h */,
-				5B3970DF2028060000B41305 /* zcomp_lstm_cell.cpp */,
-				5B3970E02028060000B41305 /* zcomp_lstm_cell.h */,
-				5B3970E12028060000B41305 /* znnet.cpp */,
-				5B3970E22028060000B41305 /* znnet.h */,
-			);
-			name = dnn;
-			path = ../../../workspace/r2slv4/r2vt4/src/dnn;
-			sourceTree = "<group>";
-		};
-		5B3970E42028060000B41305 /* rs */ = {
-			isa = PBXGroup;
-			children = (
-				5B3970E52028060000B41305 /* fa_fir.cpp */,
-				5B3970E62028060000B41305 /* fa_fir.h */,
-				5B3970E72028060000B41305 /* fa_resample.cpp */,
-				5B3970E82028060000B41305 /* fa_resample.h */,
-				5B3970E92028060000B41305 /* zrsapi.cpp */,
-				5B3970EA2028060000B41305 /* zrsapi.h */,
-				5B3970EB2028060000B41305 /* zrsmem2.cpp */,
-				5B3970EC2028060000B41305 /* zrsmem2.h */,
-				5B3970ED2028060000B41305 /* zrssto.cpp */,
-				5B3970EE2028060000B41305 /* zrssto.h */,
-			);
-			name = rs;
-			path = ../../../workspace/r2slv4/r2vt4/src/rs;
-			sourceTree = "<group>";
-		};
-		5B3970EF2028060000B41305 /* sl */ = {
-			isa = PBXGroup;
-			children = (
-				5B3970F02028060000B41305 /* spline.cpp */,
-				5B3970F12028060000B41305 /* spline.h */,
-				5B3970F22028060000B41305 /* zslapi.cpp */,
-				5B3970F32028060000B41305 /* zslapi.h */,
-				5B3970F42028060000B41305 /* zslmem.cpp */,
-				5B3970F52028060000B41305 /* zslmem.h */,
-			);
-			name = sl;
-			path = ../../../workspace/r2slv4/r2vt4/src/sl;
-			sourceTree = "<group>";
-		};
-		5B3970F62028060000B41305 /* aud */ = {
-			isa = PBXGroup;
-			children = (
-				5B3970F72028060000B41305 /* zaudapi.cpp */,
-				5B3970F82028060000B41305 /* zaudapi.h */,
-			);
-			name = aud;
-			path = ../../../workspace/r2slv4/r2vt4/src/aud;
-			sourceTree = "<group>";
-		};
-		5B3970FA2028060000B41305 /* mat */ = {
-			isa = PBXGroup;
-			children = (
-				5B3970FB2028060000B41305 /* zcmat.cpp */,
-				5B3970FC2028060000B41305 /* zcmat.h */,
-				5B3970FD2028060000B41305 /* zmat.cpp */,
-				5B3970FE2028060000B41305 /* zmat.h */,
-				5B3970FF2028060000B41305 /* zmat_neon.cpp */,
-				5B3971002028060000B41305 /* zmat_neon.h */,
-				5B3971012028060000B41305 /* zvec.cpp */,
-				5B3971022028060000B41305 /* zvec.h */,
-			);
-			name = mat;
-			path = ../../../workspace/r2slv4/r2vt4/src/mat;
-			sourceTree = "<group>";
-		};
-		5B3971032028060000B41305 /* vt */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971042028060000B41305 /* dep */,
-				5B39710B2028060000B41305 /* zvtapi.cpp */,
-				5B39710C2028060000B41305 /* zvtapi.h */,
-				5B39710D2028060000B41305 /* zvtmem.cpp */,
-				5B39710E2028060000B41305 /* zvtmem.h */,
-				5B39710F2028060000B41305 /* zvtsto.cpp */,
-				5B3971102028060000B41305 /* zvtsto.h */,
-			);
-			name = vt;
-			path = ../../../workspace/r2slv4/r2vt4/src/vt;
-			sourceTree = "<group>";
-		};
-		5B3971042028060000B41305 /* dep */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971052028060000B41305 /* zphosto.cpp */,
-				5B3971062028060000B41305 /* zphosto.h */,
-				5B3971072028060000B41305 /* zsildet3.cpp */,
-				5B3971082028060000B41305 /* zsildet3.h */,
-				5B3971092028060000B41305 /* zvtdet.cpp */,
-				5B39710A2028060000B41305 /* zvtdet.h */,
-			);
-			path = dep;
-			sourceTree = "<group>";
-		};
-		5B3971112028060000B41305 /* cf */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971122028060000B41305 /* zcfapi.cpp */,
-				5B3971132028060000B41305 /* zcfapi.h */,
-				5B3971142028060000B41305 /* zcfmem.cpp */,
-				5B3971152028060000B41305 /* zcfmem.h */,
-			);
-			name = cf;
-			path = ../../../workspace/r2slv4/r2vt4/src/cf;
-			sourceTree = "<group>";
-		};
-		5B3971172028060000B41305 /* g2p */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971182028060000B41305 /* zg2papi.cpp */,
-				5B3971192028060000B41305 /* zg2papi.h */,
-			);
-			name = g2p;
-			path = ../../../workspace/r2slv4/r2vt4/src/g2p;
-			sourceTree = "<group>";
-		};
-		5B39711A2028060100B41305 /* fft */ = {
-			isa = PBXGroup;
-			children = (
-				5B39711B2028060100B41305 /* zfftr2c.cpp */,
-				5B39711C2028060100B41305 /* zfftr2c.h */,
-				5B39711D2028060100B41305 /* zfftr2r.cpp */,
-				5B39711E2028060100B41305 /* zfftr2r.h */,
-			);
-			name = fft;
-			path = ../../../workspace/r2slv4/r2vt4/src/fft;
-			sourceTree = "<group>";
-		};
-		5B39711F2028060100B41305 /* io */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971202028060100B41305 /* zinput.cpp */,
-				5B3971212028060100B41305 /* zinput.h */,
-				5B3971222028060100B41305 /* zoutput.cpp */,
-				5B3971232028060100B41305 /* zoutput.h */,
-			);
-			name = io;
-			path = ../../../workspace/r2slv4/r2vt4/src/io;
-			sourceTree = "<group>";
-		};
-		5B3971242028060100B41305 /* vbv */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971252028060100B41305 /* dep */,
-				5B3971322028060100B41305 /* zvbvapi.cpp */,
-				5B3971332028060100B41305 /* zvbvapi.h */,
-				5B3971342028060100B41305 /* zvbvmem.cpp */,
-				5B3971352028060100B41305 /* zvbvmem.h */,
-			);
-			name = vbv;
-			path = ../../../workspace/r2slv4/r2vt4/src/vbv;
-			sourceTree = "<group>";
-		};
-		5B3971252028060100B41305 /* dep */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971262028060100B41305 /* zbf.cpp */,
-				5B3971272028060100B41305 /* zbf.h */,
-				5B3971282028060100B41305 /* zdirty.cpp */,
-				5B3971292028060100B41305 /* zdirty.h */,
-				5B39712A2028060100B41305 /* zns.cpp */,
-				5B39712B2028060100B41305 /* zns.h */,
-				5B39712C2028060100B41305 /* zsl.cpp */,
-				5B39712D2028060100B41305 /* zsl.h */,
-				5B39712E2028060100B41305 /* zvad.cpp */,
-				5B39712F2028060100B41305 /* zvad.h */,
-				5B3971302028060100B41305 /* zvt.cpp */,
-				5B3971312028060100B41305 /* zvt.h */,
-			);
-			path = dep;
-			sourceTree = "<group>";
-		};
-		5B3971372028060100B41305 /* fea */ = {
-			isa = PBXGroup;
-			children = (
-				5B3971382028060100B41305 /* zfea1.cpp */,
-				5B3971392028060100B41305 /* zfea1.h */,
-				5B39713A2028060100B41305 /* zfea2.cpp */,
-				5B39713B2028060100B41305 /* zfea2.h */,
-				5B39713C2028060100B41305 /* zfilter.cpp */,
-				5B39713D2028060100B41305 /* zfilter.h */,
-			);
-			name = fea;
-			path = ../../../workspace/r2slv4/r2vt4/src/fea;
-			sourceTree = "<group>";
-		};
-		5B39713E2028060100B41305 /* buff */ = {
-			isa = PBXGroup;
-			children = (
-				5B39713F2028060100B41305 /* zbuff.cpp */,
-				5B3971402028060100B41305 /* zbuff.h */,
-			);
-			name = buff;
-			path = ../../../workspace/r2slv4/r2vt4/src/buff;
 			sourceTree = "<group>";
 		};
 		5B39719F2028061500B41305 /* Frameworks */ = {
@@ -1020,6 +787,241 @@
 			path = audio_processing;
 			sourceTree = "<group>";
 		};
+		5B94E4E02A52FD0600A125AE /* r2vt4 */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E4E12A52FD2A00A125AE /* aud */,
+				5B94E5192A52FD2B00A125AE /* buff */,
+				5B94E54A2A52FD2C00A125AE /* cf */,
+				5B94E4EF2A52FD2B00A125AE /* dnn */,
+				5B94E5102A52FD2B00A125AE /* fea */,
+				5B94E5352A52FD2C00A125AE /* fft */,
+				5B94E4FE2A52FD2B00A125AE /* g2p */,
+				5B94E5442A52FD2C00A125AE /* io */,
+				5B94E53B2A52FD2C00A125AE /* mat */,
+				5B94E4E42A52FD2B00A125AE /* rs */,
+				5B94E51C2A52FD2B00A125AE /* sl */,
+				5B94E5232A52FD2B00A125AE /* vbv */,
+				5B94E5012A52FD2B00A125AE /* vt */,
+				5B94E5172A52FD2B00A125AE /* zmacro.h */,
+				5B94E5182A52FD2B00A125AE /* zmath */,
+				5B94E53A2A52FD2C00A125AE /* zmath.h */,
+				5B94E50F2A52FD2B00A125AE /* zutil.cpp */,
+				5B94E5492A52FD2C00A125AE /* zutil.h */,
+			);
+			path = r2vt4;
+			sourceTree = "<group>";
+		};
+		5B94E4E12A52FD2A00A125AE /* aud */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E4E22A52FD2A00A125AE /* zaudapi.cpp */,
+				5B94E4E32A52FD2A00A125AE /* zaudapi.h */,
+			);
+			name = aud;
+			path = ../../r2slv4/r2vt4/src/aud;
+			sourceTree = "<group>";
+		};
+		5B94E4E42A52FD2B00A125AE /* rs */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E4E52A52FD2B00A125AE /* zrsmem2.cpp */,
+				5B94E4E62A52FD2B00A125AE /* zrsapi.h */,
+				5B94E4E72A52FD2B00A125AE /* fa_fir.h */,
+				5B94E4E82A52FD2B00A125AE /* fa_fir.cpp */,
+				5B94E4E92A52FD2B00A125AE /* zrssto.cpp */,
+				5B94E4EA2A52FD2B00A125AE /* zrsapi.cpp */,
+				5B94E4EB2A52FD2B00A125AE /* fa_resample.cpp */,
+				5B94E4EC2A52FD2B00A125AE /* zrssto.h */,
+				5B94E4ED2A52FD2B00A125AE /* zrsmem2.h */,
+				5B94E4EE2A52FD2B00A125AE /* fa_resample.h */,
+			);
+			name = rs;
+			path = ../../r2slv4/r2vt4/src/rs;
+			sourceTree = "<group>";
+		};
+		5B94E4EF2A52FD2B00A125AE /* dnn */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E4F02A52FD2B00A125AE /* zcomp_affine.h */,
+				5B94E4F12A52FD2B00A125AE /* zcomp.cpp */,
+				5B94E4F22A52FD2B00A125AE /* zcomp.h */,
+				5B94E4F32A52FD2B00A125AE /* zcomp_linear.cpp */,
+				5B94E4F42A52FD2B00A125AE /* znnet.cpp */,
+				5B94E4F52A52FD2B00A125AE /* zcomp_activation.h */,
+				5B94E4F62A52FD2B00A125AE /* zcomp_activation.cpp */,
+				5B94E4F72A52FD2B00A125AE /* znnet.h */,
+				5B94E4F82A52FD2B00A125AE /* zcomp_affine.cpp */,
+				5B94E4F92A52FD2B00A125AE /* zcomp_lstm_cell.cpp */,
+				5B94E4FA2A52FD2B00A125AE /* zcomp_linear.h */,
+				5B94E4FB2A52FD2B00A125AE /* zcomp_lstm_cell.h */,
+				5B94E4FC2A52FD2B00A125AE /* zcomp_lstm.cpp */,
+				5B94E4FD2A52FD2B00A125AE /* zcomp_lstm.h */,
+			);
+			name = dnn;
+			path = ../../r2slv4/r2vt4/src/dnn;
+			sourceTree = "<group>";
+		};
+		5B94E4FE2A52FD2B00A125AE /* g2p */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E4FF2A52FD2B00A125AE /* zg2papi.h */,
+				5B94E5002A52FD2B00A125AE /* zg2papi.cpp */,
+			);
+			name = g2p;
+			path = ../../r2slv4/r2vt4/src/g2p;
+			sourceTree = "<group>";
+		};
+		5B94E5012A52FD2B00A125AE /* vt */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5022A52FD2B00A125AE /* zvtmem.h */,
+				5B94E5032A52FD2B00A125AE /* zvtapi.h */,
+				5B94E5042A52FD2B00A125AE /* zvtmem.cpp */,
+				5B94E5052A52FD2B00A125AE /* zvtsto.cpp */,
+				5B94E5062A52FD2B00A125AE /* dep */,
+				5B94E50D2A52FD2B00A125AE /* zvtapi.cpp */,
+				5B94E50E2A52FD2B00A125AE /* zvtsto.h */,
+			);
+			name = vt;
+			path = ../../r2slv4/r2vt4/src/vt;
+			sourceTree = "<group>";
+		};
+		5B94E5062A52FD2B00A125AE /* dep */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5072A52FD2B00A125AE /* zvtdet.cpp */,
+				5B94E5082A52FD2B00A125AE /* zvtdet.h */,
+				5B94E5092A52FD2B00A125AE /* zphosto.h */,
+				5B94E50A2A52FD2B00A125AE /* zsildet3.h */,
+				5B94E50B2A52FD2B00A125AE /* zphosto.cpp */,
+				5B94E50C2A52FD2B00A125AE /* zsildet3.cpp */,
+			);
+			path = dep;
+			sourceTree = "<group>";
+		};
+		5B94E5102A52FD2B00A125AE /* fea */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5112A52FD2B00A125AE /* zfea2.cpp */,
+				5B94E5122A52FD2B00A125AE /* zfea1.cpp */,
+				5B94E5132A52FD2B00A125AE /* zfilter.cpp */,
+				5B94E5142A52FD2B00A125AE /* zfilter.h */,
+				5B94E5152A52FD2B00A125AE /* zfea1.h */,
+				5B94E5162A52FD2B00A125AE /* zfea2.h */,
+			);
+			name = fea;
+			path = ../../r2slv4/r2vt4/src/fea;
+			sourceTree = "<group>";
+		};
+		5B94E5192A52FD2B00A125AE /* buff */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E51A2A52FD2B00A125AE /* zbuff.h */,
+				5B94E51B2A52FD2B00A125AE /* zbuff.cpp */,
+			);
+			name = buff;
+			path = ../../r2slv4/r2vt4/src/buff;
+			sourceTree = "<group>";
+		};
+		5B94E51C2A52FD2B00A125AE /* sl */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E51D2A52FD2B00A125AE /* zslapi.h */,
+				5B94E51E2A52FD2B00A125AE /* spline.h */,
+				5B94E51F2A52FD2B00A125AE /* zslmem.h */,
+				5B94E5202A52FD2B00A125AE /* zslapi.cpp */,
+				5B94E5212A52FD2B00A125AE /* zslmem.cpp */,
+				5B94E5222A52FD2B00A125AE /* spline.cpp */,
+			);
+			name = sl;
+			path = ../../r2slv4/r2vt4/src/sl;
+			sourceTree = "<group>";
+		};
+		5B94E5232A52FD2B00A125AE /* vbv */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5242A52FD2B00A125AE /* zvbvmem.h */,
+				5B94E5252A52FD2B00A125AE /* zvbvmem.cpp */,
+				5B94E5262A52FD2B00A125AE /* zvbvapi.h */,
+				5B94E5272A52FD2B00A125AE /* dep */,
+				5B94E5342A52FD2B00A125AE /* zvbvapi.cpp */,
+			);
+			name = vbv;
+			path = ../../r2slv4/r2vt4/src/vbv;
+			sourceTree = "<group>";
+		};
+		5B94E5272A52FD2B00A125AE /* dep */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5282A52FD2B00A125AE /* zns.h */,
+				5B94E5292A52FD2B00A125AE /* zvt.h */,
+				5B94E52A2A52FD2B00A125AE /* zsl.h */,
+				5B94E52B2A52FD2B00A125AE /* zvad.h */,
+				5B94E52C2A52FD2B00A125AE /* zbf.cpp */,
+				5B94E52D2A52FD2B00A125AE /* zvt.cpp */,
+				5B94E52E2A52FD2B00A125AE /* zns.cpp */,
+				5B94E52F2A52FD2B00A125AE /* zdirty.cpp */,
+				5B94E5302A52FD2B00A125AE /* zdirty.h */,
+				5B94E5312A52FD2B00A125AE /* zsl.cpp */,
+				5B94E5322A52FD2B00A125AE /* zbf.h */,
+				5B94E5332A52FD2B00A125AE /* zvad.cpp */,
+			);
+			path = dep;
+			sourceTree = "<group>";
+		};
+		5B94E5352A52FD2C00A125AE /* fft */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5362A52FD2C00A125AE /* zfftr2r.h */,
+				5B94E5372A52FD2C00A125AE /* zfftr2c.h */,
+				5B94E5382A52FD2C00A125AE /* zfftr2r.cpp */,
+				5B94E5392A52FD2C00A125AE /* zfftr2c.cpp */,
+			);
+			name = fft;
+			path = ../../r2slv4/r2vt4/src/fft;
+			sourceTree = "<group>";
+		};
+		5B94E53B2A52FD2C00A125AE /* mat */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E53C2A52FD2C00A125AE /* zmat_neon.cpp */,
+				5B94E53D2A52FD2C00A125AE /* zmat.h */,
+				5B94E53E2A52FD2C00A125AE /* zvec.h */,
+				5B94E53F2A52FD2C00A125AE /* zcmat.cpp */,
+				5B94E5402A52FD2C00A125AE /* zvec.cpp */,
+				5B94E5412A52FD2C00A125AE /* zcmat.h */,
+				5B94E5422A52FD2C00A125AE /* zmat_neon.h */,
+				5B94E5432A52FD2C00A125AE /* zmat.cpp */,
+			);
+			name = mat;
+			path = ../../r2slv4/r2vt4/src/mat;
+			sourceTree = "<group>";
+		};
+		5B94E5442A52FD2C00A125AE /* io */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E5452A52FD2C00A125AE /* zoutput.h */,
+				5B94E5462A52FD2C00A125AE /* zoutput.cpp */,
+				5B94E5472A52FD2C00A125AE /* zinput.h */,
+				5B94E5482A52FD2C00A125AE /* zinput.cpp */,
+			);
+			name = io;
+			path = ../../r2slv4/r2vt4/src/io;
+			sourceTree = "<group>";
+		};
+		5B94E54A2A52FD2C00A125AE /* cf */ = {
+			isa = PBXGroup;
+			children = (
+				5B94E54B2A52FD2C00A125AE /* zcfmem.cpp */,
+				5B94E54C2A52FD2C00A125AE /* zcfmem.h */,
+				5B94E54D2A52FD2C00A125AE /* zcfapi.h */,
+				5B94E54E2A52FD2C00A125AE /* zcfapi.cpp */,
+			);
+			name = cf;
+			path = ../../r2slv4/r2vt4/src/cf;
+			sourceTree = "<group>";
+		};
 		5BA3DDDE2063798700AF4F15 /* util */ = {
 			isa = PBXGroup;
 			children = (
@@ -1057,54 +1059,54 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B39717F2028060100B41305 /* zfftr2c.h in Headers */,
-				5B3971932028060100B41305 /* zvbvapi.h in Headers */,
-				5B3971512028060100B41305 /* fa_fir.h in Headers */,
-				5B3971552028060100B41305 /* zrsapi.h in Headers */,
-				5B3971442028060100B41305 /* zcomp_activation.h in Headers */,
-				5B3971812028060100B41305 /* zfftr2r.h in Headers */,
-				5B39714A2028060100B41305 /* zcomp_lstm.h in Headers */,
-				5B39714F2028060100B41305 /* zmacro.h in Headers */,
-				5B3971662028060100B41305 /* zmat.h in Headers */,
-				5B39715B2028060100B41305 /* spline.h in Headers */,
-				5B39718D2028060100B41305 /* zsl.h in Headers */,
-				5B3971642028060100B41305 /* zcmat.h in Headers */,
-				5B3971682028060100B41305 /* zmat_neon.h in Headers */,
-				5B39717B2028060100B41305 /* zutil.h in Headers */,
-				5B39715F2028060100B41305 /* zslmem.h in Headers */,
-				5B3971592028060100B41305 /* zrssto.h in Headers */,
-				5B3971832028060100B41305 /* zinput.h in Headers */,
-				5B3971762028060100B41305 /* zvtsto.h in Headers */,
-				5B39717D2028060100B41305 /* zg2papi.h in Headers */,
-				5B39715D2028060100B41305 /* zslapi.h in Headers */,
-				5B3971532028060100B41305 /* fa_resample.h in Headers */,
-				5B3971962028060100B41305 /* zmath.h in Headers */,
-				5B3971422028060100B41305 /* zcomp.h in Headers */,
-				5B39716A2028060100B41305 /* zvec.h in Headers */,
-				5B3971982028060100B41305 /* zfea1.h in Headers */,
-				5B3971702028060100B41305 /* zvtdet.h in Headers */,
-				5B3971952028060100B41305 /* zvbvmem.h in Headers */,
-				5B3971892028060100B41305 /* zdirty.h in Headers */,
-				5B39717A2028060100B41305 /* zcfmem.h in Headers */,
-				5B39718F2028060100B41305 /* zvad.h in Headers */,
-				5B39718B2028060100B41305 /* zns.h in Headers */,
-				5B3971612028060100B41305 /* zaudapi.h in Headers */,
-				5B39716E2028060100B41305 /* zsildet3.h in Headers */,
-				5B3971912028060100B41305 /* zvt.h in Headers */,
-				5B3971572028060100B41305 /* zrsmem2.h in Headers */,
-				5B3971742028060100B41305 /* zvtmem.h in Headers */,
-				5B3971462028060100B41305 /* zcomp_affine.h in Headers */,
-				5B39714C2028060100B41305 /* zcomp_lstm_cell.h in Headers */,
-				5B3971852028060100B41305 /* zoutput.h in Headers */,
-				5B3971782028060100B41305 /* zcfapi.h in Headers */,
-				5B39714E2028060100B41305 /* znnet.h in Headers */,
-				5B39719A2028060100B41305 /* zfea2.h in Headers */,
-				5B39719E2028060100B41305 /* zbuff.h in Headers */,
-				5B3971722028060100B41305 /* zvtapi.h in Headers */,
-				5B3971872028060100B41305 /* zbf.h in Headers */,
-				5B39716C2028060100B41305 /* zphosto.h in Headers */,
-				5B39719C2028060100B41305 /* zfilter.h in Headers */,
-				5B3971482028060100B41305 /* zcomp_linear.h in Headers */,
+				5B94E59D2A52FD2C00A125AE /* zmat.h in Headers */,
+				5B94E59B2A52FD2C00A125AE /* zmath.h in Headers */,
+				5B94E58C2A52FD2C00A125AE /* zsl.h in Headers */,
+				5B94E5532A52FD2C00A125AE /* fa_fir.h in Headers */,
+				5B94E5502A52FD2C00A125AE /* zaudapi.h in Headers */,
+				5B94E57C2A52FD2C00A125AE /* zfea1.h in Headers */,
+				5B94E5602A52FD2C00A125AE /* zcomp_activation.h in Headers */,
+				5B94E55A2A52FD2C00A125AE /* fa_resample.h in Headers */,
+				5B94E5982A52FD2C00A125AE /* zfftr2c.h in Headers */,
+				5B94E5762A52FD2C00A125AE /* zvtsto.h in Headers */,
+				5B94E5A62A52FD2C00A125AE /* zinput.h in Headers */,
+				5B94E5822A52FD2C00A125AE /* spline.h in Headers */,
+				5B94E5892A52FD2C00A125AE /* zvbvapi.h in Headers */,
+				5B94E5622A52FD2C00A125AE /* znnet.h in Headers */,
+				5B94E5872A52FD2C00A125AE /* zvbvmem.h in Headers */,
+				5B94E5812A52FD2C00A125AE /* zslapi.h in Headers */,
+				5B94E5A22A52FD2C00A125AE /* zmat_neon.h in Headers */,
+				5B94E55B2A52FD2C00A125AE /* zcomp_affine.h in Headers */,
+				5B94E5592A52FD2C00A125AE /* zrsmem2.h in Headers */,
+				5B94E57F2A52FD2C00A125AE /* zbuff.h in Headers */,
+				5B94E5522A52FD2C00A125AE /* zrsapi.h in Headers */,
+				5B94E55D2A52FD2C00A125AE /* zcomp.h in Headers */,
+				5B94E5722A52FD2C00A125AE /* zsildet3.h in Headers */,
+				5B94E5702A52FD2C00A125AE /* zvtdet.h in Headers */,
+				5B94E5922A52FD2C00A125AE /* zdirty.h in Headers */,
+				5B94E5582A52FD2C00A125AE /* zrssto.h in Headers */,
+				5B94E5A12A52FD2C00A125AE /* zcmat.h in Headers */,
+				5B94E5A42A52FD2C00A125AE /* zoutput.h in Headers */,
+				5B94E57B2A52FD2C00A125AE /* zfilter.h in Headers */,
+				5B94E5A82A52FD2C00A125AE /* zutil.h in Headers */,
+				5B94E58D2A52FD2C00A125AE /* zvad.h in Headers */,
+				5B94E5692A52FD2C00A125AE /* zg2papi.h in Headers */,
+				5B94E5662A52FD2C00A125AE /* zcomp_lstm_cell.h in Headers */,
+				5B94E5972A52FD2C00A125AE /* zfftr2r.h in Headers */,
+				5B94E56C2A52FD2C00A125AE /* zvtapi.h in Headers */,
+				5B94E57E2A52FD2C00A125AE /* zmacro.h in Headers */,
+				5B94E5832A52FD2C00A125AE /* zslmem.h in Headers */,
+				5B94E58A2A52FD2C00A125AE /* zns.h in Headers */,
+				5B94E57D2A52FD2C00A125AE /* zfea2.h in Headers */,
+				5B94E5AA2A52FD2C00A125AE /* zcfmem.h in Headers */,
+				5B94E59E2A52FD2C00A125AE /* zvec.h in Headers */,
+				5B94E5682A52FD2C00A125AE /* zcomp_lstm.h in Headers */,
+				5B94E56B2A52FD2C00A125AE /* zvtmem.h in Headers */,
+				5B94E5AB2A52FD2C00A125AE /* zcfapi.h in Headers */,
+				5B94E5712A52FD2C00A125AE /* zphosto.h in Headers */,
+				5B94E5942A52FD2C00A125AE /* zbf.h in Headers */,
+				5B94E5652A52FD2C00A125AE /* zcomp_linear.h in Headers */,
+				5B94E58B2A52FD2C00A125AE /* zvt.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1477,52 +1479,52 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B3971582028060100B41305 /* zrssto.cpp in Sources */,
-				5B3971942028060100B41305 /* zvbvmem.cpp in Sources */,
-				5B3971992028060100B41305 /* zfea2.cpp in Sources */,
-				5B39717E2028060100B41305 /* zfftr2c.cpp in Sources */,
-				5B39716D2028060100B41305 /* zsildet3.cpp in Sources */,
-				5B3971792028060100B41305 /* zcfmem.cpp in Sources */,
-				5B3971472028060100B41305 /* zcomp_linear.cpp in Sources */,
-				5B39718A2028060100B41305 /* zns.cpp in Sources */,
-				5B39715C2028060100B41305 /* zslapi.cpp in Sources */,
-				5B39716F2028060100B41305 /* zvtdet.cpp in Sources */,
-				5B39714D2028060100B41305 /* znnet.cpp in Sources */,
-				5B39719B2028060100B41305 /* zfilter.cpp in Sources */,
-				5B39717C2028060100B41305 /* zg2papi.cpp in Sources */,
-				5B3971502028060100B41305 /* fa_fir.cpp in Sources */,
-				5B39718E2028060100B41305 /* zvad.cpp in Sources */,
-				5B39714B2028060100B41305 /* zcomp_lstm_cell.cpp in Sources */,
-				5B3971712028060100B41305 /* zvtapi.cpp in Sources */,
-				5B39719D2028060100B41305 /* zbuff.cpp in Sources */,
-				5B3971802028060100B41305 /* zfftr2r.cpp in Sources */,
-				5B3971542028060100B41305 /* zrsapi.cpp in Sources */,
-				5B3971632028060100B41305 /* zcmat.cpp in Sources */,
-				5B3971622028060100B41305 /* zutil.cpp in Sources */,
-				5B3971412028060100B41305 /* zcomp.cpp in Sources */,
-				5B39715A2028060100B41305 /* spline.cpp in Sources */,
-				5B3971902028060100B41305 /* zvt.cpp in Sources */,
-				5B3971972028060100B41305 /* zfea1.cpp in Sources */,
-				5B39716B2028060100B41305 /* zphosto.cpp in Sources */,
-				5B3971862028060100B41305 /* zbf.cpp in Sources */,
-				5B3971522028060100B41305 /* fa_resample.cpp in Sources */,
-				5B3971922028060100B41305 /* zvbvapi.cpp in Sources */,
-				5B3971602028060100B41305 /* zaudapi.cpp in Sources */,
-				5B3971672028060100B41305 /* zmat_neon.cpp in Sources */,
-				5B3971752028060100B41305 /* zvtsto.cpp in Sources */,
-				5B3971652028060100B41305 /* zmat.cpp in Sources */,
-				5B3971882028060100B41305 /* zdirty.cpp in Sources */,
-				5B3971452028060100B41305 /* zcomp_affine.cpp in Sources */,
-				5B3971492028060100B41305 /* zcomp_lstm.cpp in Sources */,
-				5B3971692028060100B41305 /* zvec.cpp in Sources */,
-				5B3971732028060100B41305 /* zvtmem.cpp in Sources */,
-				5B39718C2028060100B41305 /* zsl.cpp in Sources */,
-				5B3971772028060100B41305 /* zcfapi.cpp in Sources */,
-				5B3971562028060100B41305 /* zrsmem2.cpp in Sources */,
-				5B39715E2028060100B41305 /* zslmem.cpp in Sources */,
-				5B3971842028060100B41305 /* zoutput.cpp in Sources */,
-				5B3971432028060100B41305 /* zcomp_activation.cpp in Sources */,
-				5B3971822028060100B41305 /* zinput.cpp in Sources */,
+				5B94E5672A52FD2C00A125AE /* zcomp_lstm.cpp in Sources */,
+				5B94E5882A52FD2C00A125AE /* zvbvmem.cpp in Sources */,
+				5B94E5802A52FD2C00A125AE /* zbuff.cpp in Sources */,
+				5B94E59A2A52FD2C00A125AE /* zfftr2c.cpp in Sources */,
+				5B94E5552A52FD2C00A125AE /* zrssto.cpp in Sources */,
+				5B94E5782A52FD2C00A125AE /* zfea2.cpp in Sources */,
+				5B94E5932A52FD2C00A125AE /* zsl.cpp in Sources */,
+				5B94E5792A52FD2C00A125AE /* zfea1.cpp in Sources */,
+				5B94E58F2A52FD2C00A125AE /* zvt.cpp in Sources */,
+				5B94E5512A52FD2C00A125AE /* zrsmem2.cpp in Sources */,
+				5B94E5732A52FD2C00A125AE /* zphosto.cpp in Sources */,
+				5B94E54F2A52FD2C00A125AE /* zaudapi.cpp in Sources */,
+				5B94E5A02A52FD2C00A125AE /* zvec.cpp in Sources */,
+				5B94E5632A52FD2C00A125AE /* zcomp_affine.cpp in Sources */,
+				5B94E56E2A52FD2C00A125AE /* zvtsto.cpp in Sources */,
+				5B94E5742A52FD2C00A125AE /* zsildet3.cpp in Sources */,
+				5B94E5612A52FD2C00A125AE /* zcomp_activation.cpp in Sources */,
+				5B94E55C2A52FD2C00A125AE /* zcomp.cpp in Sources */,
+				5B94E5772A52FD2C00A125AE /* zutil.cpp in Sources */,
+				5B94E55E2A52FD2C00A125AE /* zcomp_linear.cpp in Sources */,
+				5B94E5952A52FD2C00A125AE /* zvad.cpp in Sources */,
+				5B94E5A72A52FD2C00A125AE /* zinput.cpp in Sources */,
+				5B94E56D2A52FD2C00A125AE /* zvtmem.cpp in Sources */,
+				5B94E5642A52FD2C00A125AE /* zcomp_lstm_cell.cpp in Sources */,
+				5B94E5AC2A52FD2C00A125AE /* zcfapi.cpp in Sources */,
+				5B94E5902A52FD2C00A125AE /* zns.cpp in Sources */,
+				5B94E5752A52FD2C00A125AE /* zvtapi.cpp in Sources */,
+				5B94E5862A52FD2C00A125AE /* spline.cpp in Sources */,
+				5B94E5542A52FD2C00A125AE /* fa_fir.cpp in Sources */,
+				5B94E5852A52FD2C00A125AE /* zslmem.cpp in Sources */,
+				5B94E5992A52FD2C00A125AE /* zfftr2r.cpp in Sources */,
+				5B94E5A52A52FD2C00A125AE /* zoutput.cpp in Sources */,
+				5B94E5A32A52FD2C00A125AE /* zmat.cpp in Sources */,
+				5B94E5962A52FD2C00A125AE /* zvbvapi.cpp in Sources */,
+				5B94E56F2A52FD2C00A125AE /* zvtdet.cpp in Sources */,
+				5B94E5912A52FD2C00A125AE /* zdirty.cpp in Sources */,
+				5B94E5A92A52FD2C00A125AE /* zcfmem.cpp in Sources */,
+				5B94E5562A52FD2C00A125AE /* zrsapi.cpp in Sources */,
+				5B94E58E2A52FD2C00A125AE /* zbf.cpp in Sources */,
+				5B94E59F2A52FD2C00A125AE /* zcmat.cpp in Sources */,
+				5B94E57A2A52FD2C00A125AE /* zfilter.cpp in Sources */,
+				5B94E5842A52FD2C00A125AE /* zslapi.cpp in Sources */,
+				5B94E55F2A52FD2C00A125AE /* znnet.cpp in Sources */,
+				5B94E59C2A52FD2C00A125AE /* zmat_neon.cpp in Sources */,
+				5B94E5572A52FD2C00A125AE /* fa_resample.cpp in Sources */,
+				5B94E56A2A52FD2C00A125AE /* zg2papi.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
