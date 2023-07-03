@@ -31,11 +31,6 @@
 		5B3970C12028014400B41305 /* aec_wrap.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970BE2028014300B41305 /* aec_wrap.h */; };
 		5B3971A02028061500B41305 /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
 		5B3971AB2028072200B41305 /* libactivation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B397084202800E400B41305 /* libactivation.a */; };
-		5B3971AC2028075100B41305 /* libmkl_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A22028063400B41305 /* libmkl_core.a */; };
-		5B3971AD2028075100B41305 /* libmkl_intel_lp64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A52028063500B41305 /* libmkl_intel_lp64.a */; };
-		5B3971AE2028075100B41305 /* libmkl_sequential.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A42028063500B41305 /* libmkl_sequential.a */; };
-		5B3971AF2028075100B41305 /* libr2ssp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A32028063400B41305 /* libr2ssp.a */; };
-		5B3971B02028075100B41305 /* libztvad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A12028063400B41305 /* libztvad.a */; };
 		5B39722A20280AC100B41305 /* speex_buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971F420280AC100B41305 /* speex_buffer.h */; };
 		5B39722B20280AC100B41305 /* speex_echo.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971F520280AC100B41305 /* speex_echo.h */; };
 		5B39722C20280AC100B41305 /* speex_jitter.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971F620280AC100B41305 /* speex_jitter.h */; };
@@ -89,16 +84,9 @@
 		5B89A2BC206612B400C6CD20 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B89A2BB206612B400C6CD20 /* main.cpp */; };
 		5B89A2C0206613B100C6CD20 /* libactivation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B397084202800E400B41305 /* libactivation.a */; };
 		5B89A2C1206613B100C6CD20 /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
-		5B89A2C22066143C00C6CD20 /* libmkl_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A22028063400B41305 /* libmkl_core.a */; };
-		5B89A2C32066143C00C6CD20 /* libmkl_intel_lp64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A52028063500B41305 /* libmkl_intel_lp64.a */; };
-		5B89A2C42066143C00C6CD20 /* libmkl_sequential.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A42028063500B41305 /* libmkl_sequential.a */; };
-		5B89A2C52066143C00C6CD20 /* libr2ssp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A32028063400B41305 /* libr2ssp.a */; };
-		5B89A2C62066143C00C6CD20 /* libztvad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971A12028063400B41305 /* libztvad.a */; };
 		5B89A2CE2066148400C6CD20 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B89A2CD2066148400C6CD20 /* main.cpp */; };
 		5B89A2D22066157900C6CD20 /* libspeex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971B520280A8200B41305 /* libspeex.a */; };
-		5B89A2D4206615F700C6CD20 /* libfftw3f.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B89A2D3206615F700C6CD20 /* libfftw3f.a */; };
 		5B89A2DC206616C600C6CD20 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B89A2DB206616C600C6CD20 /* main.cpp */; };
-		5B89A2E22066176B00C6CD20 /* libfftw3f.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B89A2D3206615F700C6CD20 /* libfftw3f.a */; };
 		5B8F86DC202896D2004A883C /* audio_processing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8F86DB202896D2004A883C /* audio_processing.cpp */; };
 		5B8F86DD20289906004A883C /* libcommon_audio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B8F86CE2028968B004A883C /* libcommon_audio.a */; };
 		5B8F86E12028B50D004A883C /* audio_converter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8F86DE2028B50C004A883C /* audio_converter.cpp */; };
@@ -198,6 +186,13 @@
 		5B94E5AA2A52FD2C00A125AE /* zcfmem.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E54C2A52FD2C00A125AE /* zcfmem.h */; };
 		5B94E5AB2A52FD2C00A125AE /* zcfapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B94E54D2A52FD2C00A125AE /* zcfapi.h */; };
 		5B94E5AC2A52FD2C00A125AE /* zcfapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B94E54E2A52FD2C00A125AE /* zcfapi.cpp */; };
+		5B94E5B42A53015200A125AE /* libiomp5.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5AD2A53015200A125AE /* libiomp5.a */; };
+		5B94E5B52A53015200A125AE /* libmkl_intel_lp64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5AE2A53015200A125AE /* libmkl_intel_lp64.a */; };
+		5B94E5B62A53015200A125AE /* libmkl_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5AF2A53015200A125AE /* libmkl_core.a */; };
+		5B94E5B72A53015200A125AE /* libr2ssp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B02A53015200A125AE /* libr2ssp.a */; };
+		5B94E5B82A53015200A125AE /* libztvad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B12A53015200A125AE /* libztvad.a */; };
+		5B94E5B92A53015200A125AE /* libmkl_sequential.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B22A53015200A125AE /* libmkl_sequential.a */; };
+		5B94E5BA2A53015200A125AE /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B32A53015200A125AE /* libopus.a */; };
 		5BA3DDEA206379BE00AF4F15 /* simple_wave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BA3DDE9206379BE00AF4F15 /* simple_wave.cpp */; };
 /* End PBXBuildFile section */
 
@@ -267,11 +262,6 @@
 		5B3970BC2028014300B41305 /* aec_wrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aec_wrap.cpp; sourceTree = "<group>"; };
 		5B3970BE2028014300B41305 /* aec_wrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aec_wrap.h; sourceTree = "<group>"; };
 		5B3970C92028057100B41305 /* libr2vt4.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libr2vt4.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B3971A12028063400B41305 /* libztvad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libztvad.a; path = ../../workspace/thirdlib/mac/lib/libztvad.a; sourceTree = "<group>"; };
-		5B3971A22028063400B41305 /* libmkl_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_core.a; path = ../../workspace/thirdlib/mac/lib/libmkl_core.a; sourceTree = "<group>"; };
-		5B3971A32028063400B41305 /* libr2ssp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libr2ssp.a; path = ../../workspace/thirdlib/mac/lib/libr2ssp.a; sourceTree = "<group>"; };
-		5B3971A42028063500B41305 /* libmkl_sequential.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_sequential.a; path = ../../workspace/thirdlib/mac/lib/libmkl_sequential.a; sourceTree = "<group>"; };
-		5B3971A52028063500B41305 /* libmkl_intel_lp64.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_intel_lp64.a; path = ../../workspace/thirdlib/mac/lib/libmkl_intel_lp64.a; sourceTree = "<group>"; };
 		5B3971B520280A8200B41305 /* libspeex.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libspeex.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B3971F420280AC100B41305 /* speex_buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = speex_buffer.h; sourceTree = "<group>"; };
 		5B3971F520280AC100B41305 /* speex_echo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = speex_echo.h; sourceTree = "<group>"; };
@@ -333,7 +323,6 @@
 		5B89A2BB206612B400C6CD20 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		5B89A2CB2066148400C6CD20 /* test_audio_processing */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test_audio_processing; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B89A2CD2066148400C6CD20 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		5B89A2D3206615F700C6CD20 /* libfftw3f.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfftw3f.a; path = workspace/lib/libfftw3f.a; sourceTree = "<group>"; };
 		5B89A2D9206616C600C6CD20 /* test_mel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test_mel; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B89A2DB206616C600C6CD20 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		5B8F86CE2028968B004A883C /* libcommon_audio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libcommon_audio.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -437,6 +426,13 @@
 		5B94E54C2A52FD2C00A125AE /* zcfmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcfmem.h; sourceTree = "<group>"; };
 		5B94E54D2A52FD2C00A125AE /* zcfapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zcfapi.h; sourceTree = "<group>"; };
 		5B94E54E2A52FD2C00A125AE /* zcfapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zcfapi.cpp; sourceTree = "<group>"; };
+		5B94E5AD2A53015200A125AE /* libiomp5.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libiomp5.a; path = "../3rd-party/mac/lib/libiomp5.a"; sourceTree = "<group>"; };
+		5B94E5AE2A53015200A125AE /* libmkl_intel_lp64.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_intel_lp64.a; path = "../3rd-party/mac/lib/libmkl_intel_lp64.a"; sourceTree = "<group>"; };
+		5B94E5AF2A53015200A125AE /* libmkl_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_core.a; path = "../3rd-party/mac/lib/libmkl_core.a"; sourceTree = "<group>"; };
+		5B94E5B02A53015200A125AE /* libr2ssp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libr2ssp.a; path = "../3rd-party/mac/lib/libr2ssp.a"; sourceTree = "<group>"; };
+		5B94E5B12A53015200A125AE /* libztvad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libztvad.a; path = "../3rd-party/mac/lib/libztvad.a"; sourceTree = "<group>"; };
+		5B94E5B22A53015200A125AE /* libmkl_sequential.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmkl_sequential.a; path = "../3rd-party/mac/lib/libmkl_sequential.a"; sourceTree = "<group>"; };
+		5B94E5B32A53015200A125AE /* libopus.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopus.a; path = "../3rd-party/mac/lib/libopus.a"; sourceTree = "<group>"; };
 		5BA3DDDD2063798700AF4F15 /* libutil.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libutil.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BA3DDE8206379B100AF4F15 /* simple_wave.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = simple_wave.h; sourceTree = "<group>"; };
 		5BA3DDE9206379BE00AF4F15 /* simple_wave.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = simple_wave.cpp; sourceTree = "<group>"; };
@@ -448,11 +444,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				5B8F86DD20289906004A883C /* libcommon_audio.a in Frameworks */,
-				5B3971AC2028075100B41305 /* libmkl_core.a in Frameworks */,
-				5B3971AD2028075100B41305 /* libmkl_intel_lp64.a in Frameworks */,
-				5B3971AE2028075100B41305 /* libmkl_sequential.a in Frameworks */,
-				5B3971AF2028075100B41305 /* libr2ssp.a in Frameworks */,
-				5B3971B02028075100B41305 /* libztvad.a in Frameworks */,
 				5B3971AB2028072200B41305 /* libactivation.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -469,6 +460,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B94E5B42A53015200A125AE /* libiomp5.a in Frameworks */,
+				5B94E5B52A53015200A125AE /* libmkl_intel_lp64.a in Frameworks */,
+				5B94E5B62A53015200A125AE /* libmkl_core.a in Frameworks */,
+				5B94E5B72A53015200A125AE /* libr2ssp.a in Frameworks */,
+				5B94E5B82A53015200A125AE /* libztvad.a in Frameworks */,
+				5B94E5B92A53015200A125AE /* libmkl_sequential.a in Frameworks */,
+				5B94E5BA2A53015200A125AE /* libopus.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -497,11 +495,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B89A2C22066143C00C6CD20 /* libmkl_core.a in Frameworks */,
-				5B89A2C32066143C00C6CD20 /* libmkl_intel_lp64.a in Frameworks */,
-				5B89A2C42066143C00C6CD20 /* libmkl_sequential.a in Frameworks */,
-				5B89A2C52066143C00C6CD20 /* libr2ssp.a in Frameworks */,
-				5B89A2C62066143C00C6CD20 /* libztvad.a in Frameworks */,
 				5B89A2C0206613B100C6CD20 /* libactivation.a in Frameworks */,
 				5B89A2C1206613B100C6CD20 /* libr2vt4.a in Frameworks */,
 			);
@@ -511,7 +504,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B89A2D4206615F700C6CD20 /* libfftw3f.a in Frameworks */,
 				5B89A2D22066157900C6CD20 /* libspeex.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -520,7 +512,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B89A2E22066176B00C6CD20 /* libfftw3f.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -639,12 +630,13 @@
 		5B39719F2028061500B41305 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				5B89A2D3206615F700C6CD20 /* libfftw3f.a */,
-				5B3971A22028063400B41305 /* libmkl_core.a */,
-				5B3971A52028063500B41305 /* libmkl_intel_lp64.a */,
-				5B3971A42028063500B41305 /* libmkl_sequential.a */,
-				5B3971A32028063400B41305 /* libr2ssp.a */,
-				5B3971A12028063400B41305 /* libztvad.a */,
+				5B94E5AD2A53015200A125AE /* libiomp5.a */,
+				5B94E5AF2A53015200A125AE /* libmkl_core.a */,
+				5B94E5AE2A53015200A125AE /* libmkl_intel_lp64.a */,
+				5B94E5B22A53015200A125AE /* libmkl_sequential.a */,
+				5B94E5B32A53015200A125AE /* libopus.a */,
+				5B94E5B02A53015200A125AE /* libr2ssp.a */,
+				5B94E5B12A53015200A125AE /* libztvad.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -1376,7 +1368,7 @@
 		5B39706E202800CF00B41305 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0900;
+				LastUpgradeCheck = 1340;
 				ORGANIZATIONNAME = "薯条";
 				TargetAttributes = {
 					5B397075202800CF00B41305 = {
@@ -1624,6 +1616,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -1631,8 +1624,10 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -1679,6 +1674,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -1686,8 +1682,10 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -1716,6 +1714,7 @@
 		5B39707E202800CF00B41305 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				"LIBRARY_SEARCH_PATHS[arch=*]" = /Users/daixiang/workspace/thirdlib/mac/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.12.6;
@@ -1726,6 +1725,7 @@
 		5B39707F202800CF00B41305 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				MACOSX_DEPLOYMENT_TARGET = 10.12.6;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1762,8 +1762,8 @@
 				EXECUTABLE_PREFIX = lib;
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_ENABLE_CPP_RTTI = YES;
-				"HEADER_SEARCH_PATHS[arch=*]" = /Users/daixiang/workspace/thirdlib/mac/include;
-				"LIBRARY_SEARCH_PATHS[arch=*]" = /Users/daixiang/workspace/thirdlib/mac/lib;
+				"HEADER_SEARCH_PATHS[arch=*]" = "/Users/daixiang/Home/vsys-final/3rd-party/mac/include";
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "/Users/daixiang/Home/vsys-final/3rd-party/mac/lib";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1848,6 +1848,7 @@
 		5B89A2BD206612B400C6CD20 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				"LIBRARY_SEARCH_PATHS[arch=*]" = /Users/daixiang/workspace/thirdlib/mac/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.12.6;
@@ -1858,6 +1859,7 @@
 		5B89A2BE206612B400C6CD20 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				MACOSX_DEPLOYMENT_TARGET = 10.12.6;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1867,6 +1869,7 @@
 		5B89A2D02066148500C6CD20 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1880,6 +1883,7 @@
 		5B89A2D12066148500C6CD20 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1893,6 +1897,7 @@
 		5B89A2DE206616C600C6CD20 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1906,6 +1911,7 @@
 		5B89A2DF206616C600C6CD20 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",

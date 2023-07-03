@@ -16,6 +16,7 @@ proguard-project.txt
 project.properties
 gen
 tmp
+mac
 *.o
 model
 workdir_cn
