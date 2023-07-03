@@ -29,7 +29,6 @@
 		5B3970BA2028013400B41305 /* cpu_relax.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970B92028013400B41305 /* cpu_relax.h */; };
 		5B3970C02028014400B41305 /* aec_wrap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B3970BC2028014300B41305 /* aec_wrap.cpp */; };
 		5B3970C12028014400B41305 /* aec_wrap.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3970BE2028014300B41305 /* aec_wrap.h */; };
-		5B3971A02028061500B41305 /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
 		5B3971AB2028072200B41305 /* libactivation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B397084202800E400B41305 /* libactivation.a */; };
 		5B39722A20280AC100B41305 /* speex_buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971F420280AC100B41305 /* speex_buffer.h */; };
 		5B39722B20280AC100B41305 /* speex_echo.h in Headers */ = {isa = PBXBuildFile; fileRef = 5B3971F520280AC100B41305 /* speex_echo.h */; };
@@ -193,6 +192,7 @@
 		5B94E5B82A53015200A125AE /* libztvad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B12A53015200A125AE /* libztvad.a */; };
 		5B94E5B92A53015200A125AE /* libmkl_sequential.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B22A53015200A125AE /* libmkl_sequential.a */; };
 		5B94E5BA2A53015200A125AE /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B32A53015200A125AE /* libopus.a */; };
+		5B94E5BB2A53056400A125AE /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
 		5BA3DDEA206379BE00AF4F15 /* simple_wave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BA3DDE9206379BE00AF4F15 /* simple_wave.cpp */; };
 /* End PBXBuildFile section */
 
@@ -452,7 +452,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B3971A02028061500B41305 /* libr2vt4.a in Frameworks */,
+				5B94E5BB2A53056400A125AE /* libr2vt4.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1739,7 +1739,7 @@
 				EXECUTABLE_PREFIX = lib;
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_ENABLE_CPP_RTTI = YES;
-				"HEADER_SEARCH_PATHS[arch=*]" = /Users/daixiang/workspace/thirdlib/mac/include;
+				"HEADER_SEARCH_PATHS[arch=*]" = "/Users/daixiang/Home/vsys-final/3rd-party/mac/include";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;

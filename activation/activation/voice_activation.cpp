@@ -645,7 +645,7 @@ void VoiceActivation::get_vt_info(char*& vt_word, uint32_t& vt_begin, uint32_t& 
         vt_length = strlen(pWordInfo->pWordContent_UTF8);
         vt_begin = 20 * frame_size;
         vt_end = vt_begin + pWordDetInfo->iWordPos_Start - pWordDetInfo->iWordPos_End;
-        vt_energy = pWordDetInfo->fWordEnergy;
+        vt_energy = pWordDetInfo->fEnergy;
     }
     VSYS_DEBUGI("%s     %d      %d      %f", vt_word, vt_begin, vt_end, vt_energy);
 }
