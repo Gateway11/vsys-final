@@ -39,7 +39,7 @@ void test_audio_processing(){
     }
     
     sem_t *proc_sem, *sync_sem;
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) || defined(__MACH__)
 #define __STR(x) #x
     sem_unlink(__STR(proc_sem));
     sem_unlink(__STR(sync_sem));
@@ -107,7 +107,7 @@ void test_audio_processing(){
     thread_exit = true;
     mfor_each(0, num_mics, [&proc_sem]{sem_post(proc_sem);});
     std::for_each(threads.begin(), threads.end(), [](std::thread& thread){thread.join();});
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) || defined(__MACH__)
     sem_close(proc_sem);
     sem_close(sync_sem);
     sem_unlink(__STR(proc_sem));
