@@ -84,7 +84,6 @@
 		5B89A2C0206613B100C6CD20 /* libactivation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B397084202800E400B41305 /* libactivation.a */; };
 		5B89A2C1206613B100C6CD20 /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
 		5B89A2CE2066148400C6CD20 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B89A2CD2066148400C6CD20 /* main.cpp */; };
-		5B89A2D22066157900C6CD20 /* libspeex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971B520280A8200B41305 /* libspeex.a */; };
 		5B89A2DC206616C600C6CD20 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B89A2DB206616C600C6CD20 /* main.cpp */; };
 		5B8F86DC202896D2004A883C /* audio_processing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B8F86DB202896D2004A883C /* audio_processing.cpp */; };
 		5B8F86DD20289906004A883C /* libcommon_audio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B8F86CE2028968B004A883C /* libcommon_audio.a */; };
@@ -193,6 +192,12 @@
 		5B94E5B92A53015200A125AE /* libmkl_sequential.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B22A53015200A125AE /* libmkl_sequential.a */; };
 		5B94E5BA2A53015200A125AE /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B32A53015200A125AE /* libopus.a */; };
 		5B94E5BB2A53056400A125AE /* libr2vt4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3970C92028057100B41305 /* libr2vt4.a */; };
+		5B94E5BF2A530EF900A125AE /* libiomp5.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5AD2A53015200A125AE /* libiomp5.a */; };
+		5B94E5C02A530EF900A125AE /* libmkl_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5AF2A53015200A125AE /* libmkl_core.a */; };
+		5B94E5C12A530EF900A125AE /* libmkl_intel_lp64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5AE2A53015200A125AE /* libmkl_intel_lp64.a */; };
+		5B94E5C22A530EF900A125AE /* libmkl_sequential.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B22A53015200A125AE /* libmkl_sequential.a */; };
+		5B94E5C42A530EF900A125AE /* libr2ssp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B94E5B02A53015200A125AE /* libr2ssp.a */; };
+		5B94E5C52A53150800A125AE /* libspeex.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B3971B520280A8200B41305 /* libspeex.a */; };
 		5BA3DDEA206379BE00AF4F15 /* simple_wave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BA3DDE9206379BE00AF4F15 /* simple_wave.cpp */; };
 /* End PBXBuildFile section */
 
@@ -504,7 +509,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B89A2D22066157900C6CD20 /* libspeex.a in Frameworks */,
+				5B94E5C52A53150800A125AE /* libspeex.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -512,6 +517,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B94E5BF2A530EF900A125AE /* libiomp5.a in Frameworks */,
+				5B94E5C02A530EF900A125AE /* libmkl_core.a in Frameworks */,
+				5B94E5C12A530EF900A125AE /* libmkl_intel_lp64.a in Frameworks */,
+				5B94E5C22A530EF900A125AE /* libmkl_sequential.a in Frameworks */,
+				5B94E5C42A530EF900A125AE /* libr2ssp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1871,10 +1881,8 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/workspace/lib",
-				);
+				HEADER_SEARCH_PATHS = "/Users/daixiang/Home/vsys-final/activation/speex/include";
+				LIBRARY_SEARCH_PATHS = "/Users/daixiang/Home/vsys-final/3rd-party/mac/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1885,10 +1893,8 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/workspace/lib",
-				);
+				HEADER_SEARCH_PATHS = "/Users/daixiang/Home/vsys-final/activation/speex/include";
+				LIBRARY_SEARCH_PATHS = "/Users/daixiang/Home/vsys-final/3rd-party/mac/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1902,6 +1908,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/workspace/lib",
+					"/Users/daixiang/Home/vsys-final/3rd-party/mac/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12.6;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1916,6 +1923,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/workspace/lib",
+					"/Users/daixiang/Home/vsys-final/3rd-party/mac/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12.6;
 				PRODUCT_NAME = "$(TARGET_NAME)";
