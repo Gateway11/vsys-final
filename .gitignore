@@ -15,6 +15,7 @@ bin
 proguard-project.txt
 project.properties
 gen
+tmp
 *.o
 model
 workdir_cn
