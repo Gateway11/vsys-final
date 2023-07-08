@@ -24,7 +24,6 @@ LOCAL_SRC_FILES := ../3rd-party/armeabi-v7a/libs/libr2ssp.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include Android-ztvad.mk Android-r2vt4.mk
-
 else
 #include $(call all-subdir-makefiles)
 include $(call all-named-files-under,Android-*, .)
