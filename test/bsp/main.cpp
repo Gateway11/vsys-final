@@ -94,6 +94,7 @@ int main(int argc, const char * argv[]) {
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     //servaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     //servaddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    //servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     servaddr.sin_port = htons(2333);
 
     uint32_t* buf[1024], str[64];

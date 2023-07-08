@@ -130,6 +130,17 @@ void func(const int* values) {
 }
 
 int main() {
+#if 0
+#define lambda_(return_type, function_body) ({ return_type fn function_body fn; })
+ 
+    lambda_ (int, (int x, int y) { return x + y; })(1, 2); 
+
+#define lambda3(return_type, function_body, ...) \
+    ({ return_type fn (__typeof__(VA_ARG0(__VA_ARGS__)) x) function_body fn; })(__VA_ARGS__)
+
+    lambda3 (int, { return x; }, 1); 
+#endif
+
 #define COMPILE_ASSERT(cond) typedef char __compile_time_assert[ (cond > 0) ? 0 : -1]
     COMPILE_ASSERT(100);
 
