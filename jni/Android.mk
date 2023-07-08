@@ -28,4 +28,4 @@ include Android-r2ssp.mk
 include Android-ztvad.mk Android-r2vt4.mk
 
 #include $(call all-subdir-makefiles)
-#include $(call all-named-files-under, *.mk, .)
+#include $(call all-named-files-under, Android-*, .)
