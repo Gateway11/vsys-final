@@ -422,7 +422,7 @@ namespace __r2vt4__ {
     int M = pMatA->m_iRow_Neon;
     int K = pMatA->m_iCol_Neon;
     
-#if defined(__arm__)
+#if defined(__arm__) && __ANDROID_API__ <= 26
     
     ///////////////////////////////////////////////////////////////////
     

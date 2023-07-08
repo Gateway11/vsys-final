@@ -1,6 +1,8 @@
 # vsys-final
 
 ### blis in android
+    
+    NDK-21
 
     https://github.com/xianyi/OpenBLAS/wiki/How-to-build-OpenBLAS-for-Android
 
