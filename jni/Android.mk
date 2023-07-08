@@ -21,10 +21,9 @@ include $(PREBUILT_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := r2ssp
 LOCAL_SRC_FILES := ../3rd-party/armeabi-v7a/libs/libr2ssp.so
-include $(PREBUILT_SHARED_LIBRARY)
+#include $(PREBUILT_SHARED_LIBRARY)
 
-include Android-ztvad.mk Android-r2vt4.mk
+include Android-ztvad.mk Android-r2vt4.mk Android-r2ssp.mk
 else
-#include $(call all-subdir-makefiles)
 include $(call all-named-files-under,Android-*, .)
 endif
