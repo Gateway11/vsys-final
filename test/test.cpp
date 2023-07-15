@@ -129,7 +129,20 @@ void func(const int* values) {
     printf("%s, %lu, %d\n", __func__, (uint8_t)sizeof(values) / sizeof(values[0]), x);
 }
 
+#define REG1 1
+#define REG5 5
+
 int main() {
+#line 136 "abcdefg.xxxxx"
+    switch(5) {
+        case REG1 ... REG5 :
+            printf("%s line: %d\n", __FILE__, __LINE__);
+            break;
+        default:
+            printf("%s line: %d\n", __FILE__, __LINE__);
+            break;
+    }
+
 #if 0
 #define lambda_(return_type, function_body) ({ return_type fn function_body fn; })
  
