@@ -38,12 +38,19 @@
 
 //---------------------------------------
 
+
 #define __VA_ARG0(A0,...) A0
+#define __VA_ARG1(A0,A1,...) A1
+#define __VA_ARG2(A0,A1,A2,...) A2
+#define __VA_ARG3(A0,A1,A2,A3,...) A3
+
+#define ARG(X) X
 //#define VA_ARG0(...) VA_ARG_EXPAND(__VA_ARG0(__VA_ARGS__,DFLT)+0)  //想想这里为啥要写个+0？？
-#define VA_ARG0(A0,...) A0
-//#define __VA_ARG1(A0,A1,...) A1
 //#define VA_ARG1(...) VA_ARG_EXPAND(__VA_ARG1(__VA_ARGS__,DFLT,DFLT))
-#define VA_ARG1(A0,A1,...) A1
+#define VA_ARG0(...) __VA_ARG0(__VA_ARGS__,DFLT)
+#define VA_ARG1(...) __VA_ARG1(__VA_ARGS__,DFLT,DFLT)
+#define VA_ARG2(...) __VA_ARG2(__VA_ARGS__,DFLT,DFLT,DFLT)
+#define VA_ARG3(...) __VA_ARG3(__VA_ARGS__,DFLT,DFLT,DFLT,DFLT)
 
 #define __PP_CAT(x,y) x##y //函数可变参数重载
 #define PP_CAT(x,y) __PP_CAT(x,y)
@@ -132,6 +139,10 @@ void func(const int* values) {
 #define REG1 1
 #define REG5 5
 
+int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
+    return 8;
+}
+
 int main() {
 #line 136 "abcdefg.xxxxx"
     switch(5) {
@@ -142,6 +153,18 @@ int main() {
             printf("%s line: %d\n", __FILE__, __LINE__);
             break;
     }
+#define DFLT 0
+#define mImageCreate(...)(                                                                                              \
+  (VA_ARG_NUM(__VA_ARGS__) == 0) ? ImageCreate(DFLT, DFLT, DFLT, NULL):                                                 \
+  (VA_ARG_NUM(__VA_ARGS__) == 2) ? ImageCreate(DFLT, VA_ARG0(__VA_ARGS__), VA_ARG1(__VA_ARGS__), NULL):                 \
+  (VA_ARG_NUM(__VA_ARGS__) == 3) ? ImageCreate(VA_ARG0(__VA_ARGS__), VA_ARG1(__VA_ARGS__), VA_ARG2(__VA_ARGS__), NULL): \
+  (VA_ARG_NUM(__VA_ARGS__) == 4) ? ImageCreate(VA_ARG0(__VA_ARGS__),VA_ARG1(__VA_ARGS__),VA_ARG2(__VA_ARGS__),(unsigned char ***)VA_ARG3(__VA_ARGS__)):\
+  NULL                                                                                                                  \
+)
+    mImageCreate(12, 34, 32);
+    mImageCreate(12, 34);
+    //mImageCreate();
+
 
 #if 0
 #define lambda_(return_type, function_body) ({ return_type fn function_body fn; })
