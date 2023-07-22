@@ -2,8 +2,8 @@
 
 cd 3rd-party
 
-if [ ! -d blis ]; then
-    git clone https://github.com/flame/blis.git
+if [ ! -d blis/.git ]; then
+    git submodule update --init blis
 
     cd blis
     export NDK_BUNDLE=../../../*/*
