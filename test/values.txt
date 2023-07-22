@@ -12,16 +12,21 @@ DSP TDM_SCK, AMP TDM_SCK; DSP TDM_SD, AMP TDM_SD
 
 
 git stash save [stashMessage]
-
-# 取出指定index的储藏的修改到工作区中
 git stash apply stash@{index} 
-# 将指定index的储藏从储藏记录列表中删除
 git stash drop stash@{index}
-
 git stash pop
 git stash show -p stash@{3}
 
+
 git submodule add git@github.com:nanopb/nanopb.git 3rd-party/nanopb
+git rm --cached 3rd-party/nanopb
+
+git submodule init
+git submodule update 3rd-party/nanopb
+
+git clone --recursive <url>
+
 git pull --recurse-submodule
+git submodule update --init --recursive
 
 #endif
