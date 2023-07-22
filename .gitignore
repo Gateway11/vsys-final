@@ -1,8 +1,6 @@
 #*.xcworkspace
 #*.xcodeproj
 libs
-!3rd-party/armeabi-v7a/libs
-blis
 obj
 bin
 3rd-party/fftw*

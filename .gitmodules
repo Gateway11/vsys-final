@@ -1,3 +1,6 @@
 [submodule "3rd-party/nanopb"]
 	path = 3rd-party/nanopb
 	url = git@github.com:nanopb/nanopb.git
+[submodule "3rd-party/blis"]
+	path = 3rd-party/blis
+	url = git@github.com:flame/blis.git
