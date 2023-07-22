@@ -21,4 +21,7 @@ git stash drop stash@{index}
 git stash pop
 git stash show -p stash@{3}
 
+git submodule add git@github.com:nanopb/nanopb.git 3rd-party/nanopb
+git pull --recurse-submodule
+
 #endif
