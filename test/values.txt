@@ -1,4 +1,25 @@
 1,2,3,4,5,
 
-//snd_afe_dai_trigger; SND_SOC_DAIFMT_CBM_CFM/SND_SOC_DAIFMT_CBS_CFS sck_polar
-//DSP TDM_SCK, AMP TDM_SCK; DSP TDM_SD, AMP TDM_SD
+#if 0
+
+snd_afe_dai_trigger; SND_SOC_DAIFMT_CBM_CFM/SND_SOC_DAIFMT_CBS_CFS sck_polar
+DSP TDM_SCK, AMP TDM_SCK; DSP TDM_SD, AMP TDM_SD
+
+
+
+
+
+
+
+git stash save [stashMessage]
+
+# 取出指定index的储藏的修改到工作区中
+git stash apply stash@{index} 
+# 将指定index的储藏从储藏记录列表中删除
+git stash drop stash@{index}
+git stash apply stash@{index}
+
+git stash pop
+git stash show -p stash@{3}
+
+#endif
