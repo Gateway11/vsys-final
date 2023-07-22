@@ -17,7 +17,6 @@ git stash save [stashMessage]
 git stash apply stash@{index} 
 # 将指定index的储藏从储藏记录列表中删除
 git stash drop stash@{index}
-git stash apply stash@{index}
 
 git stash pop
 git stash show -p stash@{3}
