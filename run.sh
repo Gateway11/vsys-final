@@ -23,8 +23,7 @@ fi
 
 if [ ! -d fftw-3.3.10 ]; then
     wget https://www.fftw.org/fftw-3.3.10.tar.gz
-    tar -zxvf fftw-3.3.10.tar.gz
-    rm *.tar.gz
+    tar -zxvf fftw-3.3.10.tar.gz || exit; rm *.tar.gz
 
     cd fftw-3.3.10
     mkdir build && cd build
@@ -32,7 +31,7 @@ if [ ! -d fftw-3.3.10 ]; then
     cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_FLOAT=ON \
         -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r21/build/cmake/android.toolchain.cmake \
         -DANDROID_ABI=arm64-v8a \
-        -DANDROID_PLATFORM=android-29
+        -DANDROID_PLATFORM=android-29 || exit
 
     #make -j8
     cd ../..
