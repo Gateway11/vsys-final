@@ -25,7 +25,7 @@ git submodule init
 git submodule update 3rd-party/nanopb
 git submodule update --init 3rd-party/blis
 
-git clone --recursive <url>
+git clone --recursive <url> --depth=1
 
 git pull --recurse-submodule
 git submodule update --init --recursive
