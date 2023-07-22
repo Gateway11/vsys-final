@@ -3,9 +3,8 @@
 cd 3rd-party
 
 if [ ! -d blis/.git ]; then
-    git submodule update --init blis
+    git submodule update --init blis || exit; cd blis
 
-    cd blis
     export NDK_BUNDLE=../../../*/*
     export TOOLCHAIN=$NDK_BUNDLE/toolchains/llvm/prebuilt/$(uname | tr A-Z a-z)-x86_64/bin
     
