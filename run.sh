@@ -2,7 +2,7 @@
 
 cd 3rd-party
 
-if [ ! -d blis/.git ]; then
+if [ ! -f blis/.git ]; then
     git submodule update --init --depth 1 blis || exit; cd blis
 
     export NDK_BUNDLE=../../../*/*
