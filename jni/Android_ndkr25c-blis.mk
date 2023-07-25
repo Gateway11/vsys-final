@@ -17,7 +17,8 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_firestorm
-LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS) ../3rd-party/blis/config/firestorm/bli_cntx_init_firestorm.c
+LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c")
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -march=armv8-a -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=firestorm
 include $(BUILD_STATIC_LIBRARY)
 
@@ -47,11 +48,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blis
-LOCAL_SRC_FILES := \
-    ../3rd-party/blis/config/firestorm/bli_cntx_init_firestorm.c \
-    ../3rd-party/blis/config/generic/bli_cntx_init_generic.c \
-
-LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c")
+LOCAL_SRC_FILES := ../3rd-party/blis/config/generic/bli_cntx_init_generic.c
 LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/frame ! -path "*old*" ! -path "*other*" ! -path "*attic*" ! -path "*amd*" -name "*.c")
 
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -I../3rd-party/blis/frame/compat/cblas/src
