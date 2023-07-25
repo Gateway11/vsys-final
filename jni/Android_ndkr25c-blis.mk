@@ -47,6 +47,5 @@ LOCAL_MODULE    := blis
 LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/frame ! -path "*old*" ! -path "*other*" ! -path "*attic*" ! -path "*amd*" -name "*.c")
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -I../3rd-party/blis/frame/compat/cblas/src
 LOCAL_LDLIBS    := -lm -ldl
-
 LOCAL_STATIC_LIBRARIES := ref_kernels_armsve ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic
 include $(BUILD_SHARED_LIBRARY)
