@@ -4,10 +4,6 @@ LOCAL_CFLAGS_COMMON := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautol
 LOCAL_CFLAGS_REF_KERNELS := $(LOCAL_CFLAGS_COMMON) -O3 -funsafe-math-optimizations -ffp-contract=fast -DBLIS_IN_REF_KERNEL=1
 LOCAL_SRC_FILES_REF_KERNELS := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
 
-#-O3 -ftree-vectorize -march=armv8-a+sve -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L -Iinclude/arm64 -I./frame/include -I./frame/compat/cblas/src/ -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
-
-#-O2 -mcpu=cortex-a53 -O3 -ftree-vectorize -mcpu=cortex-a53 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L -Iinclude/arm64 -I./frame/include -I./frame/compat/cblas/src/ -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
-
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_armsve
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS) ../3rd-party/blis/config/armsve/bli_cntx_init_armsve.c
@@ -42,15 +38,13 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_generic
-LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS)
+LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS) ../3rd-party/blis/config/generic/bli_cntx_init_generic.c
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -DBLIS_CNAME=generic
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := blis
-LOCAL_SRC_FILES := ../3rd-party/blis/config/generic/bli_cntx_init_generic.c
-LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/frame ! -path "*old*" ! -path "*other*" ! -path "*attic*" ! -path "*amd*" -name "*.c")
-
+LOCAL_SRC_FILES := $(shell find -L ../3rd-party/blis/frame ! -path "*old*" ! -path "*other*" ! -path "*attic*" ! -path "*amd*" -name "*.c")
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -I../3rd-party/blis/frame/compat/cblas/src
 LOCAL_LDLIBS    := -lm -ldl
 
