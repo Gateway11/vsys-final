@@ -1,7 +1,5 @@
 LOCAL_PATH:= $(call my-dir)
 
-#https://github.com/flame/blis.git
-#configure auto
 LOCAL_CFLAGS_COMMON := -O2 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_POSIX_C_SOURCE=200112L -I../3rd-party/blis/include/arm64 -I../3rd-party/blis/frame/include -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
 LOCAL_CFLAGS_REF_KERNELS := $(LOCAL_CFLAGS_COMMON) -O3 -funsafe-math-optimizations -ffp-contract=fast -DBLIS_IN_REF_KERNEL=1
 LOCAL_SRC_FILES_REF_KERNELS := $(shell find -L ../3rd-party/blis/ref_kernels ! -path "*old*" ! -path *other* -name "*.c")
@@ -9,9 +7,6 @@ LOCAL_SRC_FILES_REF_KERNELS := $(shell find -L ../3rd-party/blis/ref_kernels ! -
 #-O3 -ftree-vectorize -march=armv8-a+sve -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L -Iinclude/arm64 -I./frame/include -I./frame/compat/cblas/src/ -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
 
 #-O2 -mcpu=cortex-a53 -O3 -ftree-vectorize -mcpu=cortex-a53 -Wall -Wno-unused-function -Wfatal-errors -Wno-tautological-compare -Wno-pass-failed -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200112L -Iinclude/arm64 -I./frame/include -I./frame/compat/cblas/src/ -DBLIS_IS_BUILDING_LIBRARY -fvisibility=hidden
-
-LOCAL_SRC_FILES_KERNELS_ARMSVE := $(shell find -L ../3rd-party/blis/kernels/armsve ! -path "*old*" -name "*.c")
-LOCAL_SRC_FILES_KERNELS_ARMSVE := $(shell find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c")
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_armsve
@@ -63,6 +58,4 @@ LOCAL_CFLAGS    := $(LOCAL_CFLAGS_COMMON) -D_GNU_SOURCE -I../3rd-party/blis/fram
 LOCAL_LDLIBS    := -lm -ldl
 
 LOCAL_STATIC_LIBRARIES := ref_kernels_armsve ref_kernels_firestorm ref_kernels_thunderx2 ref_kernels_cortexa57 ref_kernels_cortexa53 ref_kernels_generic
-
 include $(BUILD_SHARED_LIBRARY)
-#include $(BUILD_STATIC_LIBRARY)
