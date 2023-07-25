@@ -14,7 +14,6 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_firestorm
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS) ../3rd-party/blis/config/firestorm/bli_cntx_init_firestorm.c
-LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c")
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -march=armv8-a -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=firestorm
 include $(BUILD_STATIC_LIBRARY)
 
@@ -33,6 +32,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := ref_kernels_cortexa53
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES_REF_KERNELS) ../3rd-party/blis/config/cortexa53/bli_cntx_init_cortexa53.c
+LOCAL_SRC_FILES += $(shell find -L ../3rd-party/blis/kernels/armv8a ! -path "*old*" -name "*.c")
 LOCAL_CFLAGS    := $(LOCAL_CFLAGS_REF_KERNELS) -mcpu=cortex-a53 -ftree-vectorize -D_GNU_SOURCE -DBLIS_CNAME=cortexa53
 include $(BUILD_STATIC_LIBRARY)
 
