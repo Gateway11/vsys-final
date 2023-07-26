@@ -94,7 +94,6 @@
 #define qT3       v20.2s
 
 #define half      v0.2s
-#define halfs     v0.s
 #define dZip      v21.2s
 #define dZip8b    v21.8b
         
@@ -107,7 +106,7 @@
 
         clz     order, subFFTNum                    // N = 2^order
 
-        rsb     order,order,#63
+        RSB     order,order,#63
         MOV     subFFTSize,subFFTNum            // subFFTSize = N/2
         //MOV     subFFTNum,N
         mov     argDst, pDst
@@ -128,7 +127,7 @@
         MOV     zero,#0
         mov    dX0rs[1],zero
         lsl     step,subFFTSize, #3               // step = N/2 * 8 bytes
-        mov    dX0is[1],zero
+        mov    dX0i[1],zero
         // twStep = 3N/8 * 8 bytes pointing to W^1
         SUB     twStep,step,subFFTSize,LSL #1
 
@@ -186,8 +185,8 @@ evenOddButterflyLoop:
         fadd    dT0,dX0r,dX1r                     // a+c
         fsub    dT1,dX0i,dX1i                     // b-d
         fadd    dT3,dX0i,dX1i                     // b+d
-        fmul   dT0,dT0,halfs[0]
-        fmul   dT1,dT1,halfs[0]
+        fmul   dT0,dT0,half[0]
+        fmul   dT1,dT1,half[0]
         // VZIP    dW1r,dW1i
         // VZIP    dW0r,dW0i
         zip1    dZip, dW1r, dW1i
@@ -209,8 +208,8 @@ evenOddButterflyLoop:
         fmla   qT3,dW0i,dT2
 
 
-        fmul  dX1r,qT0,halfs[0]
-        fmul  dX1i,qT1,halfs[0]
+        fmul  dX1r,qT0,half[0]
+        fmul  dX1i,qT1,half[0]
 
         fsub    dY1r,dT0,dX1i                     // F(N/2 -1)
         fadd    dY1i,dT1,dX1r
@@ -220,8 +219,8 @@ evenOddButterflyLoop:
         rev64   dY1i,dY1i
 
 
-        fmul  dX0r,qT2,halfs[0]
-        fmul  dX0i,qT3,halfs[0]
+        fmul  dX0r,qT2,half[0]
+        fmul  dX0i,qT3,half[0]
 
         fsub    dY0r,dT0,dX0i                     // F(1)
         fadd    dY0i,dT1,dX0r

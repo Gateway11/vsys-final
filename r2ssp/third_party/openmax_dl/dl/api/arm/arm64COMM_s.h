@@ -106,7 +106,6 @@
 
 	// Define the function and make it external.
 	.global	\name
-	.hidden \name
 	.section	.text.\name,"ax",%progbits
 	.align	4
 \name :		
