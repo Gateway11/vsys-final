@@ -417,7 +417,7 @@ namespace __r2vt4__ {
     int N = pMatB->m_iCol_Neon;
     int K = pMatA->m_iCol_Neon;
     
-#if defined(__arm__) //&& __ANDROID_API__ <= 26
+#if defined(__arm__) && __ANDROID_API__ <= 26
     
     if (pMatB->m_bF16) {
       
@@ -772,7 +772,7 @@ namespace __r2vt4__ {
 #ifdef __USE_MAT_NEON__
   int ZMat_Neon::Change2F16(){
     
-#if defined(__arm__) //&& __ANDROID_API__ <= 26
+#if defined(__arm__) && __ANDROID_API__ <= 26
     
     m_bF16 = true ;
     m_pData_Neon_F16 = Z_SAFE_NEW_SSE_AR2(m_pData_Neon_F16, unsigned short, m_iRow_Neon * m_iCol_Neon , 16);
