@@ -125,7 +125,7 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 LOCAL_SRC_FILES += $(call all-named-files-under,*.S, ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/armv7)
 LOCAL_CFLAGS    += -DWEBRTC_ARCH_ARM_NEON -DWEBRTC_ARCH_ARM_V7 
 else
-LOCAL_SRC_FILES += $(call all-named-files-under,*.[cS], ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/arm64)
+LOCAL_SRC_FILES += $(call all-named-files-under,*.[cS], ../r2ssp/third_party/openmax_dl/dl-new/sp/src/arm/arm64)
 LOCAL_CFLAGS    += -DWEBRTC_ARCH_ARM64_NEON -DDL_ARM_NEON
 endif
 
