@@ -4,12 +4,14 @@
 #include "fftw3.h"
 #include "lockwrapper.h"
 
+#if __ANDROID_API__ <= 29
 #pragma comment(lib, "mkl_core_dll.lib")
 #pragma comment(lib, "mkl_sequential_dll.lib")
 #ifdef _WIN64
 #pragma comment(lib, "mkl_intel_lp64_dll.lib")
 #else
 #pragma comment(lib, "mkl_intel_c_dll.lib")
+#endif
 #endif
 
 typedef unsigned int UINT;

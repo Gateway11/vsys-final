@@ -2,7 +2,7 @@
 
 ### blis in android
     
-    NDK-21
+    NDK-25C
 
     https://github.com/xianyi/OpenBLAS/wiki/How-to-build-OpenBLAS-for-Android
 

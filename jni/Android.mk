@@ -25,5 +25,5 @@ LOCAL_SRC_FILES := ../3rd-party/armeabi-v7a/libs/libr2ssp.so
 
 include Android-ztvad.mk Android-r2vt4.mk Android-r2ssp.mk
 else
-include $(call all-named-files-under,Android-*, .)
+include $(call all-named-files-under,Android-*.mk, .)
 endif
