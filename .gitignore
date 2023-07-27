@@ -4,7 +4,6 @@ libs
 obj
 bin
 3rd-party/fftw-3.3.10
-!3rd-party/fftw-3.3.10/build/config.h
 .vscode
 .metadata
 .DS_Store
