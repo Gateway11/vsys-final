@@ -31,7 +31,7 @@ if [ ! -d fftw-3.3.10 ]; then
     cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_FLOAT=ON \
         -DCMAKE_TOOLCHAIN_FILE=../../../../toolbox/ndk-r25c/build/cmake/android.toolchain.cmake \
         -DANDROID_ABI=arm64-v8a \
-        -DANDROID_PLATFORM=android-32 || exit
+        -DANDROID_PLATFORM=android-32
 
     #make -j8
     cd ../..
