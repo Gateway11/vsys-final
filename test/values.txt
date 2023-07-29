@@ -17,6 +17,10 @@ git stash drop stash@{index}
 git stash pop
 git stash show -p stash@{3}
 
+//git stash drop/clear后悔药
+git fsck --unreachable
+git show b0c20877e8cd116e630c9971d4c8e1332d0098d2
+git stash apply b0c20877e8cd116e630c9971d4c8e1332d0098d2
 
 git submodule add git@github.com:nanopb/nanopb.git 3rd-party/nanopb
 git rm --cached 3rd-party/nanopb
