@@ -37,4 +37,6 @@ git reset --hard origin/master      //将本地的状态回退到和远程的一
 
 git log --stat/-p
 
+https://segmentfault.com/a/1190000021101602 //vim显示tab键
+
 #endif
