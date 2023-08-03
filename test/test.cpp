@@ -165,9 +165,10 @@ int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
 }
 
 int main() {
-    uint32_t reg = 0x12345678, val = 0x9abcdef0, reglen = 4, vallen = 4;
-    uint64_t number = ((uint64_t)reg << (8 * reglen)) | val;
-    number = __SWP64_SF(number, 0);
+    uint32_t reg = 0x1234/*5678*/, val = 0x9abcdef0, reglen = 2, vallen = 4;
+
+    uint64_t number = ((uint64_t)reg << (8 * vallen)) | val;
+    number = __SWP64_SF(number, 8 - (reglen + vallen));
 
     printf("Hello, World! %#llx, %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", number,
 	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
