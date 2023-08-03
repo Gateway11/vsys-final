@@ -150,7 +150,7 @@ void div2(int32_t arg, ...) {
     (((uint64_t)(A) & 0x00000000ff000000) <<  8)    |   \
     (((uint64_t)(A) & 0x0000000000ff0000) << 24)    |   \
     (((uint64_t)(A) & 0x000000000000ff00) << 40)    |   \
-    (((uint64_t)(A) & 0x00000000000000ff) << 56)) >> (8 * (SF)))
+    (((uint64_t)(A) & 0x00000000000000ff) << 56)) >> ((SF) << 3))
 
 int x = 0;
 void func(const int* values) {
@@ -171,8 +171,8 @@ int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
 int main() {
     uint32_t reg = 0x1234/*5678*/, val = 0x9abcdef0, reglen = 2, vallen = 4;
 
-    uint64_t number = ((uint64_t)reg << (8 * vallen)) | val;
-    number = __SWP64_SF3(number, 8 - (reglen + vallen));
+    uint64_t number = ((uint64_t)reg << (vallen << 3)) | val;
+    number = __SWP64_SF(number, 8 - (reglen + vallen));
 
     printf("Hello, World! %#llx, %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", number,
 	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
