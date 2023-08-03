@@ -143,6 +143,12 @@ int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
     return 8;
 }
 
+#define __SWP32(A)                              \
+    ((((uint32_t)(A) & 0xff000000) >> 24)   |   \
+    (( (uint32_t)(A) & 0x00ff0000) >>  8)   |   \
+    (( (uint32_t)(A) & 0x0000ff00) <<  8)   |   \
+    (( (uint32_t)(A) & 0x000000ff) << 24))
+
 int main() {
 #line 136 "abcdefg.xxxxx"
     switch(5) {
