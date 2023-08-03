@@ -168,7 +168,7 @@ int main() {
     uint64_t number = 0x123456789abcdef0;
     number = __SWP64_SF(number, 0);
 
-    printf("Hello, World! %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n",
+    printf("Hello, World! %#llx, %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", number,
 	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
 	        ((uint8_t *)&number)[2], ((uint8_t *)&number)[3],
 	        ((uint8_t *)&number)[4], ((uint8_t *)&number)[5],
