@@ -126,6 +126,27 @@ void div2(int32_t arg, ...) {
     PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
 /* --- end macros --- */
 
+#define __SWP32(A) (                            \
+    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
+    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
+    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
+    (((uint32_t)(A) & 0x000000ff) << 24))
+
+#define __SWP32_SF(A, SF) ((                    \
+    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
+    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
+    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
+    (((uint32_t)(A) & 0x000000ff) << 24)) >> (8 * (SF)))
+
+#define __SWP64_SF(A, SF) ((                            \
+    (((uint64_t)(A) & 0xff00000000000000) >> 56)    |   \
+    (((uint64_t)(A) & 0x00ff000000000000) >> 40)    |   \
+    (((uint64_t)(A) & 0x0000ff0000000000) >> 24)    |   \
+    (((uint64_t)(A) & 0x000000ff00000000) >>  8)    |   \
+    (((uint64_t)(A) & 0x00000000ff000000) <<  8)    |   \
+    (((uint64_t)(A) & 0x0000000000ff0000) << 24)    |   \
+    (((uint64_t)(A) & 0x000000000000ff00) << 40)    |   \
+    (((uint64_t)(A) & 0x00000000000000ff) << 56)) >> (8 * (SF)))
 
 int x = 0;
 void func(const int* values) {
@@ -142,18 +163,6 @@ void func(const int* values) {
 int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
     return 8;
 }
-
-#define __SWP32(A) (                            \
-    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
-    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
-    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
-    (((uint32_t)(A) & 0x000000ff) << 24))
-
-#define __SWP32_SF(A, SF) ((                    \
-    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
-    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
-    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
-    (((uint32_t)(A) & 0x000000ff) << 24)) >> (8 * (SF)))
 
 int main() {
 #line 136 "abcdefg.xxxxx"
