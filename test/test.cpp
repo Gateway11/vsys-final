@@ -165,7 +165,25 @@ int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
 }
 
 int main() {
-#line 136 "abcdefg.xxxxx"
+    uint64_t number = 0x123456789abcdef0;
+    number = __SWP64_SF(number, 0);
+
+    printf("Hello, World! %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n",
+	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
+	        ((uint8_t *)&number)[2], ((uint8_t *)&number)[3],
+	        ((uint8_t *)&number)[4], ((uint8_t *)&number)[5],
+	        ((uint8_t *)&number)[6], ((uint8_t *)&number)[7]);
+
+    uint32_t number2;
+    ((uint8_t *)&number2)[0] = 0x12;
+    ((uint8_t *)&number2)[1] = 0x34;
+    ((uint8_t *)&number2)[2] = 0x56;
+    ((uint8_t *)&number2)[3] = 0x78;
+
+    printf("Hello, World! %d, %#x, %#x, %#x\n", __LINE__,
+            number2, __SWP32_SF(number2, 0), (uint32_t)__SWP64_SF(number2, 4));
+
+//#line 136 "abcdefg.xxxxx"
     switch(5) {
         case REG1 ... REG5 :
             printf("%s line: %d\n", __FILE__, __LINE__);
