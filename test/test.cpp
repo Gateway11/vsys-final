@@ -138,6 +138,10 @@ void div2(int32_t arg, ...) {
     (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
     (((uint32_t)(A) & 0x000000ff) << 24)) >> (8 * (SF)))
 
+#define __SWP64_SF2(A, SF) ((                               \
+    (((uint64_t)__SWP32(A & 0x00000000ffffffff)) << 32) |   \
+    __SWP32((A & 0xffffffff00000000) >>  32)) >> (8 * (SF)))
+
 #define __SWP64_SF(A, SF) ((                            \
     (((uint64_t)(A) & 0xff00000000000000) >> 56)    |   \
     (((uint64_t)(A) & 0x00ff000000000000) >> 40)    |   \
@@ -168,7 +172,7 @@ int main() {
     uint32_t reg = 0x1234/*5678*/, val = 0x9abcdef0, reglen = 2, vallen = 4;
 
     uint64_t number = ((uint64_t)reg << (8 * vallen)) | val;
-    number = __SWP64_SF(number, 8 - (reglen + vallen));
+    number = __SWP64_SF3(number, 8 - (reglen + vallen));
 
     printf("Hello, World! %#llx, %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", number,
 	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
