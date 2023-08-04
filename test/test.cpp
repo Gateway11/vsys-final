@@ -132,13 +132,13 @@ void div2(int32_t arg, ...) {
     (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
     (((uint32_t)(A) & 0x000000ff) << 24))
 
-#define __SWP32_MSB(A, MSB) ((                    \
+#define __SWP32_MSB(A, MSB) ((                  \
     (((uint32_t)(A) & 0xff000000) >> 24)    |   \
     (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
     (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
     (((uint32_t)(A) & 0x000000ff) << 24)) >> (8 * (4 - (MSB))))
 
-#define __SWP64_MSB2(A, MSB) ((                               \
+#define __SWP64_MSB2(A, MSB) ((                             \
     (((uint64_t)__SWP32(A & 0x00000000ffffffff)) << 32) |   \
     __SWP32((A & 0xffffffff00000000) >>  32)) >> ((8 - (MSB)) << 3))
 
