@@ -126,32 +126,6 @@ void div2(int32_t arg, ...) {
     PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
 /* --- end macros --- */
 
-#define __SWP32(A) (                            \
-    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
-    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
-    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
-    (((uint32_t)(A) & 0x000000ff) << 24))
-
-#define __SWP32_MSB(A, MSB) ((                  \
-    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
-    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
-    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
-    (((uint32_t)(A) & 0x000000ff) << 24)) >> (8 * (4 - (MSB))))
-
-#define __SWP64_MSB2(A, MSB) ((                             \
-    (((uint64_t)__SWP32(A & 0x00000000ffffffff)) << 32) |   \
-    __SWP32((A & 0xffffffff00000000) >>  32)) >> ((8 - (MSB)) << 3))
-
-#define __SWP64_MSB(A, MSB) ((                            \
-    (((uint64_t)(A) & 0xff00000000000000) >> 56)    |   \
-    (((uint64_t)(A) & 0x00ff000000000000) >> 40)    |   \
-    (((uint64_t)(A) & 0x0000ff0000000000) >> 24)    |   \
-    (((uint64_t)(A) & 0x000000ff00000000) >>  8)    |   \
-    (((uint64_t)(A) & 0x00000000ff000000) <<  8)    |   \
-    (((uint64_t)(A) & 0x0000000000ff0000) << 24)    |   \
-    (((uint64_t)(A) & 0x000000000000ff00) << 40)    |   \
-    (((uint64_t)(A) & 0x00000000000000ff) << 56)) >> ((8 - (MSB)) << 3))
-
 int x = 0;
 void func(const int* values) {
     while(*values) {
@@ -169,26 +143,6 @@ int ImageCreate(int channel,int height,int width,unsigned char **data[]) {
 }
 
 int main() {
-    uint32_t reg = 0x1234/*5678*/, val = 0x9abcdef0, reglen = 2, vallen = 4;
-
-    uint64_t number = ((uint64_t)reg << (vallen << 3)) | val;
-    number = __SWP64_MSB(number, reglen + vallen);
-
-    printf("Hello, World! %#llx, %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", number,
-	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
-	        ((uint8_t *)&number)[2], ((uint8_t *)&number)[3],
-	        ((uint8_t *)&number)[4], ((uint8_t *)&number)[5],
-	        ((uint8_t *)&number)[6], ((uint8_t *)&number)[7]);
-
-    uint32_t number2;
-    ((uint8_t *)&number2)[0] = 0x12;
-    ((uint8_t *)&number2)[1] = 0x34;
-    ((uint8_t *)&number2)[2] = 0x56;
-    ((uint8_t *)&number2)[3] = 0x78;
-
-    printf("Hello, World! %d, %#x, %#x, %#x\n", __LINE__,
-            number2, __SWP32_MSB(number2, 4), (uint32_t)__SWP64_MSB(number2, 4));
-
 //#line 136 "abcdefg.xxxxx"
     switch(5) {
         case REG1 ... REG5 :

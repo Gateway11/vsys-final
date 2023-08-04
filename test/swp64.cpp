@@ -1,6 +1,22 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define __SWP32(A) (                            \
+    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
+    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
+    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
+    (((uint32_t)(A) & 0x000000ff) << 24))
+
+#define __SWP32_MSB(A, MSB) ((                  \
+    (((uint32_t)(A) & 0xff000000) >> 24)    |   \
+    (((uint32_t)(A) & 0x00ff0000) >>  8)    |   \
+    (((uint32_t)(A) & 0x0000ff00) <<  8)    |   \
+    (((uint32_t)(A) & 0x000000ff) << 24)) >> (8 * (4 - (MSB))))
+
+#define __SWP64_MSB2(A, MSB) ((                             \
+    (((uint64_t)__SWP32(A & 0x00000000ffffffff)) << 32) |   \
+    __SWP32((A & 0xffffffff00000000) >>  32)) >> ((8 - (MSB)) << 3))
+
 #define __SWP64_MSB(A, MSB) ((                          \
     (((uint64_t)(A) & 0xff00000000000000) >> 56)    |   \
     (((uint64_t)(A) & 0x00ff000000000000) >> 40)    |   \
@@ -23,6 +39,26 @@ void my_printf(uint64_t reg, uint8_t reg_val, uint64_t val, uint8_t val_len) {
 int main()
 {
    	/*  Write C code in this online editor and run it. */
+    uint32_t reg = 0x1234/*5678*/, val = 0x9abcdef0, reglen = 2, vallen = 4;
+
+    uint64_t number = ((uint64_t)reg << (vallen << 3)) | val;
+    number = __SWP64_MSB(number, reglen + vallen);
+
+    printf("Hello, World! %#llx, %#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", number,
+	        ((uint8_t *)&number)[0], ((uint8_t *)&number)[1],
+	        ((uint8_t *)&number)[2], ((uint8_t *)&number)[3],
+	        ((uint8_t *)&number)[4], ((uint8_t *)&number)[5],
+	        ((uint8_t *)&number)[6], ((uint8_t *)&number)[7]);
+
+    uint32_t number2;
+    ((uint8_t *)&number2)[0] = 0x12;
+    ((uint8_t *)&number2)[1] = 0x34;
+    ((uint8_t *)&number2)[2] = 0x56;
+    ((uint8_t *)&number2)[3] = 0x78;
+
+    printf("Hello, World! %d, %#x, %#x, %#x\n", __LINE__,
+            number2, __SWP32_MSB(number2, 4), (uint32_t)__SWP64_MSB(number2, 4));
+
 	my_printf(0x12345678, 4, 0x9abcdef0, 4);
 	my_printf(0x12, 1, 0x34, 1);
 	my_printf(0x12, 1, 0x3456789a, 4);
