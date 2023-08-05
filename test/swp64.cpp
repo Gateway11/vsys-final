@@ -57,8 +57,10 @@ int main()
     ((uint8_t *)&number2)[1] = 0x34;
     ((uint8_t *)&number2)[2] = 0x56;
     ((uint8_t *)&number2)[3] = 0x78;
-
     printf("Hello, World! %#x, %#x, %#x\n", number2, __SWP32_MSB(number2, 4), (uint32_t)__SWP64_MSB(number2, 4));
+
+    uint8_t number3[] = {0x12, 0x34, 0x56, 0x78};
+    printf("Hello, World! %#x, %#x, %#x\n", *(uint32_t *)number3, __SWP32_MSB(*(uint32_t *)number3, 4), (uint32_t)__SWP64_MSB(*(uint32_t *)number3, 4));
 
 	my_printf(0x12345678, 4, 0x9abcdef0, 4);
 	my_printf(0x12, 1, 0x3400, 2);
