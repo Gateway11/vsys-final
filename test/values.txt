@@ -41,4 +41,7 @@ https://segmentfault.com/a/1190000021101602 //vim显示tab键
 :set paste
 :set nopaste
 
+out/soong/host/linux-x86/bin/hidl-gen -L hash -r android.hardware:hardware/interfaces android.hardware.audio@2.0
+development/vndk/tools/header-checker/utils/create_reference_dumps.py -l android.hardware.light@2.0 -product x9hp_ms
+
 #endif
