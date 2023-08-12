@@ -203,10 +203,10 @@ int main() {
     00000100 ^ 00000110 = 00000010
 #endif
 
-
-
     http://stackoverflow.com/
-    printf("%d, %d\n", __LINE__, printf("%*s%*s", a, "\r", b, "\r"));
+    printf("%d, %d\n", __LINE__, printf("%*s%*s", a, "\r", b, "\r")); //不用加号的加法
+    uint64_t __i = 100; //匿名数组
+    printf("Hello, World! %lld, %p\n", (uint64_t*[]){&__i}[0][0], &__i);
 
     int x = 'ABCD';
     printf("%#x\n", x);
