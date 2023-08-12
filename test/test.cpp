@@ -206,7 +206,7 @@ int main() {
     http://stackoverflow.com/
     printf("%d, %d\n", __LINE__, printf("%*s%*s", a, "\r", b, "\r")); //不用加号的加法
     uint64_t __i = 100; //匿名数组
-    printf("Hello, World! %lld, %p\n", (uint64_t*[]){&__i}[0][0], &__i);
+    printf("Hello, World! %lld, %p\n", **(__typeof__(__i)*[]){&__i}, &__i);
 
     int x = 'ABCD';
     printf("%#x\n", x);
