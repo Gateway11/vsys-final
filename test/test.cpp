@@ -224,9 +224,6 @@ int main() {
 
     printf("%d, %d\n", __LINE__, ^(__typeof__(a) x, int y) { return x + y; }(a, b));
 
-
-
-
     printf("----------------------------------------------\n");
 
 #if 0
@@ -241,7 +238,7 @@ int main() {
     }
 #endif
 
-    func((int[]){1, 1, 1, 1, 0});
+    func((int[]){1, 1, 1, 1, 0}); //匿名数组
 
     printf("%s, %lu\n", VA_ARG0("sdfasdfasdi-------------", 88), sizeof((int[]){1, 2, 3, 0}));
 
