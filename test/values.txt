@@ -45,3 +45,57 @@ out/soong/host/linux-x86/bin/hidl-gen -L hash -r android.hardware:hardware/inter
 development/vndk/tools/header-checker/utils/create_reference_dumps.py -l android.hardware.audio@2.0 -product x9hp_ms
 
 #endif
+
+
+
+
+#if 0
+
+元音：A O E I U Y
+半元音: [w]wo [ч]yue Y[j]ye
+
+词尾需要发音：Q C L R F
+
+E
+    [ə] 单音节词词尾;词首开音节
+    [ɛ] 闭音节中;除了二声以外的
+    [e] 二声
+
+S
+    [z] 在两个元音字母中间发
+    [s] 其他
+
+C:清浊
+    [k] 词尾;在a,o,u或辅音字母前
+    [s] 在字母e,i,y前;ç
+
+O
+    [o] 词尾开音节中;在[z]前面时
+    [ɔ] 其他
+
+Y:半元音
+    [i]
+    [j]ye 字母Y在词首，并在元音前
+
+K[ka]   
+    [k]
+
+G[ʒe]
+    [g] 在a, o, u和辅音字母前
+    [ʒ:日] 在e, i, y前
+
+Q[ky]
+
+J[ʒi]
+
+W
+    [w:wo] week-end/tramway
+    [v] wagon
+
+X[iks]
+    [ks]
+    [gz] ex-在词首,且后面是元音
+    [s] 少数词(Bruxelles/six/dix)
+    [z] 跟少数词(sixieme/dixieme)
+
+#endif
