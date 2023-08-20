@@ -6,4 +6,4 @@ APP_CPPFLAGS            := -std=c++11 -frtti -Wno-register #-fpermissive
 APP_LDFLAGS             := -llog
 APP_PLATFORM            := android-32
 APP_STL                 := c++_static
-NDK_TOOLCHAIN_VERSION   := 4.9
+#NDK_TOOLCHAIN_VERSION   := 4.9
