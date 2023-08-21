@@ -18,6 +18,7 @@ git stash pop
 git stash show -p stash@{3}
 
 git fsck | awk '{print $3}' | xargs git show        //git stash drop/clear后悔药
+git fsck | awk '{print $3}' | xargs git show --stat
 git fsck | awk '{print $3}' | xargs -I {} git show {} -p run.sh
 git stash apply b0c20877e8cd116e630c9971d4c8e1332d0098d2
 
