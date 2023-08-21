@@ -18,3 +18,12 @@
 
     mv Android-blis.mk Android.mk
     ndk-build
+
+
+#### voice system
+
+    adb push activation/data/baomao_M_0020.16000.8.float.pcm /data/vsys-final/activation/data/baomao_M_0020.16000.8.float.pcm
+    adb push /vsys-final/3rd-party/workdir_cn /data/vsys-final/3rd-party
+    adb push libs/arm64-v8a/ data/vsys-final
+    adb push activation/test_activation/run.sh /data/vsys-final
+    ./run.sh
