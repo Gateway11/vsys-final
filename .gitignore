@@ -18,6 +18,7 @@ mac
 *.o
 model
 workdir_cn
+!3rd-party/workdir_cn
 a.out
 hellomake
 r2ssp/third_party/openmax_dl/dl/sp/src/test
