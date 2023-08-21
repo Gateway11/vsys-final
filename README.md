@@ -18,3 +18,5 @@
 
     mv Android-blis.mk Android.mk
     ndk-build
+
+    export LD_LIBRARY_PATH=/data/vsys-final:$LD_LIBRARY_PATH
