@@ -21,6 +21,8 @@ git fsck | awk '{print $3}' | xargs git show        //git stash drop/clear后悔
 git fsck | awk '{print $3}' | xargs -I {} git show {} -p run.sh
 git stash apply b0c20877e8cd116e630c9971d4c8e1332d0098d2
 
+git log --stat/-p
+
 git submodule add git@github.com:nanopb/nanopb.git 3rd-party/nanopb
 git rm --cached 3rd-party/nanopb
 
@@ -36,12 +38,9 @@ git reset --mixed/soft/hard HEAD    //--mixed 为默认，可以不用带该参�
 git reset HEAD^ hello.php           //回退 hello.php 文件的版本到上一个版本
 git reset --hard origin/master      //将本地的状态回退到和远程的一样
 
-git log --stat/-p
-
 https://segmentfault.com/a/1190000021101602 //vim显示tab键
 :set paste
 :set nopaste
-
 
 echo 32 > /sys/class/gpio/export
 echo "out" > /sys/class/gpio/gpio32/direction
