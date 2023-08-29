@@ -38,9 +38,15 @@ if [ ! -d fftw-3.3.10 ]; then
     cd ../..
 fi
 
-if [ ! -d speexdsp-1.2.1 ]; then
+if [ ! -d speexdsp-1.2.1/libspeexdsp ]; then
     wget http://downloads.xiph.org/releases/speex/speexdsp-1.2.1.tar.gz
     tar -zxvf speexdsp-1.2.1.tar.gz || exit; rm *.tar.gz
+
+    cd speexdsp-1.2.1
+
+    ./configure --disable-sse #--with-fft=gpl-fftw3
+    git checkout config.h
+
     cd ..
 fi
 
