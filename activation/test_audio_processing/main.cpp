@@ -17,6 +17,12 @@
 
 #include "debug.h"
 
+#if defined(__ANDROID__) || defined(ANDROID)
+#define PATH "/data"
+#else
+#define PATH "/Users/daixiang/Home"
+#endif
+
 uint32_t num_mics = 2;
 uint32_t num_speakers = 2;
 uint32_t num_channels = num_mics + num_speakers;
@@ -25,8 +31,8 @@ uint32_t sample_rate = 16000;
 uint32_t frame_size = sample_rate / 100;
 
 void test_audio_processing(){
-    std::ifstream input_stream("/Users/daixiang/Home/vsys-final/activation/data/lujnan_G_0020.16000.4.16bit.pcm", std::ios::in | std::ios::binary);
-    std::ofstream output_stream("/Users/daixiang/Home/vsys-final/activation/data/tmp/lujnan_G_0020.16000.2.16bit.pcm", std::ios::out | std::ios::binary);
+    std::ifstream input_stream(PATH"/vsys-final/activation/data/lujnan_G_0020.16000.4.16bit.pcm", std::ios::in | std::ios::binary);
+    std::ofstream output_stream(PATH"/vsys-final/activation/data/tmp/lujnan_G_0020.16000.2.16bit.pcm", std::ios::out | std::ios::binary);
     
     SpeexPreprocessState** dens(new SpeexPreprocessState*[num_mics]);
     SpeexEchoState** echo_states(new SpeexEchoState*[num_speakers]);
