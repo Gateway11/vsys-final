@@ -15,18 +15,18 @@
 
 namespace vsys {
     
-typedef struct{
+typedef struct {
     unsigned char cont[3] ;
     int toint(){
-        if ((cont[2] & 0x80) != 0){
+        if ((cont[2] & 0x80) != 0) {
             return  ((cont[0] & 0xff) | (cont[1] & 0xff) << 8 | (cont[2] & 0xff) << 16 | (-1 & 0xff) << 24);
-        }else{
+        } else {
             return  ((cont[0] & 0xff) | (cont[1] & 0xff) << 8 | (cont[2] & 0xff) << 16 | (0 & 0xff) << 24);
         }
     }
-}int24_t;
+} int24_t;
     
-class AudioConverter{
+class AudioConverter {
 public:
     AudioConverter(uint32_t format, uint32_t num_mics, uint32_t num_channels, uint32_t* mic_ids)
     :format(format), num_mics(num_mics), num_channels(num_channels), mic_ids(mic_ids), buff(nullptr), buff_len(0){}
