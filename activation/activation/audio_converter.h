@@ -17,7 +17,7 @@ namespace vsys {
     
 typedef struct {
     unsigned char cont[3] ;
-    int toint(){
+    int32_t toint(){
         if ((cont[2] & 0x80) != 0) {
             return  ((cont[0] & 0xff) | (cont[1] & 0xff) << 8 | (cont[2] & 0xff) << 16 | (-1 & 0xff) << 24);
         } else {
