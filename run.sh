@@ -38,6 +38,12 @@ if [ ! -d fftw-3.3.10 ]; then
     cd ../..
 fi
 
+if [ ! -d speexdsp-1.2.1 ]; then
+    wget http://downloads.xiph.org/releases/speex/speexdsp-1.2.1.tar.gz
+    tar -zxvf speexdsp-1.2.1.tar.gz || exit; rm *.tar.gz
+    cd ..
+fi
+
 cd ../jni
 
 ndk-build -j8

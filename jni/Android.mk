@@ -25,7 +25,9 @@ include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := test_aec
-LOCAL_C_INCLUDES := ../activation/activation ../activation/speex ../activation/speex/include
+LOCAL_C_INCLUDES := ../3rd-party/armeabi-v7a/include ../3rd-party/speexdsp-1.2.1 ../3rd-party/speexdsp-1.2.1/include
 LOCAL_SRC_FILES := ../activation/test_audio_processing/main.cpp
-LOCAL_SHARED_LIBRARIES := r2ssp ztvad blis
-#include $(BUILD_EXECUTABLE)
+LOCAL_SRC_FILES += $(shell find -L ../3rd-party/speexdsp-1.2.1/libspeexdsp ! -name "test*" -name "*.c")
+LOCAL_CFLAGS    := -DHAVE_CONFIG_H
+LOCAL_SHARED_LIBRARIES := fftw
+include $(BUILD_EXECUTABLE)
