@@ -29,5 +29,5 @@ LOCAL_C_INCLUDES := ../3rd-party/armeabi-v7a/include ../3rd-party/speexdsp-1.2.1
 LOCAL_SRC_FILES := ../activation/test_audio_processing/main.cpp
 LOCAL_SRC_FILES += $(shell find -L ../3rd-party/speexdsp-1.2.1/libspeexdsp ! -name "test*" -name "*.c")
 LOCAL_CFLAGS    := -DHAVE_CONFIG_H
-LOCAL_SHARED_LIBRARIES := fftw
+LOCAL_STATIC_LIBRARIES := fftw
 include $(BUILD_EXECUTABLE)
