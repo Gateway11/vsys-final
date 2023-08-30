@@ -11,7 +11,8 @@ include $(call all-named-files-under,Android-*.mk, .)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := activation
-LOCAL_C_INCLUDES := $(shell find -L ../activation -name include) ../activation/activation ../activation/activation/legacy
+LOCAL_C_INCLUDES := $(shell find -L ../activation -name include)
+LOCAL_C_INCLUDES += ../activation/activation ../activation/activation/legacy ../3rd-party/armeabi-v7a/include
 LOCAL_SRC_FILES := $(shell find -L ../activation/activation -name "*.cpp")
 LOCAL_SHARED_LIBRARIES := r2ssp ztvad blis r2vt fftw
 include $(BUILD_SHARED_LIBRARY)
