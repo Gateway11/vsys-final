@@ -121,7 +121,7 @@ LOCAL_SRC_FILES := \
 
 #http://aospxref.com/android-5.1.1_r9/xref/external/chromium_org/third_party/openmax_dl
 LOCAL_CFLAGS    := -DWEBRTC_ANDROID -DWEBRTC_THREAD_RR -DWEBRTC_CLOCK_TYPE_REALTIME -DWEBRTC_POSIX -DWEBRTC_ARCH_ARM -DHAVE_CONFIG_H
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+ifneq (,$(findstring armeabi-v7a, $(TARGET_ARCH_ABI)))
 LOCAL_SRC_FILES += $(call all-named-files-under,*.S, ../r2ssp/third_party/openmax_dl/dl/sp/src/arm/armv7)
 LOCAL_CFLAGS    += -DWEBRTC_ARCH_ARM_NEON -DWEBRTC_ARCH_ARM_V7 
 else
