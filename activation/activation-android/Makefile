@@ -9,7 +9,7 @@ rkvacti.out-dir-libs := $(PROJECT_ROOT)/out/libs
 
 rkvacti.cpp.src-dirs := $(shell find src -maxdepth 3 -type d)
 rkvacti.cpp.src-files := $(foreach dir, $(rkvacti.cpp.src-dirs), $(wildcard $(dir)/*.cpp))
-rkvacti.cpp.src-objs = $(patsubst %.cpp, %.o, $(rkvacti.cpp.src-files))
+rkvacti.cpp.src-objs = $(patsubst %.cpp, %.o, $(rkvacti.cpp.src-files)) #x.c.c bar.c -> x.c.o bar.o
 rkvacti.cpp.src-flags := -std=c++11 -fPIC #-Wno-format
 rkvacti.cpp.src-includes := -Iinclude -Isrc -Isrc/legacy -Ithirdparty/include
 rkvacti.cpp.src-deps := -Lthirdparty/libs/dnn/linux-x86_64 -lr2vt5 -lr2ssp -lztvad -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
