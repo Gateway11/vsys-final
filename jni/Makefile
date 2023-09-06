@@ -10,7 +10,7 @@ $(info (filter-out foo.c,$(sources))    ->  $(filter-out foo.c,$(sources)))     
 $(info (sort foo bar lose foo)          ->  $(sort foo bar lose foo))                #$(sort LIST)
 $(info (word 2, foo bar baz)            ->  $(word 2, foo bar baz))                  #$(word N,TEXT)
 $(info (wordlist 2, 3, foo bar baz)     ->  $(wordlist 2, 3, foo bar baz))           #$(wordlist S,E,TEXT)
-$(info (words, foo bar)                 ->  $(words, foo bar))                       #$(words TEXT)
+$(info (words foo bar)                  ->  $(words foo bar))                        #$(words TEXT)
 $(info (firstword foo bar)              ->  $(firstword foo bar))                    #$(firstword NAMES...)
 
 $(info (dir src/foo.c hacks)            ->  $(dir src/foo.c hacks))                  #$(dir NAMES...)
