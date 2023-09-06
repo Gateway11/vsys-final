@@ -3,7 +3,7 @@ reverse = $(2) $(1)
 
 $(info $(subst ee,EE,feet on the street))       #$(subst FROM,TO,TEXT)
 $(info $(patsubst %.c,%.o,x.c.c bar.c))         #$(patsubst PATTERN,REPLACEMENT,TEXT)   
-$(info $(bar.c:%.c=%.o))
+$(info $(sources:.c=.o))                        #$(VAR:SUFFIX=REPLACEMENT) == $(patsubst %SUFFIX,%REPLACEMENT,$(VAR))
 $(info $(findstring a,a b c))                   #$(findstring FIND,IN)
 $(info $(filter %.c %.s,$(sources)))            #$(filter PATTERN...,TEXT)
 $(info $(filter-out foo.c,$(sources)))          #$(filter-out PATTERN...,TEXT)
@@ -23,4 +23,3 @@ $(info $(wildcard *.c))
 $(info $(foreach dir,$(dirs),$(wildcard $(dir)/*)))
 $(info $(if $(SRC_DIR) $(SRC_DIR),/home/src))   #如果“SRC_DIR”变量值不为空，则将变量“SRC_DIR”指定 的目录作为一个子目录
 $(warning $(call reverse,a,b))
-$(info )
