@@ -38,7 +38,7 @@ git clean -xdf
 git reset --mixed/soft/hard HEAD    //--mixed 为默认，可以不用带该参数
 git reset HEAD^ hello.php           //回退 hello.php 文件的版本到上一个版本
 git reset --hard origin/master      //将本地的状态回退到和远程的一样
-git fetch --all &&  git reset --hard origin/master
+git fetch --all && git reset --hard origin/master
 
 https://segmentfault.com/a/1190000021101602 //vim显示tab键
 :set paste
