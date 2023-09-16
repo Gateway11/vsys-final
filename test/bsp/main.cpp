@@ -33,10 +33,7 @@ struct sockaddr_rpmsg {
 #include <uapi/linux/rpmsg_socket.h> //struct sockaddr_rpmsg
 #endif
 
-//#if __has_include(<android/log.h>) || __has_include(<log.h>)//ndk-build
 #if defined(__ANDROID__) || defined(ANDROID)
-#warning ddddddddddddddd __cplusplus
-
 #include <unistd.h> //read/write
 #include <arpa/inet.h> //htonl/inet_pton
 #include <android/log.h>
