@@ -5,7 +5,7 @@ LOCAL_MODULE    := libr2vt
 LOCAL_SRC_FILES := $(shell find -L ../r2slv4/r2vt4/src -name "*.c*")
 #LOCAL_SRC_FILES += ../r2slv4/r2ad3/src
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a) 
+ifneq (,$(filter armeabi-v7a, $(TARGET_ARCH_ABI)))
 LOCAL_ARM_NEON  := true
 EXTRA_CFLAGS    := -march=armv7-a -mfloat-abi=softfp -mfpu=neon-fp16 #-mfpu=neon
 EXTRA_LDFLAGS   := -Wl,--fix-cortex-a8
