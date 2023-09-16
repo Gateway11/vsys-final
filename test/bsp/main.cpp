@@ -30,11 +30,10 @@ struct sockaddr_rpmsg {
 
 #define RPMSG_LOCALHOST ((__u32)~0UL)
 #else
-#include <linux/inet.h> //htonl/inet_pton
 #include <uapi/linux/rpmsg_socket.h> //struct sockaddr_rpmsg
 #endif
 
-#if __has_include(<android/log.h>) //ndk-build
+#if __has_include(<android/log.h>) || __has_include(<log.h>)//ndk-build
 #warning ddddddddddddddd __cplusplus
 
 #include <unistd.h> //read/write
@@ -43,10 +42,11 @@ struct sockaddr_rpmsg {
 #define LOG_TAG "ipc_test"
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#else //linux application
-//#include <linux/types.h>
-//#include <linux/in.h>
-//#include <netinet/in.h>
+#elif !defined(__KERNEL__) //linux application
+#include <linux/types.h>
+#include <linux/in.h>
+#include <linux/inet.h> //htonl/inet_pton
+#include <netinet/in.h>
 #endif
 //#if __STDC_VERSION__ ==  201112L
 
