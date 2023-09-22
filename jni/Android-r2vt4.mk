@@ -11,8 +11,7 @@ EXTRA_CFLAGS    := -march=armv7-a -mfloat-abi=softfp -mfpu=neon-fp16 #-mfpu=neon
 EXTRA_LDFLAGS   := -Wl,--fix-cortex-a8
 endif
 
-#ifeq ($(TARGET_ARCH_ABI),arm64-v8a) 
-ifeq (,$(filter-out arm64-v8a, $(TARGET_ARCH_ABI))) #filter两个值可以对调，filter-out这种排列若果相等可以把后者质空，达到同样效果
+ifeq (,$(filter-out arm64-v8a, $(TARGET_ARCH_ABI)))
 EXTRA_LDFLAGS   := "-Wl"
 endif
 
