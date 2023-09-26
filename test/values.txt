@@ -54,13 +54,15 @@ i2cset -y 1 0x44 0x0b 0x82 w
 i2cget -y 1 0x44 0x0b r
 
 apt-get download your-package-name
-dpkg-x your-package.deb your-dir
+dpkg -x your-package.deb your-dir
 find . -name "*.deb" | xargs -I {} dpkg -x {} ~/bin/orin-bundle
 export PATH=$PATH:/your-dir/usr/bin
 
 out/soong/host/linux-x86/bin/hidl-gen -L hash -r android.hardware:hardware/interfaces android.hardware.audio@2.0
 development/vndk/tools/header-checker/utils/create_reference_dumps.py -l android.hardware.audio@2.0 -product x9hp_ms
 
+scrcpy使用方法
+https://blog.csdn.net/DDJ_TEST/article/details/120287342
 #endif
 
 
