@@ -77,7 +77,7 @@ LOCAL_C_INCLUDES := \
     
 LOCAL_STATIC_LIBRARIES := cpufeatures fftw #blis
 LOCAL_SHARED_LIBRARIES := r2ssp blis
-LOCAL_LDLIBS := -llog -lm -ldl
+LOCAL_LDLIBS := -lm -ldl
 
 LOCAL_CFLAGS += -DWEBRTC_POSIX
 LOCAL_CPP_FEATURES += exceptions

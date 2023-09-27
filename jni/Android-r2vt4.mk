@@ -15,9 +15,7 @@ ifeq (,$(filter-out arm64-v8a, $(TARGET_ARCH_ABI)))
 EXTRA_LDFLAGS   := "-Wl"
 endif
 
-LOCAL_LDLIBS    := -llog
 LOCAL_LDFLAGS   := "-Wl,--start-group" $(LIBS) "-Wl,--end-group" -ldl  -fopenmp
-
 LOCAL_C_INCLUDES := ../3rd-party/armeabi-v7a/include #../r2slv4/r2ad3/src
 
 LOCAL_SHARED_LIBRARIES := r2ssp ztvad blis
