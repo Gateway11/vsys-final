@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	package="com.rokid.openvoice"
+	android:sharedUserId="android.uid.system">
+
+	<uses-sdk android:minSdkVersion="19"/>
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.INTERNET"/>
+
+    <application 
+        android:name="VoiceApplication"
+        android:persistent="true">
+        <service android:name="com.rokid.openvoice.VoiceService"/>
+		<service android:name="com.rokid.openvoice.SirenService" android:exported="true">
+			<intent-filter>
+				<action android:name="com.rokid.openvoice" />
+			</intent-filter>
+		</service>
+		<receiver android:name="com.rokid.openvoice.VoiceReceiver">
+			<intent-filter android:priority="1000">
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+			</intent-filter>
+		</receiver>
+	</application>
+</manifest>
