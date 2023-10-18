@@ -6,6 +6,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+//头文件和C代码只需要加一此，头文件没包就在c代码函数头加或者把c代码包起来
+//__BEGIN_DECLS
+//__END_DECLS
+
 #define Y_TUPLE_SIZE_II(__args) Y_TUPLE_SIZE_I __args
 #define Y_TUPLE_SIZE_PREFIX__Y_TUPLE_SIZE_POSTFIX ,,,,,,,,0
 
