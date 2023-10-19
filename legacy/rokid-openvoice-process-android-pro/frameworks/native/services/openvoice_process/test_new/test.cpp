@@ -8,6 +8,7 @@ using ::android::hardware::automotive::audiocontrol::V2_0::AudioParamConfig;
 using ::android::hardware::automotive::audiocontrol::V2_0::Audio_Command_Type;
 using ::android::hardware::automotive::audiocontrol::V2_0::Audio_Geq_Type;
 
+//out/soong/.intermediates/hardware/interfaces/automotive/audiocontrol/2.0
 sp<IAudioControl> audiocontrol = IAudioControl::getService();
 
 int32_t main(int argc, char** argv) {
@@ -18,6 +19,7 @@ int32_t main(int argc, char** argv) {
         AudioParamConfig config;
         config.command = Audio_Command_Type::GEQ;
         config.equalizer.type = Audio_Geq_Type::EFFECT_TYPE;
+        //system/libhidl/base/include/hidl/HidlSupport.h
         config.equalizer.eq_effect_type = hardware::hidl_array<uint8_t, 16>({'P', 'e', 'r', 'c', 'u', 's', 's', 'i', 'o', 'n'});
         config.equalizer.frequency_index = 3;
         config.values = 2;
