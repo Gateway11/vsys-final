@@ -8,6 +8,8 @@ using ::android::hardware::automotive::audiocontrol::V2_0::AudioParamConfig;
 using ::android::hardware::automotive::audiocontrol::V2_0::Audio_Command_Type;
 using ::android::hardware::automotive::audiocontrol::V2_0::Audio_Geq_Type;
 
+//https://blog.csdn.net/sevenjoin/article/details/107619014
+//https://blog.csdn.net/qq_40731414/article/details/126823262
 //out/soong/.intermediates/hardware/interfaces/automotive/audiocontrol/2.0
 sp<IAudioControl> audiocontrol = IAudioControl::getService();
 
