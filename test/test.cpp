@@ -298,5 +298,13 @@ int main() {
     //slot_map8(output, int16_t, output_chans, sizeof(output_chans), input, int16_t, num_channels, num_samples, );
     //(^(float x){ return x / (1UL << 15);}(usrc[j % (2)]))
 #endif
+
+#if 0
+    #include <sstream>
+    std::ifstream istream(remote_config_file_path.c_str());
+    std::stringstream string_buffer;
+    string_buffer << istream.rdbuf();
+    std::string remote_config(string_buffer.str());
+#endif
     return 0;
 }
