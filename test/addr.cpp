@@ -27,7 +27,7 @@ int main()
 {
     std::cout << "Hello World";
 
-    std::string usage = "AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED";
+    std::string usage("AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED");
     const std::string& addr = addr_map[usage.c_str()];
     if (addr.size()){
         printf("----------%s", addr.c_str());
