@@ -18,6 +18,11 @@ std::map<std::string, const char*> addr_map {
     {"AUDIO_USAGE_ASSISTANCE_SONIFICATION",             "bus6"},
     {"AUDIO_USAGE_GAME",                                "bus0"},
     {"AUDIO_USAGE_ASSISTANT",                           "bus1"},
+    /*{"bus0_media_out",                                  "bus0"},
+    {"bus1_voice_command_out",                          "bus1"},
+    {"bus2_phone_out",                                  "bus2"},
+    {"bus3_navi_out",                                   "bus3"},
+    {"bus6_notification_out",                           "bus6"},*/
     {"bus0",                                            "bus0"},
     {"bus1",                                            "bus1"},
     {"bus2",                                            "bus2"},
