@@ -32,10 +32,13 @@ int main()
     if (addr.size()){
         printf("----------%s", addr.c_str());
     }
-
-    //std::map<std::string, const char*> addr_map {
-    //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()];
-
+#if 0
+    std::map<std::string, const char*> addr_map {
+    const char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()];
+    if (addr && !strncmp(addr, "bus", 3)) {
+        atoi(addr + 3);
+    }
+#endif
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
 }
