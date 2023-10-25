@@ -33,7 +33,9 @@ int main()
         printf("----------%s", addr.c_str());
     }
 
+    //std::map<std::string, const char*> addr_map {
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()];
+
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
 }
