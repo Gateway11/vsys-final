@@ -1,7 +1,8 @@
 #include <iostream>
 #include <map>
 
-std::map<std::string, std::string> addr_map {
+//std::map<std::string, std::string> addr_map {
+std::map<std::string, const char*> addr_map {
     {"AUDIO_USAGE_MEDIA",                               "bus0"},
     {"AUDIO_USAGE_VOICE_COMMUNICATION",                 "bus2"},
     {"AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING",      "bus2"},
@@ -25,12 +26,12 @@ std::map<std::string, std::string> addr_map {
 
 int main()
 {
-    std::cout << "Hello World";
+    std::cout << "Hello World" << std::endl;
 
     std::string usage("AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED");
     const std::string& addr = addr_map[usage.c_str()];
     if (addr.size()){
-        printf("----------%s", addr.c_str());
+        printf("----------%s\n", addr.c_str());
     }
 #if 0
     std::map<std::string, const char*> addr_map {

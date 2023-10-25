@@ -29,5 +29,7 @@ $(warning (call reverse,a,b)    ->  $(call reverse,a,b))
 hellomake: test.cpp
 	gcc -o hellomake test.cpp -I.
 
+#g++ -std=c++11 addr.cpp
+
 clean:
 	rm hellomake
