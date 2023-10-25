@@ -34,5 +34,6 @@ int main()
     }
 
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()];
+    //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
 }
