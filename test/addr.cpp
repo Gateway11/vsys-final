@@ -31,6 +31,6 @@ int main()
     const std::string& addr = addr_map[usage.c_str()];
     if (addr.size()){
         printf("----------%s", addr.c_str());
-    }   
+    }
     return 0;
 }
