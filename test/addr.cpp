@@ -29,6 +29,15 @@ std::map<std::string, const char*> addr_map {
     {"bus3",                                            "bus3"},
     {"bus6",                                            "bus6"}};
 
+bool audio_device_address_is_valid(const uint8_t& addr) {
+    switch(addr) {
+    case 0 ... 3:
+    case 6:
+          return true;
+    }
+    return false;
+}
+
 int main()
 {
     std::cout << "Hello World" << std::endl;
