@@ -66,7 +66,7 @@ int main()
 #if 0
     android.hardware.automotive.audiocontrol.V2_0.MutingInfo[] mutingInfos =
         new android.hardware.automotive.audiocontrol.V2_0.MutingInfo[1];
-    mutingInfos[0] = new MutingInfo();
+    mutingInfos[0] = new android.hardware.automotive.audiocontrol.V2_0.MutingInfo();
 
     int muteAddrNum = mutingInfos[0].deviceAddressesToMute.length;
     if (carZonesMutingInfo.get(0).deviceAddressesToMute.length < mutingInfos[0].deviceAddressesToMute.length) {
