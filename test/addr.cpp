@@ -63,6 +63,33 @@ int main()
         atoi(addr + 3);
     }
 #endif
+#if 0
+    android.hardware.automotive.audiocontrol.V2_0.MutingInfo[] mutingInfos =
+        new android.hardware.automotive.audiocontrol.V2_0.MutingInfo[1];
+    mutingInfos[0] = new MutingInfo();
+
+    int muteAddrNum = mutingInfos[0].deviceAddressesToMute.length;
+    if (carZonesMutingInfo.get(0).deviceAddressesToMute.length < mutingInfos[0].deviceAddressesToMute.length) {
+        muteAddrNum = carZonesMutingInfo.get(0).deviceAddressesToMute.length;
+    }
+    for (int i = 0; i < muteAddrNum; i++) {
+        mutingInfos[0].deviceAddressesToMute[i] = carZonesMutingInfo.get(0).deviceAddressesToMute[i];
+    }
+    for (int i = muteAddrNum; i < mutingInfos[0].deviceAddressesToMute.length; i++) {
+        mutingInfos[0].deviceAddressesToMute[i] = "";
+    }
+
+    int unMuteAddrNum = mutingInfos[0].deviceAddressesToUnmute.length;
+    if (carZonesMutingInfo.get(0).deviceAddressesToUnmute.length < mutingInfos[0].deviceAddressesToUnmute.length) {
+        unMuteAddrNum = carZonesMutingInfo.get(0).deviceAddressesToUnmute.length;
+    }
+    for (int i = 0; i < unMuteAddrNum; i++) {
+        mutingInfos[0].deviceAddressesToUnmute[i] = carZonesMutingInfo.get(0).deviceAddressesToUnmute[i];
+    }
+    for (int i = unMuteAddrNum; i < mutingInfos[0].deviceAddressesToUnmute.length; i++) {
+        mutingInfos[0].deviceAddressesToUnmute[i] = "";
+    }
+#endif
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
 }
