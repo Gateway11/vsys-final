@@ -64,31 +64,12 @@ int main()
     }
 #endif
 #if 0
-    android.hardware.automotive.audiocontrol.V2_0.MutingInfo[] mutingInfoToHal =
-        new android.hardware.automotive.audiocontrol.V2_0.MutingInfo[1];
-    mutingInfoToHal[0] = new android.hardware.automotive.audiocontrol.V2_0.MutingInfo();
-
-    int muteAddrNum = mutingInfoToHal[0].deviceAddressesToMute.length;
-    if (carZonesMutingInfo.get(0).deviceAddressesToMute.length < mutingInfoToHal[0].deviceAddressesToMute.length) {
-        muteAddrNum = carZonesMutingInfo.get(0).deviceAddressesToMute.length;
-    }
-    for (int i = 0; i < muteAddrNum; i++) {
-        mutingInfoToHal[0].deviceAddressesToMute[i] = carZonesMutingInfo.get(0).deviceAddressesToMute[i];
-    }
-    for (int i = muteAddrNum; i < mutingInfoToHal[0].deviceAddressesToMute.length; i++) {
-        mutingInfoToHal[0].deviceAddressesToMute[i] = "";
-    }
-
-    int unMuteAddrNum = mutingInfoToHal[0].deviceAddressesToUnmute.length;
-    if (carZonesMutingInfo.get(0).deviceAddressesToUnmute.length < mutingInfoToHal[0].deviceAddressesToUnmute.length) {
-        unMuteAddrNum = carZonesMutingInfo.get(0).deviceAddressesToUnmute.length;
-    }
-    for (int i = 0; i < unMuteAddrNum; i++) {
-        mutingInfoToHal[0].deviceAddressesToUnmute[i] = carZonesMutingInfo.get(0).deviceAddressesToUnmute[i];
-    }
-    for (int i = unMuteAddrNum; i < mutingInfoToHal[0].deviceAddressesToUnmute.length; i++) {
-        mutingInfoToHal[0].deviceAddressesToUnmute[i] = "";
-    }
+    std::mutex focus_mutex;
+    std::thread thread([&] {
+            std::lock_guard<decltype(focus_mutex)> lg(focus_mutex);
+            audioControl->requestAudioFocus(usage, zoneId, xxxx);
+        });
+    thread.detach();
 #endif
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
