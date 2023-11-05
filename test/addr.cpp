@@ -71,6 +71,18 @@ int main()
         });
     thread.detach();
 #endif
+#if 0
+    #include <set>
+    #include <algorithm>
+
+    std::set<std::string> set{"bus0", "bus3", "bus2", "bus0", "bus0"};
+    auto it = set.begin();
+    for (int i = 0; i < std::min(set.size(), (size_t)4); i++, it++)
+        printf("%s, ", it->c_str());
+    //std::for_each_n(set.begin(), std::min(set.size(), (size_t)4), [](auto& n){
+    //    printf("%s, ", n.c_str());
+    //});
+#endif
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
 }
