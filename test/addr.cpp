@@ -75,8 +75,10 @@ int main()
 #endif
 #if 1
     std::set<std::string> set{"bus0", "bus3", "bus2", "bus0", "bus0"};
-    for(struct { int32_t i; std::set<std::string>::iterator it; } loop = { 0, set.begin() }; loop.i < std::min(set.size(), (size_t)4); loop.i++, loop.it++)
-        printf("%s, ", loop.it->c_str());
+    //for(struct { int32_t i; std::set<std::string>::iterator it; } loop = { 0, set.begin() }; loop.i < std::min(set.size(), (size_t)4); loop.i++, loop.it++)
+    for(std::pair<int32_t, std::set<std::string>::iterator> loop{0, set.begin()}; loop.first < std::min(set.size(), (size_t)4); loop.first++, loop.second++)
+        printf("%s, ", loop.second->c_str());
+        //printf("%s, ", loop.it->c_str());
 
     printf("\n");
 
@@ -88,8 +90,10 @@ int main()
     //    printf("%s, ", n.c_str());
     //});
 #endif
-    for(struct { int a; float b; } loop = { 1, 2 }; loop.a != 0; loop.a--) {
-
+    //for(struct { int a; float b; } loop = { 1, 2 }; loop.a != 0; loop.a--) {
+    //for(std::pair<int32_t, float> loop = std::make_pair(1, 2.1); loop.first < 5; loop.first++) {
+    for(std::pair<int32_t, float> loop{1, 2.1}; loop.first < 5; loop.first++) {
+        printf("%d, %f\n", loop.first, loop.second);
     }
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
