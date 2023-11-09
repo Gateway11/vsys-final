@@ -74,6 +74,7 @@ int main()
     thread.detach();
 #endif
 #if 1
+    https://stackoverflow.com/questions/75538/hidden-features-of-c
     std::set<std::string> set{"bus0", "bus3", "bus2", "bus0", "bus0"};
     //for(struct { int32_t i; std::set<std::string>::iterator it; } loop = { 0, set.begin() }; loop.i < std::min(set.size(), (size_t)4); loop.i++, loop.it++)
     for(std::pair<int32_t, std::set<std::string>::iterator> loop{0, set.begin()}; loop.first < std::min(set.size(), (size_t)4); loop.first++, loop.second++)
