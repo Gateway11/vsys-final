@@ -104,6 +104,13 @@ void div2(int32_t arg, ...) {
 #define __STR(x) #x
 #define _STR(x) __STR(x)
 
+//#define FSM 4
+//#define __STATE(x)      doSomethingElse_##x
+//#define STATE(x) __STATE(x)
+//#define NEXTSTATE(x)  goto s_##x
+//void doSomethingElse_4() { printf("1\n"); }
+//STATE(FSM)();
+
 #define in ,
 #define foreach(...) foreach_in(__VA_ARGS__)
 #define foreach_in(e, a) for(int i = 0; i < sizeof(a); i++)
