@@ -1,5 +1,7 @@
 #include <iostream>
 #include <map>
+#include <set>
+#include <algorithm>
 
 //std::map<std::string, std::string> addr_map {
 std::map<std::string, const char*> addr_map {
@@ -71,18 +73,24 @@ int main()
         });
     thread.detach();
 #endif
-#if 0
-    #include <set>
-    #include <algorithm>
-
+#if 1
     std::set<std::string> set{"bus0", "bus3", "bus2", "bus0", "bus0"};
+    for(struct { int32_t i; std::set<std::string>::iterator it; } loop = { 0, set.begin() }; loop.i < std::min(set.size(), (size_t)4); loop.i++, loop.it++)
+        printf("%s, ", loop.it->c_str());
+
+    printf("\n");
+
     auto it = set.begin();
     for (int i = 0; i < std::min(set.size(), (size_t)4); i++, it++)
         printf("%s, ", it->c_str());
+    printf("\n");
     //std::for_each_n(set.begin(), std::min(set.size(), (size_t)4), [](auto& n){
     //    printf("%s, ", n.c_str());
     //});
 #endif
+    for(struct { int a; float b; } loop = { 1, 2 }; loop.a != 0; loop.a--) {
+
+    }
     //char* addr = addr_map[duckingInfo.usagesHoldingFocus[i].c_str()].c_str();
     return 0;
 }
