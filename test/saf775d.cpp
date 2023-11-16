@@ -15,6 +15,7 @@ int32_t main(int argc, char** argv)
             printf("---------------------------- %d\n", i);
         }
     }
+    printf("%d\n",(int32_t)(log10((0x1000 - 0xF34) / 2048.0) * 20));
 #endif
     int32_t n = atoi(argv[1]);
     if (n >= 0) {
