@@ -30,6 +30,7 @@ hellomake: test.cpp
 	gcc -o hellomake test.cpp -I.
 
 #g++ -std=c++11 addr.cpp
+#g++ saf775d.cpp
 #gcc -E test.cpp
 
 clean:
