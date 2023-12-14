@@ -3,15 +3,15 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := audiocontrol_test
 
-LOCAL_PROPRIETARY_MODULE := true
-
 LOCAL_SRC_FILES := test.cpp
 
 LOCAL_SHARED_LIBRARIES := \
 		libutils \
         libhidlbase \
-        android.hardware.automotive.audiocontrol@2.0
+        android.hardware.automotive.audiocontrol@2.0 \
+        android.hardware.audio@4.0
 
+LOCAL_PROPRIETARY_MODULE := true
 include $(BUILD_EXECUTABLE)
 
 #out/soong/host/linux-x86/bin/hidl-gen -L hash -r android.hardware:hardware/interfaces android.hardware.audio@2.0
