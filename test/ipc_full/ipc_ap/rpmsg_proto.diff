@@ -1,0 +1,41 @@
+diff --git a/net/rpmsg/rpmsg_proto.c b/net/rpmsg/rpmsg_proto.c
+index ddb2c179a10c..ad63154081b6 100644
+--- a/net/rpmsg/rpmsg_proto.c
++++ b/net/rpmsg/rpmsg_proto.c
+@@ -70,6 +70,7 @@ struct rpmsg_channel {
+ };
+ 
+ static struct rpmsg_channel rpmsg_channels[RPMSG_MAX_CHAN];
++static wait_queue_head_t peer_wait;
+ 
+ /* Synchronization of access to the tree is achieved using a mutex,
+  * because we're using non-atomic radix tree allocations.
+@@ -109,6 +110,8 @@ static int rpmsg_device_insert(unsigned long vproc_id,
+ 			rpmsg_channels[i].address = rpdev->dst;
+ 			rpmsg_channels[i].dev = rpdev;
+ 			rpmsg_channels[i].vproc_id = vproc_id;
++
++			wake_up_interruptible(&peer_wait);
+ 			return 0;
+ 		}
+ 	}
+@@ -449,7 +452,9 @@ rpmsg_sock_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
+ 	if (sk->sk_state != RPMSG_OPEN)
+ 		return -EINVAL;
+ 
+-	rpdev = rpmsg_device_lookup(sa->vproc_id, sa->addr);
++	//rpdev = rpmsg_device_lookup(sa->vproc_id, sa->addr);
++	int ret = wait_event_interruptible(peer_wait, (rpdev = rpmsg_device_lookup(sa->vproc_id, sa->addr)));
++	printk(KERN_ALERT "~~~~~~~~~~~~~~~~~~~~~~~~Hello rpmsg~~~~~~~~~~~~~~~~~~~~~~~~ ret=%d, rpdev=%p\n", ret, rpdev);
+ 	if (!rpdev)
+ 		return -EINVAL;
+ 
+@@ -741,6 +746,8 @@ static int __init rpmsg_proto_init(void)
+ 		goto proto_unreg;
+ 	}
+ 
++	init_waitqueue_head(&peer_wait);
++
+ 	/* for Native or XEN Dom-0 */
+ 	if (!xen_domain() || xen_initial_domain()) {
+ 		ret = register_rpmsg_driver(&rpmsg_proto_driver);

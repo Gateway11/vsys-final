@@ -1,0 +1,96 @@
+diff --git a/middleware/CLI/CLI_console.c b/middleware/CLI/CLI_console.c
+index b9af89b6..d07873c0 100644
+--- a/middleware/CLI/CLI_console.c
++++ b/middleware/CLI/CLI_console.c
+@@ -121,6 +121,34 @@ static void CLIRegisterCommands(void)
+     }
+ }
+ 
++#include <cmsis_os2.h>
++static uint8_t uart_rx_buf2[RX_BUF_SIZE];
++static uint32_t head = 0, tail = 0;
++static bool rlogbuf_en = false;
++static osEventFlagsId_t *log_event = NULL;
++
++enum {
++    RLOGBUF_ENABLE,
++    LOG_EVENT,
++};
++
++void uart_control(uint32_t type, void* val) {
++    if (type == RLOGBUF_ENABLE) {
++        head = tail = 0;
++        rlogbuf_en = *(bool *)val;
++    } else if (type == LOG_EVENT) {
++        log_event = (osEventFlagsId_t *)val;
++    }
++}
++
++uint32_t uart_rx_buf_read(uint8_t *buf, uint32_t buf_size) {
++    uint32_t offset = 0;
++    while (tail != head && offset < buf_size) {
++        buf[offset++] = uart_rx_buf2[tail++ & (RX_BUF_SIZE - 1)];
++    }
++    return offset;
++}
++
+ /*
+  * console task entry.
+  *
+@@ -128,8 +156,12 @@ static void CLIRegisterCommands(void)
+  */
+ static void CLICommandHandle(char cRxedChar)
+ {
+-    int xReturned;
+-
++    int xReturned = 0;
++#ifndef CONFIG_MP
++    if (rlogbuf_en) {
++        uart_rx_buf2[head++ & (RX_BUF_SIZE - 1)] = cRxedChar;
++    }
++#endif
+     /* Is end of the line? */
+     if(cRxedChar == '\n' || cRxedChar == '\r')
+     {
+@@ -138,12 +170,19 @@ static void CLICommandHandle(char cRxedChar)
+             gcInputBuffer[gucInputIndex] = '\0';
+             do {
+                 gcOutputBuffer[0] = '\0';
+-
+-                /* Get the next output string from the command interpreter. */
+-                xReturned = CLIProcessCommand(gcInputBuffer, gcOutputBuffer, CLI_OUTPUT_BUFFER_SIZE);
+-
+-                /* Write the generated string to the UART. */
+-                CLIUartWrite(gcOutputBuffer, strlen(gcOutputBuffer));
++#ifndef CONFIG_MP
++                if (!rlogbuf_en) {
++#endif
++                    /* Get the next output string from the command interpreter. */
++                    xReturned = CLIProcessCommand(gcInputBuffer, gcOutputBuffer, CLI_OUTPUT_BUFFER_SIZE);
++
++                    /* Write the generated string to the UART. */
++                    CLIUartWrite(gcOutputBuffer, strlen(gcOutputBuffer));
++#ifndef CONFIG_MP
++                } else {
++                    osEventFlagsSet(*log_event, 1);
++                }
++#endif
+             } while(xReturned != CLI_FALSE);
+ 
+             gucInputIndex = 0;
+diff --git a/middleware/CLI/include/CLI.h b/middleware/CLI/include/CLI.h
+index fc8ce8ae..0e649830 100644
+--- a/middleware/CLI/include/CLI.h
++++ b/middleware/CLI/include/CLI.h
+@@ -29,6 +29,11 @@
+ #define _APP_CLI_CLI_H
+ 
+ #include "CLI_type.h"
++
++#define RX_BUF_SIZE 512
++void uart_control(uint32_t type, void* val);
++uint32_t uart_rx_buf_read(uint8_t *buf, uint32_t buf_size);
++
+ 
+ /*
+  * Register the command passed in using the pxCommandToRegister parameter.
