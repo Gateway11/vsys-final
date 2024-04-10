@@ -420,13 +420,13 @@ int spi_close() {
 }
 
 // Blocking read function from the SPI device
-ssize_t spi_read_blocking(void *buffer, size_t len) {
+ssize_t spi_read_blocking(void *buffer, size_t len, int timeout_sec) {
     fd_set recv_fds;
     struct timeval tv;
     ssize_t bytes_read;
 
     // Set timeout to 10 seconds
-    tv.tv_sec = 10;
+    tv.tv_sec = timeout_sec;
     tv.tv_usec = 0;
 
     // Initialize file descriptor set
@@ -466,7 +466,7 @@ ssize_t spi_read_nonblocking(void *buffer, size_t len) {
 // Read data from the SPI device based on the blocking flag
 ssize_t spi_read(void *buffer, size_t len, int block_flag) {
     if (block_flag) {
-        return spi_read_blocking(buffer, len);
+        return spi_read_blocking(buffer, len, 10);
     } else {
         return spi_read_nonblocking(buffer, len);
     }
@@ -476,7 +476,7 @@ ssize_t spi_read(void *buffer, size_t len, int block_flag) {
 
 // Read data from the SPI device
 ssize_t spi_read(void *buffer, size_t len) {
-    return spi_read_blocking(buffer, len);
+    return spi_read_blocking(buffer, len, 10);
 }
 #endif
 

@@ -63,6 +63,49 @@ int spi_open();
 // - Number of bytes successfully read, or -1 on error
 ssize_t spi_read(void *buffer, size_t len);
 
+// Read data from the SPI device based on the blocking flag.
+// Parameters:
+// - buffer: Buffer to store the read data.
+// - len: Number of bytes to read.
+// - block_flag: Flag indicating whether the read operation should be blocking or non-blocking.
+//               If block_flag is non-zero, the function will block until data is available.
+//               If block_flag is zero, the function will return immediately if no data is available.
+// Returns:
+// - Number of bytes successfully read, or -1 on error.
+ssize_t spi_read(void *buffer, size_t len, int block_flag);
+
+// Read data from the SPI device based on the blocking flag with timeout.
+// Parameters:
+// - buffer: Buffer to store the read data.
+// - len: Number of bytes to read.
+// - block_flag: Flag indicating whether the read operation should be blocking or non-blocking.
+//               If block_flag is non-zero, the function will block until data is available.
+//               If block_flag is zero, the function will return immediately if no data is available.
+// - timeout_sec: Timeout duration in seconds for blocking reads. This parameter is only effective
+//                if block_flag is non-zero. If no data is available within this time, the function
+//                returns with a timeout error.
+// Returns:
+// - Number of bytes successfully read, or -1 on error.
+ssize_t spi_read(void *buffer, size_t len, int block_flag, int timeout_sec);
+
+// Read data from the SPI device in a blocking manner with timeout.
+// Parameters:
+// - buffer: Buffer to store the read data.
+// - len: Number of bytes to read.
+// - timeout_sec: Timeout duration in seconds. If no data is available
+//                within this time, the function returns with a timeout error.
+// Returns:
+// - Number of bytes successfully read, or -1 on error.
+ssize_t spi_read_blocking(void *buffer, size_t len, int timeout_sec);
+
+// Read data from the SPI device in a non-blocking manner.
+// Parameters:
+// - buffer: Buffer to store the read data.
+// - len: Number of bytes to read.
+// Returns:
+// - Number of bytes successfully read, or -1 on error.
+ssize_t spi_read_nonblocking(void *buffer, size_t len);
+
 // Write data to SPI device
 // Parameters:
 // - buffer: Data buffer to write
