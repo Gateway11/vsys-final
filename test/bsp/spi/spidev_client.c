@@ -149,7 +149,7 @@ static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 	if (ret < 1)
 		pabort("can't send spi message");
 
-	if (verbose)
+	if (verbose && tx)
 		hex_dump(tx, len, 32, "TX");
 
 	if (output_file) {
@@ -164,7 +164,7 @@ static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 		close(out_fd);
 	}
 
-	if (verbose)
+	if (verbose && rx)
 		hex_dump(rx, len, 32, "RX");
 }
 
@@ -462,30 +462,18 @@ ssize_t spi_read_nonblocking(void *buffer, size_t len) {
     return read(spi_fd, buffer, len);
 }
 
-#if 0
-// Read data from the SPI device based on the blocking flag
-ssize_t spi_read(void *buffer, size_t len, int block_flag) {
-    if (block_flag) {
-        return spi_read_blocking(buffer, len, 10);
-    } else {
-        return spi_read_nonblocking(buffer, len);
-    }
-}
-
-#else
-
-// Read data from the SPI device
 ssize_t spi_read(void *buffer, size_t len) {
-    return spi_read_blocking(buffer, len, 10);
+    //return spi_read_blocking(buffer, len, 10);
+    transfer(spi_fd, NULL, buffer, len);
+    return 0;
 }
-#endif
 
 ssize_t spi_write(const void *buffer, size_t len) {
     return write(spi_fd, buffer, len);
 }
 
 ssize_t spi_transfer(const void *tx_buffer, void *rx_buffer, size_t len) {
-    transfer(spi_fd, tx_buffer, tx_buffer, len);
+    transfer(spi_fd, tx_buffer, rx_buffer, len);
     return 0;
 }
 
