@@ -407,9 +407,25 @@ static void transfer_buf(int fd, int len)
 
 // Open the SPI device
 int spi_open() {
-	spi_fd = open("/dev/spidev7.0", O_RDWR);
-	if (spi_fd < 0)
-		pabort("can't open device");
+    spi_fd = open("/dev/spidev7.0", O_RDWR);
+    if (spi_fd < 0)
+        pabort("can't open device");
+    // Set the file descriptor to blocking mode
+    int flags = fcntl(spi_fd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("Failed to get file descriptor flags");
+        return -1;
+    }
+
+    // Clear the non-blocking flag
+    flags &= ~O_NONBLOCK;
+
+    // Set the file descriptor's attributes
+    int ret = fcntl(spi_fd, F_SETFL, flags);
+    if (ret == -1) {
+        perror("Failed to set file descriptor flags");
+        return -1;
+    }
     return 0;
 }
 
