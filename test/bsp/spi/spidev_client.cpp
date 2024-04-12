@@ -32,6 +32,7 @@
 #include "spidev_api.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 static void pabort(const char *s)
 {
@@ -319,7 +320,7 @@ static void parse_opts(int argc, char *argv[])
 
 uint64_t spi_open() {
     static spidata_priv_t spidata;
-    spidata.timeout_sec = 10;
+    spidata.delay_ms = 10;
 
 	spidata.fd = open(device, O_RDWR);
 	if (spidata.fd < 0) {
@@ -358,7 +359,7 @@ int spi_control(uint64_t fd, spi_param_key_t key, void *val) {
         case SPI_TIMEOUT_SEC: {
             // Cast val to the appropriate type for the specified parameter
             uint32_t *timeout = (uint32_t *)val;
-            spidata->timeout_sec = *timeout;
+            spidata->delay_ms = *timeout;
             printf("Setting timeout to %d\n", *timeout);
             break;
         }
@@ -375,17 +376,21 @@ ssize_t spi_read(uint64_t fd, void *buffer, size_t len) {
     if (spidata)
     {
         std::lock_guard<decltype(spidata->spi_mutex)> lg(spidata->spi_mutex);
-        memcpy(buffer, spidata->rx_buffer, len);
+        memcpy(buffer, spidata->rx_buffer, min(len, SPI_MSG_LEN));
     }
     return len;
 }
 
 ssize_t spi_write(uint64_t fd, const void *buffer, size_t len) {
+    ssize_t ret = -1;
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
     if (spidata) {
         std::lock_guard<decltype(spidata->spi_mutex)> lg(spidata->spi_mutex);
-        memcpy(spidata->tx_buffer, buffer, len);
+        ret = write(spidata->fd, buffer, len);
+        //memcpy(spidata->tx_buffer, buffer, min(len, SPI_MSG_LEN));
     }
+    if (verbose && ret > 0)
+	    hex_dump((uint8_t *)buffer, ret, 32, "TX");
     return len;
 }
 
