@@ -26,9 +26,11 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 
+#include <pthread.h>
 #include "spidev_api.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#define READ_ONLY_ENABLE
 
 static void pabort(const char *s)
 {
@@ -36,7 +38,14 @@ static void pabort(const char *s)
 	abort();
 }
 
-static int spi_fd;
+typedef struct spidata_priv {
+    int fd;
+#ifdef READ_ONLY_ENABLE
+    int read_fd;
+#endif
+    uint32_t timeout_sec;
+} spidata_priv_t;
+
 static const char *device = "/dev/spidev7.0";
 static uint32_t mode;
 static uint8_t bits = 8;
@@ -405,13 +414,24 @@ static void transfer_buf(int fd, int len)
 	free(tx);
 }
 
-// Open the SPI device
-int spi_open() {
-    spi_fd = open("/dev/spidev7.0", O_RDWR);
-    if (spi_fd < 0)
-        pabort("can't open device");
+uint64_t spi_open() {
+    static spidata_priv_t spidata;
+    spidata.timeout_sec = 10;
+
+	spidata.fd = open(device, O_RDWR);
+	if (spidata.fd < 0) {
+		pabort("Failed to open the device in read-write mode");
+        return 0;
+    }
+#ifdef READ_ONLY_ENABLE
+	spidata.read_fd = open(device, O_RDONLY);
+	if (spidata.read_fd < 0) {
+		pabort("Failed to open the device in read-only mode");
+        close(spidata.fd);
+        return 0;
+    }
     // Set the file descriptor to blocking mode
-    int flags = fcntl(spi_fd, F_GETFL, 0);
+    int flags = fcntl(spidata.read_fd, F_GETFL, 0);
     if (flags == -1) {
         perror("Failed to get file descriptor flags");
         return -1;
@@ -421,76 +441,147 @@ int spi_open() {
     flags &= ~O_NONBLOCK;
 
     // Set the file descriptor's attributes
-    int ret = fcntl(spi_fd, F_SETFL, flags);
+    int ret = fcntl(spidata.read_fd, F_SETFL, flags);
     if (ret == -1) {
         perror("Failed to set file descriptor flags");
         return -1;
     }
+#endif
+    return (uint64_t)&spidata;
+}
+
+int spi_close(uint64_t fd) {
+    int ret = -1;
+    spidata_priv_t *spidata = (spidata_priv_t*)fd;
+
+    if (spidata != NULL) {
+        ret = close(spidata->fd);
+#ifdef READ_ONLY_ENABLE
+        ret = close(spidata->read_fd);
+#endif
+    }
+    return ret;
+}
+
+int spi_control(uint64_t fd, spi_param_key_t key, void *val) {
+    spidata_priv_t *spidata = (spidata_priv_t*)fd;
+    if (spidata == NULL)
+        return -1;
+    switch(key) {
+        case SPI_TIMEOUT_SEC: {
+            // Cast val to the appropriate type for the specified parameter
+            uint32_t *timeout = (uint32_t *)val;
+            spidata->timeout_sec = *timeout;
+            printf("Setting timeout to %d\n", *timeout);
+            break;
+        }
+        default:
+            // Handle unsupported or invalid key
+            return -1;
+    }
     return 0;
 }
 
-// Close the SPI device
-int spi_close() {
-    close(spi_fd);
-    return 0;
-}
-
-// Blocking read function from the SPI device
-ssize_t spi_read_blocking(void *buffer, size_t len, int timeout_sec) {
+ssize_t spi_read_blocking(int spi_fd, void *buffer, size_t len, int timeout_sec) {
     fd_set recv_fds;
     struct timeval tv;
     ssize_t bytes_read;
 
-    // Set timeout to 10 seconds
     tv.tv_sec = timeout_sec;
     tv.tv_usec = 0;
 
-    // Initialize file descriptor set
     FD_ZERO(&recv_fds);
     FD_SET(spi_fd, &recv_fds);
 
-    for (;;) {
-        // Call select to monitor if data is ready to read from the SPI device
-        int fd_result = select(spi_fd + 1, &recv_fds, NULL, NULL, &tv);
-        if (fd_result < 0) {
-            perror("select error");
-            return -1;
-        } else if (fd_result == 0) {
-            // No change in the SPI device's state within the specified time
-            printf("select timeout\n");
-            continue;
-        } else {
-            // Data is ready to read from the SPI device
-            if (FD_ISSET(spi_fd, &recv_fds)) {
-                bytes_read = read(spi_fd, buffer, len);
-                if (bytes_read < 0) {
-                    perror("read error");
-                    return -1;
-                }
-                return bytes_read;
+    // Call select to monitor if data is ready to read from the SPI device
+    int fd_result = select(spi_fd + 1, &recv_fds, NULL, NULL, &tv);
+    if (fd_result < 0) {
+        perror("select error");
+        return -1;
+    } else if (fd_result == 0) {
+        // No change in the SPI device's state within the specified time
+        printf("select timeout\n");
+        return -1;//continue;
+    } else {
+        // Data is ready to read from the SPI device
+        if (FD_ISSET(spi_fd, &recv_fds)) {
+            bytes_read = read(spi_fd, buffer, len);
+            if (bytes_read < 0) {
+                perror("read error");
+                return -1;
             }
+            return bytes_read;
         }
     }
+    return -1;
 }
 
-// Non-blocking read function from the SPI device
-ssize_t spi_read_nonblocking(void *buffer, size_t len) {
+ssize_t spi_read_nonblocking(int spi_fd, void *buffer, size_t len) {
     return read(spi_fd, buffer, len);
 }
 
-ssize_t spi_read(void *buffer, size_t len) {
-    //return spi_read_blocking(buffer, len, 10);
-    transfer(spi_fd, NULL, buffer, len);
+ssize_t spi_read(uint64_t fd, void *buffer, size_t len) {
+    int ret = -1;
+    spidata_priv_t *spidata = (spidata_priv_t*)fd;
+    if (spidata != NULL)
+#ifdef READ_ONLY_ENABLE
+        ret = spi_read_blocking(spidata->read_fd, buffer, len, spidata->timeout_sec);
+#else
+        ret = spi_read_blocking(spidata->fd, buffer, len, spidata->timeout_sec);
+#endif
+    if (verbose && ret > 0)
+		hex_dump(buffer, ret, 32, "RX");
+    return ret;
+}
+
+ssize_t spi_write(uint64_t fd, const void *buffer, size_t len) {
+    int ret = -1;
+    spidata_priv_t *spidata = (spidata_priv_t*)fd;
+    if (spidata != NULL)
+        ret = write(spidata->fd, buffer, len);
+    if (verbose && ret > 0)
+	    hex_dump(buffer, ret, 32, "TX");
+    return ret;
+}
+
+ssize_t spi_transfer(uint64_t fd, const void *tx_buffer, void *rx_buffer, size_t len) {
+    spidata_priv_t *spidata = (spidata_priv_t*)fd;
+    if (spidata != NULL)
+        transfer(spidata->fd, tx_buffer, tx_buffer, len);
     return 0;
 }
 
-ssize_t spi_write(const void *buffer, size_t len) {
-    return write(spi_fd, buffer, len);
+void* th_read_fun(void *arg) {
+    uint64_t spi_fd = *(uint64_t *)arg;
+    srand((unsigned)time(NULL));
+    for(;;) {
+        spi_read(spi_fd, default_rx, sizeof(default_rx));
+        usleep((rand() % 1000) * 1000);
+    }
+    return NULL;
 }
 
-ssize_t spi_transfer(const void *tx_buffer, void *rx_buffer, size_t len) {
-    transfer(spi_fd, tx_buffer, rx_buffer, len);
-    return 0;
+void* th_write_fun(void *arg) {
+    uint64_t spi_fd = *(uint64_t *)arg;
+    srand((unsigned)time(NULL));
+    for(;;) {
+        spi_write(spi_fd, input_tx, strlen(input_tx));
+        usleep((rand() % 1000) * 1000);
+    }
+    return NULL;
+}
+
+void* th_transfer_fun(void *arg) {
+    uint64_t spi_fd = *(uint64_t *)arg;
+    spidata_priv_t *spidata = (spidata_priv_t*)spi_fd;
+
+    srand((unsigned)time(NULL));
+    for(;;) {
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+        spi_transfer(spi_fd, input_tx, default_rx, min(strlen(input_tx), sizeof(default_rx)));
+        usleep((rand() % 1000) * 1000);
+    }
+    return NULL;
 }
 
 #ifdef __ANDROID_NDK__
@@ -501,6 +592,36 @@ int main(int argc, char *argv[])
 
 	parse_opts(argc, argv);
 
+#if 1
+    uint64_t spi_fd = spi_open();
+	if (input_tx && input_file)
+		pabort("only one of -p and --input may be selected");
+
+#if 1
+    spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){15});
+
+	size_t size = strlen(input_tx);
+    ret = spi_write(spi_fd, input_tx, size);
+
+    ret = spi_read(spi_fd, default_rx, sizeof(default_rx));
+
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+    ret = spi_transfer(spi_fd, input_tx, default_rx, min(size, sizeof(default_rx)));
+
+#else
+    pthread_t th_read, th_write, th_transfer;
+    pthread_create(&th_read, NULL, th_read_fun, (void *)&spi_fd);
+    pthread_detach(th_read);
+
+    pthread_create(&th_write, NULL, th_write_fun, (void *)&spi_fd);
+    pthread_detach(th_write);
+
+    pthread_create(&th_transfer, NULL, th_transfer_fun, (void *)&spi_fd);
+    pthread_detach(th_transfer);
+#endif
+
+    ret = spi_close(spi_fd);
+#else
 	fd = open(device, O_RDWR);
 	if (fd < 0)
 		pabort("can't open device");
@@ -571,7 +692,7 @@ int main(int argc, char *argv[])
 		transfer(fd, default_tx, default_rx, sizeof(default_tx));
 
 	close(fd);
-
+#endif
 	return ret;
 }
 #endif
