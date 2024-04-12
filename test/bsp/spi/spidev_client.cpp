@@ -339,6 +339,7 @@ uint64_t spi_open() {
             std::this_thread::sleep_for(std::chrono::milliseconds(spidata.delay_ms));
         }
     });
+    thread.detach();
     return (uint64_t)&spidata;
 }
 
