@@ -41,7 +41,7 @@ static void pabort(const char *s)
 }
 
 typedef struct spidata_priv {
-#define SPI_MSG_LEN 512
+#define SPI_MSG_LEN 64
     uint8_t tx_buffer[SPI_MSG_LEN];
     uint8_t rx_buffer[SPI_MSG_LEN];
     std::mutex spi_mutex;
@@ -52,6 +52,7 @@ typedef struct spidata_priv {
         uint32_t timeout_sec;
         uint32_t delay_ms;
     };
+    uint8_t thread_exit;
 } spidata_priv_t;
 
 static const char *device = "/dev/spidev7.0";
@@ -321,6 +322,7 @@ static void parse_opts(int argc, char *argv[])
 uint64_t spi_open() {
     static spidata_priv_t spidata;
     spidata.delay_ms = 10;
+    spidata.thread_exit = false;
 
 	spidata.fd = open(device, O_RDWR);
 	if (spidata.fd < 0) {
@@ -329,7 +331,7 @@ uint64_t spi_open() {
     }
     sem_init(&spidata.read_sem, 0, 0);
     std::thread thread([&]{
-        for (;;) {
+        while (!spidata.thread_exit) {
             {
                 std::lock_guard<decltype(spidata.spi_mutex)> lg(spidata.spi_mutex);
                 transfer(spidata.fd, spidata.tx_buffer, spidata.tx_buffer, SPI_MSG_LEN);
@@ -347,8 +349,11 @@ int spi_close(uint64_t fd) {
     int ret = -1;
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
 
-    if (spidata != NULL)
+    if (spidata != NULL) {
+        std::lock_guard<decltype(spidata->spi_mutex)> lg(spidata->spi_mutex);
+        spidata->thread_exit = true;
         ret = close(spidata->fd);
+    }
     return ret;
 }
 
@@ -415,12 +420,13 @@ int main(int argc, char *argv[])
 	if (input_tx && input_file)
 		pabort("only one of -p and --input may be selected");
 
-    spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){500});
+    spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){1000});
 
 	size_t size = strlen(input_tx);
     ret = spi_write(spi_fd, input_tx, size);
 
-    ret = spi_read(spi_fd, default_rx, sizeof(default_rx));
+    for (;;)
+        ret = spi_read(spi_fd, default_rx, sizeof(default_rx));
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
     ret = spi_transfer(spi_fd, input_tx, default_rx, min(size, sizeof(default_rx)));
