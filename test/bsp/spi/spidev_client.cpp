@@ -415,7 +415,7 @@ int main(int argc, char *argv[])
 	if (input_tx && input_file)
 		pabort("only one of -p and --input may be selected");
 
-    spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){15});
+    spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){500});
 
 	size_t size = strlen(input_tx);
     ret = spi_write(spi_fd, input_tx, size);
