@@ -423,20 +423,20 @@ void handle_ctrl_c(int sig) {
 
 int main(int argc, char *argv[])
 {
-	int ret = 0;
+    int ret = 0;
 
-	parse_opts(argc, argv);
+    parse_opts(argc, argv);
+
+    if (input_tx && input_file)
+        pabort("only one of -p and --input may be selected");
 
     printf("Program is running, press CTRL+C to exit.\n");
     signal(SIGINT, handle_ctrl_c);
 
     spi_fd = spi_open();
-	if (input_tx && input_file)
-		pabort("only one of -p and --input may be selected");
-
     spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){1000});
 
-	size_t size = strlen(input_tx);
+    size_t size = strlen(input_tx);
     ret = spi_write(spi_fd, input_tx, size);
 
     for (;;)
