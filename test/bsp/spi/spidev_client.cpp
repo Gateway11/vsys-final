@@ -415,14 +415,24 @@ ssize_t spi_transfer(uint64_t fd, const void *tx_buffer, void *rx_buffer, size_t
     return 0;
 }
 
+uint64_t spi_fd = 0;
+void handle_ctrl_c(int sig) {
+    printf("\nCTRL+C pressed, exiting the program.\n");
+    if (spi_fd)
+        spi_close(spi_fd);
+    exit(0);
+}
+
 int main(int argc, char *argv[])
 {
 	int ret = 0;
-	int fd;
 
 	parse_opts(argc, argv);
 
-    uint64_t spi_fd = spi_open();
+    printf("Program is running, press CTRL+C to exit.\n");
+    signal(SIGINT, handle_ctrl_c);
+
+    spi_fd = spi_open();
 	if (input_tx && input_file)
 		pabort("only one of -p and --input may be selected");
 
