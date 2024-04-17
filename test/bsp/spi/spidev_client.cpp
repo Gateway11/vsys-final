@@ -337,10 +337,8 @@ uint64_t spi_open() {
                 memset(spidata.rx_buffer, 0, SPI_MSG_LEN);
 
                 transfer(spidata.fd, spidata.tx_buffer, spidata.rx_buffer, SPI_MSG_LEN);
-                memset(spidata.tx_buffer, 0, SPI_MSG_LEN);
             }
             sem_post(&spidata.read_sem);
-
             std::this_thread::sleep_for(std::chrono::milliseconds(spidata.delay_ms));
         }
     });
