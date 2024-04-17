@@ -410,7 +410,7 @@ ssize_t spi_transfer(uint64_t fd, const void *tx_buffer, void *rx_buffer, size_t
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
     if (spidata) {
         std::lock_guard<decltype(spidata->spi_mutex)> lg(spidata->spi_mutex);
-        transfer(spidata->fd, (const uint8_t*)tx_buffer, (uint8_t*)tx_buffer, len);
+        transfer(spidata->fd, (const uint8_t*)tx_buffer, (uint8_t*)rx_buffer, len);
     }
     return 0;
 }
@@ -444,7 +444,6 @@ int main(int argc, char *argv[])
     for (;;)
         ret = spi_read(spi_fd, default_rx, sizeof(default_rx));
 
-#define min(a,b) (((a) < (b)) ? (a) : (b))
     ret = spi_transfer(spi_fd, input_tx, default_rx, min(size, sizeof(default_rx)));
 
     ret = spi_close(spi_fd);
