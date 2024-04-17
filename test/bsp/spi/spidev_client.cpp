@@ -334,7 +334,10 @@ uint64_t spi_open() {
         while (!spidata.thread_exit) {
             {
                 std::lock_guard<decltype(spidata.spi_mutex)> lg(spidata.spi_mutex);
-                transfer(spidata.fd, spidata.tx_buffer, spidata.tx_buffer, SPI_MSG_LEN);
+                memset(spidata.rx_buffer, 0, SPI_MSG_LEN);
+
+                transfer(spidata.fd, spidata.tx_buffer, spidata.rx_buffer, SPI_MSG_LEN);
+                memset(spidata.tx_buffer, 0, SPI_MSG_LEN);
             }
             sem_post(&spidata.read_sem);
 
@@ -391,8 +394,11 @@ ssize_t spi_write(uint64_t fd, const void *buffer, size_t len) {
     ssize_t ret = -1;
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
     if (spidata) {
-        std::lock_guard<decltype(spidata->spi_mutex)> lg(spidata->spi_mutex);
-        ret = write(spidata->fd, buffer, len);
+        {
+            std::lock_guard<decltype(spidata->spi_mutex)> lg(spidata->spi_mutex);
+            ret = write(spidata->fd, buffer, len);
+        }
+        //sem_wait(&spidata->read_sem);
         //memcpy(spidata->tx_buffer, buffer, min(len, SPI_MSG_LEN));
     }
     if (verbose && ret > 0)
