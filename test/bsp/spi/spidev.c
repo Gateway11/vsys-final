@@ -693,7 +693,6 @@ static irqreturn_t spidev_rx_isr(int irq, void *dev_id)
         spidev->rx_triggered = irq & IRQF_TRIGGER_RISING;
         wake_up_all(&spidev->peer_wait);
     }
-
     //mutex_unlock(&spidev->buf_lock);
     return IRQ_HANDLED;
 }
