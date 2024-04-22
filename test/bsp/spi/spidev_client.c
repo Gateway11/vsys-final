@@ -30,6 +30,7 @@
 #include "spidev_api.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 static void pabort(const char *s)
 {
@@ -526,27 +527,24 @@ void* th_read_fun(void *arg) {
     return NULL;
 }
 
-void* th_write_fun(void *arg) {
-    uint64_t spi_fd = *(uint64_t *)arg;
-    srand((unsigned)time(NULL));
-    for(;;) {
-        spi_write(spi_fd, input_tx, strlen(input_tx));
-        usleep((rand() % 1000) * 1000);
-    }
-    return NULL;
-}
-
 void* th_transfer_fun(void *arg) {
     uint64_t spi_fd = *(uint64_t *)arg;
     spidata_priv_t *spidata = (spidata_priv_t*)spi_fd;
 
     srand((unsigned)time(NULL));
     for(;;) {
-#define min(a,b) (((a) < (b)) ? (a) : (b))
         spi_transfer(spi_fd, input_tx, default_rx, min(strlen(input_tx), sizeof(default_rx)));
         usleep((rand() % 1000) * 1000);
     }
     return NULL;
+}
+
+uint64_t spi_fd = 0;
+void handle_ctrl_c(int sig) {
+    printf("\nCTRL+C pressed, exiting the program.\n");
+    if (spi_fd)
+        spi_close(spi_fd);
+    exit(0);
 }
 
 #ifdef __ANDROID_NDK__
@@ -558,21 +556,23 @@ int main(int argc, char *argv[])
 	parse_opts(argc, argv);
 
 #if 1
-    uint64_t spi_fd = spi_open();
-	if (input_tx && input_file)
-		pabort("only one of -p and --input may be selected");
+    if (input_tx && input_file)
+        pabort("only one of -p and --input may be selected");
 
-#if 1
+    printf("Program is running, press CTRL+C to exit.\n");
+    signal(SIGINT, handle_ctrl_c);
+
+    spi_fd = spi_open();
     spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){15});
 
+#if 1
 	size_t size = strlen(input_tx);
     ret = spi_write(spi_fd, input_tx, size);
 
-    ret = spi_read(spi_fd, default_rx, sizeof(default_rx));
+    for (;;)
+        ret = spi_read(spi_fd, default_rx, sizeof(default_rx));
 
-#define min(a,b) (((a) < (b)) ? (a) : (b))
     ret = spi_transfer(spi_fd, input_tx, default_rx, min(size, sizeof(default_rx)));
-
 #else
     pthread_t th_read, th_write, th_transfer;
     pthread_create(&th_read, NULL, th_read_fun, (void *)&spi_fd);
