@@ -355,7 +355,12 @@ void transfer_file(int fd, char *filename)
 	if (bytes != sb.st_size)
 		pabort("failed to read input file");
 
-	transfer(fd, tx, rx, sb.st_size);
+	//transfer(fd, tx, rx, sb.st_size);
+	for (int i = 0; i < sb.st_size / SPI_MSG_LEN; i++)
+	    transfer(fd, tx + i * SPI_MSG_LEN, rx, sb.st_size);
+	ssize_t ss = sb.st_size % SPI_MSG_LEN;
+	transfer(fd, tx + (sb.st_size - ss), rx, ss);
+
 	free(rx);
 	free(tx);
 	close(tx_fd);

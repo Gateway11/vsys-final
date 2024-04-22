@@ -106,11 +106,11 @@ extern "C" int external_main(int fd, char *filename)
     memcpy(&total_size_ota[6], total_size_num.data, 4);
     write(fd, total_size_ota, sizeof(total_size_ota));
 
-    transfer_file(fd, filename);
-
     //step3
     uint8_t begin_ota[64] = {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x00, 0x00, 0x00, 0x33};
     write(fd, begin_ota, sizeof(begin_ota));
+
+    transfer_file(fd, filename);
     
     //step4
     uint8_t crc_value_ota[64] = {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x00, 0x00, 0x00, 0x22};
