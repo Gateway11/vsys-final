@@ -806,8 +806,7 @@ static int spidev_probe(struct spi_device *spi)
 
 	INIT_LIST_HEAD(&spidev->device_entry);
 
-	//status = request_irq(
-    //        spi->irq, spidev_rx_isr, IRQF_TRIGGER_RISING | IRQF_ONESHOT, __func__, spi);
+	//status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_RISING | IRQF_ONESHOT, __func__, spi);
 	status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_RISING, __func__, spi);
 	if (status)
 	    dev_err(&spi->dev, "Failed to request IRQ: %d, ret:%d\n", spi->irq, status);
