@@ -145,7 +145,7 @@ spidev_sync_read(struct spidev_data *spidev, size_t len)
 }
 
 static inline void check_and_enable_irq(struct spidev_data *spidev) {
-    pr_err("44444444444444444444444444    =%s", __func__);
+    dev_info(&spidev->spi->dev, "%s", __func__);
     if (spidev->rx_triggered) {
         spidev->rx_triggered = false;
         enable_irq(spidev->spi->irq);
@@ -671,7 +671,6 @@ static unsigned int spidev_poll(struct file *filp, poll_table *wait)
     unsigned int mask = 0;
 
     spidev = filp->private_data;
-
     poll_wait(filp, &spidev->peer_wait, wait);
 
     if (spidev->rx_triggered)
@@ -685,11 +684,15 @@ static irqreturn_t spidev_rx_isr(int irq, void *dev_id)
     struct spi_device *spi = dev_id;
     struct spidev_data	*spidev = spi_get_drvdata(spi);
 
+    //mutex_lock(&spidev->buf_lock);
+
     disable_irq_nosync(irq);
     spidev->rx_triggered = irq & IRQF_TRIGGER_RISING;
-    dev_dbg(&spi->dev, "%s: interrupt handled. %d", __func__, spidev->rx_triggered);
+    dev_info(&spi->dev, "%s: interrupt handled. %d", __func__, spidev->rx_triggered);
 
     wake_up_all(&spidev->peer_wait);
+
+    //mutex_unlock(&spidev->buf_lock);
     return IRQ_HANDLED;
 }
 
@@ -777,7 +780,6 @@ static int spidev_probe(struct spi_device *spi)
 	struct spidev_data	*spidev;
 	int			status;
 	unsigned long		minor;
-	int ret;
 
 	/*
 	 * spidev should never be referenced in DT without a specific
@@ -802,9 +804,9 @@ static int spidev_probe(struct spi_device *spi)
 
 	INIT_LIST_HEAD(&spidev->device_entry);
 
-	ret = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_HIGH, __func__, spi);
-	if (ret)
-		dev_err(&spi->dev, "Failed to request IRQ: %d, ret:%d\n", spi->irq, ret);
+	status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_HIGH, __func__, spi);
+	if (status)
+	    dev_err(&spi->dev, "Failed to request IRQ: %d, ret:%d\n", spi->irq, status);
 	init_waitqueue_head(&spidev->peer_wait);
 	spidev->rx_triggered = false;
 
@@ -845,7 +847,6 @@ static int spidev_remove(struct spi_device *spi)
 	struct spidev_data	*spidev = spi_get_drvdata(spi);
 
 	free_irq(spi->irq, spi);
-	//devm_free_irq(&spi->dev, spi->irq, spi);
 
 	/* prevent new opens */
 	mutex_lock(&device_list_lock);
