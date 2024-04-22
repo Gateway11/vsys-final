@@ -30,7 +30,6 @@
 #include "spidev_api.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-#define READ_ONLY_ENABLE
 
 static void pabort(const char *s)
 {
@@ -38,11 +37,9 @@ static void pabort(const char *s)
 	abort();
 }
 
+#define SPI_MSG_LEN 64
 typedef struct spidata_priv {
     int fd;
-#ifdef READ_ONLY_ENABLE
-    int read_fd;
-#endif
     uint32_t timeout_sec;
 } spidata_priv_t;
 
@@ -67,7 +64,7 @@ uint8_t default_tx[] = {
 	0xF0, 0x0D,
 };
 
-uint8_t default_rx[ARRAY_SIZE(default_tx)] = {0, };
+uint8_t default_rx[SPI_MSG_LEN] = {0, };
 char *input_tx;
 
 static void hex_dump(const void *src, size_t length, size_t line_size,
@@ -423,30 +420,6 @@ uint64_t spi_open() {
 		pabort("Failed to open the device in read-write mode");
         return 0;
     }
-#ifdef READ_ONLY_ENABLE
-	spidata.read_fd = open(device, O_RDONLY);
-	if (spidata.read_fd < 0) {
-		pabort("Failed to open the device in read-only mode");
-        close(spidata.fd);
-        return 0;
-    }
-    // Set the file descriptor to blocking mode
-    int flags = fcntl(spidata.read_fd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("Failed to get file descriptor flags");
-        return -1;
-    }
-
-    // Clear the non-blocking flag
-    flags &= ~O_NONBLOCK;
-
-    // Set the file descriptor's attributes
-    int ret = fcntl(spidata.read_fd, F_SETFL, flags);
-    if (ret == -1) {
-        perror("Failed to set file descriptor flags");
-        return -1;
-    }
-#endif
     return (uint64_t)&spidata;
 }
 
@@ -454,12 +427,8 @@ int spi_close(uint64_t fd) {
     int ret = -1;
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
 
-    if (spidata != NULL) {
+    if (spidata != NULL)
         ret = close(spidata->fd);
-#ifdef READ_ONLY_ENABLE
-        ret = close(spidata->read_fd);
-#endif
-    }
     return ret;
 }
 
@@ -524,11 +493,7 @@ ssize_t spi_read(uint64_t fd, void *buffer, size_t len) {
     int ret = -1;
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
     if (spidata != NULL)
-#ifdef READ_ONLY_ENABLE
-        ret = spi_read_blocking(spidata->read_fd, buffer, len, spidata->timeout_sec);
-#else
         ret = spi_read_blocking(spidata->fd, buffer, len, spidata->timeout_sec);
-#endif
     if (verbose && ret > 0)
 		hex_dump(buffer, ret, 32, "RX");
     return ret;
@@ -547,7 +512,7 @@ ssize_t spi_write(uint64_t fd, const void *buffer, size_t len) {
 ssize_t spi_transfer(uint64_t fd, const void *tx_buffer, void *rx_buffer, size_t len) {
     spidata_priv_t *spidata = (spidata_priv_t*)fd;
     if (spidata != NULL)
-        transfer(spidata->fd, tx_buffer, tx_buffer, len);
+        transfer(spidata->fd, tx_buffer, rx_buffer, len);
     return 0;
 }
 
@@ -613,11 +578,8 @@ int main(int argc, char *argv[])
     pthread_create(&th_read, NULL, th_read_fun, (void *)&spi_fd);
     pthread_detach(th_read);
 
-    pthread_create(&th_write, NULL, th_write_fun, (void *)&spi_fd);
-    pthread_detach(th_write);
-
     pthread_create(&th_transfer, NULL, th_transfer_fun, (void *)&spi_fd);
-    pthread_detach(th_transfer);
+    pthread_join(th_transfer, NULL);
 #endif
 
     ret = spi_close(spi_fd);
