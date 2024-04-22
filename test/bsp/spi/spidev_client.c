@@ -328,7 +328,7 @@ static void transfer_escaped_string(int fd, char *str)
 	free(tx);
 }
 
-static void transfer_file(int fd, char *filename)
+void transfer_file(int fd, char *filename)
 {
 	ssize_t bytes;
 	struct stat sb;
@@ -547,6 +547,8 @@ void handle_ctrl_c(int sig) {
     exit(0);
 }
 
+extern int external_main(int fd, char *filename);
+
 #ifdef __ANDROID_NDK__
 int main(int argc, char *argv[])
 {
@@ -564,6 +566,7 @@ int main(int argc, char *argv[])
 
     spi_fd = spi_open();
     spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){15});
+    external_main(((spidata_priv_t*)spi_fd)->fd, input_file);
 
 #if 1
 	size_t size = strlen(input_tx);
