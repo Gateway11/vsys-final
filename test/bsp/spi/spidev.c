@@ -498,7 +498,7 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		/* translate to spi_message, execute */
 		retval = spidev_message(spidev, ioc, n_ioc);
 		kfree(ioc);
-		check_and_enable_irq(spidev);
+		//check_and_enable_irq(spidev);
 		break;
 	}
 
@@ -687,10 +687,12 @@ static irqreturn_t spidev_rx_isr(int irq, void *dev_id)
     //mutex_lock(&spidev->buf_lock);
 
     disable_irq_nosync(irq);
-    spidev->rx_triggered = irq & IRQF_TRIGGER_RISING;
-    dev_info(&spi->dev, "%s: interrupt handled. %d", __func__, spidev->rx_triggered);
+    dev_info(&spi->dev, "%s: interrupt handled. %#x", __func__, irq);
 
-    wake_up_all(&spidev->peer_wait);
+    if (!spidev->rx_triggered) {
+        spidev->rx_triggered = irq & IRQF_TRIGGER_RISING;
+        wake_up_all(&spidev->peer_wait);
+    }
 
     //mutex_unlock(&spidev->buf_lock);
     return IRQ_HANDLED;
@@ -804,7 +806,9 @@ static int spidev_probe(struct spi_device *spi)
 
 	INIT_LIST_HEAD(&spidev->device_entry);
 
-	status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_HIGH, __func__, spi);
+	//int irq_flags = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
+	//status = request_irq(spi->irq, spidev_rx_isr, irq_flags, __func__, spi);
+	status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_RISING, __func__, spi);
 	if (status)
 	    dev_err(&spi->dev, "Failed to request IRQ: %d, ret:%d\n", spi->irq, status);
 	init_waitqueue_head(&spidev->peer_wait);
