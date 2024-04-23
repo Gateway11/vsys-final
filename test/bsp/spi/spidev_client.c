@@ -359,7 +359,8 @@ void transfer_file(int fd, char *filename)
 	for (int i = 0; i < sb.st_size / SPI_MSG_LEN; i++)
 	    transfer(fd, tx + i * SPI_MSG_LEN, rx, sb.st_size);
 	ssize_t ss = sb.st_size % SPI_MSG_LEN;
-	transfer(fd, tx + (sb.st_size - ss), rx, ss);
+	memcpy(tx, tx + (sb.st_size - ss), ss);
+	transfer(fd, tx, rx, SPI_MSG_LEN);
 
 	free(rx);
 	free(tx);
@@ -571,8 +572,10 @@ int main(int argc, char *argv[])
 
     spi_fd = spi_open();
     spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){15});
-    external_main(((spidata_priv_t*)spi_fd)->fd, input_file);
-
+    if (input_file) {
+        external_main(((spidata_priv_t*)spi_fd)->fd, input_file);
+        goto exit;
+    }
 #if 1
 	size_t size = strlen(input_tx);
     ret = spi_write(spi_fd, input_tx, size);
@@ -589,7 +592,7 @@ int main(int argc, char *argv[])
     pthread_create(&th_transfer, NULL, th_transfer_fun, (void *)&spi_fd);
     pthread_join(th_transfer, NULL);
 #endif
-
+exit:
     ret = spi_close(spi_fd);
 #else
 	fd = open(device, O_RDWR);
