@@ -498,7 +498,7 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		/* translate to spi_message, execute */
 		retval = spidev_message(spidev, ioc, n_ioc);
 		kfree(ioc);
-		//check_and_enable_irq(spidev);
+		check_and_enable_irq(spidev);
 		break;
 	}
 
@@ -684,15 +684,12 @@ static irqreturn_t spidev_rx_isr(int irq, void *dev_id)
     struct spi_device *spi = dev_id;
     struct spidev_data	*spidev = spi_get_drvdata(spi);
 
-    //mutex_lock(&spidev->buf_lock);
-
     disable_irq_nosync(irq);
-    dev_info(&spi->dev, "%s: interrupt handled. %#x", __func__, irq);
+    dev_info(&spi->dev, "%s: interrupt handled. %d", __func__, irq);
 
-    if (!spidev->rx_triggered) {
-        spidev->rx_triggered = irq & IRQF_TRIGGER_RISING;
-        wake_up_all(&spidev->peer_wait);
-    }
+    //mutex_lock(&spidev->buf_lock);
+    spidev->rx_triggered = true;
+    wake_up_all(&spidev->peer_wait);
     //mutex_unlock(&spidev->buf_lock);
     return IRQ_HANDLED;
 }
