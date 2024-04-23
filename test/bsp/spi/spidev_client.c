@@ -424,7 +424,7 @@ uint64_t spi_open() {
 
 	spidata.fd = open(device, O_RDWR);
 	if (spidata.fd < 0) {
-		pabort("Failed to open the device in read-write mode");
+		pabort("Failed to open the SPI device");
         return 0;
     }
     return (uint64_t)&spidata;
