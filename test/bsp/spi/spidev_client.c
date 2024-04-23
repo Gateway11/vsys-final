@@ -567,9 +567,6 @@ int main(int argc, char *argv[])
     if (input_tx && input_file)
         pabort("only one of -p and --input may be selected");
 
-    printf("Program is running, press CTRL+C to exit.\n");
-    signal(SIGINT, handle_ctrl_c);
-
     spi_fd = spi_open();
     spi_control(spi_fd, SPI_TIMEOUT_SEC, (uint32_t []){15});
     if (input_file) {
@@ -577,6 +574,9 @@ int main(int argc, char *argv[])
         goto exit;
     }
 #if 1
+    printf("Program is running, press CTRL+C to exit.\n");
+    signal(SIGINT, handle_ctrl_c);
+
 	size_t size = strlen(input_tx);
     ret = spi_write(spi_fd, input_tx, size);
 
@@ -585,7 +585,7 @@ int main(int argc, char *argv[])
 
     ret = spi_transfer(spi_fd, input_tx, default_rx, min(size, sizeof(default_rx)));
 #else
-    pthread_t th_read, th_write, th_transfer;
+    pthread_t th_read, th_transfer;
     pthread_create(&th_read, NULL, th_read_fun, (void *)&spi_fd);
     pthread_detach(th_read);
 
