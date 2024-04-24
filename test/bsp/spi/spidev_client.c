@@ -523,6 +523,7 @@ ssize_t spi_transfer(uint64_t fd, const void *tx_buffer, void *rx_buffer, size_t
     return 0;
 }
 
+#ifdef __ANDROID_NDK__
 void* th_read_fun(void *arg) {
     uint64_t spi_fd = *(uint64_t *)arg;
     srand((unsigned)time(NULL));
@@ -555,7 +556,6 @@ void handle_ctrl_c(int sig) {
 
 extern int external_main(int fd, char *filename);
 
-#ifdef __ANDROID_NDK__
 int main(int argc, char *argv[])
 {
 	int ret = 0;
