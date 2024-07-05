@@ -9,7 +9,7 @@ DSP TDM_SCK, AMP TDM_SCK; DSP TDM_SD, AMP TDM_SD
 
 
 
-
+buildsystem/res/tools/res/early_app/audio
 
 git stash save [stashMessage]
 git stash apply stash@{index} 
