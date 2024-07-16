@@ -1,0 +1,4 @@
+service vendor.semidrive.audiocontrol-hal-2.0 /vendor/bin/hw/android.hardware.automotive.audiocontrol@2.0-service.semidrive
+    class hal
+    user audioserver
+    group system

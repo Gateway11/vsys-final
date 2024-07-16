@@ -1,0 +1,6 @@
+allow hal_audiocontrol_default self:socket { create connect read write };
+
+allow hal_audiocontrol_default fwmarkd_socket:sock_file write;
+allow hal_audiocontrol_default netd:unix_stream_socket connectto;
+allow hal_audiocontrol_default self:tcp_socket { connect create getopt read write };
+
