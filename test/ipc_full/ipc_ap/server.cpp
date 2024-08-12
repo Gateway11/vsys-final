@@ -76,6 +76,7 @@ void ipc_server_socket() {
     }
 }
 
+#ifdef __ANDROID_NDK__
 int main(int argc, const char * argv[]) {
     if(argc < 2) {
         printf("%s, %s/%s\n", IPC_SERVER_STR, __DATE__, __TIME__);
@@ -94,3 +95,4 @@ int main(int argc, const char * argv[]) {
     }
     return 0;
 }
+#endif

@@ -29,7 +29,7 @@ struct sockaddr_rpmsg {
     __u32 addr;
 };
 
-#define IPC_CLIENT_STR "ipc_client [safety mp ap1 ap2][text][count]"
+#define IPC_CLIENT_STR "ipc_client [safety mp ap1 ap2 local][text][count]"
 
 void ipc_write(int32_t sock, struct sockaddr* addr,
         socklen_t addrlen, const char* data, uint32_t size, uint32_t count) {
@@ -93,6 +93,8 @@ int main(int argc, const char * argv[]) {
         ipc_client_socket("172.20.2.35", argv[2], strlen(argv[2]), atoi(argv[3]));
     } else if (strcmp(argv[1], "ap2") == 0) {
         ipc_client_socket("172.20.2.36", argv[2], strlen(argv[2]), atoi(argv[3]));
+    } else if (strcmp(argv[1], "local") == 0) {
+        ipc_client_socket("127.0.0.1", argv[2], strlen(argv[2]), atoi(argv[3]));
     } else {
         printf("Domain is not supported!\n");
     }
