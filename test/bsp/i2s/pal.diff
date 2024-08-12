@@ -1,0 +1,109 @@
+diff --git a/configs/pineapple/resourcemanager_pineapple_qrd.xml b/configs/pineapple/resourcemanager_pineapple_qrd.xml
+index 8f86308d..f2d0e125 100644
+--- a/configs/pineapple/resourcemanager_pineapple_qrd.xml
++++ b/configs/pineapple/resourcemanager_pineapple_qrd.xml
+@@ -40,9 +40,9 @@
+         <param key="hifi_filter" value="false"/>
+         <param key="max_sessions" value="128"/>
+         <param key="max_nonTunnel_sessions" value="4"/>
+-        <param key="logging_level" value ="3" />
++        <param key="logging_level" value ="15" />
+         <param key="context_manager_enable" value ="true" />
+-        <param key="lpi_logging_enable" value ="false" />
++        <param key="lpi_logging_enable" value ="true" />
+         <param key="upd_dedicated_be" value ="false" />
+         <param key="signal_handler" value ="true" />
+         <param key="device_mux_config" value ="false" />
+@@ -134,6 +134,41 @@
+         <!-- More Vendors can be added as needed.  -->
+     </usb_vendor_uuids>
+     <device_profile>
++        <in-device>
++            <id>PAL_DEVICE_IN_AUX_DIGITAL</id>
++            <back_end_name>MI2S-LPAIF-TX-SECONDARY</back_end_name>
++            <snd_device_name>display-port</snd_device_name>
++            <fractional_sr>1</fractional_sr>
++            <max_channels>2</max_channels>
++            <channels>1</channels>
++            <samplerate>48000</samplerate>
++            <!-- <snd_device_name>handset-mic</snd_device_name> -->
++            <ec_enable>0</ec_enable>
++            <usecase>
++                <name>PAL_STREAM_VOICE_CALL</name>
++                <priority>1</priority>
++            </usecase>
++            <usecase>
++                <name>PAL_STREAM_DEEP_BUFFER</name>
++                <ec_enable>1</ec_enable>
++                <custom-config key="unprocessed-hdr-mic-landscape">
++                    <channels>4</channels>
++                    <snd_device_name>unprocessed-hdr-mic-landscape</snd_device_name>
++                </custom-config>
++                <custom-config key="unprocessed-hdr-mic-portrait">
++                    <channels>4</channels>
++                    <snd_device_name>unprocessed-hdr-mic-portrait</snd_device_name>
++                </custom-config>
++                <custom-config key="unprocessed-hdr-mic-inverted-landscape">
++                    <channels>4</channels>
++                    <snd_device_name>unprocessed-hdr-mic-inverted-landscape</snd_device_name>
++                </custom-config>
++                <custom-config key="unprocessed-hdr-mic-inverted-portrait">
++                    <channels>4</channels>
++                    <snd_device_name>unprocessed-hdr-mic-inverted-portrait</snd_device_name>
++                </custom-config>
++            </usecase>
++        </in-device>
+         <in-device>
+             <id>PAL_DEVICE_IN_HANDSET_MIC</id>
+             <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-3</back_end_name>
+diff --git a/configs/pineapple/usecaseKvManager.xml b/configs/pineapple/usecaseKvManager.xml
+index 4560a22e..5857caaf 100644
+--- a/configs/pineapple/usecaseKvManager.xml
++++ b/configs/pineapple/usecaseKvManager.xml
+@@ -435,6 +435,12 @@
+                 <graph_kv key="0xA2000000" value="0xA2000005"/>
+             </keys_and_values>
+         </device>
++        <device id="PAL_DEVICE_IN_AUX_DIGITAL">
++            <keys_and_values>
++                <!-- DEVICETX - HANDSETMIC -->
++                <graph_kv key="0xA3000000" value="0xA3000011"/>
++            </keys_and_values>
++        </device>
+         <!-- In Handset MIC Device -->
+         <device id="PAL_DEVICE_IN_HANDSET_MIC">
+             <keys_and_values>
+diff --git a/device/src/Device.cpp b/device/src/Device.cpp
+index 61e3e21f..d121b75c 100644
+--- a/device/src/Device.cpp
++++ b/device/src/Device.cpp
+@@ -156,6 +156,7 @@ std::shared_ptr<Device> Device::getInstance(struct pal_device *device,
+     case PAL_DEVICE_OUT_AUX_DIGITAL:
+     case PAL_DEVICE_OUT_AUX_DIGITAL_1:
+     case PAL_DEVICE_OUT_HDMI:
++    case PAL_DEVICE_IN_AUX_DIGITAL:
+         PAL_VERBOSE(LOG_TAG, "Display Port device");
+         return DisplayPort::getInstance(device, Rm);
+     case PAL_DEVICE_IN_HEADSET_VA_MIC:
+@@ -235,6 +236,7 @@ std::shared_ptr<Device> Device::getObject(pal_device_id_t dev_id)
+     case PAL_DEVICE_OUT_AUX_DIGITAL:
+     case PAL_DEVICE_OUT_AUX_DIGITAL_1:
+     case PAL_DEVICE_OUT_HDMI:
++    case PAL_DEVICE_IN_AUX_DIGITAL:
+         PAL_VERBOSE(LOG_TAG, "Display Port device");
+         return DisplayPort::getObject(dev_id);
+     case PAL_DEVICE_IN_HANDSET_MIC:
+diff --git a/device/src/DisplayPort.cpp b/device/src/DisplayPort.cpp
+index 100161e1..8fc56c46 100644
+--- a/device/src/DisplayPort.cpp
++++ b/device/src/DisplayPort.cpp
+@@ -181,7 +181,8 @@ int DisplayPort::start()
+     customPayload = NULL;
+     customPayloadSize = 0;
+ 
+-    status = configureDpEndpoint();
++    if (objRx)
++        status = configureDpEndpoint();
+     if (status != 0) {
+         PAL_ERR(LOG_TAG,"Endpoint Configuration Failed");
+         return status;

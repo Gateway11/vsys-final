@@ -1,0 +1,12 @@
+diff --git a/traced_perf.rc b/traced_perf.rc
+index 7b0ec6a99..4af7f6d4a 100644
+--- a/traced_perf.rc
++++ b/traced_perf.rc
+@@ -39,7 +39,6 @@ on property:persist.traced_perf.enable=1
+ on property:persist.traced_perf.enable="" && property:sys.init.perf_lsm_hooks=""
+     stop traced_perf
+ on property:persist.traced_perf.enable="" && property:sys.init.perf_lsm_hooks=1 && property:traced.lazy.traced_perf=1
+-    start traced_perf
+ on property:persist.traced_perf.enable="" && property:sys.init.perf_lsm_hooks=1 && property:traced.lazy.traced_perf=""
+     stop traced_perf
+ 

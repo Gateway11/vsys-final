@@ -1,0 +1,58 @@
+diff --git a/qcom/lapis-touch-nt36532.dtsi b/qcom/lapis-touch-nt36532.dtsi
+index fe62ed30..9b0ae829 100644
+--- a/qcom/lapis-touch-nt36532.dtsi
++++ b/qcom/lapis-touch-nt36532.dtsi
+@@ -13,7 +13,7 @@
+ 		spi-max-frequency = <9600000>;	//4800000,9600000,15000000,19200000
+ 		novatek,reset-gpio = <&tlmm 161 0x00>;
+ 		novatek,irq-gpio = <&tlmm 162 0x2001>;
+-		novatek,pen-support;
++		//novatek,pen-support;
+ 		//novatek,spi-rd-fast-addr = <0x03F310>;
+ 		/* MP */
+ 		//novatek,mp-support-dt;
+diff --git a/qcom/pineapple-qrd.dtsi b/qcom/pineapple-qrd.dtsi
+index 8956e0fb..60994df3 100644
+--- a/qcom/pineapple-qrd.dtsi
++++ b/qcom/pineapple-qrd.dtsi
+@@ -340,6 +340,19 @@
+ };
+ */
+ 
++&qupv3_se2_spi {
++    status = "ok";
++    spi_mcu@0 {
++        compatible = "qcom,spi-mcu";
++        reg = <0>;
++        spi-max-frequency = <5000000>;
++        interrupt-parent = <&tlmm>;
++        interrupts = <91 IRQ_TYPE_EDGE_FALLING>;
++        //spi-cpha;
++        status = "ok";
++    };
++};
++
+ &qupv3_se6_i2c {
+ 	status = "ok";
+ 
+diff --git a/qcom/pineapple.dtsi b/qcom/pineapple.dtsi
+index 575af87b..77deafad 100644
+--- a/qcom/pineapple.dtsi
++++ b/qcom/pineapple.dtsi
+@@ -37,6 +37,7 @@
+ 		hsuart1 = &qupv3_se10_uart;
+ 		mmc1 = &sdhc_2; /* SDC2 SD card slot */
+ 		ufshc1 = &ufshc_mem; /* Embedded UFS Slot */
++		spi7 = &qupv3_se2_spi;
+ 	};
+ 
+ 	reserved_memory: reserved-memory { };
+@@ -683,7 +684,7 @@
+ 		interrupt-controller;
+ 		#interrupt-cells = <2>;
+ 		wakeup-parent = <&pdc>;
+-		qcom,gpios-reserved = <74 40 41 42 43>;
++		qcom,gpios-reserved = <74>;
+ 	};
+ 
+ 	show_resume_irqs@17100000 {

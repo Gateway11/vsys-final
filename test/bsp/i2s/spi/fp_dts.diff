@@ -1,0 +1,13 @@
+diff --git a/pineapple-fingerprint.dtsi b/pineapple-fingerprint.dtsi
+index fb9d5a7..094ad14 100644
+--- a/pineapple-fingerprint.dtsi
++++ b/pineapple-fingerprint.dtsi
+@@ -5,7 +5,7 @@
+ 	fp-gpio-irq = <&tlmm 92 0x00>;
+ 	fp-gpio-reset = <&tlmm 91 0x00>;
+ 	fp_vdd_vreg-supply = <&L9B>;
+-	status = "okay";
++	status = "disabled";
+ 	};
+ 
+ };

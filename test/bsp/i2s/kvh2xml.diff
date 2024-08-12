@@ -1,0 +1,12 @@
+diff --git a/acdbdata/kvh2xml.h b/acdbdata/kvh2xml.h
+index 330bf3f..9af885d 100644
+--- a/acdbdata/kvh2xml.h
++++ b/acdbdata/kvh2xml.h
+@@ -203,6 +203,7 @@ enum Key_DeviceTX {
+      CPS_TX          = 0xA300000E, /**< @h2xmle_name {CPS_TX} */
+      CPS2_TX         = 0xA300000F, /**< @h2xmle_name {CPS2_TX} */
+      DUMMY_TX        = 0xA3000010, /**< @h2xmle_name {Dummy_Tx}*/
++     HDMI_TX         = 0xA3000011, /**< @h2xmle_name {HDMI_Tx}*/
+ };
+ 
+ /**

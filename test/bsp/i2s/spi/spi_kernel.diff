@@ -1,0 +1,171 @@
+diff --git a/arch/arm64/configs/vendor/lapis_GKI.config b/arch/arm64/configs/vendor/lapis_GKI.config
+index 44067c94e829..f5e9b6408f14 100644
+--- a/arch/arm64/configs/vendor/lapis_GKI.config
++++ b/arch/arm64/configs/vendor/lapis_GKI.config
+@@ -335,9 +335,10 @@ CONFIG_USB_QCOM_EMU_PHY=m
+ CONFIG_USB_REDRIVER=m
+ # CONFIG_USB_REDRIVER_NB7VPQ904M is not set
+ CONFIG_USB_REPEATER=m
++CONFIG_SPI_SPIDEV=m
+ #Lapis code by sunyt13 at 2024-4-16 for fp bringup start
+-CONFIG_GOODIX_FINGERPRINT=m
+-CONFIG_INPUT_FINGERPRINT=m
++CONFIG_GOODIX_FINGERPRINT=n
++CONFIG_INPUT_FINGERPRINT=n
+ #Lapis code by sunyt13 at 2024-4-16 for fp bringup end
+ CONFIG_HQ_PEN_HALL=m
+ # CONFIG_VIDEO_QCOM_VENUS is not set
+diff --git a/drivers/spi/spidev.c b/drivers/spi/spidev.c
+index 1ca806bae283..c16655be739d 100644
+--- a/drivers/spi/spidev.c
++++ b/drivers/spi/spidev.c
+@@ -20,6 +20,9 @@
+ #include <linux/property.h>
+ #include <linux/slab.h>
+ #include <linux/compat.h>
++#include <linux/of_irq.h>
++#include <linux/poll.h>
++#include <linux/interrupt.h>
+ 
+ #include <linux/spi/spi.h>
+ #include <linux/spi/spidev.h>
+@@ -74,6 +77,8 @@ struct spidev_data {
+ 
+ 	/* TX/RX buffers are NULL unless this device is open (users > 0) */
+ 	struct mutex		buf_lock;
++	wait_queue_head_t   peer_wait;
++	bool            rx_triggered;
+ 	unsigned		users;
+ 	u8			*tx_buffer;
+ 	u8			*rx_buffer;
+@@ -140,6 +145,14 @@ spidev_sync_read(struct spidev_data *spidev, size_t len)
+ 	return spidev_sync(spidev, &m);
+ }
+ 
++static inline void check_and_enable_irq(struct spidev_data *spidev) {
++    dev_info(&spidev->spi->dev, "%s", __func__);
++    if (spidev->rx_triggered) {
++        spidev->rx_triggered = false;
++        enable_irq(spidev->spi->irq);
++    }
++}
++
+ /*-------------------------------------------------------------------------*/
+ 
+ /* Read-only message with current device setup */
+@@ -166,6 +179,7 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+ 		else
+ 			status = status - missing;
+ 	}
++	check_and_enable_irq(spidev);
+ 	mutex_unlock(&spidev->buf_lock);
+ 
+ 	return status;
+@@ -503,6 +517,7 @@ spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 		/* translate to spi_message, execute */
+ 		retval = spidev_message(spidev, ioc, n_ioc);
+ 		kfree(ioc);
++		check_and_enable_irq(spidev);
+ 		break;
+ 	}
+ 
+@@ -618,6 +633,7 @@ static int spidev_open(struct inode *inode, struct file *filp)
+ 	filp->private_data = spidev;
+ 	stream_open(inode, filp);
+ 
++	check_and_enable_irq(spidev);
+ 	mutex_unlock(&device_list_lock);
+ 	return 0;
+ 
+@@ -667,6 +683,33 @@ static int spidev_release(struct inode *inode, struct file *filp)
+ 	return 0;
+ }
+ 
++static unsigned int spidev_poll(struct file *filp, poll_table *wait)
++{
++    struct spidev_data	*spidev;
++    unsigned int mask = 0;
++
++    spidev = filp->private_data;
++    poll_wait(filp, &spidev->peer_wait, wait);
++
++    if (spidev->rx_triggered)
++        mask |= (POLLIN | POLLRDNORM);
++
++    return mask;
++}
++
++static irqreturn_t spidev_rx_isr(int irq, void *dev_id)
++{
++    struct spi_device *spi = dev_id;
++    struct spidev_data	*spidev = spi_get_drvdata(spi);
++
++    disable_irq_nosync(irq);
++    dev_err(&spi->dev, "%s: interrupt handled.%d", __func__, irq);
++
++    spidev->rx_triggered = true;
++    wake_up_all(&spidev->peer_wait);
++    return IRQ_HANDLED;
++}
++
+ static const struct file_operations spidev_fops = {
+ 	.owner =	THIS_MODULE,
+ 	/* REVISIT switch to aio primitives, so that userspace
+@@ -680,6 +723,7 @@ static const struct file_operations spidev_fops = {
+ 	.open =		spidev_open,
+ 	.release =	spidev_release,
+ 	.llseek =	no_llseek,
++	.poll   =	spidev_poll,
+ };
+ 
+ /*-------------------------------------------------------------------------*/
+@@ -692,6 +736,7 @@ static const struct file_operations spidev_fops = {
+ static struct class *spidev_class;
+ 
+ static const struct spi_device_id spidev_spi_ids[] = {
++	{ .name = "spi-mcu" },
+ 	{ .name = "dh2228fv" },
+ 	{ .name = "ltc2488" },
+ 	{ .name = "sx1301" },
+@@ -718,6 +763,7 @@ static int spidev_of_check(struct device *dev)
+ }
+ 
+ static const struct of_device_id spidev_dt_ids[] = {
++	{ .compatible = "qcom,spi-mcu", .data = &spidev_of_check },
+ 	{ .compatible = "rohm,dh2228fv", .data = &spidev_of_check },
+ 	{ .compatible = "lineartechnology,ltc2488", .data = &spidev_of_check },
+ 	{ .compatible = "semtech,sx1301", .data = &spidev_of_check },
+@@ -780,6 +826,11 @@ static int spidev_probe(struct spi_device *spi)
+ 
+ 	INIT_LIST_HEAD(&spidev->device_entry);
+ 
++	status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_FALLING, __func__, spi);
++	if (status)
++	    dev_err(&spi->dev, "Failed to request IRQ: %d, ret:%d\n", spi->irq, status);
++	init_waitqueue_head(&spidev->peer_wait);
++	spidev->rx_triggered = false;
+ 	/* If we can allocate a minor number, hook up this device.
+ 	 * Reusing minors is fine so long as udev or mdev is working.
+ 	 */
+@@ -817,6 +868,8 @@ static void spidev_remove(struct spi_device *spi)
+ {
+ 	struct spidev_data	*spidev = spi_get_drvdata(spi);
+ 
++	free_irq(spi->irq, spi);
++
+ 	/* prevent new opens */
+ 	mutex_lock(&device_list_lock);
+ 	/* make sure ops on existing fds can abort cleanly */
+diff --git a/lapis.bzl b/lapis.bzl
+index 64ec9aa953a6..35f36b884388 100644
+--- a/lapis.bzl
++++ b/lapis.bzl
+@@ -75,7 +75,7 @@ def define_lapis():
+         "drivers/interconnect/qcom/icc-bcm-voter.ko",
+         "drivers/interconnect/qcom/icc-debug.ko",
+         "drivers/interconnect/qcom/icc-rpmh.ko",
+-        "drivers/input/fingerprint/goodix/goodix_fp.ko",
++        "drivers/spi/spidev.ko",
+         "drivers/interconnect/qcom/qnoc-cliffs.ko",
+         "drivers/interconnect/qcom/qnoc-pineapple.ko",
+         "drivers/interconnect/qcom/qnoc-qos.ko",
