@@ -28,7 +28,7 @@ struct sockaddr_rpmsg {
     __u32 addr;
 };
 
-#define IPC_SERVER_STR "ipc_server [safety mp ap1 ap2]"
+#define IPC_SERVER_STR "Usage: ipc_server [domain: safety mp ap1 ap2]"
 
 void ipc_server_bind(int32_t sock, struct sockaddr* addr, socklen_t addrlen) {
     char buf[128] = {0};

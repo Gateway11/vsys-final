@@ -29,7 +29,7 @@ struct sockaddr_rpmsg {
     __u32 addr;
 };
 
-#define IPC_CLIENT_STR "ipc_client [safety mp ap1 ap2 local][text][count]"
+#define IPC_CLIENT_STR "Usage: ipc_client [domain: safety/mp/ap1/ap2/local] [message text] [send count]"
 
 void ipc_write(int32_t sock, struct sockaddr* addr,
         socklen_t addrlen, const char* data, uint32_t size, uint32_t count) {
@@ -81,20 +81,24 @@ void ipc_client_socket(const char* ip_addr, const char* data, uint32_t size, uin
 }
 
 int main(int argc, const char * argv[]) {
-    if(argc < 4) {
+    int sendCount = 1;
+    if(argc < 3) {
         printf("%s, %s/%s\n", IPC_CLIENT_STR, __DATE__, __TIME__);
         return 0;
     }
+    if(argc > 3)
+        sendCount =  atoi(argv[3]);
+
     if (strcmp(argv[1], "safety") == 0) {
-        ipc_client_rpmsg(MBOX_RPROC_SAF, argv[2], strlen(argv[2]), atoi(argv[3]));
+        ipc_client_rpmsg(MBOX_RPROC_SAF, argv[2], strlen(argv[2]), sendCount);
     } else if (strcmp(argv[1], "mp") == 0) {
-        ipc_client_rpmsg(MBOX_RPROC_MP, argv[2], strlen(argv[2]), atoi(argv[3]));
+        ipc_client_rpmsg(MBOX_RPROC_MP, argv[2], strlen(argv[2]), sendCount);
     } else if (strcmp(argv[1], "ap1") == 0) {
-        ipc_client_socket("172.20.2.35", argv[2], strlen(argv[2]), atoi(argv[3]));
+        ipc_client_socket("172.20.2.35", argv[2], strlen(argv[2]), sendCount);
     } else if (strcmp(argv[1], "ap2") == 0) {
-        ipc_client_socket("172.20.2.36", argv[2], strlen(argv[2]), atoi(argv[3]));
+        ipc_client_socket("172.20.2.36", argv[2], strlen(argv[2]), sendCount);
     } else if (strcmp(argv[1], "local") == 0) {
-        ipc_client_socket("127.0.0.1", argv[2], strlen(argv[2]), atoi(argv[3]));
+        ipc_client_socket("127.0.0.1", argv[2], strlen(argv[2]), sendCount);
     } else {
         printf("Domain is not supported!\n");
     }
