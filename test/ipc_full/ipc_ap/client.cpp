@@ -41,7 +41,7 @@ void ipc_write(int32_t sock, struct sockaddr* addr,
         return;
     }
     while (count) {
-        ret = snprintf(buf, sizeof(buf), "%s %03d", data, count--);
+        ret = snprintf(buf, sizeof(buf), "%s; %03d", data, count--);
         ret = sendto(sock, buf, ret, 0, NULL, 0);
 
         usleep(1000 * 100);
