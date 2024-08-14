@@ -1,0 +1,42 @@
+From cedb807aeb66e48361cebb4b594d194c42e79442 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 14:36:41 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [device/lenovo] [scope of influence]:PowerManager [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: I96aa05d4c603bc6d2faff07dcddada107c4188fc
+
+Change-Id: I1a691d2e28e1a0f9526d1041d4808eb324a6f89d
+---
+
+diff --git a/lgsi_common/lgsi_config.mk b/lgsi_common/lgsi_config.mk
+index 2fd7906..e913c5c 100644
+--- a/lgsi_common/lgsi_config.mk
++++ b/lgsi_common/lgsi_config.mk
+@@ -116,6 +116,7 @@
+     DoubleTapWakeup \
+     ZuiBatteryManager \
+     ZuiSliderMapToBrightness \
++    SpiSignal \
+ 
+ ifeq ($(LGSI_NET_TYPE),wifi)
+ ENABLED_FEATURE_LIST += \
+diff --git a/project_common/lgsi_config.mk b/project_common/lgsi_config.mk
+index f484f16..e66488a 100644
+--- a/project_common/lgsi_config.mk
++++ b/project_common/lgsi_config.mk
+@@ -44,6 +44,7 @@
+            CameraGlobalAutoFraming \
+            CameraScreenRecord \
+            ZuiPowerKey \
++           SpiSignal \
+ 
+ ifeq ($(LGSI_CODE_BASE),aosp)
+ ENABLED_FEATURE_LIST += \
+@@ -178,7 +179,8 @@
+     HalTouchscreenServer \
+     VendorCommonSepolicy \
+     HalUsbServer \
+-    HalKeyboardServer
++    HalKeyboardServer \
++    HalSpiSignalServer \
+ ##########################
+ # define disabled features
+ ##########################

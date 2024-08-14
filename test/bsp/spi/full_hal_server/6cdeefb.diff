@@ -1,0 +1,20 @@
+From 6cdeefb449e52baf2c2e452d0f427cfc195f263a Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 15:16:38 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SpiHal-config] [scope of influence]:SpiHal [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: I8db1de570094bd2373a38450ec4f31141beed5dc
+
+Change-Id: I7f9aab16eca8314f8e2d33fd0e6ebe8e497b5714
+---
+
+diff --git a/lgsi_drvonly_injection.mk b/lgsi_drvonly_injection.mk
+index 550eeaf..e05bf8a 100644
+--- a/lgsi_drvonly_injection.mk
++++ b/lgsi_drvonly_injection.mk
+@@ -38,6 +38,7 @@
+     HalPerformanceServer \
+     HalTouchscreenServer \
+     HalUsbServer \
++    HalSpiSignalServer \
+ 
+ $(call drvonly_feature_enable,$(ENABLED_DRVONLY_FEATURE_LIST))
+ 

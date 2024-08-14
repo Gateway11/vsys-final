@@ -1,0 +1,24 @@
+From 549c04f6bb0a10818d13421ebf3f0aca60aaf3bb Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 17:26:31 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SpiHal-feature_cofing] [scope of influence]:SpiHal [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: Iaed0e9545b5cecadc20431db45d28406314809d6
+
+Change-Id: I74266e864b78836e9fd2f83c80fd198830d490b8
+---
+
+diff --git a/config/lgsi_vendor_feature_config.xml b/config/lgsi_vendor_feature_config.xml
+index 03aa625..232941c 100644
+--- a/config/lgsi_vendor_feature_config.xml
++++ b/config/lgsi_vendor_feature_config.xml
+@@ -202,4 +202,11 @@
+             <item>motorola.hardware.input@1.1-service</item>
+         </module>
+     </feature>
++    <feature name="HalSpiSignalServer">
++        <description>
++            Feature for spi hal server
++            Both drvonly and dev branch need
++        </description>
++    </feature>
++
+ </config>

@@ -1,0 +1,374 @@
+From 57afe5ffc3c1fe39526defdae2f09160cbbd8992 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 14:32:30 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [aosp framework] [scope of influence]:PowerManager [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: Ib1656c7b68c86811165e6de76734651b9d5716ee
+
+Change-Id: Ia35e11992465d8e850601ce7e1af0720c7bf5466
+---
+
+diff --git a/Android.bp b/Android.bp
+index d11400b..c2bb1e7 100755
+--- a/Android.bp
++++ b/Android.bp
+@@ -612,6 +612,9 @@
+     "--api-lint-ignore-prefix android.vendor " +
+     // INCEPU-1971
+     "--api-lint-ignore-prefix org. " +
++    //modify for [GEROLFING-336] begin
++    "--api-lint-ignore-prefix android.app.spisignal. " +
++    //modify for [GEROLFING-336] end
+     "--error NoSettingsProvider " +
+     "--error UnhiddenSystemApi " +
+     "--force-convert-to-warning-nullability-annotations +*:-android.*:+android.icu.*:-dalvik.* " +
+diff --git a/apex/jobscheduler/service/java/com/android/server/DeviceIdleController.java b/apex/jobscheduler/service/java/com/android/server/DeviceIdleController.java
+index 8316a26..eba65ed 100644
+--- a/apex/jobscheduler/service/java/com/android/server/DeviceIdleController.java
++++ b/apex/jobscheduler/service/java/com/android/server/DeviceIdleController.java
+@@ -126,6 +126,11 @@
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.stream.Collectors;
++//modify for [GEROLFING-336] begin
++import android.app.spisignal.LenovoSpiSignalManager;
++import android.media.AudioManager;
++import android.app.spisignal.LenovoSpiSignalInternal;
++//modify for [GEROLFING-336] end
+ 
+ /**
+  * Keeps track of device idleness and drives low power mode based on that.
+@@ -324,6 +329,15 @@
+     private PowerManager mPowerManager;
+     private INetworkPolicyManager mNetworkPolicyManager;
+     private SensorManager mSensorManager;
++
++    //modify for [GEROLFING-336] begin
++    private LenovoSpiSignalInternal mSpiSignalManager;
++    //modify for [GEROLFING-336] end
++
++    //modify for [GEROLFING-336] begin
++    private AudioManager mAudioManager;
++    //modify for [GEROLFING-336] end
++
+     private final boolean mUseMotionSensor;
+     private Sensor mMotionSensor;
+     private final boolean mIsLocationPrefetchEnabled;
+@@ -2680,16 +2694,19 @@
+                 mLocalActivityManager.setDeviceIdleAllowlist(
+                         mPowerSaveWhitelistAllAppIdArray, mPowerSaveWhitelistExceptIdleAppIdArray);
+                 mLocalPowerManager.setDeviceIdleWhitelist(mPowerSaveWhitelistAllAppIdArray);
+-
++                //modify for [GEROLFING-336] begin
+                 mLocalPowerManager.registerLowPowerModeObserver(ServiceType.QUICK_DOZE,
+                         state -> {
+                             synchronized (DeviceIdleController.this) {
+-                                updateQuickDozeFlagLocked(state.batterySaverEnabled);
++                                //updateQuickDozeFlagLocked(state.batterySaverEnabled);
+                             }
+                         });
+-                updateQuickDozeFlagLocked(
+-                        mLocalPowerManager.getLowPowerState(
+-                                ServiceType.QUICK_DOZE).batterySaverEnabled);
++                updateQuickDozeFlagLocked(true
++                        /*mLocalPowerManager.getLowPowerState(
++                                ServiceType.QUICK_DOZE).batterySaverEnabled*/);
++                mSpiSignalManager = getLocalService(LenovoSpiSignalInternal.class);
++                mAudioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
++                //modify for [GEROLFING-336] end
+ 
+                 mLocalActivityTaskManager.registerScreenObserver(mScreenObserver);
+ 
+@@ -3337,12 +3354,18 @@
+         if (DEBUG) Slog.d(TAG, "updateInteractivityLocked: screenOn=" + screenOn);
+         if (!screenOn && mScreenOn) {
+             mScreenOn = false;
++            //modify for [GEROLFING-336] begin
++            mSpiSignalManager.setPowerMode(LenovoSpiSignalManager.POWER_MODE_OPERATION_SCREEN_OFF);
++            //modify for [GEROLFING-336] end
+             if (!mForceIdle) {
+                 becomeInactiveIfAppropriateLocked();
+             }
+         } else if (screenOn) {
+             mScreenOn = true;
+-            if (!mForceIdle && (!mScreenLocked || !mConstants.WAIT_FOR_UNLOCK)) {
++            //modify for [GEROLFING-336] begin
++            mSpiSignalManager.setPowerMode(LenovoSpiSignalManager.POWER_MODE_OPERATION_SCREEN_ON);
++            //modify for [GEROLFING-336] end
++            if (!mForceIdle /*&& (!mScreenLocked || !mConstants.WAIT_FOR_UNLOCK)*/) { /*modify for [GEROLFING-336]*/
+                 mActiveReason = ACTIVE_REASON_SCREEN;
+                 becomeActiveLocked("screen", Process.myUid());
+             }
+@@ -3455,6 +3478,9 @@
+                 scheduleReportActiveLocked(activeReason, activeUid);
+                 addEvent(EVENT_NORMAL, activeReason);
+             }
++            //modify for [GEROLFING-336] begin
++            mSpiSignalManager.setPowerMode(LenovoSpiSignalManager.POWER_MODE_OPERATION_SCREEN_ON);
++            //modify for [GEROLFING-336] end
+         }
+     }
+ 
+@@ -3511,7 +3537,7 @@
+                     + " mForceIdle=" + mForceIdle
+             );
+         }
+-        if (!mForceIdle && (mCharging || isScreenBlockingInactive || isEmergencyCallActive)) {
++        if (!mForceIdle && (/*mCharging || */isScreenBlockingInactive || isEmergencyCallActive)) {//modify for [GEROLFING-336]
+             return;
+         }
+         // Become inactive and determine if we will ultimately go idle.
+@@ -3836,6 +3862,13 @@
+ 
+                 // Intentional fallthrough -- time to go into IDLE state.
+             case STATE_QUICK_DOZE_DELAY:
++                //modify for [GEROLFING-336] begin
++                if (mAudioManager != null && mAudioManager.isMusicActive()){
++                    Slog.d(TAG,"music playing,don't go DOZE");
++                    scheduleAlarmLocked(mConstants.QUICK_DOZE_DELAY_TIMEOUT);
++                    break;
++                }
++                //modify for [GEROLFING-336] end
+                 // Reset the upcoming idle delays.
+                 mNextIdlePendingDelay = mConstants.IDLE_PENDING_TIMEOUT;
+                 mNextIdleDelay = mConstants.IDLE_TIMEOUT;
+@@ -3858,6 +3891,9 @@
+                     cancelLightAlarmLocked();
+                 }
+                 addEvent(EVENT_DEEP_IDLE, null);
++                //modify for [GEROLFING-336] begin
++                mSpiSignalManager.setPowerMode(LenovoSpiSignalManager.POWER_MODE_IDLE);
++                //modify for [GEROLFING-336] end
+                 mGoingIdleWakeLock.acquire();
+                 mHandler.sendEmptyMessage(MSG_REPORT_IDLE_ON);
+                 break;
+@@ -4273,14 +4309,18 @@
+             mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                     mNextAlarmTime, "DeviceIdleController.deep", mDeepAlarmListener, mHandler);
+         } else {
+-            if (mConstants.USE_WINDOW_ALARMS) {
++            //modify for [GEROLFING-336] begin
++            /*if (mConstants.USE_WINDOW_ALARMS) {
+                 mAlarmManager.setWindow(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                         mNextAlarmTime, mConstants.FLEX_TIME_SHORT,
+                         "DeviceIdleController.deep", mDeepAlarmListener, mHandler);
++
+             } else {
+                 mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                         mNextAlarmTime, "DeviceIdleController.deep", mDeepAlarmListener, mHandler);
+-            }
++            }*/
++            mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,mNextAlarmTime,"DeviceIdleController.deep",mDeepAlarmListener,mHandler);
++            //modify for [GEROLFING-336] end
+         }
+     }
+ 
+diff --git a/core/java/android/app/SystemServiceRegistry.java b/core/java/android/app/SystemServiceRegistry.java
+index c8fec8a..ac37762 100644
+--- a/core/java/android/app/SystemServiceRegistry.java
++++ b/core/java/android/app/SystemServiceRegistry.java
+@@ -1622,6 +1622,25 @@
+         }
+         // END INCEPU-66
+ 
++        // BEGIN [GEROLFING-336]
++        final boolean mSpiSignalEnabled = com.lgsi.config.LgsiFeatures.enabled("SpiSignal");
++        if (mSpiSignalEnabled) {
++            Slog.d(TAG, "systemserviceregistry---SpiSignal");
++            registerService(Context.SCALERMANAGER_SERVICE, ScalerManager.class,
++                    new CachedServiceFetcher<ScalerManager>() {
++                        @Override
++                        public ScalerManager createService(ContextImpl ctx) {
++                            IBinder iBinder = ServiceManager.getService(Context.SCALERMANAGER_SERVICE);
++                            if (iBinder == null) {
++                                return null;
++                            }
++                            IScalerManagerService service = IScalerManagerService.Stub.asInterface(iBinder);
++                            return new ScalerManager(ctx.getOuterContext(), service);
++                        }
++                    });
++        }
++        // END [GEROLFING-336]
++
+         registerService(Context.WEARABLE_SENSING_SERVICE, WearableSensingManager.class,
+                 new CachedServiceFetcher<WearableSensingManager>() {
+                     @Override
+diff --git a/core/java/android/content/Context.java b/core/java/android/content/Context.java
+index 73b097b..e364e58 100644
+--- a/core/java/android/content/Context.java
++++ b/core/java/android/content/Context.java
+@@ -4059,6 +4059,7 @@
+     /** @hide */
+     @StringDef(suffix = { "_SERVICE" }, value = {
+             POWER_SERVICE,
++            LENOVO_SPI_SIGNAL_SERVICE, //modify for [GEROLFING-336]
+             //@hide: POWER_STATS_SERVICE,
+             WINDOW_SERVICE,
+             LAYOUT_INFLATER_SERVICE,
+@@ -4232,6 +4233,9 @@
+      *  <dt> {@link #POWER_SERVICE} ("power")
+      *  <dd> A {@link android.os.PowerManager} for controlling power
+      *  management.
++     *  <dt> {@link #LENOVO_SPI_SIGNAL_SERVICE} ("power_signal")
++     *  <dd> A {@link android.app.spisignal.LenovoSpiSignalManager} for controlling power signal
++     *  management.
+      *  <dt> {@link #ALARM_SERVICE} ("alarm")
+      *  <dd> A {@link android.app.AlarmManager} for receiving intents at the
+      *  time of your choosing.
+@@ -4320,6 +4324,8 @@
+      * @see android.app.ActivityManager
+      * @see #POWER_SERVICE
+      * @see android.os.PowerManager
++     * @see #LENOVO_SPI_SIGNAL_SERVICE
++     * @see android.os.LenovoSpiSignalManager
+      * @see #ALARM_SERVICE
+      * @see android.app.AlarmManager
+      * @see #NOTIFICATION_SERVICE
+@@ -4442,6 +4448,17 @@
+      */
+     public static final String POWER_SERVICE = "power";
+ 
++    //modify for [GEROLFING-336] begin
++    /**
++     * Use with {@link #getSystemService(String)} to retrieve a
++     * {@link android.app.spisignal.LenovoSpiSignalManager} for controlling power signal management,
++     * including "wake locks," which let you keep the device on while
++     * you're running long tasks.
++     * @hide
++     */
++    public static final String LENOVO_SPI_SIGNAL_SERVICE = "lenovo_spi_signal";
++    //modify for [GEROLFING-336] end
++
+     /**
+      * Use with {@link #getSystemService(String)} to retrieve a
+      * {@link android.os.PowerStatsService} for accessing power stats
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index f7a367b..9522742 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -270,6 +270,10 @@
+ import android.view.SurfaceControl;
+ import com.android.server.display.DisplayControl;
+ // END Lenovo, LGSIT-6018
++//modify for [GEROLFING-336] begin
++import android.app.spisignal.LenovoSpiSignalInternal;
++import android.app.spisignal.LenovoSpiSignalManager;
++//modify for [GEROLFING-336] end
+ 
+ /**
+  * WindowManagerPolicy implementation for the Android phone UI.  This
+@@ -552,6 +556,10 @@
+     volatile boolean mNavBarVirtualKeyHapticFeedbackEnabled = true;
+     volatile boolean mPictureInPictureVisible;
+     volatile private boolean mDismissImeOnBackKeyPressed;
++    //modify for [GEROLFING-336] begin
++    volatile boolean mPowerKeyLongPressed = false;
++    private static final long POWER_KEY_LONG_PRESS_TIME = 8 * 1000L;
++    //modify for [GEROLFING-336] end
+ 
+     // Used to hold the last user key used to wake the device.  This helps us prevent up events
+     // from being passed to the foregrounded app without a corresponding down event
+@@ -1099,6 +1107,13 @@
+                 // Abort possibly stuck animations only when power key up without long press case.
+                 mHandler.post(mWindowManagerFuncs::triggerAnimationFailsafe);
+             }
++            //modify for [GEROLFING-336] begin
++            if (mPowerKeyLongPressed){
++                Slog.d(TAG,"power key long press up , go to STR");
++                LenovoSpiSignalInternal signalManager = LocalServices.getService(LenovoSpiSignalInternal.class);
++                if (signalManager != null) signalManager.setPowerMode(LenovoSpiSignalManager.POWER_MODE_SUSPEND2RAM);
++            }
++            //modify for [GEROLFING-336] end
+         }
+ 
+         finishPowerKeyPress();
+@@ -1128,6 +1143,14 @@
+         Slog.d(TAG, "powerPress: eventTime=" + eventTime + " interactive=" + interactive
+                 + " count=" + count + " beganFromNonInteractive=" + beganFromNonInteractive
+                 + " mShortPressOnPowerBehavior=" + mShortPressOnPowerBehavior);
++        //modify for [GEROLFING-336] begin
++        LenovoSpiSignalInternal signalManager = LocalServices.getService(LenovoSpiSignalInternal.class);
++        if (signalManager != null && signalManager.getPowerMode() == LenovoSpiSignalManager.POWER_MODE_SUSPEND2RAM
++                && !interactive && beganFromNonInteractive && count == 1){
++            Slog.d(TAG,"in STR and power key down wake failed, wakeup again");
++            wakeUpFromPowerKey(eventTime);
++        }
++        //modify for [GEROLFING-336] end
+ 
+         if (count == 2) {
+             powerMultiPressAction(eventTime, interactive, mDoublePressOnPowerBehavior);
+@@ -1467,11 +1490,13 @@
+             case LONG_PRESS_POWER_NOTHING:
+                 break;
+             case LONG_PRESS_POWER_GLOBAL_ACTIONS:
+-                mPowerKeyHandled = true;
++                //modify for [GEROLFING-336] begin
++                /*mPowerKeyHandled = true;
+                 performHapticFeedback(HapticFeedbackConstants.LONG_PRESS_POWER_BUTTON, false,
+                         "Power - Long Press - Global Actions");
+                 showGlobalActions();
+-                break;
++                break;*/
++                //modify for [GEROLFING-336] end
+             case LONG_PRESS_POWER_SHUT_OFF:
+             case LONG_PRESS_POWER_SHUT_OFF_NO_CONFIRM:
+                 mPowerKeyHandled = true;
+@@ -1482,8 +1507,14 @@
+                 }
+                 performHapticFeedback(HapticFeedbackConstants.LONG_PRESS_POWER_BUTTON, false,
+                         "Power - Long Press - Shut Off");
+-                sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
+-                mWindowManagerFuncs.shutdown(behavior == LONG_PRESS_POWER_SHUT_OFF);
++                //modify for [GEROLFING-336] begin
++                //sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
++                Slog.d(TAG,"detect shutdown, execute customized process ,send OPERATION_SUSPEND to SpiSignalService");
++                LenovoSpiSignalInternal signalManager = LocalServices.getService(LenovoSpiSignalInternal.class);
++                if (signalManager != null) signalManager.setPowerMode(LenovoSpiSignalManager.POWER_MODE_OPERATION_SUSPEND);
++                mPowerKeyLongPressed = true;
++                //mWindowManagerFuncs.shutdown(behavior == LONG_PRESS_POWER_SHUT_OFF);
++                //modify for [GEROLFING-336] end
+                 break;
+             case LONG_PRESS_POWER_GO_TO_VOICE_ASSIST:
+                 mPowerKeyHandled = true;
+@@ -2855,10 +2886,16 @@
+             if (getResolvedLongPressOnPowerBehavior() == LONG_PRESS_POWER_ASSISTANT) {
+                 return mLongPressOnPowerAssistantTimeoutMs;
+             } else {
+-                return super.getLongPressTimeoutMs();
++                return /*super.getLongPressTimeoutMs()*/POWER_KEY_LONG_PRESS_TIME;//modify for [GEROLFING-336]
+             }
+         }
+ 
++        //modify for [GEROLFING-336] begin
++        @Override
++        long getVeryLongPressTimeoutMs() {
++            return POWER_KEY_LONG_PRESS_TIME + 2000;
++        }
++        //modify for [GEROLFING-336] end
+         @Override
+         void onLongPress(long eventTime) {
+             if (mSingleKeyGestureDetector.beganFromNonInteractive()
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index cd92e20..6452d9a 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -4266,7 +4266,9 @@
+                         setHalInteractiveModeLocked(false);
+                     }
+                     if (!mDecoupleHalAutoSuspendModeFromDisplayConfig) {
+-                        setHalAutoSuspendModeLocked(true);
++                        //modify for GEROLFING-336 begin
++                        //setHalAutoSuspendModeLocked(true);
++                        //modify for GEROLFING-336 end
+                     }
+                 } else {
+                     if (!mDecoupleHalAutoSuspendModeFromDisplayConfig) {
+@@ -4365,7 +4367,9 @@
+ 
+         // Enable auto-suspend if needed.
+         if (autoSuspend && mDecoupleHalAutoSuspendModeFromDisplayConfig) {
+-            setHalAutoSuspendModeLocked(true);
++            //modify for GEROLFING-336 begin
++            //setHalAutoSuspendModeLocked(true);
++            //modify for GEROLFING-336 end
+         }
+     }
+ 

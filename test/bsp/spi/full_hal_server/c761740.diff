@@ -1,0 +1,26 @@
+From c76174051c49edd1dd11261652c94bdc2ad76829 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Mon, 05 Aug 2024 18:52:50 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [lenovo/vendor/components] [scope of influence]:PowerManager [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration
+
+Change-Id: I7195b30bf1be341a75bcde16a10e135c8bf93f99
+---
+
+diff --git a/config/lgsi_vendor_feature_config.xml b/config/lgsi_vendor_feature_config.xml
+index 03aa625..f12548e 100644
+--- a/config/lgsi_vendor_feature_config.xml
++++ b/config/lgsi_vendor_feature_config.xml
+@@ -120,6 +120,13 @@
+         </description>
+     </feature>
+ 
++    <feature name="HalSpiSignalServer">
++        <description>
++            Feature for spi hal server
++            Both drvonly and dev branch need
++        </description>
++    </feature>
++
+     <feature name="HalDisplayServer">
+         <description>
+             Feature for display hal server

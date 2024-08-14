@@ -1,0 +1,20 @@
+From 2b2f68b1901525128d9a415ac476d894bd0f9bd5 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 15:26:11 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SpiHal-vendor/qcom/proprietary] [scope of influence]:SpiHal [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: Ib868e7e346fa6634fbfbc2c8d02009911b2ed954
+
+Change-Id: I19cc331dfcfed1634b08b01441e05d868967a8ad
+---
+
+diff --git a/hidl/qiifa_hidl_skipped_interfaces.txt b/hidl/qiifa_hidl_skipped_interfaces.txt
+index 113222b..b7dcc8d 100644
+--- a/hidl/qiifa_hidl_skipped_interfaces.txt
++++ b/hidl/qiifa_hidl_skipped_interfaces.txt
+@@ -12,4 +12,5 @@
+ vendor.lenovo.hardware.factory
+ vendor.lenovo.hardware.misc
+ vendor.lenovo.hardware.performance
+-vendor.lenovo.hardware.usb
+\ No newline at end of file
++vendor.lenovo.hardware.usb
++vendor.lenovo.hardware.spisignal

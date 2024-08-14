@@ -1,0 +1,1339 @@
+From d053d684f9c98009bd77d2106128137850901233 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Mon, 05 Aug 2024 18:54:18 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SpiHal-impl] [scope of influence]:SpiHal [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: I701b5304079acf48f35618161e435788facae229
+
+Change-Id: If556076cc8184464d8eb5b1bb892decee0d56bac
+---
+
+diff --git a/build/product.mk b/build/product.mk
+index 12a07cb..a133418 100644
+--- a/build/product.mk
++++ b/build/product.mk
+@@ -11,6 +11,7 @@
+         HalPerformanceServer:performance \
+         HalTouchscreenServer:touchscreen \
+         HalUsbServer:usb \
++	HalSpiSignalServer:spisignal \
+ 
+ LGSI_FCM_4 :=
+ LGSI_FCM_5 :=
+diff --git a/spisignal/product.mk b/spisignal/product.mk
+new file mode 100644
+index 0000000..996ebd6
+--- /dev/null
++++ b/spisignal/product.mk
+@@ -0,0 +1,11 @@
++
++PRODUCT_PACKAGES += vendor.lenovo.hardware.spisignal@1.0-service
++
++DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += $(LGSI_INFS_IMPL)/spisignal/service/compatibility_matrix.xml
++#LGSI_FCM_6 += $(LGSI_INFS_IMPL)/spisignal/service/compatibility_matrix.6.xml
++#LGSI_FCM_7 += $(LGSI_INFS_IMPL)/spisignal/service/compatibility_matrix.7.xml
++#LGSI_FCM_8 += $(LGSI_INFS_IMPL)/spisignal/service/compatibility_matrix.8.xml
++
++
++
++
+diff --git a/spisignal/service/Android.bp b/spisignal/service/Android.bp
+new file mode 100644
+index 0000000..0b6529d
+--- /dev/null
++++ b/spisignal/service/Android.bp
+@@ -0,0 +1,30 @@
++cc_binary {
++    proprietary: true,
++    defaults: ["hidl_defaults"],
++    relative_install_path: "hw",
++    name: "vendor.lenovo.hardware.spisignal@1.0-service",
++    vintf_fragments: ["vendor.lenovo.hardware.spisignal@1.0-service.xml"],
++    init_rc: ["vendor.lenovo.hardware.spisignal@1.0-service.rc"],
++    srcs: [
++            "LenovoSpiSignal.cpp",
++            "service.cpp",
++            "Utils.cpp",
++            "SpiProtocolImpl.cpp",
++    ],
++
++    cflags: [
++        "-Wall",
++        "-Werror",
++        "-Wno-unused-parameter",
++    ],
++
++    shared_libs: [
++        "liblog",
++        "libdl",
++        "libutils",
++        "libhardware",
++        "libhidlbase",
++        "vendor.lenovo.hardware.spisignal@1.0",
++    ],
++
++}
+\ No newline at end of file
+diff --git a/spisignal/service/LenovoSpiSignal.cpp b/spisignal/service/LenovoSpiSignal.cpp
+new file mode 100644
+index 0000000..7221be3
+--- /dev/null
++++ b/spisignal/service/LenovoSpiSignal.cpp
+@@ -0,0 +1,342 @@
++#define LOG_TAG "LenovoSpiSignal"
++#include <utils/Log.h>
++#include "LenovoSpiSignal.h"
++#include <fcntl.h>
++
++//msg id
++#define FUNC_ID_HEARTBEAT 0x0001 //soc -> mcu
++#define FUNC_ID_POWER_MODE 0x0002 //soc -> mcu
++#define FUNC_ID_UDS_RESET 0x0004 //soc -> mcu
++#define FUNC_ID_GET_MCU_VERSION 0x0007 //soc -> mcu
++#define FUNC_ID_OTA 0x0100 //soc -> mcu
++#define FUNC_ID_SPI_BLE 0x8200
++#define FUNC_ID_SPI_CL15 0x8400
++#define FUNC_ID_SPI_BATTERY 0x8500
++//msg id
++
++using namespace android;
++using namespace android::hardware;
++using android::hardware::hidl_vec;
++namespace vendor::lenovo::hardware::spisignal::implementation {
++LenovoSpiSignal::LenovoSpiSignal(){
++    mUtils = new Utils();
++    mSpiImpl = new SpiProtocolImpl(mUtils);
++    start();
++}
++
++
++Return<void> LenovoSpiSignal::readSpiData(int32_t funcId, readSpiData_cb hidl_cb){
++    ALOGD("readSpiData, funcId: %d",funcId);
++    if(mDataStore.find(funcId) != mDataStore.end()){
++        hidl_cb(hidl_vec<uint8_t>(mDataStore[funcId]));
++    }else{
++        ALOGE("funcId error, not in data store...");
++        hidl_cb(hidl_vec<uint8_t>());//empty
++    }
++
++    return Void();
++}
++
++Return<void> LenovoSpiSignal::readSpiString(int32_t funcId, readSpiString_cb _hidl_cb){
++    ALOGD("readStringValue, funcId: %d",funcId);
++    if(mStringStore.find(funcId) != mStringStore.end()){
++        _hidl_cb(mStringStore[funcId]);
++    }else{
++        ALOGE("funcId error, not in string store...");
++        _hidl_cb(hidl_string());
++    }
++    return Void();
++}
++
++Return<int32_t> LenovoSpiSignal::readSpiValue(int32_t funcId){
++    ALOGD("readSpiValue, funcId: %d",funcId);
++    if(mValueStore.find(funcId) != mValueStore.end()){
++        return mValueStore[funcId];
++    }
++    ALOGE("funcId error, not in value store...");
++    return -1;
++}
++
++Return<void> LenovoSpiSignal::setSpiValue(int32_t funcId, int32_t value) {
++    ALOGD("setSpiValue, funcId : %d, value : %d",funcId,value);
++    mValueStore[funcId] = value;
++    switch(funcId){
++        case FUNC_ID_HEARTBEAT:
++            doHeartBeat(value);
++            break;
++        case FUNC_ID_POWER_MODE:
++            sendPowerMode(value);
++            break;
++
++
++    }
++    return Void();
++}
++
++void LenovoSpiSignal::sendPowerMode(int32_t mode){
++    ALOGD("sendPowerMode");
++    mSpiImpl->sendPmState(mode);
++}
++
++void LenovoSpiSignal::doHeartBeat(int32_t timeout){
++    ALOGD("doHeartBeat");
++    mSpiImpl->sendHeartBeat((uint8_t)timeout);
++
++}
++
++Return<void> LenovoSpiSignal::setSpiData(int32_t funcId, const hidl_vec<uint8_t>& data) {
++    ALOGD("setSpiData, funcId : %d",funcId);
++    std::vector<uint8_t> dataVector;
++    for(uint8_t v : data){
++        dataVector.push_back(v);
++    }
++    mDataStore[funcId] = dataVector;
++    // TODO implement
++    return Void();
++}
++
++Return<void> LenovoSpiSignal::registerCallback(int32_t funcId, const sp<ISpiSignalCallback>& callback) {
++    ALOGD("registerCallback, funcId: %d",funcId);
++    auto iter = mCallbacks.find(funcId);
++    if( iter == mCallbacks.end()){
++        std::vector<sp<ISpiSignalCallback>> callbackVector;
++        callbackVector.push_back(callback);
++        mCallbacks.insert(std::pair<int32_t,std::vector<sp<ISpiSignalCallback>>>(funcId,callbackVector));
++    }else{
++        std::vector<sp<ISpiSignalCallback>> callbackVector = iter->second;
++        if(std::find(callbackVector.begin(),callbackVector.end(),callback) == callbackVector.end())
++            callbackVector.push_back(callback);
++    }
++
++    //for test
++    //uint8_t testData[64] = {0,1,2,3,4,5};
++    //invokeCallback(0,testData);
++    //for test
++    return Void();
++}
++
++Return<void> LenovoSpiSignal::unregisterCallback(const sp<ISpiSignalCallback>& callback) {
++    ALOGD("unregisterCallback");
++    for (auto it = mCallbacks.begin(); it != mCallbacks.end() ; it++) {
++        std::vector<sp<ISpiSignalCallback>> callbackVector = it->second;
++        for (auto iter = callbackVector.begin(); iter != callbackVector.end() ; iter++) {
++            if(*iter == callback) mCallbacks.erase(it);
++        }
++    }
++    return Void();
++}
++
++void LenovoSpiSignal::start(){
++
++    mReadThread = std::make_unique<std::thread>(std::bind(&LenovoSpiSignal::readSpiThread, this));
++}
++
++void LenovoSpiSignal::invokeDataCallback(int32_t funcId, uint8_t* buffer,int32_t size){
++    ALOGD("invokeDataCallback,funcId: %d",funcId);
++    if(mCallbacks.empty()){
++        ALOGE("callbacks is empty , did you register it ?");
++        return;
++    }
++    //for value array callback
++    std::vector<uint8_t> data;
++    for (int i = 0; i < size; i++) {
++        data.push_back(*buffer);
++        buffer++;
++    }
++    mDataStore[funcId] = data;
++    auto iter = mCallbacks.find(funcId);
++    if(iter != mCallbacks.end()){
++        std::vector<sp<ISpiSignalCallback>> callbackVector = iter->second;
++        for(auto it = callbackVector.begin(); it != callbackVector.end(); it++){
++            (*it)->onSpiDataCallback(funcId,hidl_vec<uint8_t>(data));
++        }
++    }
++}
++
++void LenovoSpiSignal::invokeValueCallback(int32_t funcId, uint8_t value){
++    ALOGD("invokeValueCallback,funcId: %d",funcId);
++    if(mCallbacks.empty()){
++        ALOGE("callbacks is empty , did you register it ?");
++        return;
++    }
++    mValueStore[funcId] = buffer[0];
++    auto iter = mCallbacks.find(funcId);
++    if(iter != mCallbacks.end()){
++        std::vector<sp<ISpiSignalCallback>> callbackVector = iter->second;
++        for(auto it = callbackVector.begin(); it != callbackVector.end(); it++){
++            (*it)->onSpiValueCallback(funcId,value);
++        }
++    }
++}
++
++void LenovoSpiSignal::parseSpiMsgOnce(buff_mgr_t* msg){
++    ALOGD("parseSpiMsgOnce");
++    spi_protocol_header_t * header;
++    buff_mgr_t body;
++    unsigned short msg_no;
++
++    header = (spi_protocol_header_t *)(msg->buf + 1);
++
++    msg_no = header->msg_id;
++
++    ALOGD("msg_no = 0x%x",msg_no);
++
++    body.buf = msg->buf + 1 + sizeof(spi_protocol_header_t);
++    body.len = header->msg_len;
++
++    switch (msg_no){
++        case MSG_ID_HEART_BEAT:
++            ALOGD("MSG_ID_HEART_BEAT");
++            break;
++        case MSG_ID_PM_STATE:
++            ALOGD("MSG_ID_PM_STATE");
++            handleMcuPowerState(&body);
++            break;
++        case MSG_ID_MCU_INFO:
++
++            break;
++        case MSG_ID_MCU_INFO_ACK:
++            ALOGD("MSG_ID_MCU_INFO_ACK");
++            handleMcuInfoMsg(&body);
++            break;
++        case MSG_ID_UDS:
++            break;
++        case MSG_ID_UDS_ACK:
++            break;
++        case MSG_ID_OTA:
++            break;
++        case MSG_ID_MCU_REPORT:
++            handleMcuReportMsg(&body);
++            break;
++        default:
++            break;
++    }
++}
++
++void LenovoSpiSignal::handleMcuReportMsg(buff_mgr_t* msg){
++    ALOGD("handleMcuReportMsg");
++    uint16_t * cmd = (uint16_t *)(msg->buf);
++    ALOGD("mcu report cmd : %d",*cmd);
++    uint8_t value;
++    switch(*cmd){
++        case CMD_ID_KL15:
++            cmd++;
++            value = *((uint8_t *)cmd);
++            invokeValueCallback(FUNC_ID_SPI_CL15,value);
++            break;
++        case CMD_ID_BATTERY:
++            cmd++;
++            value = *((uint8_t *)cmd);
++            invokeValueCallback(FUNC_ID_SPI_BATTERY,value);
++            break;
++        case CMD_ID_BLE:
++            cmd++;
++            value = *((uint8_t *)cmd);
++            invokeValueCallback(FUNC_ID_SPI_BLE,value);
++            break;
++    }
++}
++
++void LenovoSpiSignal::handleMcuInfoMsg(buff_mgr_t* body){
++    ALOGD("handleMcuInfoMsg");
++    body->buf[body->len] = '\0';
++    ALOGD("mcu version: %s", body->buf);
++    mStringStore[FUNC_ID_GET_MCU_VERSION] = hidl_string(reinterpret_cast<char *>(body->buf));
++    //invokeCallback(FUNC_ID_GET_MCU_VERSION,mcuVersionData);
++}
++
++void LenovoSpiSignal::handleMcuPowerState(buff_mgr_t* msg){
++    ALOGD("handleMcuPowerState");
++    spi_protocol_pm_t * pm_body;
++
++    pm_body = (spi_protocol_pm_t *)(msg->buf);
++
++    if((pm_body->state ^ pm_body->toggle) != 0xFF)
++    {
++        ALOGE("spi protocol pm state toggle error!");
++        return;
++    }
++
++    ALOGD("pm_body[0] = %d", pm_body->state);
++    ALOGD("pm_body[1] = %d", pm_body->toggle);
++
++    switch (pm_body->state)
++    {
++        case PM_OPERATIONAL_STATE:
++            ALOGD("PM_OPERATIONAL_STATE");
++            // app_pm_send_event(false, PM_SET_OPERAION_EVENT);
++            break;
++
++        case PM_IDLE_STATE:
++            ALOGD("PM_IDLE_STATE");
++            // app_pm_send_event(false, PM_SET_IDLE_EVENT);
++            break;
++
++        case PM_OPERATION_SUSPEND_STATE:
++            ALOGD("PM_OPERATION_SUSPEND_STATE");
++            // app_pm_send_event(false, PM_SET_SUSPEND_READY_EVENT);
++            break;
++
++        case PM_SUSPEND2RAM_STATE:
++            ALOGD("PM_SUSPEND2RAM_STATE");
++            // app_pm_send_event(false, PM_SET_SUSPEND_EVENT);
++            break;
++
++        default:
++            break;
++    }
++}
++
++void LenovoSpiSignal::readSpiThread(){
++    ALOGD("readSpiThread enter...");
++    int retryCount = 0,ret = -1;
++    while(retryCount < 10 && ret < 0){
++        ret = mUtils->spi_open();
++        if(ret < 0){
++            retryCount++;
++            sleep(1);
++            continue;
++        }
++        break;
++    }
++    if(ret < 0) {
++        ALOGE("open failed ...");
++        return;
++    }
++    ALOGD("device open success");
++    mSpiImpl->getMcuVersion();
++    buff_mgr_t msg,raw;
++    uint8_t spi_frame_receive[SPI_PROTOCOL_FRAME_SIZE]; //data buf to receive
++    uint8_t spi_frame_transmit[SPI_PROTOCOL_FRAME_SIZE];  //data buf to transfer
++
++    do{
++        memset(spi_frame_receive,0,sizeof(spi_frame_receive));
++        memset(spi_frame_transmit,0,sizeof(spi_frame_transmit));
++        msg.buf = spi_frame_transmit;
++        msg.len = sizeof(spi_frame_transmit);
++        ret = mUtils->spi_read(spi_frame_receive, sizeof(spi_frame_receive));
++        if(ret > 0){
++            mUtils->spi_get_one_full_msg(spi_frame_receive, sizeof(spi_frame_receive), &raw);
++            msg.len = mUtils->spi_protocol_unescape(msg.buf, raw.buf, raw.len);
++
++            for(int i = msg.len - 1; i >= 0; i--){
++                if(msg.buf[i] != 0x00){
++                    msg.len = i + 1;
++                    break;
++                }
++            }
++
++            bool success = mUtils->parse_header(&msg);
++            if(!success){
++                ALOGE("Failed to parse header!");
++                continue;
++            }
++            parseSpiMsgOnce(&msg);
++
++        }
++
++    }while(ret >= 0);
++    ALOGE("readSpiThread exit...");
++}
++
++}
+diff --git a/spisignal/service/LenovoSpiSignal.h b/spisignal/service/LenovoSpiSignal.h
+new file mode 100644
+index 0000000..689da9b
+--- /dev/null
++++ b/spisignal/service/LenovoSpiSignal.h
+@@ -0,0 +1,61 @@
++// FIXME: your file license if you have one
++
++#pragma once
++#include <vendor/lenovo/hardware/spisignal/1.0/ILenovoSpiSignal.h>
++#include <hidl/MQDescriptor.h>
++#include <hidl/Status.h>
++#include <vector>
++#include <thread>
++#include <sys/epoll.h>
++#include <Utils.h>
++#include <SpiProtocolImpl.h>
++
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_memory;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::sp;
++using vendor::lenovo::hardware::spisignal::V1_0::ISpiSignalCallback;
++
++struct LenovoSpiSignal : public V1_0::ILenovoSpiSignal {
++    Utils* mUtils;
++    SpiProtocolImpl* mSpiImpl;
++    int epoll_fd, uevent_fd, mFd;
++    char buffer[1024];
++    struct epoll_event ev, events[20];
++    std::map<int32_t,int32_t> mValueStore;
++    std::map<int32_t,std::vector<uint8_t>> mDataStore;
++    std::map<int32_t,hidl_string> mStringStore;
++    std::map<int32_t,std::vector<sp<ISpiSignalCallback>>> mCallbacks;
++    std::unique_ptr<std::thread> mReadThread;
++    LenovoSpiSignal();
++    // Methods from ::vendor.lenovo.hardware.spisignal@1.0::ILenovoSpiSignal follow.
++    Return<void> readSpiData(int32_t funcId, readSpiData_cb _hidl_cb) override;
++    Return<int32_t> readSpiValue(int32_t funcId) override;
++    Return<void> readSpiString(int32_t funcId, readSpiString_cb _hidl_cb) override;
++    Return<void> setSpiValue(int32_t funcId, int32_t value) override;
++    Return<void> setSpiData(int32_t funcId, const hidl_vec<uint8_t>& data) override;
++    Return<void> registerCallback(int32_t funcId, const sp<ISpiSignalCallback>& callback) override;
++    Return<void> unregisterCallback(const sp<ISpiSignalCallback>& callback) override;
++    // Methods from ::vendor.lenovo.hardware.spisignal@1.0::ILenovoSpiSignal follow.
++    void start();
++    void invokeDataCallback(int32_t funcId, uint8_t* value,int32_t size);
++    void invokeValueCallback(int32_t funcId, uint8_t value);
++    void readSpiThread();
++    void doHeartBeat(int32_t timeout);
++    void sendPowerMode(int32_t mode);
++    void parseSpiMsgOnce(buff_mgr_t* msg);
++    void handleMcuPowerState(buff_mgr_t* msg);
++    void handleMcuInfoMsg(buff_mgr_t* msg);
++    void handleMcuReportMsg(buff_mgr_t* msg);
++
++};
++
++// FIXME: most likely delete, this is only for passthrough implementations
++// extern "C" IPowerSignal* HIDL_FETCH_IPowerSignal(const char* name);
++
++}  // namespace android::hardware::lenovospisignal::implementation
+diff --git a/spisignal/service/SpiProtocolImpl.cpp b/spisignal/service/SpiProtocolImpl.cpp
+new file mode 100644
+index 0000000..d55e8ae
+--- /dev/null
++++ b/spisignal/service/SpiProtocolImpl.cpp
+@@ -0,0 +1,100 @@
++#define LOG_TAG "LenovoSpiSignal-Impl"
++#include <utils/Log.h>
++#include <SpiProtocolImpl.h>
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++SpiProtocolImpl::SpiProtocolImpl(Utils* utils):mUtils(utils){
++
++}
++
++void SpiProtocolImpl::sendHeartBeat(uint8_t timeout) {
++    ALOGD("sendHeartBeat");
++    spi_protocol_msg_t msg;
++    buff_mgr_t msg_bin, body;
++    int ret;
++
++    uint8_t spi_frame[SPI_PROTOCOL_FRAME_SIZE];
++    msg_bin.buf = spi_frame;
++    msg_bin.len = sizeof(spi_frame);
++
++    body.buf = &timeout;
++    body.len = 1;
++
++    mUtils->buildSpiRequestMsg(MSG_ID_HEART_BEAT,&msg, &body);
++
++    mUtils->buildSpiBinMsg(&msg_bin, &msg);
++
++    ret = mUtils->spi_write(msg_bin.buf, msg_bin.len);
++}
++
++void SpiProtocolImpl::sendPmState(int state){
++    ALOGD("sendPmState");
++    spi_protocol_msg_t msg;
++    buff_mgr_t msg_bin;
++    buff_mgr_t body;
++    int ret;
++
++    uint8_t spi_frame[SPI_PROTOCOL_FRAME_SIZE];  //dara buf to transfer
++
++    uint8_t pm_state_buf[2] = {0};
++
++    // pm_state[0] = 0x01;     // OPERATION
++    // pm_state[0] = 0x02;     // IDLE
++    // pm_state[0] = 0x03;     // OPERATION SUSPEND
++    // pm_state[0] = 0x04;     // SUSPEND2RAM
++
++    msg_bin.buf = spi_frame;
++    msg_bin.len = sizeof(spi_frame);
++
++    body.buf = pm_state_buf;
++    body.len = sizeof(pm_state_buf);
++
++    pm_state_buf[0] = state;
++    pm_state_buf[1] = ~pm_state_buf[0];
++    mUtils->buildSpiRequestMsg(MSG_ID_PM_STATE, &msg, &body);
++    mUtils->buildSpiBinMsg(&msg_bin, &msg);
++    ret = mUtils->spi_write(msg_bin.buf, msg_bin.len);
++    ALOGD("ret = %d", ret);
++}
++
++int SpiProtocolImpl::getMcuVersion(){
++    ALOGD("getMcuVersion");
++    spi_protocol_msg_t msg;
++    buff_mgr_t msg_bin;
++    buff_mgr_t body;
++    //buff_mgr_t raw;
++    int ret;
++
++    ALOGD("test_mcu_version");
++
++    uint8_t spi_frame_transmit[SPI_PROTOCOL_FRAME_SIZE];  //data buf to transfer
++    //uint8_t spi_frame_receive[SPI_PROTOCOL_FRAME_SIZE]; //data buf to receive
++
++    spi_protocol_mcu_info_t mcu_version_request_buf;
++    memset(&mcu_version_request_buf, 0, sizeof(spi_protocol_mcu_info_t));
++
++    msg_bin.buf = spi_frame_transmit;
++    msg_bin.len = sizeof(spi_frame_transmit);
++
++    mcu_version_request_buf.cmd = 0x0001;
++    body.buf = (unsigned char *)&mcu_version_request_buf;
++    body.len = sizeof(spi_protocol_mcu_info_t);
++
++    mUtils->buildSpiRequestMsg(MSG_ID_MCU_INFO, &msg, &body);
++    mUtils->buildSpiBinMsg(&msg_bin, &msg);
++
++    ret = mUtils->spi_write(msg_bin.buf, msg_bin.len);
++    ALOGD("ret = %d", ret);
++
++/*    ret = mUtils->spi_read(spi_frame_receive, sizeof(spi_frame_receive));
++    if(ret > 0){
++
++        mUtils->spi_get_one_full_msg(spi_frame_receive, sizeof(spi_frame_receive), &raw);
++        msg_bin.len = mUtils->spi_protocol_unescape(msg_bin.buf, raw.buf, raw.len);
++
++        return mUtils->spi_protocol_parse_mcu_version(&msg_bin);
++    }*/
++    return -1;
++}
++
++}  // namespace android::hardware::lenovospisignal::implementation
+\ No newline at end of file
+diff --git a/spisignal/service/SpiProtocolImpl.h b/spisignal/service/SpiProtocolImpl.h
+new file mode 100644
+index 0000000..ecd6ca4
+--- /dev/null
++++ b/spisignal/service/SpiProtocolImpl.h
+@@ -0,0 +1,18 @@
++#pragma once
++#include <types.h>
++#include <Utils.h>
++#define SPI_PROTOCOL_FRAME_SIZE         (128)
++
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++class SpiProtocolImpl{
++public:
++    SpiProtocolImpl(Utils* utils);
++    void sendHeartBeat(uint8_t timeout);
++    void sendPmState(int state);
++    int getMcuVersion();
++private:
++    Utils* mUtils;
++};
++
++} // namespace android::hardware::lenovospisignal::implementation
+\ No newline at end of file
+diff --git a/spisignal/service/SpiSignalCallback.cpp b/spisignal/service/SpiSignalCallback.cpp
+new file mode 100644
+index 0000000..b4805bb
+--- /dev/null
++++ b/spisignal/service/SpiSignalCallback.cpp
+@@ -0,0 +1,23 @@
++// FIXME: your file license if you have one
++
++#include "SpiSignalCallback.h"
++
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++// Methods from ::android::hardware::lenovospisignal::V1_0::IPowerSignalCallback follow.
++Return<void> SpiSignalCallback::onSpiDataCallback(int32_t funcId,vec<uint8_t> data) {
++    // TODO implement
++    return Void();
++}
++
++Return<void> SpiSignalCallback::onSpiValueCallback(int32_t funcId,int32_t value) {
++    // TODO implement
++    return Void();
++}
++// Methods from ::android::hidl::base::V1_0::IBase follow.
++
++//IPowerSignalCallback* HIDL_FETCH_IPowerSignalCallback(const char* /* name */) {
++    //return new PowerSignalCallback();
++//}
++//
++}  // namespace android::hardware::lenovospisignal::implementation
+diff --git a/spisignal/service/SpiSignalCallback.h b/spisignal/service/SpiSignalCallback.h
+new file mode 100644
+index 0000000..fc058f4
+--- /dev/null
++++ b/spisignal/service/SpiSignalCallback.h
+@@ -0,0 +1,30 @@
++// FIXME: your file license if you have one
++
++#pragma once
++
++#include <android/hardware/powersignal/1.0/ISpiSignalCallback.h>
++#include <hidl/MQDescriptor.h>
++#include <hidl/Status.h>
++
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_memory;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::sp;
++
++struct SpiSignalCallback : public V1_0::ISpiSignalCallback {
++    // Methods from ::android::hardware::lenovospisignal::V1_0::IPowerSignalCallback follow.
++    Return<void> onSpiDataCallback(int32_t funcId,vec<uint8_t> value) override;
++    Return<void> onSpiValueCallback(int32_t funcId,int32_t value) override;
++    // Methods from ::android::hidl::base::V1_0::IBase follow.
++
++};
++
++// FIXME: most likely delete, this is only for passthrough implementations
++// extern "C" IPowerSignalCallback* HIDL_FETCH_IPowerSignalCallback(const char* name);
++
++}  // namespace android::hardware::lenovospisignal::implementation
+diff --git a/spisignal/service/Utils.cpp b/spisignal/service/Utils.cpp
+new file mode 100644
+index 0000000..3d90c4c
+--- /dev/null
++++ b/spisignal/service/Utils.cpp
+@@ -0,0 +1,391 @@
++#define LOG_TAG "LenovoSpiSignal-Utils"
++#include <utils/Log.h>
++#include <fcntl.h>
++#include <Utils.h>
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++unsigned int Utils::msg_seq_number = 0;
++
++void Utils::buildSpiRequestMsg(int cmd, p_spi_protocol_msg_t msg, buff_mgr_t * body){
++    ALOGD("buildSpiRequestMsg,cmd: %d",cmd);
++    unsigned short crc;
++    unsigned short len;
++
++    msg->start_magic_id = MAGIC_CHAR;
++    len = body->len;
++    switch(cmd){
++        case MSG_ID_HEART_BEAT:
++            buildSpiHeader(&msg->header, MSG_ID_HEART_BEAT, len);
++            break;
++        case MSG_ID_PM_STATE:
++            buildSpiHeader(&msg->header, MSG_ID_PM_STATE, len);
++            break;
++        case MSG_ID_MCU_INFO:
++            buildSpiHeader(&msg->header,MSG_ID_MCU_INFO,len);
++            break;
++        default:
++            ALOGE("unknown cmd ...");
++            break;
++    }
++
++    msg->body.buf = body->buf;
++    msg->body.len = body->len;
++    msg->crc = crc16((unsigned char *)&msg->header,sizeof(msg->header),NULL);
++    crc = msg->crc;
++    msg->crc = crc16((unsigned char *)msg->body.buf,msg->body.len,&crc);
++
++    msg->end_magic_id = MAGIC_CHAR;
++}
++
++int Utils::buildSpiBinMsg(p_buff_mgr_t msg_bin, p_spi_protocol_msg_t msg){
++    ALOGD("buildSpiBinMsg");
++    unsigned short len = 0;
++    unsigned short offset = 0;
++
++    memset(msg_bin->buf, 0x00, msg_bin->len);
++
++    msg_bin->buf[offset++] = msg->start_magic_id;
++    len = (unsigned short)spi_protocol_escape(&(msg_bin->buf[offset]), (unsigned char *)&msg->header, sizeof(spi_protocol_header_t));
++    offset += len;
++    ALOGD("offset = %d", offset);
++    if(msg->body.len)
++    {
++        len = (unsigned short)spi_protocol_escape(&(msg_bin->buf[offset]), msg->body.buf, msg->body.len);
++        offset += len;
++    }
++    ALOGD("offset = %d", offset);
++    len = (unsigned short)spi_protocol_escape(&(msg_bin->buf[offset]), (unsigned char *)&msg->crc, sizeof(msg->crc));
++    offset += len;
++    msg_bin->buf[offset++] = msg->end_magic_id;
++    ALOGD("offset = %d", offset);
++
++    if(offset > SPI_PROTOCOL_FRAME_SIZE)
++    {
++        ALOGD("offset exceed SPI_PROTOCOL_FRAME_SIZE!(%d)", offset);
++    }
++
++    return offset;
++}
++
++void Utils::buildSpiHeader(p_spi_protocol_header_t header, unsigned short msg_id, unsigned short msg_len){
++    memset(header,0x00,sizeof(spi_protocol_header_t));
++    header->msg_id = msg_id;
++    header->msg_len = msg_len;
++
++    header->msg_sequence = msg_seq_number;
++
++    ALOGD("msg_seq_number = %d", msg_seq_number);
++    msg_seq_number++;
++}
++
++int Utils::spi_protocol_escape(unsigned char *dest, unsigned char *src, int len){
++    ALOGD("spi_protocol_escape");
++    int i,j;
++
++    if(!dest || !src || !len)
++    {
++        ALOGE("spi protocol escape params error!");
++        return -1;
++    }
++
++    for(i=0,j=0; i<len; i++)
++    {
++        if(src[i] == ESCAPE_CHAR)
++        {
++            dest[j++] = ESCAPE_CHAR;
++            dest[j++] = 0x01;
++        }
++        else if(src[i] == MAGIC_CHAR)
++        {
++            dest[j++] = ESCAPE_CHAR;
++            dest[j++] = 0x02;
++        }
++        else
++        {
++            dest[j++]=src[i];
++        }
++    }
++
++    return j;
++}
++
++int Utils::spi_protocol_unescape(unsigned char *dest, unsigned char *src, int len){
++    ALOGD("spi_protocol_unescape");
++    int i,j;
++
++    if( !dest || !src || !len )
++    {
++        printf("spi protocol unescape params error!");
++        return -1;
++    }
++
++    for(i=0,j=0; i<len; i++){
++        if(src[i]== ESCAPE_CHAR){
++            i++;
++            if(i == len){
++                ALOGD("not unescape number error!");
++                return -1;
++            }else if(src[i] == 0x01){
++                dest[j++] = ESCAPE_CHAR;
++            }else if(src[i]==0x02){
++                dest[j++] = MAGIC_CHAR;
++            }else{
++                ALOGD("unescape number error!");
++                return -1;
++            }
++        }else
++        {
++            dest[j++]=src[i];
++        }
++    }
++    return j;
++}
++
++int Utils::spi_get_one_full_msg(unsigned char *buf,int len, buff_mgr_t *msg){
++    ALOGD("spi_get_one_full_msg");
++    bool ret;
++    unsigned int head_offset = 0,tail_offset = 0;
++    int offset;
++
++    ret = find_magic_char(buf,len,&head_offset);
++    if(ret && (len - head_offset >= sizeof(spi_protocol_header_t) + 3))
++    {
++        ret = find_magic_char(buf + head_offset + 1,len - head_offset - 1,&tail_offset);
++        tail_offset += head_offset + 1;
++        if(ret){
++
++            msg->buf = (buf + head_offset);
++            msg->len = tail_offset - head_offset + 1;
++            offset = tail_offset + 1;
++        }
++        else{
++            offset = head_offset;
++        }
++    }
++    else
++    {
++        offset = head_offset;
++    }
++    return offset;
++}
++
++bool Utils::find_magic_char(unsigned char *buf, int len,unsigned int * offset){
++    int index=0;
++    bool ret = false;
++
++    *offset = 0;
++
++    while(index < len){
++        if(buf[index] == MAGIC_CHAR){
++            ret = true;
++            *offset = index;
++            break;
++        }
++        index++;
++    }
++    return ret;
++}
++
++bool Utils::parse_header(buff_mgr_t * msg){
++    ALOGD("parse_header");
++    bool ret = true;
++    spi_protocol_header_t * header;
++
++    header = (spi_protocol_header_t *)(msg->buf + sizeof(char));    // offset magic number
++
++    if( header->msg_len != msg->len - sizeof(spi_protocol_header_t) - sizeof(char) - sizeof(short) - sizeof(char))
++    {
++        ret = false;
++
++        ALOGD("1 = %d", header->msg_len);
++        ALOGD("2 = %d", (int)sizeof(spi_protocol_header_t));
++        ALOGD("3 = %d", (int)(msg->len - sizeof(spi_protocol_header_t) - sizeof(char) - sizeof(short) - sizeof(char)));
++        ALOGD("4 = %d", msg->len);
++
++        ALOGD("msg len is invaild!");
++        return ret;
++    }
++
++    return ret;
++}
++
++int Utils::spi_protocol_parse_mcu_version(buff_mgr_t * msg){
++    ALOGD("spi_protocol_parse_mcu_version");
++    int ret;
++    for(int i = msg->len - 1; i >= 0; i--){
++        if(msg->buf[i] != 0x00){
++            msg->len = i + 1;
++            break;
++        }
++    }
++
++    ret = parse_header(msg);
++    if(!ret){
++        ALOGE("Failed to parse header!");
++        return ret;
++    }
++
++    spi_protocol_header_t * header;
++    buff_mgr_t body;
++    unsigned short msg_no;
++    //unsigned char result;
++
++    header = (spi_protocol_header_t *)(msg->buf + 1);
++
++    msg_no = header->msg_id;
++
++    ALOGD("msg_no = 0x%x",msg_no);
++
++    body.buf = msg->buf + 1 + sizeof(spi_protocol_header_t);
++    body.len = header->msg_len;
++    if(msg_no == MSG_ID_MCU_INFO){
++        spi_protocol_mcu_info_t * info_body;
++
++        info_body = (spi_protocol_mcu_info_t *)(body.buf);
++
++        ALOGD("0x%x", info_body->cmd);
++        return info_body->cmd;
++    }
++    return -1;
++}
++
++int Utils::spi_open(){
++    ALOGD("spi_open");
++    int ret = -1;
++
++    mFd = open(SPI_DEVICE, O_RDWR);
++    if (mFd < 0) {
++        ALOGE("Failed to open the SPI device");
++        return -1;
++    }
++    ret = ioctl(mFd, SPI_IOC_WR_MAX_SPEED_HZ, &mSpeed);
++    if (ret == -1)
++        ALOGE("can't set max speed hz");
++
++    ret = ioctl(mFd, SPI_IOC_RD_MAX_SPEED_HZ, &mSpeed);
++    if (ret == -1)
++        ALOGE("can't get max speed hz");
++    return ret;
++}
++
++ssize_t Utils::spi_write(const void *buffer, size_t len){
++    if(mFd < 0) return -1;
++
++    ALOGD("spi_write");
++    int ret = -1;
++    if (buffer == nullptr || len < SPI_MSG_LEN) {
++        ALOGE("Buffer is NULL or length != SPI_MSG_LEN");
++        return ret;
++    }
++    if (mFd > 0)
++        ret = write(mFd, buffer, SPI_MSG_LEN);
++    if (DEBUG_LOG && ret > 0)
++        hex_dump(buffer, ret, 32, "TX");
++    return ret;
++}
++
++ssize_t Utils::spi_read(void *buffer, size_t len){
++    ALOGD("spi_read");
++    int ret = -1;
++    if (buffer == NULL || len < SPI_MSG_LEN) {
++        ALOGE("Buffer is NULL or length != SPI_MSG_LEN");
++        return ret;
++    }
++    if (mFd > 0)
++        ret = spi_read_blocking(mFd, buffer, SPI_MSG_LEN, TIME_OUT);
++    if (DEBUG_LOG && ret > 0)
++        hex_dump(buffer, ret, 32, "RX");
++    return ret;
++}
++
++ssize_t Utils::spi_read_blocking(int spi_fd, void *buffer, size_t len, int timeout_sec){
++    ALOGD("spi_read_blocking");
++    fd_set recv_fds;
++    struct timeval tv;
++    ssize_t bytes_read;
++
++    tv.tv_sec = timeout_sec;
++    tv.tv_usec = 0;
++
++    FD_ZERO(&recv_fds);
++    FD_SET(spi_fd, &recv_fds);
++
++    // Call select to monitor if data is ready to read from the SPI device
++    //int fd_result = select(spi_fd + 1, &recv_fds, NULL, NULL, &tv);
++    int fd_result = select(spi_fd + 1, &recv_fds, NULL, NULL, NULL);
++    if (fd_result < 0) {
++        perror("select error");
++        return fd_result;
++    } else if (fd_result == 0) {
++        // No change in the SPI device's state within the specified time
++        printf("select timeout\n");
++        return 0;//continue;
++    } else {
++        // Data is ready to read from the SPI device
++        if (FD_ISSET(spi_fd, &recv_fds)) {
++            //transfer(spi_fd, NULL, buffer, len);
++            bytes_read = read(spi_fd, buffer, len);
++            if (bytes_read < 0) {
++                perror("read error");
++                return 0;
++            }
++            return bytes_read;
++        }
++    }
++
++    return -1;
++}
++
++void Utils::hex_dump(const void *src, size_t length, size_t line_size, std::string prefix){
++    ALOGD("hex_dump");
++    int i = 0;
++    const unsigned char *address = static_cast<const unsigned char *>(src);
++    const unsigned char *line = address;
++    unsigned char c;
++    char output[10];
++    std::stringstream ss;
++    sprintf(output, "%s | ", prefix.c_str());
++    ss << output;
++    while (length-- > 0) {
++        sprintf(output, "%02X ", *address++);
++        ss << output;
++        if (!(++i % line_size) || (length == 0 && i % line_size)) {
++            if (length == 0) {
++                while (i++ % line_size)
++                    sprintf(output, "%s", "__ ");
++                    ss << output;
++            }
++            sprintf(output, "%s", " | ");  /* right close */
++            ss << output;
++            while (line < address) {
++                c = *line++;
++                sprintf(output, "%c", (c < 33 || c == 255) ? 0x2E : c);
++                ss << output;
++            }
++            ALOGD("%s",ss.str().c_str());
++            ss.str("");
++            if (length > 0)
++                sprintf(output, "%s | ", prefix.c_str());
++                ss << output;
++        }
++    }
++}
++
++unsigned short Utils::crc16(const unsigned char * p_data, unsigned int size, unsigned short * p_crc){
++    ALOGD("crc16");
++    unsigned int i;
++    unsigned short crc = (p_crc == nullptr) ? 0xffff : *p_crc;
++
++    for (i = 0; i < size; i++)
++    {
++        crc = (unsigned char)(crc >> 8) | (crc << 8);
++        crc ^= p_data[i];
++        crc ^= (unsigned char)(crc & 0xff) >> 4;
++        crc ^= (crc << 8) << 4;
++        crc ^= ((crc & 0xff) << 4) << 1;
++    }
++
++    return crc;
++}
++
++}  // namespace android::hardware::lenovospisignal::implementation
+\ No newline at end of file
+diff --git a/spisignal/service/Utils.h b/spisignal/service/Utils.h
+new file mode 100644
+index 0000000..e163d25
+--- /dev/null
++++ b/spisignal/service/Utils.h
+@@ -0,0 +1,55 @@
++#pragma once
++#include <types.h>
++#include <string>
++#include <iostream>
++#include <linux/spi/spidev.h>
++#include <fcntl.h>
++#include <cstdio>
++#include <sstream>
++#define ESCAPE_CHAR (0x7D)
++#define MAGIC_CHAR (0x7E)
++#define MSG_ID_HEART_BEAT (0x0001)
++#define MSG_ID_PM_STATE (0x0002)
++#define MSG_ID_MCU_INFO (0x0003)
++#define MSG_ID_MCU_INFO_ACK (0x8003)
++#define MSG_ID_UDS (0x0004)
++#define MSG_ID_UDS_ACK (0x8004)
++#define MSG_ID_OTA (0x0100)
++#define MSG_ID_MCU_REPORT (0x8200)
++#define MSG_ID_UPLOAD (0x8100)
++#define CMD_ID_BLE (0x0100)
++#define CMD_ID_KL15 (0x0300)
++#define CMD_ID_BATTERY (0x400)
++#define SPI_PROTOCOL_FRAME_SIZE (128)
++#define SPI_MSG_LEN 128
++#define TIME_OUT 10
++#define SPI_DEVICE "/dev/spidev7.0"
++#define DEBUG_LOG 1
++
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++class Utils{
++    public:
++        void buildSpiRequestMsg(int cmd, p_spi_protocol_msg_t msg, buff_mgr_t * body);
++        int buildSpiBinMsg(p_buff_mgr_t msg_bin, p_spi_protocol_msg_t msg);
++        void buildSpiHeader(p_spi_protocol_header_t header, unsigned short msg_id, unsigned short msg_len);
++        int spi_open();
++        ssize_t spi_write(const void *buffer, size_t len);
++        ssize_t spi_read(void *buffer, size_t len);
++        ssize_t spi_read_blocking(int spi_fd, void *buffer, size_t len, int timeout_sec);
++        int spi_get_one_full_msg(unsigned char *buf,int len, buff_mgr_t *msg);
++        int spi_protocol_parse_mcu_version(buff_mgr_t * msg);
++        int spi_protocol_escape(unsigned char *dest, unsigned char *src, int len);
++        int spi_protocol_unescape(unsigned char *dest, unsigned char *src, int len);
++        bool parse_header(buff_mgr_t * msg);
++
++private:
++        int mFd;
++        uint32_t mSpeed = 1000000;
++        static unsigned int msg_seq_number;
++        unsigned short crc16(const unsigned char * p_data, unsigned int size, unsigned short * p_crc);
++        void hex_dump(const void *src, size_t length, size_t line_size, std::string prefix);
++        bool find_magic_char(unsigned char *buf, int len,unsigned int * offset);
++};
++
++}  // namespace android::hardware::lenovospisignal::implementation
+\ No newline at end of file
+diff --git a/spisignal/service/compatibility_matrix.6.xml b/spisignal/service/compatibility_matrix.6.xml
+new file mode 100644
+index 0000000..902b6fe
+--- /dev/null
++++ b/spisignal/service/compatibility_matrix.6.xml
+@@ -0,0 +1,13 @@
++<compatibility-matrix version="1.0" type="framework" level="6">
++    <hal format="hidl" optional="true">
++        <name>vendor.lenovo.hardware.spisignal</name>
++        <version>1.0</version>
++        <interface>
++            <name>ILenovoSpiSignal</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++</compatibility-matrix>
++
++
++
+diff --git a/spisignal/service/compatibility_matrix.7.xml b/spisignal/service/compatibility_matrix.7.xml
+new file mode 100644
+index 0000000..7a969e3
+--- /dev/null
++++ b/spisignal/service/compatibility_matrix.7.xml
+@@ -0,0 +1,13 @@
++<compatibility-matrix version="1.0" type="framework" level="7">
++    <hal format="hidl" optional="true">
++        <name>vendor.lenovo.hardware.spisignal</name>
++        <version>1.0</version>
++        <interface>
++            <name>ILenovoSpiSignal</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++</compatibility-matrix>
++
++
++
+diff --git a/spisignal/service/compatibility_matrix.8.xml b/spisignal/service/compatibility_matrix.8.xml
+new file mode 100644
+index 0000000..8aa2130
+--- /dev/null
++++ b/spisignal/service/compatibility_matrix.8.xml
+@@ -0,0 +1,13 @@
++<compatibility-matrix version="1.0" type="framework" level="8">
++    <hal format="hidl" optional="true">
++        <name>vendor.lenovo.hardware.spisignal</name>
++        <version>1.0</version>
++        <interface>
++            <name>ILenovoSpiSignal</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++</compatibility-matrix>
++
++
++
+diff --git a/spisignal/service/compatibility_matrix.xml b/spisignal/service/compatibility_matrix.xml
+new file mode 100644
+index 0000000..a8873e4
+--- /dev/null
++++ b/spisignal/service/compatibility_matrix.xml
+@@ -0,0 +1,13 @@
++<compatibility-matrix version="1.0" type="framework">
++    <hal format="hidl" optional="true">
++        <name>vendor.lenovo.hardware.spisignal</name>
++        <version>1.0</version>
++        <interface>
++            <name>ILenovoSpiSignal</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++</compatibility-matrix>
++
++
++
+diff --git a/spisignal/service/service.cpp b/spisignal/service/service.cpp
+new file mode 100644
+index 0000000..11c065d
+--- /dev/null
++++ b/spisignal/service/service.cpp
+@@ -0,0 +1,29 @@
++#define LOG_TAG "lenovospisignal@1.0-service"
++#include <LenovoSpiSignal.h>
++#include <utils/Log.h>
++#include <hidl/HidlTransportSupport.h>
++
++using namespace vendor::lenovo;
++using namespace vendor::lenovo::hardware;
++using namespace vendor::lenovo::hardware::spisignal::implementation;
++using namespace android;
++using namespace android::hardware;
++
++int main(int /* argc */, char* /* argv */ []) {
++    auto service = std::make_unique<LenovoSpiSignal>();
++
++    configureRpcThreadpool(4, true /* callerWillJoin */);
++
++    ALOGI("Registering as service...");
++    status_t status = service->registerAsService();
++
++    if (status != OK) {
++        ALOGE("Unable to register spi signal service (%d)", status);
++        return 1;
++    }
++
++    ALOGI("Ready");
++    joinRpcThreadpool();
++
++    return 1;
++}
+diff --git a/spisignal/service/types.h b/spisignal/service/types.h
+new file mode 100644
+index 0000000..c80a468
+--- /dev/null
++++ b/spisignal/service/types.h
+@@ -0,0 +1,47 @@
++#pragma once
++namespace vendor::lenovo::hardware::spisignal::implementation {
++
++    typedef struct{
++        unsigned short msg_id;
++        unsigned short msg_len;
++        unsigned char reserved[2];
++        unsigned short msg_sequence;
++    }__packed spi_protocol_header_t ,*p_spi_protocol_header_t;
++
++    typedef struct{
++        unsigned char * buf;
++        int len;
++    }__packed buff_mgr_t,*p_buff_mgr_t;
++
++    typedef struct{
++        unsigned char state;
++        unsigned char toggle;
++    }__packed spi_protocol_pm_t ,*p_spi_protocol_pm_t;
++
++    typedef struct{
++        unsigned short cmd;
++        unsigned char reserved[2];
++    }__packed spi_protocol_mcu_info_t ,*p_spi_protocol_mcu_info_t;
++
++/*    typedef struct{
++        unsigned short cmd;
++        unsigned char state;
++    }__packed spi_protocol_notify_kl15_t ,*spi_protocol_notify_kl15_t;*/
++
++    typedef enum {
++        PM_OFF_STATE = 0U,  //not send
++        PM_OPERATIONAL_STATE,
++        PM_IDLE_STATE,
++        PM_OPERATION_SUSPEND_STATE,
++        PM_SUSPEND2RAM_STATE,
++    }power_mode_type_e;
++
++    typedef struct{
++        unsigned char start_magic_id;
++        spi_protocol_header_t header;
++        buff_mgr_t body;
++        unsigned short crc;
++        unsigned char end_magic_id;
++    } __packed spi_protocol_msg_t,*p_spi_protocol_msg_t;
++
++} // namespace android::hardware::lenovospisignal::implementation
+\ No newline at end of file
+diff --git a/spisignal/service/vendor.lenovo.hardware.spisignal@1.0-service.rc b/spisignal/service/vendor.lenovo.hardware.spisignal@1.0-service.rc
+new file mode 100644
+index 0000000..0a044f8
+--- /dev/null
++++ b/spisignal/service/vendor.lenovo.hardware.spisignal@1.0-service.rc
+@@ -0,0 +1,4 @@
++service vendor.lenovo.spi-signal /vendor/bin/hw/vendor.lenovo.hardware.spisignal@1.0-service
++    class hal
++    user root
++    group root system
+\ No newline at end of file
+diff --git a/spisignal/service/vendor.lenovo.hardware.spisignal@1.0-service.xml b/spisignal/service/vendor.lenovo.hardware.spisignal@1.0-service.xml
+new file mode 100644
+index 0000000..d89125d
+--- /dev/null
++++ b/spisignal/service/vendor.lenovo.hardware.spisignal@1.0-service.xml
+@@ -0,0 +1,11 @@
++<manifest version="1.0" type="device">
++    <hal format="hidl">
++        <name>vendor.lenovo.hardware.spisignal</name>
++        <transport>hwbinder</transport>
++        <version>1.0</version>
++        <interface>
++            <name>ILenovoSpiSignal</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
++</manifest>

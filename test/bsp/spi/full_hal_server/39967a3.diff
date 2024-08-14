@@ -1,0 +1,78 @@
+From 39967a3419c9e62be2bcf6ea9ec396fa86629580 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Mon, 05 Aug 2024 18:55:02 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SpiHal-sepolicy] [scope of influence]:SpiHal [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration
+
+Change-Id: I368209253174ab40835c0492612a50b434ec55c2
+---
+
+diff --git a/spisignal/common/attributes b/spisignal/common/attributes
+new file mode 100644
+index 0000000..d39dddc
+--- /dev/null
++++ b/spisignal/common/attributes
+@@ -0,0 +1,3 @@
++attribute hal_spisignal;
++attribute hal_spisignal_client;
++attribute hal_spisignal_server;
+diff --git a/spisignal/common/file_contexts b/spisignal/common/file_contexts
+new file mode 100644
+index 0000000..1f585c8
+--- /dev/null
++++ b/spisignal/common/file_contexts
+@@ -0,0 +1 @@
++/(vendor|system/vendor)/bin/hw/vendor\.lenovo\.hardware\.spisignal@1\.[0-9]-service            u:object_r:hal_spisignal_default_exec:s0
+diff --git a/spisignal/common/hal_spisignal.te b/spisignal/common/hal_spisignal.te
+new file mode 100644
+index 0000000..8769815
+--- /dev/null
++++ b/spisignal/common/hal_spisignal.te
+@@ -0,0 +1,26 @@
++#typeattribute hal_spisignal_default socket_between_core_and_vendor_violators;
++type hal_spisignal_default, domain, mlstrustedsubject, socket_between_core_and_vendor_violators;
++hal_server_domain(hal_spisignal_default, hal_spisignal)
++
++type hal_spisignal_default_exec, exec_type, vendor_file_type, file_type;
++init_daemon_domain(hal_spisignal_default);
++
++# Allow hwbinder call form hal client to server
++binder_call(hal_spisignal_client, hal_spisignal_default_exec)
++
++# add hwservice related rules
++type hal_spisignal_service, service_manager_type;
++#type hal_spisignal_hwservice, hwservice_manager_type;
++get_prop(hal_spisignal, hwservicemanager_prop)
++add_hwservice(hal_spisignal_server, hal_spisignal_hwservice)
++allow hal_spisignal_client hal_spisignal_hwservice:hwservice_manager find;
++hal_client_domain(system_server, hal_spisignal)
++hwbinder_use(hal_spisignal);
++
++allow {  system_server shell } hal_spisignal_hwservice:hwservice_manager { find };
++allow {  system_server shell } hal_spisignal:binder {call};
++allow hal_spisignal_default system_server:binder { call };
++allow system_server hal_spisignal_default:binder { transfer };
++allow hal_spisignal_default socket_device:sock_file { write };
++#allow hal_spisignal_default spidev_device:chr_file { read write open ioctl };
++#allow hal_spisignal_default perfservice:unix_stream_socket { connectto };
+diff --git a/spisignal/common/hwservice.te b/spisignal/common/hwservice.te
+new file mode 100644
+index 0000000..d96170e
+--- /dev/null
++++ b/spisignal/common/hwservice.te
+@@ -0,0 +1 @@
++type hal_spisignal_hwservice, hwservice_manager_type;
+diff --git a/spisignal/common/hwservice_contexts b/spisignal/common/hwservice_contexts
+new file mode 100644
+index 0000000..0233b5e
+--- /dev/null
++++ b/spisignal/common/hwservice_contexts
+@@ -0,0 +1 @@
++vendor.lenovo.hardware.spisignal::ILenovoSpiSignal              u:object_r:hal_spisignal_hwservice:s0
+diff --git a/spisignal/sepolicy.mk b/spisignal/sepolicy.mk
+new file mode 100644
+index 0000000..696f3f1
+--- /dev/null
++++ b/spisignal/sepolicy.mk
+@@ -0,0 +1,2 @@
++$(call lgsi-vendor-sepolicy, lenovo/lgsi/vendor/sepolicy/spisignal/common)
++

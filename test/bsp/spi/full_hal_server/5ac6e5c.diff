@@ -1,0 +1,1360 @@
+From 5ac6e5cf1384627f3aa6eb78f3348e6fa874426f Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 14:51:39 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SystemServer-SpiSignalService] [scope of influence]:SpiSignalService [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration Change-Id: I28c44a735ad044dd548725aee220a7bea128c199
+
+Change-Id: Id45e4ac092c1b02eb7640a7ec7ac63c5bd8fbe65
+---
+
+diff --git a/components/config/lgsi_spi_signal_feature_config.xml b/components/config/lgsi_spi_signal_feature_config.xml
+new file mode 100644
+index 0000000..7f7e6ea
+--- /dev/null
++++ b/components/config/lgsi_spi_signal_feature_config.xml
+@@ -0,0 +1,14 @@
++<config name="lgsi">
++    <feature name="SpiSignal">
++        <description>
++            This feature is used to enable SpiSignal. Used for communicating with the underlying Hal
++            service,sending and receiving messages from MCU,and providing APIs for App use.
++        </description>
++        <service>
++            <item>com.android.server.spisignal.LenovoSpiSignalService</item>
++        </service>
++        <sepolicy>
++            <item partition="system" type="private">spisignalservice/private</item>
++        </sepolicy>
++    </feature>
++</config>
+\ No newline at end of file
+diff --git a/components/sepolicy/spisignalservice/private/service.te b/components/sepolicy/spisignalservice/private/service.te
+new file mode 100644
+index 0000000..5cd3928
+--- /dev/null
++++ b/components/sepolicy/spisignalservice/private/service.te
+@@ -0,0 +1 @@
++type lenovo_spi_signal_service, system_api_service, system_server_service, service_manager_type;
+diff --git a/components/sepolicy/spisignalservice/private/service_contexts b/components/sepolicy/spisignalservice/private/service_contexts
+new file mode 100644
+index 0000000..4f25cb8
+--- /dev/null
++++ b/components/sepolicy/spisignalservice/private/service_contexts
+@@ -0,0 +1,2 @@
++#LenovoSpiSignalService
++lenovo_spi_signal    u:object_r:lenovo_spi_signal_service:s0
+diff --git a/frameworks/base/Android.bp b/frameworks/base/Android.bp
+index 2a193c4..350719e 100644
+--- a/frameworks/base/Android.bp
++++ b/frameworks/base/Android.bp
+@@ -21,6 +21,7 @@
+         "vendor.lenovo.hardware.touchscreen-V2-java", // AIDL
+         "vendor.lenovo.hardware.usb-V1-java", // AIDL
+         "vendor.lenovo.hardware.scaler-V1-java", // AIDL
++        "vendor.lenovo.hardware.spisignal-V1.0-java", //modify for [GEROLFING-336] end
+     ],
+     sdk_version: "core_platform",
+     installable: false,
+@@ -51,6 +52,7 @@
+             ":zui_activity_notify_src_files",
+             ":zui_scaler_manager_aidl_files",
+             ":zui_battery_manager_aidl_files",
++            ":zui_spi_signal_manager_src_files",//modify for [GEROLFING-336]
+         ],
+     },
+ }
+@@ -150,6 +152,7 @@
+         ":moto_desktop_aidl_files",
+         ":zui_battery_manager_src_files",
+         ":zui_battery_manager_aidl_files",
++        ":zui_spi_signal_manager_src_files", //modify for [GEROLFING-336]
+     ],
+ }
+ 
+@@ -921,3 +924,18 @@
+ }
+ // END LGSIU-xxxx
+ 
++// BEGIN [GEROLFING-336]
++lgsi_filegroup {
++    name: "zui_spi_signal_manager_src_files",
++    srcs: [
++        "core/java/android/app/spisignal/*.aidl",
++        "core/java/android/app/spisignal/*.java",
++    ],
++    path: "core/java",
++    srcs_type: "lgsi",
++    features: [
++        "SpiSignal",
++    ],
++}
++// END [GEROLFING-336]
++
+diff --git a/frameworks/base/api/current-spisignal.txt b/frameworks/base/api/current-spisignal.txt
+new file mode 100644
+index 0000000..c641684
+--- /dev/null
++++ b/frameworks/base/api/current-spisignal.txt
+@@ -0,0 +1,116 @@
++package android.app.spisignal {
++
++  public interface ILenovoSpiSignal extends android.os.IInterface {
++    method public byte[] readSpiData(int) throws android.os.RemoteException;
++    method public String readSpiString(int) throws android.os.RemoteException;
++    method public int readSpiValue(int) throws android.os.RemoteException;
++    method public void registerSignalCallback(int, android.app.spisignal.ILenovoSpiSignalCallback) throws android.os.RemoteException;
++    method public void setSpiData(int, byte[]) throws android.os.RemoteException;
++    method public void setSpiValue(int, int) throws android.os.RemoteException;
++    method public void unregisterSignalCallback(android.app.spisignal.ILenovoSpiSignalCallback) throws android.os.RemoteException;
++    field public static final String DESCRIPTOR = "android.app.spisignal.ILenovoSpiSignal";
++  }
++
++  public static class ILenovoSpiSignal.Default implements android.app.spisignal.ILenovoSpiSignal {
++    ctor public ILenovoSpiSignal.Default();
++    method public android.os.IBinder asBinder();
++    method public byte[] readSpiData(int) throws android.os.RemoteException;
++    method public String readSpiString(int) throws android.os.RemoteException;
++    method public int readSpiValue(int) throws android.os.RemoteException;
++    method public void registerSignalCallback(int, android.app.spisignal.ILenovoSpiSignalCallback) throws android.os.RemoteException;
++    method public void setSpiData(int, byte[]) throws android.os.RemoteException;
++    method public void setSpiValue(int, int) throws android.os.RemoteException;
++    method public void unregisterSignalCallback(android.app.spisignal.ILenovoSpiSignalCallback) throws android.os.RemoteException;
++  }
++
++  public abstract static class ILenovoSpiSignal.Stub extends android.os.Binder implements android.app.spisignal.ILenovoSpiSignal {
++    ctor public ILenovoSpiSignal.Stub();
++    method public android.os.IBinder asBinder();
++    method public static android.app.spisignal.ILenovoSpiSignal asInterface(android.os.IBinder);
++    method public boolean onTransact(int, android.os.Parcel, android.os.Parcel, int) throws android.os.RemoteException;
++  }
++
++  public interface ILenovoSpiSignalCallback extends android.os.IInterface {
++    method public void onSpiDataCallback(int, byte[]) throws android.os.RemoteException;
++    method public void onSpiValueCallback(int, int) throws android.os.RemoteException;
++    field public static final String DESCRIPTOR = "android.app.spisignal.ILenovoSpiSignalCallback";
++  }
++
++  public static class ILenovoSpiSignalCallback.Default implements android.app.spisignal.ILenovoSpiSignalCallback {
++    ctor public ILenovoSpiSignalCallback.Default();
++    method public android.os.IBinder asBinder();
++    method public void onSpiDataCallback(int, byte[]) throws android.os.RemoteException;
++    method public void onSpiValueCallback(int, int) throws android.os.RemoteException;
++  }
++
++  public abstract static class ILenovoSpiSignalCallback.Stub extends android.os.Binder implements android.app.spisignal.ILenovoSpiSignalCallback {
++    ctor public ILenovoSpiSignalCallback.Stub();
++    method public android.os.IBinder asBinder();
++    method public static android.app.spisignal.ILenovoSpiSignalCallback asInterface(android.os.IBinder);
++    method public boolean onTransact(int, android.os.Parcel, android.os.Parcel, int) throws android.os.RemoteException;
++  }
++
++  public abstract class LenovoSpiSignalCallback extends android.app.spisignal.ILenovoSpiSignalCallback.Stub {
++    ctor public LenovoSpiSignalCallback();
++    method public void onSpiDataCallback(int, byte[]);
++    method public void onSpiValueCallback(int, int);
++  }
++
++  public abstract class LenovoSpiSignalInternal {
++    ctor public LenovoSpiSignalInternal();
++    method public abstract int getPowerMode();
++    method public abstract byte[] readSpiData(int);
++    method public abstract String readSpiString(int);
++    method public abstract int readSpiValue(int);
++    method public abstract void registerSignalCallback(int, android.app.spisignal.ILenovoSpiSignalCallback);
++    method public abstract void setPowerMode(int);
++    method public abstract void setSpiData(int, byte[]);
++    method public abstract void setSpiValue(int, int);
++    method public abstract void stopHeartBeat(boolean);
++    method public abstract void unregisterSignalCallback(android.app.spisignal.ILenovoSpiSignalCallback);
++  }
++
++  public class LenovoSpiSignalManager {
++    ctor public LenovoSpiSignalManager(android.content.Context, android.app.spisignal.ILenovoSpiSignal);
++    method public byte[] readSpiData(int);
++    method public String readSpiString(int);
++    method public int readSpiValue(int);
++    method public void registerSignalCallback(int, android.app.spisignal.LenovoSpiSignalCallback);
++    method public void setSpiData(int, byte[]);
++    method public void setSpiValue(int, int);
++    method public void unregisterSignalCallback(android.app.spisignal.LenovoSpiSignalCallback);
++    field public static final int BATTERY_VOLTAGE_FOUR = 4; // 0x4
++    field public static final int BATTERY_VOLTAGE_ONE = 1; // 0x1
++    field public static final int BATTERY_VOLTAGE_THREE = 3; // 0x3
++    field public static final int BATTERY_VOLTAGE_TWO = 2; // 0x2
++    field public static final int BATTERY_VOLTAGE_ZERO = 0; // 0x0
++    field public static final int BLE_WAKEUP_IDLE = 2; // 0x2
++    field public static final int BLE_WAKEUP_OFF = 0; // 0x0
++    field public static final int BLE_WAKEUP_OPERATION = 1; // 0x1
++    field public static final int BLE_WAKEUP_OPERATION_SUSPEND = 3; // 0x3
++    field public static final int BLE_WAKEUP_STR = 4; // 0x4
++    field public static final int CL_15_SIGNAL_FALLING = 0; // 0x0
++    field public static final int CL_15_SIGNAL_RISING = 1; // 0x1
++    field public static final int FUNC_ID_BLE_CMD = 33280; // 0x8200
++    field public static final int FUNC_ID_EVENT_REPORT = 33024; // 0x8100
++    field public static final int FUNC_ID_GET_MCU_BLE_CONNECT_STATUS = 78; // 0x4e
++    field public static final int FUNC_ID_GET_MCU_INFO = 3; // 0x3
++    field public static final int FUNC_ID_GET_MCU_VERSION = 7; // 0x7
++    field public static final int FUNC_ID_HEARTBEAT = 1; // 0x1
++    field public static final int FUNC_ID_MCU_BLE_CONNECT_KEY = 71; // 0x47
++    field public static java.util.Map<java.lang.Integer,java.lang.String> FUNC_ID_NAME_MAP;
++    field public static final int FUNC_ID_OTA = 256; // 0x100
++    field public static final int FUNC_ID_POWER_MODE = 2; // 0x2
++    field public static final int FUNC_ID_SPI_BATTERY = 34048; // 0x8500
++    field public static final int FUNC_ID_SPI_CL15 = 33792; // 0x8400
++    field public static final int FUNC_ID_SPI_LOG = 33536; // 0x8300
++    field public static final int FUNC_ID_UDS_RESET = 4; // 0x4
++    field public static final int POWER_MODE_IDLE = 3; // 0x3
++    field public static final int POWER_MODE_OFF = 0; // 0x0
++    field public static final int POWER_MODE_OPERATION_SCREEN_OFF = 2; // 0x2
++    field public static final int POWER_MODE_OPERATION_SCREEN_ON = 1; // 0x1
++    field public static final int POWER_MODE_OPERATION_SUSPEND = 4; // 0x4
++    field public static final int POWER_MODE_SUSPEND2RAM = 5; // 0x5
++  }
++
++}
+diff --git a/frameworks/base/core/java/android/app/spisignal/ILenovoSpiSignal.aidl b/frameworks/base/core/java/android/app/spisignal/ILenovoSpiSignal.aidl
+new file mode 100644
+index 0000000..08df49f
+--- /dev/null
++++ b/frameworks/base/core/java/android/app/spisignal/ILenovoSpiSignal.aidl
+@@ -0,0 +1,22 @@
++package android.app.spisignal;
++import android.app.spisignal.ILenovoSpiSignalCallback;
++import java.util.List;
++
++
++@RequiresNoPermission
++interface ILenovoSpiSignal{
++
++    byte[] readSpiData(int funcId);
++
++    int readSpiValue(int funcId);
++
++    void setSpiValue(int funcId,int value);
++
++    void setSpiData(int funcId,in byte[] data);
++
++    String readSpiString(int funcId);
++
++    oneway void registerSignalCallback(int funcId, in ILenovoSpiSignalCallback listener);
++
++    oneway void unregisterSignalCallback(in ILenovoSpiSignalCallback listener);
++}
+diff --git a/frameworks/base/core/java/android/app/spisignal/ILenovoSpiSignalCallback.aidl b/frameworks/base/core/java/android/app/spisignal/ILenovoSpiSignalCallback.aidl
+new file mode 100644
+index 0000000..1a1d16f
+--- /dev/null
++++ b/frameworks/base/core/java/android/app/spisignal/ILenovoSpiSignalCallback.aidl
+@@ -0,0 +1,9 @@
++package android.app.spisignal;
++
++@RequiresNoPermission
++interface ILenovoSpiSignalCallback{
++
++    void onSpiDataCallback(int funcId, in byte[] data);
++
++    void onSpiValueCallback(int funcId, int value);
++}
+diff --git a/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalCallback.java b/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalCallback.java
+new file mode 100644
+index 0000000..cf8888d
+--- /dev/null
++++ b/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalCallback.java
+@@ -0,0 +1,14 @@
++package android.app.spisignal;
++
++public abstract class LenovoSpiSignalCallback extends ILenovoSpiSignalCallback.Stub{
++
++    @Override
++    public void onSpiDataCallback(int funcId,byte[] data){
++
++    }
++
++    @Override
++    public void onSpiValueCallback(int funcId,int value){
++
++    }
++}
+diff --git a/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalInternal.java b/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalInternal.java
+new file mode 100644
+index 0000000..820cdd9
+--- /dev/null
++++ b/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalInternal.java
+@@ -0,0 +1,17 @@
++package android.app.spisignal;
++
++import android.app.spisignal.ILenovoSpiSignalCallback;
++public abstract class LenovoSpiSignalInternal {
++    public abstract byte[] readSpiData(int funcId);
++    public abstract int readSpiValue(int funcId);
++    public abstract String readSpiString(int funcId);
++    public abstract void setSpiValue(int funcId,int value);
++    public abstract void setSpiData(int funcId,byte[] data);
++    public abstract void setPowerMode(int mode);
++    public abstract int getPowerMode();
++    public abstract void stopHeartBeat(boolean stop);
++
++    public abstract void registerSignalCallback(int funcId, ILenovoSpiSignalCallback listener);
++
++    public abstract void unregisterSignalCallback(ILenovoSpiSignalCallback listener);
++}
+diff --git a/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalManager.java b/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalManager.java
+new file mode 100644
+index 0000000..5dee77b
+--- /dev/null
++++ b/frameworks/base/core/java/android/app/spisignal/LenovoSpiSignalManager.java
+@@ -0,0 +1,130 @@
++package android.app.spisignal;
++
++import android.annotation.SystemService;
++import android.content.Context;
++import android.util.ArrayMap;
++
++import java.util.Map;
++
++@SystemService(Context.LENOVO_SPI_SIGNAL_SERVICE)
++public class LenovoSpiSignalManager {
++    private Context mContext;
++    private ILenovoSpiSignal mService;
++    //FUNC_ID begin
++    public static final int FUNC_ID_HEARTBEAT = 0x0001;
++    public static final int FUNC_ID_POWER_MODE = 0x0002;
++    public static final int FUNC_ID_GET_MCU_INFO = 0x0003;
++    public static final int FUNC_ID_UDS_RESET = 0x0004;
++    public static final int FUNC_ID_OTA = 0x0100;
++    public static final int FUNC_ID_EVENT_REPORT = 0x8100;
++
++    public static final int FUNC_ID_BLE_CMD = FUNC_ID_EVENT_REPORT + 0x0100;
++    public static final int FUNC_ID_SPI_LOG = FUNC_ID_EVENT_REPORT + 0x0200;
++    public static final int FUNC_ID_SPI_CL15 = FUNC_ID_EVENT_REPORT + 0x0300;
++    public static final int FUNC_ID_SPI_BATTERY = FUNC_ID_EVENT_REPORT + 0x0400;
++    public static final int FUNC_ID_GET_MCU_VERSION = FUNC_ID_GET_MCU_INFO * 2 + 0x0001;
++    public static final int FUNC_ID_GET_MCU_BLE_CONNECT_STATUS = FUNC_ID_GET_MCU_VERSION * 2 + 0x0040;
++    public static final int FUNC_ID_MCU_BLE_CONNECT_KEY = FUNC_ID_GET_MCU_INFO * 2 + 0x0041;
++    //FUNC_ID end
++
++    //POWER_MODE BEGIN
++    public static final int POWER_MODE_OFF = 0;
++    public static final int POWER_MODE_OPERATION_SCREEN_ON = 1;
++    public static final int POWER_MODE_OPERATION_SCREEN_OFF = 2;
++    public static final int POWER_MODE_IDLE = 3;
++    public static final int POWER_MODE_OPERATION_SUSPEND = 4;
++    public static final int POWER_MODE_SUSPEND2RAM = 5;
++    //POWER_MODE END
++
++    //BATTERY_VOLTAGE BEGIN
++    public static final int BATTERY_VOLTAGE_ZERO = 0; //0 ~ 6V
++    public static final int BATTERY_VOLTAGE_ONE = 1; //6 ~ 9V
++    public static final int BATTERY_VOLTAGE_TWO = 2; //9 ~ 16V
++    public static final int BATTERY_VOLTAGE_THREE = 3; //16 ~ 18V
++    public static final int BATTERY_VOLTAGE_FOUR = 4; //18V ~
++    //BATTERY_VOLTAGE END
++
++    //BLE_CMD_BEGIN
++    public static final int BLE_WAKEUP_OFF = 0;
++    public static final int BLE_WAKEUP_OPERATION = 1;
++    public static final int BLE_WAKEUP_IDLE = 2;
++    public static final int BLE_WAKEUP_OPERATION_SUSPEND = 3;
++    public static final int BLE_WAKEUP_STR = 4;
++    //BLE_CMD_END
++
++    //CL_15_SIGNAL BEGIN
++    public static final int CL_15_SIGNAL_RISING = 1;
++    public static final int CL_15_SIGNAL_FALLING = 0;
++    //CL_15_SIGNAL END
++
++    public static Map<Integer,String> FUNC_ID_NAME_MAP = new ArrayMap<>();
++    static {
++        FUNC_ID_NAME_MAP.put(FUNC_ID_SPI_CL15,"FUNC_ID_SPI_CL15");
++        FUNC_ID_NAME_MAP.put(FUNC_ID_SPI_BATTERY,"FUNC_ID_SPI_BATTERY");
++        FUNC_ID_NAME_MAP.put(FUNC_ID_BLE_CMD,"FUNC_ID_BLE_CMD");
++    }
++
++    public LenovoSpiSignalManager(Context context,ILenovoSpiSignal service){
++        mContext = context;
++        mService = service;
++    }
++
++    public byte[] readSpiData(int funcId){
++        try {
++            return mService.readSpiData(funcId);
++        }catch (Exception e){
++
++        }
++        return null;
++    }
++
++    public int readSpiValue(int funcId){
++        try {
++            return mService.readSpiValue(funcId);
++        }catch (Exception e){
++
++        }
++        return -1;
++    }
++
++    public void setSpiValue(int funcId,int value){
++        try {
++            mService.setSpiValue(funcId,value);
++        }catch (Exception e){
++
++        }
++    }
++
++    public void setSpiData(int funcId,byte[] data){
++        try {
++            mService.setSpiData(funcId,data);
++        }catch (Exception e){
++
++        }
++    }
++
++    public String readSpiString(int funcId){
++        try {
++            return mService.readSpiString(funcId);
++        }catch (Exception e){
++
++        }
++        return "";
++    }
++
++    public void registerSignalCallback(int funcId,LenovoSpiSignalCallback callback){
++        try {
++            mService.registerSignalCallback(funcId,callback);
++        }catch (Exception e){
++
++        }
++    }
++
++    public void unregisterSignalCallback(LenovoSpiSignalCallback callback){
++        try {
++            mService.unregisterSignalCallback(callback);
++        }catch (Exception e){
++
++        }
++    }
++}
+diff --git a/frameworks/base/core/res/res/values-zh-rCN/strings.xml b/frameworks/base/core/res/res/values-zh-rCN/strings.xml
+index c2e8a76..7845010 100644
+--- a/frameworks/base/core/res/res/values-zh-rCN/strings.xml
++++ b/frameworks/base/core/res/res/values-zh-rCN/strings.xml
+@@ -33,4 +33,9 @@
+     <string name="open_confirm">"确定"</string>
+     <string name="open_cancel">"取消"</string>
+     <!--end [lilong7][LGSIU-134]-->
++
++    <!-- BEGIN, GEROLFING-336 -->
++    <string name = "battery_voltage_unstable">电压不稳定</string>
++    <string name = "battery_voltage_unstable_tip">由于电压不稳定，系统将在 3 秒后关闭屏幕</string>
++    <!-- END, GEROLFING-336 -->
+ </resources>
+diff --git a/frameworks/base/core/res/res/values/strings.xml b/frameworks/base/core/res/res/values/strings.xml
+index 476f140..5a6af88 100644
+--- a/frameworks/base/core/res/res/values/strings.xml
++++ b/frameworks/base/core/res/res/values/strings.xml
+@@ -72,5 +72,10 @@
+     <string name="open_confirm">"OK"</string>
+     <string name="open_cancel">"Cancel"</string>
+     <!--end [lilong7][LGSIU-134]-->
++
++    <!-- BEGIN, GEROLFING-336 -->
++    <string name = "battery_voltage_unstable">Battery voltage unstable</string>
++    <string name = "battery_voltage_unstable_tip">Dut to unstable voltage,the system will shut down the screen in 3 seconds</string>
++    <!-- END, GEROLFING-336 -->
+  </resources>
+ 
+diff --git a/frameworks/base/core/res/res/values/symbols.xml b/frameworks/base/core/res/res/values/symbols.xml
+index f583c9f..3a83255 100644
+--- a/frameworks/base/core/res/res/values/symbols.xml
++++ b/frameworks/base/core/res/res/values/symbols.xml
+@@ -101,6 +101,11 @@
+   <java-symbol type="integer" name="config_max_battery_protection_level" />
+   <java-symbol type="integer" name="config_min_battery_protection_level" />
+ 
++  <!-- BEGIN, GEROLFING-336 -->
++  <java-symbol type="string"  name = "battery_voltage_unstable"/>
++  <java-symbol type="string"  name = "battery_voltage_unstable_tip"/>
++  <!-- END, GEROLFING-336 -->
++
+   <!-- TabUI string -->
+   <java-symbol type="string" name="battery_protected_title"/>
+   <java-symbol type="string" name="battery_protected_off"/>
+diff --git a/frameworks/base/services/core/Android.bp b/frameworks/base/services/core/Android.bp
+index e93b8a2..f094e28 100644
+--- a/frameworks/base/services/core/Android.bp
++++ b/frameworks/base/services/core/Android.bp
+@@ -154,6 +154,7 @@
+         ":zui_big_data_nebo_src_files",
+         ":moto_desktop_services_src_files",
+         ":zui_double_wakeup_screen_service_core_src_files",
++        ":zui_spi_signal_service_core_src_files",
+     ],
+ }
+ 
+@@ -1389,3 +1390,16 @@
+     ],
+ }
+ //END INCEPU-459
++
++// BEGIN [GEROLFING-336]
++lgsi_filegroup {
++    name: "zui_spi_signal_service_core_src_files",
++    srcs: [
++        "java/com/android/server/spisignal/*.java",
++    ],
++    srcs_type: "lgsi",
++    features: [
++        "SpiSignal",
++    ],
++}
++// END [GEROLFING-336]
+\ No newline at end of file
+diff --git a/frameworks/base/services/core/java/com/android/server/spisignal/LenovoSpiSignalService.java b/frameworks/base/services/core/java/com/android/server/spisignal/LenovoSpiSignalService.java
+new file mode 100644
+index 0000000..3d31ed2
+--- /dev/null
++++ b/frameworks/base/services/core/java/com/android/server/spisignal/LenovoSpiSignalService.java
+@@ -0,0 +1,329 @@
++package com.android.server.spisignal;
++
++import static android.os.IServiceManager.DUMP_FLAG_PRIORITY_CRITICAL;
++import static android.os.IServiceManager.DUMP_FLAG_PRIORITY_DEFAULT;
++
++import android.app.spisignal.ILenovoSpiSignal;
++import android.app.spisignal.ILenovoSpiSignalCallback;
++import android.app.spisignal.LenovoSpiSignalInternal;
++import android.app.spisignal.LenovoSpiSignalManager;
++import android.content.Context;
++import android.os.Handler;
++import android.os.Process;
++import android.util.ArrayMap;
++import android.util.Slog;
++
++import com.android.server.ServiceThread;
++import com.android.server.SystemService;
++import com.android.server.Watchdog;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Map;
++
++
++public class LenovoSpiSignalService extends SystemService
++        implements Watchdog.Monitor{
++    private static final String TAG = LenovoSpiSignalService.class.getSimpleName();
++    private static LenovoSpiSignalService mInstance;
++    private vendor.lenovo.hardware.spisignal.V1_0.ILenovoSpiSignal mSpiHal;
++    private Context mContext;
++    private BinderService mBinderService;
++    private LocalService mLocalService;
++    private ServiceThread mHandlerThread;
++    private Handler mHandler;
++    private Map<Integer,List<ILenovoSpiSignalCallback>> mCallbackMap = new ArrayMap<>();
++    private Map<Integer,String> mFuncIdMap = new ArrayMap<>();
++    private PowerStateMachine mState;
++    private vendor.lenovo.hardware.spisignal.V1_0.ISpiSignalCallback mSpiHalCallback = new vendor.lenovo.hardware.spisignal.V1_0.ISpiSignalCallback.Stub(){
++        @Override
++        public void onSpiDataCallback(int funcId,ArrayList<Byte> data){
++            String funcIdName = LenovoSpiSignalManager.FUNC_ID_NAME_MAP.get(funcId);
++            Slog.d(TAG,"onSpiDataCallback , funcId: " + (funcIdName == null ? funcId : funcIdName) + " data: " + data.toString());
++            invokeCallbackForData(funcId,data);
++        }
++        @Override
++        public void onSpiValueCallback(int funcId,int value){
++            String funcIdName = LenovoSpiSignalManager.FUNC_ID_NAME_MAP.get(funcId);
++            Slog.d(TAG,"onSpiValueCallback , funcId: " + (funcIdName == null ? funcId : funcIdName) + " value: " + value);
++            mState.onSignalCallback(funcId,value);
++            invokeCallbackForValue(funcId,value);
++        }
++    };
++
++    private void invokeCallbackForValue(int funcId, int value) {
++        List<ILenovoSpiSignalCallback> callbackList = mCallbackMap.get(funcId);
++        if (callbackList == null) return;
++        for (ILenovoSpiSignalCallback callback : callbackList){
++            try {
++                callback.onSpiValueCallback(funcId,value);
++            }catch (Exception e){
++                Slog.e(TAG,e.getMessage());
++            }
++        }
++    }
++
++    private void invokeCallbackForData(int funcId,ArrayList<Byte> data) {
++        if (data == null || data.size() == 0) return;
++        byte[] byteData = new byte[data.size()];
++        for (int i = 0; i < data.size(); i++){
++            byteData[i] = data.get(i);
++        }
++        List<ILenovoSpiSignalCallback> callbackList = mCallbackMap.get(funcId);
++        if (callbackList == null) return;
++        for (ILenovoSpiSignalCallback callback : callbackList){
++            try {
++                callback.onSpiDataCallback(funcId,byteData);
++            }catch (Exception e){
++                Slog.e(TAG,e.getMessage());
++            }
++        }
++    }
++
++    public LenovoSpiSignalService(Context context){
++        super(context);
++        Slog.d(TAG,"service start...");
++        mContext = context;
++        initData();
++    }
++
++    @Override
++    public void onBootPhase(int phase) {
++        if (phase == PHASE_SYSTEM_SERVICES_READY) {
++            mState.ServicesReady();
++        }
++    }
++
++    @Override
++    public void onStart() {
++        publishBinderService(Context.LENOVO_SPI_SIGNAL_SERVICE, mBinderService, /* allowIsolated= */ false,
++                DUMP_FLAG_PRIORITY_DEFAULT | DUMP_FLAG_PRIORITY_CRITICAL);
++        publishLocalService(LenovoSpiSignalInternal.class, mLocalService);
++        Watchdog.getInstance().addMonitor(this);
++        Watchdog.getInstance().addThread(mHandler);
++        getSpiHal();
++    }
++
++    private vendor.lenovo.hardware.spisignal.V1_0.ILenovoSpiSignal getSpiHal() {
++        if (mSpiHal == null) {
++            try {
++                mSpiHal = vendor.lenovo.hardware.spisignal.V1_0.ILenovoSpiSignal.castFrom(vendor.lenovo.hardware.spisignal.V1_0.ILenovoSpiSignal.getService(true));
++                mSpiHal.registerCallback(LenovoSpiSignalManager.FUNC_ID_SPI_CL15,mSpiHalCallback); //listen CL_15 signal
++                mSpiHal.registerCallback(LenovoSpiSignalManager.FUNC_ID_SPI_BATTERY,mSpiHalCallback); //listen battery status
++                mSpiHal.registerCallback(LenovoSpiSignalManager.FUNC_ID_BLE_CMD,mSpiHalCallback); //listen BLE cmd
++            } catch (Exception e) {
++                Slog.e(TAG,e.getMessage());
++                e.printStackTrace();
++            }
++        }
++       return mSpiHal;
++    }
++
++    private void initData() {
++        try {
++            mBinderService = new BinderService();
++            mLocalService = new LocalService();
++            mHandlerThread = new ServiceThread(TAG,
++                    Process.THREAD_PRIORITY_DISPLAY, /* allowIo= */ false);
++            mHandlerThread.start();
++            mHandler = new Handler(mHandlerThread.getLooper());
++            mState = new PowerStateMachine(mContext,this,mHandlerThread.getLooper());
++        }catch (Exception e){
++            Slog.e(TAG,e.getMessage());
++        }
++    }
++
++    public byte[] readSpiDataInternal(int funcId){
++        Slog.d(TAG,"---->readSpiData, funcId: " + funcId);
++        try {
++            if (mSpiHal != null) {
++                ArrayList<Byte> halData = getSpiHal().readSpiData(funcId);
++                if (halData == null || halData.size() == 0) return null;
++                Slog.d(TAG,"readSpiData: " + halData.toString());
++                byte[] data = new byte[halData.size()];
++                for (int i = 0; i < halData.size(); i++){
++                    data[i] = halData.get(i);
++                }
++                return data;
++            }
++        }catch (Exception e){
++            Slog.e(TAG,e.getMessage());
++        }
++        return null;
++    }
++
++
++    public int readSpiValueInternal(int funcId){
++        Slog.d(TAG,"---->readSpiValue,funcId: " + funcId);
++        try {
++            return getSpiHal().readSpiValue(funcId);
++        }catch (Exception e){
++            Slog.e(TAG,e.getMessage());
++        }
++        return -1;
++    }
++
++    public String readSpiStringInternal(int funcId){
++        Slog.d(TAG,"---->readSpiString,funcId: " + funcId);
++        try {
++            return getSpiHal().readSpiString(funcId);
++        }catch (Exception e){
++            Slog.e(TAG,e.getMessage());
++        }
++        return "";
++    }
++
++    public void setSpiValueInternal(int funcId,int value){
++        Slog.d(TAG,"---->setSpiValue, funcId: " + funcId + "  value: " + value);
++        try {
++            getSpiHal().setSpiValue(funcId,value);
++        }catch (Exception e){
++            Slog.e(TAG,e.getMessage());
++        }
++    }
++
++
++    public void setSpiDataInternal(int funcId,byte[] data){
++        if (data == null) return;
++        Slog.d(TAG,"---->setSpiValue,funcId: " + funcId + "  data: " + data.toString());
++
++        ArrayList<Byte> dataList = new ArrayList<>();
++        for (byte b : data){
++            dataList.add(b);
++        }
++        try {
++            getSpiHal().setSpiData(funcId,dataList);
++        }catch (Exception e){
++            Slog.e(TAG,e.getMessage());
++        }
++    }
++
++
++    public void registerSignalCallbackInternal(int funcId, ILenovoSpiSignalCallback callback){
++        Slog.d(TAG,"registerSignalCallback, funcId: " + funcId);
++        List<ILenovoSpiSignalCallback> callbackList = mCallbackMap.get(funcId);
++        if (callbackList == null){
++            callbackList = new ArrayList<ILenovoSpiSignalCallback>();
++            callbackList.add(callback);
++            mCallbackMap.put(funcId,callbackList);
++            try {
++                getSpiHal().registerCallback(funcId,mSpiHalCallback);
++            }catch (Exception e){
++                Slog.e(TAG,e.getMessage());
++            }
++        }else {
++            callbackList.add(callback);
++        }
++
++    }
++
++
++    public void unregisterSignalCallbackInternal(ILenovoSpiSignalCallback callback){
++        Slog.d(TAG,"unregisterSignalCallback");
++        for (List<ILenovoSpiSignalCallback> callbackList : mCallbackMap.values()){
++            if (callbackList.contains(callback)) callbackList.remove(callback);
++        }
++    }
++
++    public void setPowerModeInternal(int mode){
++        Slog.d(TAG,"setPowerModeInternal,mode: " + mode);
++        mState.setCurrentState(mode);
++    }
++
++    @Override
++    public void monitor() {
++
++    }
++
++    final class BinderService extends ILenovoSpiSignal.Stub{
++
++        @Override
++        public byte[] readSpiData(int funcId){
++            return readSpiDataInternal(funcId);
++        }
++
++        @Override
++        public int readSpiValue(int funcId){
++            return readSpiValueInternal(funcId);
++        }
++
++        @Override
++        public String readSpiString(int funcId){
++            return readSpiStringInternal(funcId);
++        }
++
++        @Override
++        public void setSpiValue(int funcId,int value){
++            setSpiValueInternal(funcId,value);
++        }
++
++        @Override
++        public void setSpiData(int funcId, byte[] data){
++            setSpiDataInternal(funcId,data);
++        }
++
++        @Override
++        public void registerSignalCallback(int funcId, ILenovoSpiSignalCallback listener){
++            registerSignalCallbackInternal(funcId,listener);
++        }
++
++        @Override
++        public void unregisterSignalCallback(ILenovoSpiSignalCallback listener){
++            unregisterSignalCallbackInternal(listener);
++        }
++
++    }
++
++    final class LocalService extends LenovoSpiSignalInternal{
++
++        @Override
++        public byte[] readSpiData(int funcId) {
++            return readSpiDataInternal(funcId);
++        }
++
++        @Override
++        public int readSpiValue(int funcId) {
++            return readSpiValueInternal(funcId);
++        }
++
++        @Override
++        public String readSpiString(int funcId) {
++            return readSpiStringInternal(funcId);
++        }
++
++        @Override
++        public void setSpiValue(int funcId, int value) {
++            setSpiValueInternal(funcId,value);
++        }
++
++        @Override
++        public void setSpiData(int funcId, byte[] data) {
++            setSpiDataInternal(funcId,data);
++        }
++
++        @Override
++        public void setPowerMode(int mode) {
++            setPowerModeInternal(mode);
++        }
++
++        @Override
++        public int getPowerMode() {
++            return mState.getCurrentState();
++        }
++
++        @Override
++        public void stopHeartBeat(boolean stop) {
++            mState.stopHeartBeat(stop);
++        }
++
++        @Override
++        public void registerSignalCallback(int funcId, ILenovoSpiSignalCallback listener) {
++            registerSignalCallbackInternal(funcId,listener);
++        }
++
++        @Override
++        public void unregisterSignalCallback(ILenovoSpiSignalCallback listener) {
++            unregisterSignalCallbackInternal(listener);
++        }
++    }
++}
+diff --git a/frameworks/base/services/core/java/com/android/server/spisignal/PowerStateMachine.java b/frameworks/base/services/core/java/com/android/server/spisignal/PowerStateMachine.java
+new file mode 100644
+index 0000000..41e810a
+--- /dev/null
++++ b/frameworks/base/services/core/java/com/android/server/spisignal/PowerStateMachine.java
+@@ -0,0 +1,484 @@
++package com.android.server.spisignal;
++import android.app.AlertDialog;
++import android.app.spisignal.LenovoSpiSignalManager;
++import android.content.Context;
++import android.content.DialogInterface;
++import android.hardware.SensorPrivacyManager;
++import android.media.AudioManager;
++import android.os.DeviceIdleManager;
++import android.os.Handler;
++import android.os.Looper;
++import android.os.Message;
++import android.os.PowerManager;
++import android.os.Process;
++import android.os.SystemClock;
++import android.os.SystemProperties;
++import android.os.UpdateEngine;
++import android.os.UpdateEngineCallback;
++import android.util.Slog;
++import android.view.WindowManager;
++
++import com.android.server.ServiceThread;
++import com.android.server.power.PowerManagerService;
++
++public class PowerStateMachine {
++    public static final String TAG = PowerStateMachine.class.getSimpleName();
++    private static final String DEBUG_HEART_BEAT_PROPERTY = "lenovo.spi.heart.beat";
++
++    public static final int STATE_OFF = 0;
++    public static final int STATE_OPERATION_DISPLAY_ON = 1;
++    public static final int STATE_OPERATION_DISPLAY_OFF = 2;
++    public static final int STATE_IDLE = 3;
++    public static final int STATE_OPERATION_SUSPEND = 4;
++    public static final int STATE_SUSPEND2RAM = 5;
++
++    private static final int MSG_POWER_MODE = 0;
++    private static final int MSG_HEART_BEAT = 1;
++    private static final int MSG_INIT_SERVICE = 2;
++    private static final int MSG_INIT_HEART_BEAT = 3;
++
++    private static final int MSG_CONFIRM_DIALOG = 5;
++    private static final int MSG_BATTERY_DIALOG = 6;
++    private static final int MSG_SHUT_DOWN_DIALOG_TIME_COUNT = 7;
++    private static final int MSG_BATTERY_DIALOG_TIME_COUNT = 8;
++    private static final int DIALOG_COUNT_SHUT_DOWN_TIME = 15;
++    private static final int DIALOG_COUNT_BATTERY_TIP_TIME = 3;
++
++    private static final int HEART_BEAT_PROPERTY_DEFAULT_VALUE = 0;
++
++    private static final long IDLE_TIME_OUT = 30 * 1000L;
++    private static final long HEAT_BEAT_INTERNAL = 30 * 1000L;
++    private static final long MCU_HEART_BEAT_TIMEOUT = HEAT_BEAT_INTERNAL * 2 + 10 * 1000L;
++
++    private static final long USER_SHUT_DOWN_DELAY = 10 * 60 * 1000L;
++    private int mCurrentState = STATE_OFF;
++    private int mPreState = STATE_OFF;
++    private int mShutDownDialogShowTime = 15;
++    private int mBatteryDialogShowTime = 3;
++    private int mUpdateStatus = UpdateEngine.UpdateStatusConstants.IDLE;
++    private int mUpdateBarrier = -1;
++    private LenovoSpiSignalService mSpiService;
++    private Context mContext;
++    private DeviceIdleManager mDeviceIdleManager;
++    private PowerManager mPowerManager;
++    private AudioManager mAudioManager;
++    private SensorPrivacyManager mSensorPrivacyManager;
++    private AlertDialog mShutDownDialog;
++    private AlertDialog mBatteryTipDialog;
++    private ServiceThread mHeartBeatThread;
++    private Handler mHeartBeatHandler;
++    private boolean mAllSensorsDisabled = false;
++
++    private Handler mHandler;
++    private AudioManager.OnAudioFocusChangeListener mAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
++        @Override
++        public void onAudioFocusChange(int i) {
++
++        }
++    };
++    private UpdateEngineCallback mUpdateCallback = new UpdateEngineCallback() {
++        @Override
++        public void onStatusUpdate(int status, float percent) {
++            Slog.d(TAG,"onUpdateStatus: " + status);
++            mUpdateStatus = status;
++            if (mUpdateBarrier != -1 && (mUpdateStatus == UpdateEngine.UpdateStatusConstants.IDLE
++                    || (mUpdateStatus == UpdateEngine.UpdateStatusConstants.DOWNLOADING && percent == 1.0f))){
++                Slog.d(TAG,"update process 100% , remove barrier , power status work again");
++                mHandler.getLooper().getQueue().removeSyncBarrier(mUpdateBarrier);
++                mUpdateBarrier = -1;
++            }
++        }
++
++        @Override
++        public void onPayloadApplicationComplete(int errorCode) {
++            if (mUpdateBarrier != -1 && errorCode == UpdateEngine.ErrorCodeConstants.SUCCESS){
++                Slog.d(TAG,"update complete , remove barrier , power status work again");
++                mHandler.getLooper().getQueue().removeSyncBarrier(mUpdateBarrier);
++                mUpdateBarrier = -1;
++            }
++        }
++    };
++
++    private void doHeatBeat() {
++        Slog.d(TAG,"doHeatBeat");
++        if(SystemProperties.getInt(DEBUG_HEART_BEAT_PROPERTY,0) == HEART_BEAT_PROPERTY_DEFAULT_VALUE){
++            mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_HEARTBEAT,(int)MCU_HEART_BEAT_TIMEOUT);
++            Slog.d(TAG,"send HeartBeat packet");
++        }
++        mHeartBeatHandler.sendEmptyMessageDelayed(MSG_HEART_BEAT,HEAT_BEAT_INTERNAL);
++    }
++
++    private void initServices() {
++        Slog.d(TAG,"initServices");
++        mDeviceIdleManager = mContext.getSystemService(DeviceIdleManager.class);
++        mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
++        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
++        mSensorPrivacyManager = (SensorPrivacyManager) mContext.getSystemService(Context.SENSOR_PRIVACY_SERVICE);
++        UpdateEngine updateEngine = new UpdateEngine();
++        updateEngine.bind(mUpdateCallback);
++    }
++
++    private void handlePowerMode(int mode) {
++        Slog.d(TAG,"handlePowerMode , mPreState: " + mCurrentState + "  mCurrentState: " + mode);
++        if (mCurrentState == mode ||
++                ((mCurrentState == STATE_SUSPEND2RAM || mCurrentState == STATE_OPERATION_SUSPEND) && mode == STATE_OPERATION_DISPLAY_OFF)) {
++            Slog.d(TAG,"state no change or ignore long press power into STR along with OPERATION_DISPLAY_OFF");
++            return;
++        }
++        mPreState = mCurrentState;
++        mCurrentState = mode;
++        switch (mode){
++            case STATE_OPERATION_DISPLAY_ON:
++                enterOperationDisplayOn();
++                break;
++            case STATE_OPERATION_DISPLAY_OFF:
++                enterOperationDisplayOff();
++                break;
++            case STATE_OPERATION_SUSPEND:
++                enterOperationSuspend();
++                break;
++            case STATE_IDLE:
++                enterIdle();
++                break;
++            case STATE_SUSPEND2RAM:
++                enterSuspend2Ram();
++                break;
++            case STATE_OFF:
++                enterOff();
++                break;
++        }
++    }
++
++    private void enterOperationDisplayOff() {
++        Slog.d(TAG,"enterOperationDisplayOff");
++        mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_POWER_MODE,LenovoSpiSignalManager.POWER_MODE_OPERATION_SCREEN_OFF - 1);
++    }
++
++    private void enterOperationDisplayOn() {
++        Slog.d(TAG,"enterOperationDisplayOn");
++        mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_POWER_MODE,LenovoSpiSignalManager.POWER_MODE_OPERATION_SCREEN_ON);
++        mHandler.removeMessages(MSG_HEART_BEAT);
++        mHandler.sendEmptyMessage(MSG_HEART_BEAT);
++        mHandler.removeMessages(MSG_POWER_MODE); //for Power key shor press transfer from IDLE to Operation,remove delay SUSPEND msg
++        if (mAllSensorsDisabled) {
++            Slog.d(TAG,"reopen all sensors");
++            mSensorPrivacyManager.setAllSensorPrivacy(false);//reopen all sensors
++            mAllSensorsDisabled = false;
++        }
++        if (mAudioManager != null) mAudioManager.abandonAudioFocus(mAudioFocusChangeListener);
++    }
++
++    private void enterIdle() {
++        Slog.d(TAG,"enterIdle...");
++        mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_POWER_MODE,LenovoSpiSignalManager.POWER_MODE_IDLE - 1);
++        //GEROLFING-503 Fixed not being able to enter the OPERATION_SUSPEND state on time
++        mHandler.sendMessageDelayed(getPowerModeMsg(STATE_OPERATION_SUSPEND), IDLE_TIME_OUT);
++        mSensorPrivacyManager.setAllSensorPrivacy(true);//disable all sensors
++        mAllSensorsDisabled  = true;
++    }
++
++
++    private void enterOff() {
++        Slog.d(TAG,"enter OFF");
++        mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_POWER_MODE,LenovoSpiSignalManager.POWER_MODE_OFF);
++        PowerManagerService.lowLevelShutdown("CL_15");
++    }
++
++    private void enterSuspend2Ram() {
++        Slog.d(TAG,"enter SUSPEND2RAM");
++        mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_POWER_MODE,LenovoSpiSignalManager.POWER_MODE_SUSPEND2RAM - 1);
++        if (mPowerManager != null){
++            boolean success = mPowerManager.forceSuspend();
++            if (success) Slog.d(TAG,"success into STR");
++        }
++    }
++
++    private void enterOperationSuspend() {
++        Slog.d(TAG,"enterOperationSuspend");
++        mSpiService.setSpiValueInternal(LenovoSpiSignalManager.FUNC_ID_POWER_MODE,LenovoSpiSignalManager.POWER_MODE_OPERATION_SUSPEND - 1);
++        checkForUpdate();
++        //if (mPreState == STATE_OPERATION_DISPLAY_ON) mHandler.sendMessage(getPowerModeMsg(STATE_OFF));
++        //if (mPreState == STATE_IDLE) mHandler.sendMessage(getPowerModeMsg(STATE_SUSPEND2RAM));
++        if (mPreState == STATE_IDLE){
++            Slog.d(TAG,"pre state idle ,go STR");
++            mHandler.sendMessage(getPowerModeMsg(STATE_SUSPEND2RAM));
++        }else if(mPreState == STATE_OPERATION_DISPLAY_ON || mPreState == STATE_OPERATION_DISPLAY_OFF){
++            Slog.d(TAG,"pre state operation, mute media and off screen");
++            mSensorPrivacyManager.setAllSensorPrivacy(true);//disable all sensors
++            mAllSensorsDisabled  = true;
++            if (mAudioManager != null) mAudioManager.requestAudioFocus(mAudioFocusChangeListener,AudioManager.STREAM_VOICE_CALL,AudioManager.AUDIOFOCUS_GAIN);
++            if (mPowerManager != null) mPowerManager.goToSleep(SystemClock.uptimeMillis(),PowerManager.GO_TO_SLEEP_REASON_FORCE_SUSPEND,PowerManager.GO_TO_SLEEP_FLAG_NO_DOZE);
++        }
++    }
++
++    private void checkForUpdate() {
++        Slog.d(TAG,"checkForUpdate, mUpdateStatus : " + mUpdateStatus);
++        if (mUpdateStatus == UpdateEngine.UpdateStatusConstants.IDLE || mUpdateStatus == UpdateEngine.UpdateStatusConstants.DISABLED){
++            Slog.d(TAG,"update idle or disable , go to next power status");
++        }else{
++            Slog.d(TAG,"updating , block in Suspend");
++            mUpdateBarrier = mHandler.getLooper().myQueue().postSyncBarrier();
++        }
++    }
++
++    public PowerStateMachine(Context context,LenovoSpiSignalService service,Looper looper) {
++        Slog.d(TAG,"PowerStateMachine construct");
++        mContext = context;
++        mSpiService = service;
++        mHandler = new PowerModeHandler(looper);
++        mHeartBeatThread = new ServiceThread("Heart_Beat", Process.THREAD_PRIORITY_BACKGROUND,false);
++        mHeartBeatThread.start();
++        mHeartBeatHandler = new HeartBeatHandler(mHeartBeatThread.getLooper());
++        mHeartBeatHandler.sendEmptyMessage(MSG_HEART_BEAT);
++    }
++
++    public void stopHeartBeat(boolean stop){
++        Slog.d(TAG,"stopHeartBeat: " + stop);
++        mHeartBeatHandler.removeMessages(MSG_HEART_BEAT);
++        if (!stop) mHeartBeatHandler.sendEmptyMessage(MSG_HEART_BEAT);
++    }
++    public int getCurrentState() {
++        return mCurrentState;
++    }
++
++    public void setCurrentState(int state) {
++        mHandler.sendMessage(getPowerModeMsg(state));
++    }
++
++    private Message getPowerModeMsg(int state){
++        Message msg = mHandler.obtainMessage();
++        msg.what = MSG_POWER_MODE;
++        msg.arg1 = state;
++        return msg;
++    }
++
++    public void onSignalCallback(int funcId,int value){
++        switch (funcId){
++            case LenovoSpiSignalManager.FUNC_ID_SPI_CL15:
++                handleCl15Signal(value);
++                break;
++            case LenovoSpiSignalManager.FUNC_ID_SPI_BATTERY:
++                handleBatterySignal(value);
++                break;
++            case LenovoSpiSignalManager.FUNC_ID_BLE_CMD:
++                handleBleCmd(value);
++                break;
++        }
++
++    }
++
++    private void handleBleCmd(int value) {
++        Slog.d(TAG,"handleBleCmd : funcId : FUNC_ID_BLE_CMD , " + value);
++        if (getCurrentState() == LenovoSpiSignalManager.POWER_MODE_OPERATION_SCREEN_OFF && value == LenovoSpiSignalManager.BLE_WAKEUP_OPERATION ){
++            Slog.d(TAG,"wake from OPERATION_SCREEN_OFF");
++            //mPowerManager.wakeUp(SystemClock.uptimeMillis());//no requirement
++        }else if (getCurrentState() == LenovoSpiSignalManager.POWER_MODE_IDLE && value == LenovoSpiSignalManager.BLE_WAKEUP_IDLE){
++            Slog.d(TAG,"wake from IDLE");
++            mPowerManager.wakeUp(SystemClock.uptimeMillis());
++        } else if (getCurrentState() == LenovoSpiSignalManager.POWER_MODE_OPERATION_SUSPEND && value == LenovoSpiSignalManager.BLE_WAKEUP_OPERATION_SUSPEND) {
++            Slog.d(TAG,"wake from OPERATION_SUSPEND");
++            mPowerManager.wakeUp(SystemClock.uptimeMillis());
++        }
++    }
++
++    private void handleBatterySignal(int value) {
++        Slog.d(TAG,"handleBatterySignal, funcId : FUNC_ID_SPI_BATTERY , " + " value: " + value);
++        if (value == LenovoSpiSignalManager.BATTERY_VOLTAGE_THREE){
++            if (mPowerManager != null && mPowerManager.isInteractive()) mHandler.sendEmptyMessage(MSG_BATTERY_DIALOG);
++        }
++    }
++
++    private void showBatteryTipDialog() {
++        Slog.d(TAG,"showBatteryTipDialog");
++        if (mBatteryTipDialog == null){
++            mBatteryTipDialog = new AlertDialog.Builder(mSpiService.getUiContext())
++                    .setTitle(com.android.internal.R.string.battery_voltage_unstable)
++                    .setMessage(com.android.internal.R.string.battery_voltage_unstable_tip)
++                    .create();
++            mBatteryTipDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
++            mBatteryTipDialog.setCanceledOnTouchOutside(false);
++        }
++        if (mBatteryTipDialog != null && !mBatteryTipDialog.isShowing()){
++            mBatteryDialogShowTime = DIALOG_COUNT_BATTERY_TIP_TIME;
++            mBatteryTipDialog.show();
++            mHandler.sendEmptyMessage(MSG_BATTERY_DIALOG_TIME_COUNT);
++        }
++    }
++
++    private void handleCl15Signal(int value) {
++        Slog.d(TAG,"handleCl15Signal, funcId: FUNC_ID_SPI_CL15 , " + " value: " + value);
++        if (value == LenovoSpiSignalManager.CL_15_SIGNAL_RISING){
++            if (mDeviceIdleManager != null && (getCurrentState() == STATE_IDLE || getCurrentState() == STATE_OPERATION_SUSPEND)) {
++                mDeviceIdleManager.endIdle("CL_15");
++                if (mPowerManager != null && !mPowerManager.isInteractive()){
++                    Slog.d(TAG,"wake up device");
++                    /*PowerManager.WakeLock wakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, TAG);
++                    wakeLock.acquire(5000L);//auto release timeout 3s*/
++                    mPowerManager.wakeUp(SystemClock.uptimeMillis());
++                }
++            }
++            if (getCurrentState() == STATE_OPERATION_DISPLAY_ON || getCurrentState() == STATE_OPERATION_DISPLAY_OFF){
++                if (mShutDownDialog != null && mShutDownDialog.isShowing()){
++                    Slog.d(TAG,"CL_15 rising , dismiss dialog ,remove shutdown dialog time count");
++                    mShutDownDialog.dismiss();
++                    mShutDownDialog = null;
++                    mHandler.removeMessages(MSG_SHUT_DOWN_DIALOG_TIME_COUNT);
++                }
++                mHandler.removeMessages(MSG_POWER_MODE);//remove user delay shutdown msg in shutdown dialog click cancel
++            }
++        }else if (value == LenovoSpiSignalManager.CL_15_SIGNAL_FALLING){
++            goOperationSuspend();
++        }
++    }
++
++    private void goOperationSuspend() {
++        Slog.d(TAG,"goOffOrOperationSuspend,current state: " + getCurrentState());
++        if (getCurrentState() == STATE_OPERATION_DISPLAY_ON || getCurrentState() == STATE_OPERATION_DISPLAY_OFF){
++            mHandler.sendEmptyMessage(MSG_CONFIRM_DIALOG);
++        }else if(getCurrentState() == STATE_IDLE){
++            mHandler.sendMessage(getPowerModeMsg(STATE_OPERATION_SUSPEND));
++        }
++    }
++
++    public void ServicesReady(){
++        Slog.d(TAG,"services ready");
++        mHandler.sendEmptyMessage(MSG_INIT_SERVICE);
++    }
++
++    class PowerModeHandler extends Handler{
++        public PowerModeHandler(Looper looper) {
++            super(looper);
++        }
++
++        @Override
++        public void handleMessage(Message msg) {
++            super.handleMessage(msg);
++            switch (msg.what){
++                case MSG_POWER_MODE:
++                    handlePowerMode(msg.arg1);
++                    break;
++                case MSG_INIT_SERVICE:
++                    initServices();
++                    break;
++                case MSG_CONFIRM_DIALOG:
++                    if (mPowerManager != null && mPowerManager.isInteractive()){
++                        Slog.d(TAG,"screen on , suspend confirm");
++                        goOperationSuspendConfirm();
++                    }else{
++                        Slog.d(TAG,"screen off , suspend no confirm");
++                        mHandler.sendMessage(getPowerModeMsg(STATE_OPERATION_SUSPEND));
++                        mHandler.sendMessage(getPowerModeMsg(STATE_SUSPEND2RAM));
++                    }
++                    break;
++                case MSG_BATTERY_DIALOG:
++                    showBatteryTipDialog();
++                    break;
++                case MSG_SHUT_DOWN_DIALOG_TIME_COUNT:
++                    doShutDownDialogTimeCount();
++                    break;
++                case MSG_BATTERY_DIALOG_TIME_COUNT:
++                    doBatteryDialogTimeCount();
++                    break;
++            }
++        }
++
++    }
++
++    class HeartBeatHandler extends Handler{
++        public HeartBeatHandler(Looper looper) {
++            super(looper);
++        }
++
++        @Override
++        public void handleMessage(Message msg) {
++            super.handleMessage(msg);
++            switch (msg.what){
++                case MSG_HEART_BEAT:
++                    doHeatBeat();
++                    break;
++            }
++        }
++    }
++
++    private void doBatteryDialogTimeCount() {
++        Slog.d(TAG,"doBatteryDialogTimeCount");
++        if (mBatteryTipDialog != null){
++            mBatteryTipDialog.setMessage(mSpiService.getUiContext().getResources().getString(com.android.internal.R.string.battery_voltage_unstable_tip)
++                    + " ( " + mBatteryDialogShowTime + " )");
++        }
++        mBatteryDialogShowTime--;
++        if (mBatteryDialogShowTime > 0) {
++            mHandler.sendEmptyMessageDelayed(MSG_BATTERY_DIALOG_TIME_COUNT,1000);
++        }else{
++            if (mBatteryTipDialog != null) {
++                mBatteryTipDialog.dismiss();
++                mBatteryTipDialog = null;
++            }
++            mPowerManager.goToSleep(SystemClock.uptimeMillis(),PowerManager.GO_TO_SLEEP_REASON_FORCE_SUSPEND,PowerManager.GO_TO_SLEEP_FLAG_NO_DOZE);
++        }
++
++    }
++
++
++    private void doShutDownDialogTimeCount() {
++        Slog.d(TAG,"doShutDownDialogTimeCount");
++        mShutDownDialogShowTime--;
++        if (mShutDownDialog != null) {
++            mShutDownDialog.setMessage(mSpiService.getUiContext().getResources().getString(com.android.internal.R.string.shutdown_confirm)
++                    + " ( " + mShutDownDialogShowTime + " )");
++        }
++        if (mShutDownDialogShowTime > 0) {
++            mHandler.sendEmptyMessageDelayed(MSG_SHUT_DOWN_DIALOG_TIME_COUNT,1000);
++        }else{
++            if (mShutDownDialog != null) {
++                mShutDownDialog.dismiss();
++                mShutDownDialog = null;
++            }
++            mHandler.sendMessageDelayed(getPowerModeMsg(STATE_OPERATION_SUSPEND),500);
++            mHandler.sendMessageDelayed(getPowerModeMsg(STATE_SUSPEND2RAM),500);
++        }
++    }
++
++
++    private void goOperationSuspendConfirm() {
++        Slog.d(TAG,"shutDownConfirm");
++        if (mShutDownDialog == null){
++            mShutDownDialog = new AlertDialog.Builder(mSpiService.getUiContext())
++                    .setTitle(com.android.internal.R.string.power_off)
++                    .setMessage(com.android.internal.R.string.shutdown_confirm)
++                    .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
++                        public void onClick(DialogInterface dialog, int which) {
++                            mHandler.removeMessages(MSG_SHUT_DOWN_DIALOG_TIME_COUNT);
++                            mShutDownDialog.dismiss();
++                            mShutDownDialog = null;
++                            //ShutdownThread.shutdown(mSpiService.getUiContext(),"CL_15",false);
++                            mHandler.sendMessage(getPowerModeMsg(STATE_OPERATION_SUSPEND));
++                            mHandler.sendMessage(getPowerModeMsg(STATE_SUSPEND2RAM));
++                        }
++                    })
++                    .setNegativeButton(com.android.internal.R.string.no, new DialogInterface.OnClickListener() {
++                        @Override
++                        public void onClick(DialogInterface dialogInterface, int i) {
++                            mHandler.removeMessages(MSG_SHUT_DOWN_DIALOG_TIME_COUNT);
++                            mShutDownDialog.dismiss();
++                            mShutDownDialog = null;
++                            mHandler.removeMessages(MSG_POWER_MODE);
++                            mHandler.sendMessageDelayed(getPowerModeMsg(STATE_OPERATION_SUSPEND),USER_SHUT_DOWN_DELAY);
++                            mHandler.sendMessageDelayed(getPowerModeMsg(STATE_SUSPEND2RAM),USER_SHUT_DOWN_DELAY);
++                        }
++                    })
++                    .create();
++            mShutDownDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
++            mShutDownDialog.setCanceledOnTouchOutside(false);
++        }
++        if (mShutDownDialog != null && !mShutDownDialog.isShowing()) {
++            mShutDownDialog.show();
++            mShutDownDialogShowTime = DIALOG_COUNT_SHUT_DOWN_TIME;
++            mHandler.sendEmptyMessage(MSG_SHUT_DOWN_DIALOG_TIME_COUNT);
++        }
++    }
++
++}
++
++
++
+diff --git a/frameworks/base/services/java/com/lenovo/lgsi/server/LgsiSystemServer.java b/frameworks/base/services/java/com/lenovo/lgsi/server/LgsiSystemServer.java
+index 07b70f9..30be1fe 100644
+--- a/frameworks/base/services/java/com/lenovo/lgsi/server/LgsiSystemServer.java
++++ b/frameworks/base/services/java/com/lenovo/lgsi/server/LgsiSystemServer.java
+@@ -10,6 +10,7 @@
+ 
+ import com.android.server.SystemServiceManager;
+ import com.android.server.pm.PackageManagerService;
++import com.android.server.spisignal.LenovoSpiSignalService;
+ import com.android.server.utils.TimingsTraceAndSlog;
+ 
+ import com.lgsi.utils.LgsiCountryCodeUtils;
+@@ -146,6 +147,12 @@
+         mSystemServiceManager.startService(SampleService.class);
+         t.traceEnd();
+         */
++
++        //modify for [GEROLFING-336] begin
++        t.traceBegin("LenovoSpiSignalService");
++        mSystemServiceManager.startService(LenovoSpiSignalService.class);
++        t.traceEnd();
++        //modify for [GEROLFING-336] end
+     }
+ 
+     private void startServicesBeforeStartAppProcess(@NonNull TimingsTraceAndSlog t) {

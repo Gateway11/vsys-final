@@ -1,0 +1,25 @@
+From 319d8e069d04d38d0099810cbfb991a27c4c2a93 Mon Sep 17 00:00:00 2001
+From: Haoyong Xu <xuhy15@lenovo.com>
+Date: Wed, 07 Aug 2024 15:22:46 +0800
+Subject: [PATCH] [GEROLFING-336]:PowerManagerment migration for lapis [SpiHal-vendor/qcom/opensource] [scope of influence]:SpiHal [Type]:Feature [RootCause]:NA [Solution]:PowerManager migration
+
+Change-Id: Iec47b2a65ef8eff8001eba20dfc08de84289149c
+---
+
+diff --git a/vendor_framework_compatibility_matrix.xml b/vendor_framework_compatibility_matrix.xml
+index daacda0..2df39c9 100644
+--- a/vendor_framework_compatibility_matrix.xml
++++ b/vendor_framework_compatibility_matrix.xml
+@@ -1635,4 +1635,12 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl" optional="true">
++        <name>vendor.lenovo.hardware.spisignal</name>
++        <version>1.0</version>
++        <interface>
++            <name>ILenovoSpiSignal</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+ </compatibility-matrix>
