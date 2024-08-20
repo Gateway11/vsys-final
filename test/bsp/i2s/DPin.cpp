@@ -135,7 +135,7 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
     struct pal_stream_attributes stream_attr;
     struct pal_channel_info ch_info;
     struct pal_device pal_devs[num_pal_devs];
-    pal_device_id_t pal_device_id = PAL_DEVICE_OUT_SPEAKER;
+    pal_device_id_t pal_device_id = PAL_DEVICE_OUT_USB_HEADSET;
     dynamic_media_config_t dynamic_media_config;
     size_t payload_size = 0;
 
@@ -143,8 +143,7 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
 
     if(device_id == AUDIO_DEVICE_OUT_USB_HEADSET)
         pal_device_id = PAL_DEVICE_OUT_USB_HEADSET;
-    else
-    {
+    else {
         AHAL_ERR("Unsupported device_id %d",device_id);
         return -EINVAL;
     }
@@ -154,17 +153,19 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
     ch_info.ch_map[1] = PAL_CHMAP_CHANNEL_FR;
 
     stream_attr.type = PAL_STREAM_LOOPBACK;
-    stream_attr.info.opt_stream_info.loopback_type = PAL_STREAM_LOOPBACK_FM;
+    stream_attr.info.opt_stream_info.loopback_type = PAL_STREAM_LOOPBACK_KARAOKE;
     stream_attr.direction = PAL_AUDIO_INPUT_OUTPUT;
     stream_attr.in_media_config.sample_rate = SAMPLE_RATE;
     stream_attr.in_media_config.bit_width = BIT_WIDTH;
     stream_attr.in_media_config.ch_info = ch_info;
     stream_attr.in_media_config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+    //stream_attr.in_media_config.aud_fmt_id = PAL_AUDIO_FMT_DEFAULT_PCM;
 
     stream_attr.out_media_config.sample_rate = SAMPLE_RATE;
     stream_attr.out_media_config.bit_width = BIT_WIDTH;
     stream_attr.out_media_config.ch_info = ch_info;
     stream_attr.out_media_config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+    //stream_attr.out_media_config.aud_fmt_id = PAL_AUDIO_FMT_DEFAULT_PCM;
 
 
     for(int i = 0; i < 2; ++i){
@@ -199,6 +200,7 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
             pal_devs[i].config.bit_width = BIT_WIDTH;
             pal_devs[i].config.ch_info = ch_info;
             pal_devs[i].config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
+            //pal_devs[i].config.aud_fmt_id = PAL_AUDIO_FMT_DEFAULT_PCM;
         }
     }
 
@@ -291,10 +293,10 @@ void dpin_set_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *pa
         AHAL_DBG("dpin usecase");
         if (val)
         {
-            // AUDIO_DEVICE_OUT_AUX_DIGITAL | AUDIO_DEVICE_OUT_USB_HEADSET
-            if(val & AUDIO_DEVICE_OUT_AUX_DIGITAL && !dpin.running)
-                dpin_start(adev, val & ~AUDIO_DEVICE_OUT_AUX_DIGITAL);
-            else if (!(val & AUDIO_DEVICE_OUT_AUX_DIGITAL) && dpin.running) {
+            // AUDIO_DEVICE_IN_AUX_DIGITAL | AUDIO_DEVICE_OUT_USB_HEADSET
+            if(val & AUDIO_DEVICE_IN_AUX_DIGITAL && !dpin.running)
+                dpin_start(adev, val & ~AUDIO_DEVICE_IN_AUX_DIGITAL);
+            else if (!(val & AUDIO_DEVICE_IN_AUX_DIGITAL) && dpin.running) {
                 dpin_set_volume(0, false);
                 usleep(DPIN_LOOPBACK_DRAIN_TIME_MS*1000);
                 dpin_stop();
@@ -306,10 +308,10 @@ void dpin_set_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *pa
     if (ret >= 0 && dpin.running) {
         val = atoi(value);
        AHAL_DBG("dpin usecase");
-        if (val && (val & AUDIO_DEVICE_OUT_AUX_DIGITAL)){
+        if (val && (val & AUDIO_DEVICE_IN_AUX_DIGITAL)){
             dpin_set_volume(0, false);
             dpin_stop();
-            dpin_start(adev, val & ~AUDIO_DEVICE_OUT_AUX_DIGITAL);
+            dpin_start(adev, val & ~AUDIO_DEVICE_IN_AUX_DIGITAL);
         }
     }
     memset(value, 0, sizeof(value));
