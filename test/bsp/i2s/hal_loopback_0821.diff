@@ -1,15 +1,3 @@
-diff --git a/Android.mk b/Android.mk
-index 2d3a70e1..d7050255 100644
---- a/Android.mk
-+++ b/Android.mk
-@@ -6,6 +6,7 @@ MY_LOCAL_PATH := $(call my-dir)
- include $(MY_LOCAL_PATH)/hal/Android.mk
- include $(MY_LOCAL_PATH)/hal/audio_extn/Android.mk
- include $(MY_LOCAL_PATH)/audio-effects/Android.mk
-+include $(MY_LOCAL_PATH)/test/Android.mk
- 
- endif
- endif
 diff --git a/configs/pineapple/audio-modules.mk b/configs/pineapple/audio-modules.mk
 index ad17cc78..16023ce4 100644
 --- a/configs/pineapple/audio-modules.mk
@@ -22,51 +10,52 @@ index ad17cc78..16023ce4 100644
  AUDIO_MODULES += event.eai
  AUDIO_MODULES += music.eai
  AUDIO_MODULES += speech.eai
-diff --git a/hal/Android.mk b/hal/Android.mk
-index bc5a68da..59fbe7ad 100644
---- a/hal/Android.mk
-+++ b/hal/Android.mk
-@@ -73,6 +73,8 @@ LOCAL_SRC_FILES := \
-     audio_extn/Gain.cpp \
-     audio_extn/AudioExtn.cpp
- 
-+LOCAL_SRC_FILES += ../test/server.cpp
-+
- LOCAL_HEADER_LIBRARIES := \
-     libhardware_headers \
-     qti_audio_kernel_uapi \
 diff --git a/hal/AudioDevice.cpp b/hal/AudioDevice.cpp
-index e4efb4d1..52b920ee 100644
+index e4efb4d1..19fe3269 100644
 --- a/hal/AudioDevice.cpp
 +++ b/hal/AudioDevice.cpp
-@@ -681,6 +681,12 @@ void adev_on_battery_status_changed(bool charging)
-     adevice->SetChargingMode(charging);
- }
- 
-+void ipc_message_notify(const char *kvpairs)
-+{
-+    std::shared_ptr<AudioDevice>adevice = AudioDevice::GetInstance();
-+    adevice->SetParameters(kvpairs);
-+}
-+
- static int adev_set_voice_volume(struct audio_hw_device *dev, float volume) {
-     std::shared_ptr<AudioDevice>adevice = AudioDevice::GetInstance(dev);
-     if (!adevice) {
-@@ -1226,6 +1232,8 @@ int AudioDevice::Init(hw_device_t **device, const hw_module_t *module) {
+@@ -1226,6 +1226,7 @@ int AudioDevice::Init(hw_device_t **device, const hw_module_t *module) {
      AudioExtn::a2dp_source_feature_init(property_get_bool("vendor.audio.feature.a2dp_offload.enable", false));
  
      AudioExtn::audio_extn_fm_init();
 +    AudioExtn::audio_extn_dpin_init();
-+    AudioExtn::audio_extn_ipc_init();
      AudioExtn::audio_extn_kpi_optimize_feature_init(
              property_get_bool("vendor.audio.feature.kpi_optimize.enable", false));
      AudioExtn::battery_listener_feature_init(
-@@ -2523,7 +2531,7 @@ void AudioDevice::FillAndroidDeviceMap() {
- #endif
+@@ -1472,6 +1473,8 @@ bool AudioDevice::getCrsConcurrentState() {
+      return false;
+ }
+ 
++#include <thread>
++static std::once_flag flag;
+ int AudioDevice::SetParameters(const char *kvpairs) {
+     int ret = 0, val = 0;
+     struct str_parms *parms = NULL;
+@@ -1682,6 +1685,19 @@ int AudioDevice::SetParameters(const char *kvpairs) {
+                     AHAL_INFO("plugin card :%d device num=%d already added", usb_card_id_,
+                           param_device_connection.device_config.usb_addr.device_num);
+                     ret = 0;
++
++                    std::call_once(flag, [&]{ std::thread thread([&]{
++                                int32_t timer = 5;
++                                while (timer--) {
++                                    AHAL_DBG("################## timer = %d", timer);
++                                    std::this_thread::sleep_for(std::chrono::seconds(1));
++                                }
++                                struct str_parms *dpin_parms = str_parms_create();
++                                str_parms_add_int(dpin_parms, "handle_dpin", AUDIO_DEVICE_IN_AUX_DIGITAL | AUDIO_DEVICE_OUT_USB_HEADSET);
++                                AudioExtn::audio_extn_set_parameters(adev_, dpin_parms);
++                                //AudioExtn::audio_extn_set_parameters(adevice, dpin_parms);
++                                str_parms_destroy(dpin_parms);
++                            }); thread.detach(); });
+                     goto exit;
+                 }
+ 
+@@ -2524,6 +2540,7 @@ void AudioDevice::FillAndroidDeviceMap() {
      /* go through all in devices and pushback */
  
--    android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_BUILTIN_MIC, PAL_DEVICE_IN_HANDSET_MIC));
-+    android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_BUILTIN_MIC, PAL_DEVICE_IN_AUX_DIGITAL));
+     android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_BUILTIN_MIC, PAL_DEVICE_IN_HANDSET_MIC));
++    //android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_BUILTIN_MIC, PAL_DEVICE_IN_AUX_DIGITAL));
      android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_BACK_MIC, PAL_DEVICE_IN_SPEAKER_MIC));
      //android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_COMMUNICATION, PAL_DEVICE_IN_COMMUNICATION));
      //android_device_map_.insert(std::make_pair(AUDIO_DEVICE_IN_AMBIENT, PAL_DEVICE_IN_AMBIENT);
@@ -118,7 +107,7 @@ index 7b4770e7..187bb0ba 100644
  #            Build BATTERY_LISTENER
  #-------------------------------------------
 diff --git a/hal/audio_extn/AudioExtn.cpp b/hal/audio_extn/AudioExtn.cpp
-index df3b22fc..8395a344 100644
+index df3b22fc..0c3e4a06 100644
 --- a/hal/audio_extn/AudioExtn.cpp
 +++ b/hal/audio_extn/AudioExtn.cpp
 @@ -80,6 +80,7 @@ using android::OK;
@@ -137,7 +126,7 @@ index df3b22fc..8395a344 100644
      audio_feature_stats_set_parameters(adev, params);
  }
  
-@@ -1038,6 +1040,52 @@ void AudioExtn::audio_extn_fm_get_parameters(std::shared_ptr<AudioDevice> adev,
+@@ -1038,6 +1040,45 @@ void AudioExtn::audio_extn_fm_get_parameters(std::shared_ptr<AudioDevice> adev,
          fm_get_params(adev, query, reply);
  }
  
@@ -180,29 +169,14 @@ index df3b22fc..8395a344 100644
 +        dpin_get_params(adev, query, reply);
 +}
 +
-+void AudioExtn::audio_extn_ipc_init(bool enabled)
-+{
-+    std::thread thread([]{ ipc_server_socket(); });
-+    thread.detach();
-+    AHAL_DBG("Exit");
-+}
-+
  //START: KPI_OPTIMIZE =============================================================================
  void AudioExtn::audio_extn_kpi_optimize_feature_init(bool is_feature_enabled)
  {
 diff --git a/hal/audio_extn/inc/AudioExtn.h b/hal/audio_extn/inc/AudioExtn.h
-index fcd23c94..3fb8ff64 100644
+index fcd23c94..6bddc5d7 100644
 --- a/hal/audio_extn/inc/AudioExtn.h
 +++ b/hal/audio_extn/inc/AudioExtn.h
-@@ -43,6 +43,7 @@
- #include "battery_listener.h"
- #define DEFAULT_OUTPUT_SAMPLING_RATE 48000
- #include <mutex>
-+#include <thread>
- 
- typedef void (*batt_listener_init_t)(battery_status_change_fn_t);
- typedef void (*batt_listener_deinit_t)();
-@@ -251,6 +252,14 @@ public:
+@@ -251,6 +251,11 @@ public:
      static void audio_extn_fm_set_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *params);
      static void audio_extn_fm_get_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *query, struct str_parms *reply);
  
@@ -211,26 +185,6 @@ index fcd23c94..3fb8ff64 100644
 +    static void audio_extn_dpin_set_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *params);
 +    static void audio_extn_dpin_get_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *query, struct str_parms *reply);
 +
-+    // IPC
-+    static void audio_extn_ipc_init(bool enabled=true);
-+
      //Karaoke
      int karaoke_open(pal_device_id_t device_out, pal_stream_callback pal_callback, pal_channel_info ch_info);
      int karaoke_start();
-@@ -274,4 +283,5 @@ private:
-     static std::mutex sLock;
- };
- 
-+extern void ipc_server_socket(void);
- #endif /* AUDIOEXTN_H */
-diff --git a/hal/audio_extn/inc/audio_extn.h b/hal/audio_extn/inc/audio_extn.h
-index c62b0f6b..ce46e897 100644
---- a/hal/audio_extn/inc/audio_extn.h
-+++ b/hal/audio_extn/inc/audio_extn.h
-@@ -100,4 +100,6 @@ extern "C" int audio_extn_gef_get_audio_cal(void* data, int *length);
- extern "C" int audio_extn_gef_store_audio_cal(void* data, int length);
- extern "C" int audio_extn_gef_retrieve_audio_cal(void* data, int *length);
- 
-+//extern "C" void ipc_server_socket();
-+
- #endif /* AUDIO_GENERIC_EFFECT_FRAMEWORK_ENABLED */

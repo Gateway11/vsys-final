@@ -159,13 +159,11 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
     stream_attr.in_media_config.bit_width = BIT_WIDTH;
     stream_attr.in_media_config.ch_info = ch_info;
     stream_attr.in_media_config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
-    //stream_attr.in_media_config.aud_fmt_id = PAL_AUDIO_FMT_DEFAULT_PCM;
 
     stream_attr.out_media_config.sample_rate = SAMPLE_RATE;
     stream_attr.out_media_config.bit_width = BIT_WIDTH;
     stream_attr.out_media_config.ch_info = ch_info;
     stream_attr.out_media_config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
-    //stream_attr.out_media_config.aud_fmt_id = PAL_AUDIO_FMT_DEFAULT_PCM;
 
 
     for(int i = 0; i < 2; ++i){
@@ -200,7 +198,6 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
             pal_devs[i].config.bit_width = BIT_WIDTH;
             pal_devs[i].config.ch_info = ch_info;
             pal_devs[i].config.aud_fmt_id = PAL_AUDIO_FMT_PCM_S16_LE;
-            //pal_devs[i].config.aud_fmt_id = PAL_AUDIO_FMT_DEFAULT_PCM;
         }
     }
 
@@ -225,7 +222,7 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
     }
 
     dpin.running = true;
-    dpin_set_volume(dpin.volume, true);
+    //dpin_set_volume(dpin.volume, true); //TODO
     AHAL_DBG("Exit");
     return ret;
 }
