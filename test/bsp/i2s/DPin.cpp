@@ -128,16 +128,6 @@ int32_t dpin_set_volume(float value, bool persist=false)
     return ret;
 }
 
-//static std::once_flag flag;
-//                    std::call_once(flag, [&]{ std::thread thread([&]{
-//                                int32_t timer = 5;
-//                                while (--timer) {
-//                                    AHAL_DBG("################## timer = %d", timer);
-//                                    std::this_thread::sleep_for(std::chrono::seconds(1));
-//                                }
-//                                str_parms_add_int(params, "handle_dpin", AUDIO_DEVICE_IN_AUX_DIGITAL | AUDIO_DEVICE_OUT_USB_HEADSET);
-//                                AudioExtn::audio_extn_set_parameters(adev_, parms);
-//                                }); thread.detach(); });
 int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
 {
     int32_t ret = 0;
@@ -182,7 +172,7 @@ int32_t dpin_start(std::shared_ptr<AudioDevice> adev, int device_id)
         //pal_devs[i].id = i ? PAL_DEVICE_IN_AUX_DIGITAL : pal_device_id;
         pal_devs[i].id = i ? PAL_DEVICE_IN_HANDSET_MIC : pal_device_id;
         // TODO: remove hardcoded device id & pass adev to getPalDeviceIds instead
-        if (device_out == PAL_DEVICE_OUT_USB_HEADSET) {
+        if (pal_device_id == PAL_DEVICE_OUT_USB_HEADSET) {
             //Configure USB Digital Headset parameters
             pal_param_device_capability_t *device_cap_query = (pal_param_device_capability_t *)
                                                        malloc(sizeof(pal_param_device_capability_t));
