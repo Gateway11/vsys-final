@@ -32,6 +32,8 @@ MD %NOW_TIME% & CD %NOW_TIME%
 adb -s 192.168.60.%1 shell logcat -c
 adb -s 192.168.60.%1 shell logcat -c
 start "" cmd /c "adb -s 192.168.60.%1 shell logcat | tee log"
+rem adb shell diag_mdlog
+rem diag_socket_log -a 192.168.60.13 -c 1 &
 
 if "%1"=="252" (
     adb -s 0000000123456789 root & adb -s 0000000123456789 remount
