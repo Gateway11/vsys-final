@@ -8,20 +8,13 @@ if "%errorlevel%"=="1" (
     adb -s a31089dc root & adb -s a31089dc remount
 )
 
+echo cmd wifi connect-network "moto X40_5928" wpa3 12345678 > tempfile.txt
+:Loop
+powershell -Command Get-Content .\tempfile.txt| adb -s a31089dc shell
+powershell -Command Get-Content .\tempfile.txt| adb -s 7131e20b shell
 ping -n 1 192.168.60.%1
 if "%errorlevel%"=="1" (
-    goto :EOF
-    adb shell am start -a android.settings.WIFI_SETTINGS
-    if "%1"=="70" (
-        pause
-    ) else (
-        scrcpy.exe -s a31089dc
-    )
-    adb shell am start -a android.intent.action.MAIN -c android.intent.category.HOME
-:EOF
-    echo cmd wifi connect-network "moto X40_5928" wpa3 12345678 > tempfile.txt
-    powershell -Command Get-Content .\tempfile.txt| adb -s a31089dc shell
-    powershell -Command Get-Content .\tempfile.txt| adb -s 7131e20b shell
+    goto :Loop
 )
 adb connect 192.168.60.%1
 
