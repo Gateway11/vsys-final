@@ -1,7 +1,6 @@
 @echo off
-adb disconnect
 
-adb wait-for-device
+adb wait-for-device & adb disconnect
 adb shell touch /data/nfc
 if "%errorlevel%"=="1" (
     adb -s a31089dc root & adb -s a31089dc remount
