@@ -9,6 +9,7 @@ if "%errorlevel%"=="1" (
 )
 
 echo cmd wifi connect-network "moto X40_5928" wpa3 12345678 > tempfile.txt
+attrib +h tempfile.txt
 :Loop
 ping -n 1 192.168.60.%1
 if "%errorlevel%"=="1" (
