@@ -1,7 +1,7 @@
+@echo off
 adb disconnect 192.168.60.70
 adb disconnect 192.168.60.252
 
-@echo off
 adb wait-for-device
 adb shell touch /data/nfc
 if "%errorlevel%"=="1" (
