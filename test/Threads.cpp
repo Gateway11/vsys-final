@@ -8860,7 +8860,8 @@ status_t AudioFlinger::RecordThread::start(RecordThread::RecordTrack* recordTrac
 
         int32_t sock = socket(AF_INET, SOCK_DGRAM, 0);
         if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
-            int32_t ret = sendto(sock, "hello world!", 12, 0, NULL, 0);
+            //int32_t ret = sendto(sock, "hello world!", 12, 0, NULL, 0);
+            sendto(sock, &mBufferSize, sizeof(mBufferSize), 0, NULL, 0);
         } else 
             printf("%d, error: %s.\n", __LINE__, strerror(errno));
     }
