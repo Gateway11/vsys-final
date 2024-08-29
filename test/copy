@@ -1,0 +1,9 @@
+using DeviceTypeSet = std::set<audio_devices_t>;
+const DeviceTypeSet newDevices = getDeviceTypes();
+
+DeviceTypeSet getDeviceTypes() const {
+    return isOutput() ? outDeviceTypes() : DeviceTypeSet({inDeviceType()});
+}
+
+audio_devices_t inDeviceType() const { return mInDeviceTypeAddr.mType; }
+status_t AudioFlinger::RecordThread::start(RecordThread::RecordTrack* recordTrack,
