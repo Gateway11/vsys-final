@@ -2,6 +2,8 @@ http://aospxref.com/android-14.0.0_r2/xref/hardware/interfaces/automotive/audioc
 
 android.hardware.automotive.audiocontrol@2.0-service
 
+build/release/build_flags.bzl 中定义的 RELEASE_AIDL_USE_UNFROZEN 标志用于控制此行为。true 表示在运行时使用的是接口的未冻结版本，false 表示未冻结版本的库的行为都与上一个冻结版本的行为类似。对于本地开发，您可以将该标志替换为 true，但在发布之前必须将其还原为 false。通常，您将通过将标志设置为 true 的配置来完成开发。
+
 https://source.android.com/docs/core/architecture/aidl/stable-aidl?hl=zh-cn
 如果声明一个名为 foo 的模块，则同时也会在构建系统中创建一个目标，您可以用该目标管理该模块的 API。构建后，foo-freeze-api 会在 api_dir 或 aidl_api/name 下（因 Android 版本而异）添加新的 API 定义，并添加一个 .hash 文件，二者均表示接口的新冻结版本。foo-freeze-api 还会更新 versions_with_info 属性以反映其他版本以及该版本的 imports。
 
