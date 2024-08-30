@@ -8294,14 +8294,12 @@ reacquire_wakelock:
         } else {
             ATRACE_BEGIN("read");
             size_t bytesRead;
-            
+           tatus_t result; 
             if (inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC && sock > 0) {
-                bytesRead = recvfrom(sock,
-                        (uint8_t*)mRsmpInBuffer + rear * mFrameSize, mBufferSize, 0, NULL, 0);
+                bytesRead = recvfrom(sock, (uint8_t*)mRsmpInBuffer + rear * mFrameSize, mBufferSize, 0, NULL, 0);
                 result = bytesRead;
             } else (
-                status_t result = mSource->read(
-                        (uint8_t*)mRsmpInBuffer + rear * mFrameSize, mBufferSize, &bytesRead);
+                result = mSource->read((uint8_t*)mRsmpInBuffer + rear * mFrameSize, mBufferSize, &bytesRead);
             }
             ATRACE_END();
             if (result < 0) {
