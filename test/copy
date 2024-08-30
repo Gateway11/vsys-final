@@ -1,6 +1,8 @@
 http://aospxref.com/android-14.0.0_r2/xref/hardware/interfaces/automotive/audiocontrol/2.0/default/Android.bp
 
 android.hardware.automotive.audiocontrol@2.0-service
+http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/services/audiopolicy/engineconfigurable/sepolicy/file_contexts
+/dev/socket/audioserver(/.*)?    u:object_r:audioserver_socket:s0
 
 build/release/build_flags.bzl 中定义的 RELEASE_AIDL_USE_UNFROZEN 标志用于控制此行为。true 表示在运行时使用的是接口的未冻结版本，false 表示未冻结版本的库的行为都与上一个冻结版本的行为类似。对于本地开发，您可以将该标志替换为 true，但在发布之前必须将其还原为 false。通常，您将通过将标志设置为 true 的配置来完成开发。
 
