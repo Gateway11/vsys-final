@@ -1,6 +1,7 @@
 http://aospxref.com/android-14.0.0_r2/xref/hardware/interfaces/automotive/audiocontrol/2.0/default/Android.bp
 
 android.hardware.automotive.audiocontrol@2.0-service
+http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/services/audiopolicy/engineconfigurable/sepolicy/audioserver.te
 http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/services/audiopolicy/engineconfigurable/sepolicy/file_contexts
 /dev/socket/audioserver(/.*)?    u:object_r:audioserver_socket:s0
 
