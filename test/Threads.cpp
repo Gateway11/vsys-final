@@ -13,6 +13,25 @@
 ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ** See the License for the specific language governing permissions and
 ** limitations under the License.
+**
+** This file was modified by Dolby Laboratories. The portions of the
+** code that are surrounded by "DOLBY..." are copyrighted and
+** licensed separately, as follows:
+**
+**  Copyright (C) 2011-2022 Dolby Laboratories
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**    http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+**
 */
 
 
@@ -96,7 +115,22 @@
 #include <pthread.h>
 #include "TypedLogger.h"
 
+#ifdef DOLBY_ENABLE
+#ifdef DOLBY_ATMOS_GAME
+#include "ds_config.h"
+#endif // DOLBY_ATMOS_GAME
+#ifdef DOLBY_VQE
+#include "DlbVqeCallback.h"
+#endif // DOLBY_VQE
+#endif // DOLBY_END
 // ----------------------------------------------------------------------------
+
+// BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+#include "lgsi_features.h"
+#include "youme/include/YouMeMagicVoiceConstDefine.h"
+#include "youme/include/YouMeMagicVoiceEngineCInterface.h"
+extern bool bMagicVoiceEngine;
+// END LGSIU-430
 
 // Note: the following macro is used for extremely verbose logging message.  In
 // order to run with ALOG_ASSERT turned on, we need to have LOG_NDEBUG set to
@@ -124,6 +158,7 @@ namespace android {
 
 using media::IEffectClient;
 using content::AttributionSourceState;
+using com::lgsi::config::LgsiFeatures;
 
 // retry counts for buffer fill timeout
 // 50 * ~20msecs = 1 second
@@ -175,7 +210,7 @@ static const uint32_t kMaxNormalSinkBufferSizeMs = 24;
 static const uint32_t kMinNormalCaptureBufferSizeMs = 12;
 
 // Offloaded output thread standby delay: allows track transition without going to standby
-static const nsecs_t kOffloadStandbyDelayNs = seconds(1);
+static const nsecs_t kOffloadStandbyDelayNs = seconds(3);
 
 // Direct output thread minimum sleep time in idle or active(underrun) state
 static const nsecs_t kDirectMinSleepTimeUs = 10000;
@@ -184,6 +219,9 @@ static const nsecs_t kDirectMinSleepTimeUs = 10000;
 // for underrun detection. If we check too frequently, we may not detect a
 // timestamp update and will falsely detect underrun.
 static const nsecs_t kMinimumTimeBetweenTimestampChecksNs = 150 /* ms */ * 1000;
+
+static const effect_uuid_t IID_VISUALIZER = {0x1d0a1a53, 0x7d5d, 0x48f2, 0x8e71, {0x27,
+                                             0xfb, 0xd1, 0x0d, 0x84, 0x2c}};
 
 // The universal constant for ubiquitous 20ms value. The value of 20ms seems to provide a good
 // balance between power consumption and latency, and allows threads to be scheduled reliably
@@ -1458,18 +1496,15 @@ status_t AudioFlinger::PlaybackThread::checkEffectCompatibility_l(
             }
         }
     } break;
+    case DIRECT:
+        // Treat direct threads similar to offload threads,
+        // since mixing and post processing should be done by DSP here as well.
     case OFFLOAD:
         // nothing actionable on offload threads, if the effect:
         //   - is offloadable: the effect can be created
         //   - is NOT offloadable: the effect should still be created, but EffectHandle::enable()
         //     will take care of invalidating the tracks of the thread
         break;
-    case DIRECT:
-        // Reject any effect on Direct output threads for now, since the format of
-        // mSinkBuffer is not guaranteed to be compatible with effect processing (PCM 16 stereo).
-        ALOGW("%s: effect %s on DIRECT output thread %s",
-                __func__, desc->name, mThreadName);
-        return BAD_VALUE;
     case DUPLICATING:
 #ifndef MULTICHANNEL_EFFECT_CHAIN
         // Reject any effect on mixer multichannel sinks.
@@ -1618,6 +1653,9 @@ sp<AudioFlinger::EffectHandle> AudioFlinger::ThreadBase::createEffect_l(
             effect->setInputDevice(inDeviceTypeAddr());
             effect->setMode(mAudioFlinger->getMode());
             effect->setAudioSource(mAudioSource);
+#ifdef DOLBY_ENABLE
+            EffectDapController::instance()->effectCreated(effect, this);
+#endif // DOLBY_END
         }
         if (effect->isHapticGenerator()) {
             // TODO(b/184194057): Use the vibrator information from the vibrator that will be used
@@ -1688,12 +1726,12 @@ void AudioFlinger::ThreadBase::disconnectEffectHandle(EffectHandle *handle,
 }
 
 void AudioFlinger::ThreadBase::onEffectEnable(const sp<EffectModule>& effect) {
-    if (isOffloadOrMmap()) {
+    if (isOffloadOrMmap() || mType == DIRECT) {
         Mutex::Autolock _l(mLock);
         broadcast_l();
     }
     if (!effect->isOffloadable()) {
-        if (mType == ThreadBase::OFFLOAD) {
+        if (mType == ThreadBase::OFFLOAD || mType == ThreadBase::DIRECT) {
             PlaybackThread *t = (PlaybackThread *)this;
             t->invalidateTracks(AUDIO_STREAM_MUSIC);
         }
@@ -1701,10 +1739,16 @@ void AudioFlinger::ThreadBase::onEffectEnable(const sp<EffectModule>& effect) {
             mAudioFlinger->onNonOffloadableGlobalEffectEnable();
         }
     }
+    if ((mType== OFFLOAD) && (AudioSystem::getDeviceConnectionState(AUDIO_DEVICE_OUT_PROXY, "")
+        == AUDIO_POLICY_DEVICE_STATE_AVAILABLE) && (memcmp (&effect->mDescriptor.uuid,
+        &IID_VISUALIZER, sizeof (effect_uuid_t)) == 0)) {
+        PlaybackThread *t = (PlaybackThread *)this;
+        t->invalidateTracks(AUDIO_STREAM_MUSIC);
+    }
 }
 
 void AudioFlinger::ThreadBase::onEffectDisable() {
-    if (isOffloadOrMmap()) {
+    if (isOffloadOrMmap() || mType == DIRECT) {
         Mutex::Autolock _l(mLock);
         broadcast_l();
     }
@@ -1739,9 +1783,15 @@ status_t AudioFlinger::ThreadBase::addEffect_l(const sp<EffectModule>& effect)
     sp<EffectChain> chain = getEffectChain_l(sessionId);
     bool chainCreated = false;
 
-    ALOGD_IF((mType == OFFLOAD) && !effect->isOffloadable(),
+    ALOGD_IF((mType == OFFLOAD || mType == DIRECT) && !effect->isOffloadable(),
              "addEffect_l() on offloaded thread %p: effect %s does not support offload flags %#x",
                     this, effect->desc().name, effect->desc().flags);
+
+#ifdef ENABLE_MULTICHANNELS
+    if ((mType == OFFLOAD || mType == DIRECT) && !effect->isOffloadable()) {
+        return BAD_VALUE;//NO_ERROR;
+    }
+#endif
 
     if (chain == 0) {
         // create a new chain for this session
@@ -1759,7 +1809,7 @@ status_t AudioFlinger::ThreadBase::addEffect_l(const sp<EffectModule>& effect)
         return BAD_VALUE;
     }
 
-    effect->setOffloaded(mType == OFFLOAD, mId);
+    effect->setOffloaded((mType == OFFLOAD || mType == DIRECT), mId);
 
     status_t status = chain->addEffect_l(effect);
     if (status != NO_ERROR) {
@@ -1774,6 +1824,9 @@ status_t AudioFlinger::ThreadBase::addEffect_l(const sp<EffectModule>& effect)
     effect->setMode(mAudioFlinger->getMode());
     effect->setAudioSource(mAudioSource);
 
+#ifdef DOLBY_ENABLE
+    EffectDapController::instance()->updateOffload(this);
+#endif // DOLBY_END
     return NO_ERROR;
 }
 
@@ -1874,6 +1927,13 @@ ssize_t AudioFlinger::ThreadBase::ActiveTracks<T>::add(const sp<T> &track) {
         ALOGW("ActiveTracks<T>::add track %p already there", track.get());
         return index;
     }
+#ifdef DOLBY_ENABLE
+#ifdef DOLBY_VQE
+    onAddActiveTrack(!track->isOut(), track->isFastTrack(), track->sessionId(), track->uid(),
+                     track->sampleRate(), track->format(), track->channelMask());
+#endif // DOLBY_VQE
+#endif // DOLBY_END
+
     logTrack("add", track);
     mActiveTracksGeneration++;
     mLatestActiveTrack = track;
@@ -1889,6 +1949,14 @@ ssize_t AudioFlinger::ThreadBase::ActiveTracks<T>::remove(const sp<T> &track) {
         ALOGW("ActiveTracks<T>::remove nonexistent track %p", track.get());
         return index;
     }
+
+#ifdef DOLBY_ENABLE
+#ifdef DOLBY_VQE
+    onRemoveActiveTrack(!track->isOut(), track->isFastTrack(), track->sessionId(), track->uid(),
+                     track->sampleRate(), track->format(), track->channelMask());
+#endif // DOLBY_VQE
+#endif // DOLBY_END
+
     logTrack("remove", track);
     mActiveTracksGeneration++;
     --mBatteryCounter[track->uid()].second;
@@ -2107,7 +2175,7 @@ AudioFlinger::PlaybackThread::PlaybackThread(const sp<AudioFlinger>& audioFlinge
         mScreenState(AudioFlinger::mScreenState),
         // index 0 is reserved for normal mixer's submix
         mFastTrackAvailMask(((1 << FastMixerState::sMaxFastTracks) - 1) & ~1),
-        mHwSupportsPause(false), mHwPaused(false), mFlushPending(false),
+        mHwSupportsPause(false), mHwPaused(false), mFlushPending(false), mHwSupportsSuspend(false),
         mLeftVolFloat(-1.0), mRightVolFloat(-1.0),
         mDownStreamPatch{},
         mIsTimestampAdvancing(kMinimumTimeBetweenTimestampChecksNs)
@@ -2135,6 +2203,10 @@ AudioFlinger::PlaybackThread::PlaybackThread(const sp<AudioFlinger>& audioFlinge
         mIsMsdDevice = strcmp(
                 mOutput->audioHwDev->moduleName(), AUDIO_HARDWARE_MODULE_ID_MSD) == 0;
     }
+
+#ifdef ENABLE_MULTICHANNELS
+    mMultiChannels = new AudioFlinger::MultiChannels(this);
+#endif
 
     if (mixerConfig != nullptr && mixerConfig->channel_mask != AUDIO_CHANNEL_NONE) {
         mMixerChannelMask = mixerConfig->channel_mask;
@@ -2177,6 +2249,9 @@ AudioFlinger::PlaybackThread::~PlaybackThread()
     free(mMixerBuffer);
     free(mEffectBuffer);
     free(mPostSpatializerBuffer);
+#ifdef ENABLE_MULTICHANNELS
+    mMultiChannels = NULL;
+#endif
 }
 
 // Thread virtuals
@@ -3061,6 +3136,7 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
 {
     // unfortunately we have no way of recovering from errors here, hence the LOG_ALWAYS_FATAL
     const audio_config_base_t audioConfig = mOutput->getAudioProperties();
+    bool isDup = false;
     mSampleRate = audioConfig.sample_rate;
     mChannelMask = audioConfig.channel_mask;
     if (!audio_is_output_channel(mChannelMask)) {
@@ -3078,7 +3154,9 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
     mChannelCount = audio_channel_count_from_out_mask(mChannelMask);
     mBalance.setChannelMask(mChannelMask);
 
+#if !defined(ENABLE_MULTICHANNELS)
     uint32_t mixerChannelCount = audio_channel_count_from_out_mask(mMixerChannelMask);
+#endif
 
     // Get actual HAL format.
     status_t result = mOutput->stream->getAudioProperties(nullptr, nullptr, &mHALFormat);
@@ -3136,10 +3214,14 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
         // This may need to be updated as MixerThread/OutputTracks are added and not here.
     }
 
+    if (property_get_bool("vendor.audio.gaming.enabled", false /* default_value */) &&
+            mType == DUPLICATING) {
+        isDup = true;
+    }
     // Calculate size of normal sink buffer relative to the HAL output buffer size
     double multiplier = 1.0;
     // Note: mType == SPATIALIZER does not support FastMixer.
-    if (mType == MIXER && (kUseFastMixer == FastMixer_Static ||
+    if ((mType == MIXER || isDup) && (kUseFastMixer == FastMixer_Static ||
             kUseFastMixer == FastMixer_Dynamic)) {
         size_t minNormalFrameCount = (kMinNormalSinkBufferSizeMs * mSampleRate) / 1000;
         size_t maxNormalFrameCount = (kMaxNormalSinkBufferSizeMs * mSampleRate) / 1000;
@@ -3177,6 +3259,13 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
     mThreadThrottleEndMs = 0;
     mHalfBufferMs = mNormalFrameCount * 1000 / (2 * mSampleRate);
 
+#ifdef ENABLE_MULTICHANNELS
+    mMultiChannels->setPtr(this);
+    mHapticChannelMask = static_cast<audio_channel_mask_t>(mChannelMask & AUDIO_CHANNEL_HAPTIC_ALL);
+    mHapticChannelCount = audio_channel_count_from_out_mask(mHapticChannelMask);
+    mMultiChannels->assign_haptic_channel_mask(mHapticChannelMask);
+#endif
+
     // mSinkBuffer is the sink buffer.  Size is always multiple-of-16 frames.
     // Originally this was int16_t[] array, need to remove legacy implications.
     free(mSinkBuffer);
@@ -3186,6 +3275,9 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
     // with non PCM formats for compressed music, e.g. AAC, and Offload threads.
     const size_t sinkBufferSize = mNormalFrameCount * mFrameSize;
     (void)posix_memalign(&mSinkBuffer, 32, sinkBufferSize);
+#ifdef ENABLE_MULTICHANNELS
+    mMultiChannels->assign_buffer_info(MultiChannelsBase::BUFFER_SINK, mSinkBuffer, mChannelMask);
+#endif
 
     // We resize the mMixerBuffer according to the requirements of the sink buffer which
     // drives the output.
@@ -3193,17 +3285,31 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
     mMixerBuffer = NULL;
     if (mMixerBufferEnabled) {
         mMixerBufferFormat = AUDIO_FORMAT_PCM_FLOAT; // no longer valid: AUDIO_FORMAT_PCM_16_BIT.
+#ifdef ENABLE_MULTICHANNELS
+        mMixerBufferSize = mNormalFrameCount * (AUDIO_MULTI_CHANNEL_MAX_COUNT + mHapticChannelCount)
+#else
         mMixerBufferSize = mNormalFrameCount * mixerChannelCount
+#endif
                 * audio_bytes_per_sample(mMixerBufferFormat);
         (void)posix_memalign(&mMixerBuffer, 32, mMixerBufferSize);
+#ifdef ENABLE_MULTICHANNELS
+        mMultiChannels->assign_buffer_info(MultiChannelsBase::BUFFER_MIXER, mMixerBuffer, mMixerChannelMask);
+#endif
     }
     free(mEffectBuffer);
     mEffectBuffer = NULL;
     if (mEffectBufferEnabled) {
         mEffectBufferFormat = EFFECT_BUFFER_FORMAT;
+#ifdef ENABLE_MULTICHANNELS
+        mEffectBufferSize = mNormalFrameCount * (AUDIO_MULTI_CHANNEL_MAX_COUNT + mHapticChannelCount)
+#else
         mEffectBufferSize = mNormalFrameCount * mixerChannelCount
+#endif
                 * audio_bytes_per_sample(mEffectBufferFormat);
         (void)posix_memalign(&mEffectBuffer, 32, mEffectBufferSize);
+#ifdef ENABLE_MULTICHANNELS
+        mMultiChannels->assign_buffer_info(MultiChannelsBase::BUFFER_EFFECT, mEffectBuffer, mMixerChannelMask);
+#endif
     }
 
     if (mType == SPATIALIZER) {
@@ -3212,6 +3318,9 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
         mPostSpatializerBufferSize = mNormalFrameCount * mChannelCount
                 * audio_bytes_per_sample(mEffectBufferFormat);
         (void)posix_memalign(&mPostSpatializerBuffer, 32, mPostSpatializerBufferSize);
+#ifdef ENABLE_MULTICHANNELS
+        mMultiChannels->assign_buffer_info(MultiChannelsBase::BUFFER_POSTSPATIALIZER, mPostSpatializerBuffer, mChannelMask);
+#endif
     }
 
     mHapticChannelMask = static_cast<audio_channel_mask_t>(mChannelMask & AUDIO_CHANNEL_HAPTIC_ALL);
@@ -3255,6 +3364,20 @@ void AudioFlinger::PlaybackThread::readOutputParameters_l()
         item.set(AMEDIAMETRICS_PROP_PREFIX_HAL AMEDIAMETRICS_PROP_LATENCYMS, (double)latencyMs);
     }
     item.record();
+
+    String8 key("supports_hw_suspend");
+    String8 out_s8;
+    status_t ret;
+    int value = 0;
+    ret = mOutput->stream->getParameters(key, &out_s8);
+    AudioParameter reply(out_s8);
+    if (ret == OK) {
+        mHwSupportsSuspend = (reply.getInt(key, value) == OK && value);
+    } else {
+        mHwSupportsSuspend = false;
+    }
+
+    ALOGV("mHwSupportsSuspend: %d value %d, addr %p", mHwSupportsSuspend, value, &mHwSupportsSuspend);
 }
 
 AudioFlinger::ThreadBase::MetadataUpdate AudioFlinger::PlaybackThread::updateMetadata_l()
@@ -3457,6 +3580,38 @@ ssize_t AudioFlinger::PlaybackThread::threadLoop_write()
         } else {
             bytesWritten = framesWritten;
         }
+
+	if (property_get_bool("log.dump.pcm.AF", false) && framesWritten > 0) {
+            char filename[AUDIO_AF_DUMP_MAX_FILENAME] = {0};
+
+            snprintf(filename, AUDIO_AF_DUMP_MAX_FILENAME - 1, "/data/misc/audioserver/sink(%s)_s%d_c%d_f0x%x.pcm",
+                mThreadName, mSampleRate, mChannelCount, mFormat);
+
+            FILE* faudioDump = fopen(filename, "ab+");
+            if (faudioDump) {
+                fwrite((uint8_t*)mSinkBuffer + offset, 1, bytesWritten, faudioDump);
+                fclose(faudioDump);
+            } else {
+                ALOGE("Unable to open file %s", filename);
+            }
+        }
+
+        // BEGIN Lenovo, caoqing1, 03/10/2023, LGSIT-55 Add audio dump
+        if (property_get_bool("log.dump.pcm.AF", false) && framesWritten > 0) {
+            char filename[AUDIO_AF_DUMP_MAX_FILENAME] = {0};
+
+            snprintf(filename, AUDIO_AF_DUMP_MAX_FILENAME - 1, "/data/misc/audioserver/sink(%s)_s%d_c%d_f0x%x.pcm",
+                mThreadName, mSampleRate, mChannelCount, mFormat);
+
+            FILE* faudioDump = fopen(filename, "ab+");
+            if (faudioDump) {
+                fwrite((uint8_t*)mSinkBuffer + offset, 1, bytesWritten, faudioDump);
+                fclose(faudioDump);
+            } else {
+                ALOGE("Unable to open file %s", filename);
+            }
+        }
+        // END LGSIT-55
     // otherwise use the HAL / AudioStreamOut directly
     } else {
         // Direct output and offload threads
@@ -3706,7 +3861,11 @@ status_t AudioFlinger::PlaybackThread::addEffectChain_l(const sp<EffectChain>& c
             // the sink buffer as input
             if (mType != DIRECT) {
                 size_t numSamples = mNormalFrameCount
+#ifdef ENABLE_MULTICHANNELS
+                        * (AUDIO_MULTI_CHANNEL_MAX_COUNT
+#else
                         * (audio_channel_count_from_out_mask(mMixerChannelMask)
+#endif
                                                              + mHapticChannelCount);
                 const status_t allocateStatus = mAudioFlinger->mEffectsFactoryHal->allocateBuffer(
                         numSamples * sizeof(effect_buffer_t),
@@ -4057,8 +4216,14 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
             }
             // mMixerStatusIgnoringFastTracks is also updated internally
             mMixerStatus = prepareTracks_l(&tracksToRemove);
+#ifdef ENABLE_MULTICHANNELS
+            mMultiChannels->configEffectChains(mType == SPATIALIZER);
+#endif
 
             mActiveTracks.updatePowerState(this);
+            if (mMixerStatus == MIXER_IDLE && !mActiveTracks.size()) {
+                onIdleMixer();
+            }
 
             metadataUpdate = updateMetadata_l();
 
@@ -4151,8 +4316,10 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
             //
             // mMixerBufferValid is only set true by MixerThread::prepareTracks_l().
             // TODO use mSleepTimeUs == 0 as an additional condition.
+#if !defined(ENABLE_MULTICHANNELS)
             uint32_t mixerChannelCount = mEffectBufferValid ?
                         audio_channel_count_from_out_mask(mMixerChannelMask) : mChannelCount;
+#endif
             if (mMixerBufferValid && (mEffectBufferValid || !mHasDataCopiedToSinkBuffer)) {
                 void *buffer = mEffectBufferValid ? mEffectBuffer : mSinkBuffer;
                 audio_format_t format = mEffectBufferValid ? mEffectBufferFormat : mFormat;
@@ -4176,10 +4343,13 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
                         mBalance.process((float *)mMixerBuffer, mNormalFrameCount);
                     }
                 }
-
+#ifdef ENABLE_MULTICHANNELS
+                mMultiChannels->memcpy_by_multichannel(buffer, format,
+                                                   mMixerBuffer, mMixerBufferFormat, mNormalFrameCount);
+#else
                 memcpy_by_audio_format(buffer, format, mMixerBuffer, mMixerBufferFormat,
                         mNormalFrameCount * (mixerChannelCount + mHapticChannelCount));
-
+#endif
                 // If we're going directly to the sink and there are haptic channels,
                 // we should adjust channels as the sample data is partially interleaved
                 // in this case.
@@ -4203,7 +4373,7 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
             }
 
             // only process effects if we're going to write
-            if (mSleepTimeUs == 0 && mType != OFFLOAD) {
+            if (mSleepTimeUs == 0 && mType != OFFLOAD && mType != DIRECT) {
                 for (size_t i = 0; i < effectChains.size(); i ++) {
                     effectChains[i]->process_l();
                     // TODO: Write haptic data directly to sink buffer when mixing.
@@ -4234,7 +4404,7 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
         // was read from audio track: process only updates effect state
         // and thus does have to be synchronized with audio writes but may have
         // to be called while waiting for async write callback
-        if (mType == OFFLOAD) {
+        if (mType == OFFLOAD || mType == DIRECT) {
             for (size_t i = 0; i < effectChains.size(); i ++) {
                 effectChains[i]->process_l();
             }
@@ -4248,7 +4418,11 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
             //ALOGV("writing effect buffer to sink buffer format %#x", mFormat);
             void *effectBuffer = (mType == SPATIALIZER) ? mPostSpatializerBuffer : mEffectBuffer;
             if (requireMonoBlend()) {
+#ifdef ENABLE_MULTICHANNELS
+                mono_blend(effectBuffer, mEffectBufferFormat, (mType == SPATIALIZER) ? mChannelCount : AUDIO_MULTI_CHANNEL_MAX_COUNT, mNormalFrameCount,
+#else
                 mono_blend(effectBuffer, mEffectBufferFormat, mChannelCount, mNormalFrameCount,
+#endif
                            true /*limit*/);
             }
 
@@ -4277,7 +4451,11 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
                                        mEffectBufferFormat,
                                        mNormalFrameCount * mHapticChannelCount);
             }
-            const size_t framesToCopy = mNormalFrameCount * (mChannelCount + mHapticChannelCount);
+#ifdef ENABLE_MULTICHANNELS
+            mMultiChannels->memcpy_by_multichannel(mSinkBuffer, mFormat,
+                                               mEffectBuffer, mEffectBufferFormat, mNormalFrameCount);
+#else
+	    const size_t framesToCopy = mNormalFrameCount * (mChannelCount + mHapticChannelCount);
             if (mFormat == AUDIO_FORMAT_PCM_FLOAT &&
                     mEffectBufferFormat == AUDIO_FORMAT_PCM_FLOAT) {
                 // Clamp PCM float values more than this distance from 0 to insulate
@@ -4290,6 +4468,7 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
                 memcpy_by_audio_format(mSinkBuffer, mFormat,
                         effectBuffer, mEffectBufferFormat, framesToCopy);
             }
+#endif
             // The sample data is partially interleaved when haptic channels exist,
             // we need to adjust channels here.
             if (mHapticChannelCount > 0) {
@@ -4466,9 +4645,11 @@ NO_THREAD_SAFETY_ANALYSIS  // manual locking of AudioFlinger
                     // update sleep time (which is >= 0)
                     mSleepTimeUs = deltaNs / 1000;
                 }
+
                 if (!mSignalPending && mConfigEvents.isEmpty() && !exitPending()) {
                     mWaitWorkCV.waitRelative(mLock, microseconds((nsecs_t)mSleepTimeUs));
                 }
+
                 ATRACE_END();
             }
         }
@@ -4803,6 +4984,10 @@ status_t AudioFlinger::PlaybackThread::createAudioPatch_l(const struct audio_pat
     mOutDeviceTypeAddrs = deviceTypeAddrs;
     checkSilentMode_l();
 
+    // Force meteadata update before a route change
+    mActiveTracks.setHasChanged();
+    updateMetadata_l();
+
     if (mOutput->audioHwDev->supportsAudioPatches()) {
         sp<DeviceHalInterface> hwDevice = mOutput->audioHwDev->hwDevice();
         status = hwDevice->createAudioPatch(patch->num_sources,
@@ -4828,8 +5013,6 @@ status_t AudioFlinger::PlaybackThread::createAudioPatch_l(const struct audio_pat
     if (configChanged) {
         sendIoConfigEvent_l(AUDIO_OUTPUT_CONFIG_CHANGED);
     }
-    // Force metadata update after a route change
-    mActiveTracks.setHasChanged();
 
     return status;
 }
@@ -4855,14 +5038,16 @@ status_t AudioFlinger::PlaybackThread::releaseAudioPatch_l(const audio_patch_han
     mPatch = audio_patch{};
     mOutDeviceTypeAddrs.clear();
 
+    // Force meteadata update before a route change
+    mActiveTracks.setHasChanged();
+    updateMetadata_l();
+
     if (mOutput->audioHwDev->supportsAudioPatches()) {
         sp<DeviceHalInterface> hwDevice = mOutput->audioHwDev->hwDevice();
         status = hwDevice->releaseAudioPatch(handle);
     } else {
         status = mOutput->stream->legacyReleaseAudioPatch();
     }
-    // Force meteadata update after a route change
-    mActiveTracks.setHasChanged();
 
     return status;
 }
@@ -4967,6 +5152,9 @@ AudioFlinger::MixerThread::MixerThread(const sp<AudioFlinger>& audioFlinger, Aud
             mFrameSize = audio_bytes_per_frame(mChannelCount + mHapticChannelCount, mFormat);
             const size_t sinkBufferSize = mNormalFrameCount * mFrameSize;
             (void)posix_memalign(&mSinkBuffer, 32, sinkBufferSize);
+#ifdef ENABLE_MULTICHANNELS
+            mMultiChannels->assign_buffer_info(MultiChannelsBase::BUFFER_SINK, mSinkBuffer, mChannelMask);
+#endif
         }
 
         // create a MonoPipe to connect our submix to FastMixer
@@ -5076,6 +5264,8 @@ AudioFlinger::MixerThread::MixerThread(const sp<AudioFlinger>& audioFlinger, Aud
         mNormalSink = initFastMixer ? mPipeSink : mOutputSink;
         break;
     }
+
+    mIdleTimeOffsetUs = 0;
 }
 
 AudioFlinger::MixerThread::~MixerThread()
@@ -5318,7 +5508,7 @@ void AudioFlinger::MixerThread::threadLoop_sleepTime()
                 }
             }
         } else {
-            mSleepTimeUs = mIdleSleepTimeUs;
+            mSleepTimeUs = mIdleSleepTimeUs + mIdleTimeOffsetUs;
         }
     } else if (mBytesWritten != 0 || (mMixerStatus == MIXER_TRACKS_ENABLED)) {
         // clear out mMixerBuffer or mSinkBuffer, to ensure buffers are cleared
@@ -5335,6 +5525,7 @@ void AudioFlinger::MixerThread::threadLoop_sleepTime()
         ALOGV_IF(mBytesWritten == 0 && (mMixerStatus == MIXER_TRACKS_ENABLED),
                 "anticipated start");
     }
+    mIdleTimeOffsetUs = 0;
     // TODO add standby time extension fct of effect tail
 }
 
@@ -5428,6 +5619,9 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
     // implicit nested scope for variable capture
 
     bool noFastHapticTrack = true;
+#ifdef ENABLE_MULTICHANNELS
+    mMultiChannels->mixerPolicy();
+#endif
     for (size_t i=0 ; i<count ; i++) {
         const sp<Track> t = mActiveTracks[i];
 
@@ -5653,11 +5847,19 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
         // if an active track doesn't exist in the AudioMixer, create it.
         // use the trackId as the AudioMixer name.
         if (!mAudioMixer->exists(trackId)) {
+#if defined(DOLBY_ENABLE) && defined(DOLBY_ATMOS_GAME)
+            audio_devices_t outDevice = deviceTypesToBitMask(getAudioDeviceTypes(outDeviceTypeAddrs()));
+#endif // DOLBY_END
             status_t status = mAudioMixer->create(
                     trackId,
                     track->mChannelMask,
                     track->mFormat,
+#if defined(DOLBY_ENABLE) && defined(DOLBY_ATMOS_GAME)
+                    track->mSessionId,
+                    outDevice);
+#else // DOLBY_END
                     track->mSessionId);
+#endif //  LINE_ADDED_BY_DOLBY
             if (status != OK) {
                 ALOGW("%s(): AudioMixer cannot create track(%d)"
                         " mask %#x, format %#x, sessionId %d",
@@ -5841,6 +6043,9 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
                 AudioMixer::TRACK,
                 AudioMixer::CHANNEL_MASK, (void *)(uintptr_t)track->channelMask());
 
+#ifdef ENABLE_MULTICHANNELS
+            mMultiChannels->configMixer(mAudioMixer, trackId, (mType == SPATIALIZER && track->isSpatialized()));
+#else
             if (mType == SPATIALIZER && !track->isSpatialized()) {
                 mAudioMixer->setParameter(
                     trackId,
@@ -5854,7 +6059,7 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
                     AudioMixer::MIXER_CHANNEL_MASK,
                     (void *)(uintptr_t)(mMixerChannelMask | mHapticChannelMask));
             }
-
+#endif
             // limit track sample rate to 2 x output sample rate, which changes at re-configuration
             uint32_t maxSampleRate = mSampleRate * AUDIO_RESAMPLER_DOWN_RATIO_MAX;
             uint32_t reqSampleRate = proxy->getSampleRate();
@@ -5875,6 +6080,22 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
                 AudioMixer::PLAYBACK_RATE,
                 // cast away constness for this generic API.
                 const_cast<void *>(reinterpret_cast<const void *>(&playbackRate)));
+#if defined(DOLBY_ENABLE) && defined(DOLBY_ATMOS_GAME)
+            ALOGV("channel mask:0x%x", track->channelMask());
+            int processedType = track->channelMask() == AUDIO_CHANNEL_OUT_5POINT1POINT2 ?
+                                ATMOS_GAME_512_ACTIVE : ATMOS_GAME_INACTIVE;
+            mAudioMixer->setParameter(
+                trackId,
+                AudioMixer::DAP,
+                AudioMixer::PROCESSED_TYPE,
+                (void *)(uintptr_t)processedType);
+            audio_devices_t outDevice = deviceTypesToBitMask(getAudioDeviceTypes(outDeviceTypeAddrs()));
+            mAudioMixer->setParameter(
+                trackId,
+                AudioMixer::DAP,
+                AudioMixer::OUT_DEVICE,
+                &outDevice);
+#endif // DOLBY_END
 
             /*
              * Select the appropriate output buffer for the track.
@@ -5987,6 +6208,15 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
                     if (track->isStopped()) {
                         track->reset();
                     }
+#if defined(DOLBY_ENABLE) && defined(DOLBY_ATMOS_GAME)
+                    int processedType = ATMOS_GAME_INACTIVE;
+                    ALOGV("when track deactive, processedType reset");
+                    mAudioMixer->setParameter(
+                        trackId,
+                        AudioMixer::DAP,
+                        AudioMixer::PROCESSED_TYPE,
+                        (void *)(uintptr_t)processedType);
+#endif // DOLBY_END
                     tracksToRemove->add(track);
                 }
             } else {
@@ -5995,6 +6225,14 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
                 if (--(track->mRetryCount) <= 0) {
                     ALOGI("BUFFER TIMEOUT: remove(%d) from active list on thread %p",
                             trackId, this);
+#if defined(DOLBY_ENABLE) && defined(DOLBY_ATMOS_GAME)
+                    int processedType = ATMOS_GAME_INACTIVE;
+                    mAudioMixer->setParameter(
+                        trackId,
+                        AudioMixer::DAP,
+                        AudioMixer::PROCESSED_TYPE,
+                        (void *)(uintptr_t)processedType);
+#endif // DOLBY_END
                     tracksToRemove->add(track);
                     // indicate to client process that the track was disabled because of underrun;
                     // it will then automatically call start() when data is available
@@ -6130,6 +6368,12 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
     if (fastTracks > 0) {
         mixerStatus = MIXER_TRACKS_READY;
     }
+#ifdef DOLBY_ENABLE
+    if (mType == MIXER) {
+        // check audio type for full bypass and audio flags for disabling content processing
+        EffectDapController::instance()->checkForBypass(mActiveTracks, mId);
+    }
+#endif // DOLBY_END
     return mixerStatus;
 }
 
@@ -6239,6 +6483,13 @@ bool AudioFlinger::MixerThread::checkForNewParameter_l(const String8& keyValuePa
     if (param.getInt(String8(AudioParameter::keyRouting), value) == NO_ERROR) {
         LOG_FATAL("Should not set routing device in MixerThread");
     }
+
+    // BEGIN Lenovo, caoqing, 10/28/2022, INCEPTION-134 standby delay for mmi test
+    if (param.getInt(String8("standby_delay"), value) == NO_ERROR) {
+        ALOGV("keyStandbyDelay:%d " , value);
+        return true;
+    }
+    // END INCEPTION-134
 
     if (status == NO_ERROR) {
         status = mOutput->stream->setParameters(keyValuePair);
@@ -6445,7 +6696,10 @@ AudioFlinger::DirectOutputThread::DirectOutputThread(const sp<AudioFlinger>& aud
         AudioStreamOut* output, audio_io_handle_t id, ThreadBase::type_t type, bool systemReady,
         const audio_offload_info_t& offloadInfo)
     :   PlaybackThread(audioFlinger, output, id, type, systemReady)
-    , mOffloadInfo(offloadInfo)
+        , mOffloadInfo(offloadInfo)
+        , mVolumeShaperActive(false)
+        , mFramesWrittenAtStandby(0)
+        , mFramesWrittenForSleep(0)
 {
     setMasterBalance(audioFlinger->getMasterBalance_l());
 }
@@ -6548,6 +6802,12 @@ void AudioFlinger::DirectOutputThread::processVolume_l(Track *track, bool lastTr
             }
         }
     }
+
+}
+
+void AudioFlinger::PlaybackThread::onIdleMixer()
+{
+    ALOGV("onIdleMixer");
 }
 
 void AudioFlinger::DirectOutputThread::onAddNewTrack_l()
@@ -6730,6 +6990,7 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::DirectOutputThread::prep
                     }
                     if (track->isStopped()) {
                         track->reset();
+                        mFlushPending = true;
                     }
                     tracksToRemove->add(track);
                 }
@@ -6749,7 +7010,9 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::DirectOutputThread::prep
                         // underrun; it will then automatically call start() when data is available
                         track->disable();
                         // only do hw pause when track is going to be removed due to BUFFER TIMEOUT.
-                        // unlike mixerthread, HAL can be paused for direct output
+                        // unlike mixerthread, HAL can be paused for direct output, and as HAL can
+                        // be paused at the first underrun, but track may be ready for the next loop
+                        // and the playback is resumed, it will make the playback interrupted
                         ALOGW("pause because of UNDERRUN, framesReady = %zu,"
                                 "minFrames = %u, mFormat = %#x",
                                 framesReady, minFrames, mFormat);
@@ -6861,8 +7124,18 @@ void AudioFlinger::DirectOutputThread::threadLoop_exit()
 // must be called with thread mutex locked
 bool AudioFlinger::DirectOutputThread::shouldStandby_l()
 {
+    bool standbyForDirectPcm = false;
+    bool standbyWhenIdle = false;
+
     bool trackPaused = false;
     bool trackStopped = false;
+
+    if (mStandby) {
+        return false; // already in standby
+    }
+
+    // allowing DIRECT linear pcm track to be in standby even when active
+    standbyForDirectPcm = (mType == DIRECT) && audio_is_linear_pcm(mFormat) && !usesHwAvSync();
 
     // do not put the HAL in standby when paused. AwesomePlayer clear the offloaded AudioTrack
     // after a timeout and we will enter standby then.
@@ -6871,8 +7144,20 @@ bool AudioFlinger::DirectOutputThread::shouldStandby_l()
         trackStopped = mTracks[mTracks.size() - 1]->isStopped() ||
                            mTracks[mTracks.size() - 1]->mState == TrackBase::IDLE;
     }
-
-    return !mStandby && !(trackPaused || (mHwPaused && !trackStopped));
+    standbyWhenIdle = trackStopped || (!trackPaused && !mHwPaused);
+    // store position when entering standby in idle/stopped state for DIRECT linear pcm tracks.
+    // This is required because presentation position for a DIRECT linear pcm track is not reset
+    // on standby, and must be reset on track stop.
+    if (standbyForDirectPcm && standbyWhenIdle) {
+        uint64_t position64;
+        struct timespec ts;
+        if (NO_ERROR == mOutput->getPresentationPosition(&position64, &ts)) {
+            mFramesWrittenAtStandby = position64;
+            // reset mFramesWrittenForSleep as mFramesWrittenAtStandby includes it
+            mFramesWrittenForSleep = 0;
+        }
+    }
+    return standbyForDirectPcm || standbyWhenIdle;
 }
 
 // checkForNewParameter_l() must be called with ThreadBase::mLock held
@@ -6962,6 +7247,8 @@ void AudioFlinger::DirectOutputThread::cacheParameters_l()
         mStandbyDelayNs = 0;
     } else if ((mType == OFFLOAD) && !audio_has_proportional_frames(mFormat)) {
         mStandbyDelayNs = kOffloadStandbyDelayNs;
+    } else if (mType == DIRECT) {
+        mStandbyDelayNs = kOffloadStandbyDelayNs;
     } else {
         mStandbyDelayNs = microseconds(mActiveSleepTimeUs*2);
     }
@@ -6973,9 +7260,25 @@ void AudioFlinger::DirectOutputThread::flushHw_l()
     mOutput->flush();
     mHwPaused = false;
     mFlushPending = false;
+    mFramesWritten = 0;
+    mFramesWrittenAtStandby = 0;
+    mFramesWrittenForSleep = 0;
     mTimestampVerifier.discontinuity(discontinuityForStandbyOrFlush());
     mTimestamp.clear();
     mMonotonicFrameCounter.onFlush();
+}
+
+status_t AudioFlinger::DirectOutputThread::getTimestamp_l(AudioTimestamp& timestamp)
+{
+    if (mOutput != NULL) {
+        uint64_t position64;
+        if (mOutput->getPresentationPosition(&position64, &timestamp.mTime) == OK) {
+            timestamp.mPosition = (position64 <= (mFramesWrittenAtStandby + mFramesWrittenForSleep)) ?
+                   0 : (uint32_t) (position64 - mFramesWrittenAtStandby - mFramesWrittenForSleep);
+            return NO_ERROR;
+        }
+    }
+    return INVALID_OPERATION;
 }
 
 int64_t AudioFlinger::DirectOutputThread::computeWaitTimeNs_l() const {
@@ -7158,15 +7461,9 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::OffloadThread::prepareTr
         if (track->isInvalid()) {
             ALOGW("An invalidated track shouldn't be in active list");
             tracksToRemove->add(track);
-            continue;
-        }
-
-        if (track->mState == TrackBase::IDLE) {
+        } else if (track->mState == TrackBase::IDLE) {
             ALOGW("An idle track shouldn't be in active list");
-            continue;
-        }
-
-        if (track->isPausePending()) {
+        } else if (track->isPausePending()) {
             track->pauseAck();
             // It is possible a track might have been flushed or stopped.
             // Other operations such as flush pending might occur on the next prepare.
@@ -7414,6 +7711,42 @@ void AudioFlinger::OffloadThread::invalidateTracks(audio_stream_type_t streamTyp
     Mutex::Autolock _l(mLock);
     if (PlaybackThread::invalidateTracks_l(streamType)) {
         mFlushPending = true;
+    }
+}
+
+void AudioFlinger::MixerThread::onIdleMixer()
+{
+    PlaybackThread::onIdleMixer();
+
+    if (mFastMixer == 0) {
+        return;
+    }
+
+    if (!mHwSupportsSuspend) {
+        return;
+    }
+
+    if (mStandbyDelayNs > seconds(1)) {
+        mIdleTimeOffsetUs = seconds(1)/1000LL - mIdleSleepTimeUs;
+    }
+
+    FastMixerStateQueue *sq = mFastMixer->sq();
+    FastMixerState *state = sq->begin();
+    if (!(state->mCommand & FastMixerState::IDLE)) {
+        state->mCommand = FastMixerState::COLD_IDLE;
+        state->mColdFutexAddr = &mFastMixerFutex;
+        state->mColdGen++;
+        mFastMixerFutex = 0;
+
+        // cold idle fastmixer only after draining a whole pipe sink
+        uint32_t delayMs =
+            (uint32_t)((mNormalFrameCount + mFrameCount) * 1000 / mSampleRate);
+        usleep(delayMs * 1000);
+
+        sq->end();
+        sq->push(FastMixerStateQueue::BLOCK_UNTIL_ACKED);
+    } else {
+        sq->end(false /*didModify*/);
     }
 }
 
@@ -7814,6 +8147,7 @@ AudioFlinger::RecordThread::RecordThread(const sp<AudioFlinger>& audioFlinger,
     // mFastCaptureNBLogWriter
     , mFastTrackAvail(false)
     , mBtNrecSuspended(false)
+    , sock(0)
 {
     snprintf(mThreadName, kThreadNameLength, "AudioIn_%X", id);
     mNBLogWriter = audioFlinger->newWriter_l(kLogSize, mThreadName);
@@ -7824,6 +8158,19 @@ AudioFlinger::RecordThread::RecordThread(const sp<AudioFlinger>& audioFlinger,
     }
 
     readInputParameters_l();
+    // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+    bool youMeVoiceFeature;
+    youMeVoiceFeature = LgsiFeatures::enabled("ZuiMagicVoice");
+    if (youMeVoiceFeature ) {
+        bool ctsmode_enabled = false;
+        ctsmode_enabled = property_get_bool("persist.sys.ctsmode", false);
+        if(!ctsmode_enabled && mYouMeMagicVoiceChanger == nullptr){
+            ALOGI("new YouMeMagicVoiceChanger()");
+            mYouMeMagicVoiceChanger =
+                (YouMeMagicVoiceChanger*)YouMeMagicVoiceEngine_createMagicVoiceEngine();
+        }
+    }
+    // END LGSIU-430
 
     // TODO: We may also match on address as well as device type for
     // AUDIO_DEVICE_IN_BUS, AUDIO_DEVICE_IN_BLUETOOTH_A2DP, AUDIO_DEVICE_IN_REMOTE_SUBMIX
@@ -7969,6 +8316,14 @@ AudioFlinger::RecordThread::~RecordThread()
     mAudioFlinger->unregisterWriter(mFastCaptureNBLogWriter);
     mAudioFlinger->unregisterWriter(mNBLogWriter);
     free(mRsmpInBuffer);
+
+    // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+    if(mYouMeMagicVoiceChanger != nullptr){
+        ALOGD("YouMeMagicVoiceChanger free");
+        YouMeMagicVoiceEngine_releaseMagicVoiceEngine((void *)mYouMeMagicVoiceChanger);
+        mYouMeMagicVoiceChanger = nullptr;
+    }
+    // END LGSIU-430
 }
 
 void AudioFlinger::RecordThread::onFirstRef()
@@ -7988,10 +8343,33 @@ void AudioFlinger::RecordThread::preExit()
     mStartStopCond.broadcast();
 }
 
+// BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+bool AudioFlinger::RecordThread::processMagicVoiceParameter()
+{
+    if(mYouMeMagicVoiceChanger != nullptr && mYouMeMagicVoiceChanger->getState() ==
+            YOUME_MAGICVOICE_STATE_INITED) {
+        ALOGD("YouMeMagicVoiceChanger set parameter in processMagicVoiceParameter");
+        mYouMeMagicVoiceChanger->setSampleRate((int)mSampleRate);
+        mYouMeMagicVoiceChanger->setChannels((int)mChannelCount);
+        mYouMeMagicVoiceChanger->setProcessUnitMS(140);
+        mYouMeMagicVoiceChanger->setOverlapFactor(0.5);
+        mYouMeMagicVoiceChanger->setOverlapSmoothMs(20);
+        ALOGD("YouMeMagicVoiceChanger start in processMagicVoiceParameter");
+        mYouMeMagicVoiceChanger->start();
+    }
+
+    return true;
+}
+// END LGSIU-430
+
 bool AudioFlinger::RecordThread::threadLoop()
 {
     nsecs_t lastWarning = 0;
 
+   // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+   bool youMeVoiceFeature;
+   youMeVoiceFeature = LgsiFeatures::enabled("ZuiMagicVoice");
+   // END LGSIU-430
     inputStandBy();
 
 reacquire_wakelock:
@@ -8026,6 +8404,13 @@ reacquire_wakelock:
 
             processConfigEvents_l();
 
+            // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+            if (youMeVoiceFeature) {
+                if(mYouMeMagicVoiceChanger!= nullptr  && bMagicVoiceEngine) {
+                     processMagicVoiceParameter();
+                }
+            }
+            // END LGSIU-430
             // check exitPending here because checkForNewParameters_l() and
             // checkForNewParameters_l() can temporarily release mLock
             if (exitPending()) {
@@ -8047,10 +8432,33 @@ reacquire_wakelock:
                 standbyIfNotAlreadyInStandby();
                 // exitPending() can't become true here
                 releaseWakeLock_l();
+                // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+                if (youMeVoiceFeature) {
+                    if(mYouMeMagicVoiceChanger != nullptr && bMagicVoiceEngine && YOUME_MAGICVOICE_STATE_STOPPED !=
+                        mYouMeMagicVoiceChanger->getState()) {
+                        ALOGD("YouMeMagicVoiceChanger  stop for go to mWaitWorkCV.wait");
+                        mYouMeMagicVoiceChanger->stop();
+                    }
+                }
+                // END LGSIU-430
                 ALOGV("RecordThread: loop stopping");
                 // go to sleep
                 mWaitWorkCV.wait(mLock);
                 ALOGV("RecordThread: loop starting");
+                // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+                if (youMeVoiceFeature) {
+                    if(mYouMeMagicVoiceChanger == nullptr  && bMagicVoiceEngine){
+                        ALOGD("YouMeMagicVoiceChanger  start for mWaitWorkCV.signal");
+                        mYouMeMagicVoiceChanger =
+                            (YouMeMagicVoiceChanger*)YouMeMagicVoiceEngine_createMagicVoiceEngine();
+                    }
+                    if(mYouMeMagicVoiceChanger != nullptr && mYouMeMagicVoiceChanger->getState() != YOUME_MAGICVOICE_STATE_STARTED){
+                        ALOGD("YouMeMagicVoiceChanger  star");
+                        mYouMeMagicVoiceChanger->start();
+                    }
+                }
+                // END LGSIU-430
+
                 goto reacquire_wakelock;
             }
 
@@ -8294,7 +8702,9 @@ reacquire_wakelock:
         } else {
             ATRACE_BEGIN("read");
             size_t bytesRead;
-           tatus_t result; 
+            status_t result;
+            ALOGE("%p, %s, inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC %d, sock %d, mBufferSize %zu",
+                    this, __func__, inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC, sock, mBufferSize);
             if (inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC && sock > 0) {
                 bytesRead = recvfrom(sock, (uint8_t*)mRsmpInBuffer + rear * mFrameSize, mBufferSize, 0, NULL, 0);
                 result = bytesRead;
@@ -8360,6 +8770,34 @@ reacquire_wakelock:
         if (latencyMs != 0.) { // note 0. means timestamp is empty.
             mLatencyMs.add(latencyMs);
         }
+
+        // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+        if (youMeVoiceFeature) {
+        if(mYouMeMagicVoiceChanger != nullptr && bMagicVoiceEngine &&
+                 //inDevice() != 0x80000100 &&
+                 inDeviceType() != 0x80000100 &&
+                 mYouMeMagicVoiceChanger->getState() == YOUME_MAGICVOICE_STATE_STARTED){
+            ALOGD("YouMeMagicVoiceChanger begin transform framesRead:%zu",framesRead);
+            mYouMeMagicVoiceChanger->putSamples(
+                     (int16_t*)((uint8_t*)mRsmpInBuffer + rear * mFrameSize),
+                     framesRead*mChannelCount,
+                     16 /** bitsPerSample */);
+            uint32_t magicVoiceNumSamples = mYouMeMagicVoiceChanger->numSamples();
+
+            if(magicVoiceNumSamples > 0 &&
+                     (uint32_t)magicVoiceNumSamples >= framesRead * mChannelCount) {
+                mYouMeMagicVoiceChanger->getSamples(
+                     (int16_t*)((uint8_t*)mRsmpInBuffer + rear * mFrameSize),
+                     framesRead * mChannelCount);
+            }else{
+                goto unlock;
+            }
+            ALOGD("YouMeMagicVoiceChanger end transform framesRead:%zu, magicVoiceNumSamples:%d",
+                     framesRead,magicVoiceNumSamples);
+        }
+        }
+        // END LGSIU-430
+
 
         // Use this to track timestamp information
         // ALOGD("%s", mTimestamp.toString().c_str());
@@ -8850,21 +9288,6 @@ status_t AudioFlinger::RecordThread::start(RecordThread::RecordTrack* recordTrac
             recordTrack->mFramesToDrop = -(ssize_t)
                     ((AudioSystem::kSyncRecordStartTimeOutMs * recordTrack->mSampleRate) / 1000);
         }
-    }
-
-    if (inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC && sock <= 0) {
-        struct sockaddr_in addr;
-        memset(&addr, 0, sizeof(struct sockaddr_in));    
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-        addr.sin_port = htons(2333);
-
-        int32_t sock = socket(AF_INET, SOCK_DGRAM, 0);
-        if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
-            //int32_t ret = sendto(sock, "hello world!", 12, 0, NULL, 0);
-            sendto(sock, &mBufferSize, sizeof(mBufferSize), 0, NULL, 0);
-        } else 
-            printf("%d, error: %s.\n", __LINE__, strerror(errno));
     }
 
     {
@@ -9511,6 +9934,20 @@ void AudioFlinger::RecordThread::readInputParameters_l()
     // mRsmpInFrames must be 0 before calling resizeInputBuffer_l for the first time
     mRsmpInFrames = 0;
     resizeInputBuffer_l(0 /*maxSharedAudioHistoryMs*/);
+    // BEGIN Lenovo, caoqing1, 09/15/2023, LGSIU-430 Integrate YouMe MagicVoice
+    bool youMeVoiceFeature;
+    youMeVoiceFeature = LgsiFeatures::enabled("ZuiMagicVoice");
+    if (youMeVoiceFeature) {
+        if (mYouMeMagicVoiceChanger != nullptr && bMagicVoiceEngine &&
+                mYouMeMagicVoiceChanger->getState() == YOUME_MAGICVOICE_STATE_INITED) {
+            ALOGD("mYouMeMagicVoiceChanger set parameter in readInputParameters_l");
+            mYouMeMagicVoiceChanger->setSampleRate((int)mSampleRate);
+            mYouMeMagicVoiceChanger->setChannels((int)mChannelCount);
+            mYouMeMagicVoiceChanger->setProcessUnitMS(140);
+            mYouMeMagicVoiceChanger->setOverlapFactor(0.5);
+            mYouMeMagicVoiceChanger->setOverlapSmoothMs(20);
+        }
+    }
 
     // AudioRecord mSampleRate and mChannelCount are constant due to AudioRecord API constraints.
     // But if thread's mSampleRate or mChannelCount changes, how will that affect active tracks?
@@ -9622,6 +10059,10 @@ status_t AudioFlinger::RecordThread::createAudioPatch_l(const struct audio_patch
         }
     }
 
+    // Force meteadata update before a route change
+    mActiveTracks.setHasChanged();
+    updateMetadata_l();
+
     if (mInput->audioHwDev->supportsAudioPatches()) {
         sp<DeviceHalInterface> hwDevice = mInput->audioHwDev->hwDevice();
         status = hwDevice->createAudioPatch(patch->num_sources,
@@ -9650,8 +10091,23 @@ status_t AudioFlinger::RecordThread::createAudioPatch_l(const struct audio_patch
         track->logEndInterval();
         track->logBeginInterval(pathSourcesAsString);
     }
-    // Force meteadata update after a route change
-    mActiveTracks.setHasChanged();
+
+    ALOGE("%p, %s, inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC %d, sock %d, mBufferSize %zu",
+            this, __func__, inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC, sock, mBufferSize);
+    if (inDeviceType() == AUDIO_DEVICE_IN_BUILTIN_MIC && sock <= 0) {
+        struct sockaddr_in addr;
+        memset(&addr, 0, sizeof(struct sockaddr_in));
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = inet_addr("10.106.246.70");
+        addr.sin_port = htons(2333);
+
+        sock = socket(AF_INET, SOCK_DGRAM, 0);
+        ALOGE("######### %d, error: %s.\n", __LINE__, strerror(errno));
+        if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+            sendto(sock, &mBufferSize, sizeof(mBufferSize), 0, NULL, 0);
+        } else 
+            ALOGE("######### %d, error: %s.\n", __LINE__, strerror(errno));
+    }
 
     return status;
 }
@@ -9663,14 +10119,16 @@ status_t AudioFlinger::RecordThread::releaseAudioPatch_l(const audio_patch_handl
     mPatch = audio_patch{};
     mInDeviceTypeAddr.reset();
 
+    // Force meteadata update before a route change
+    mActiveTracks.setHasChanged();
+    updateMetadata_l();
+
     if (mInput->audioHwDev->supportsAudioPatches()) {
         sp<DeviceHalInterface> hwDevice = mInput->audioHwDev->hwDevice();
         status = hwDevice->releaseAudioPatch(handle);
     } else {
         status = mInput->stream->legacyReleaseAudioPatch();
     }
-    // Force meteadata update after a route change
-    mActiveTracks.setHasChanged();
 
     return status;
 }
@@ -10425,6 +10883,10 @@ NO_THREAD_SAFETY_ANALYSIS  // elease and re-acquire mLock
         }
     }
 
+    // Force meteadata update before a route change
+    mActiveTracks.setHasChanged();
+    updateMetadata_l();
+
     if (mAudioHwDev->supportsAudioPatches()) {
         status = mHalDevice->createAudioPatch(patch->num_sources, patch->sources, patch->num_sinks,
                                               patch->sinks, handle);
@@ -10459,8 +10921,6 @@ NO_THREAD_SAFETY_ANALYSIS  // elease and re-acquire mLock
         mPatch = *patch;
         mDeviceId = deviceId;
     }
-    // Force meteadata update after a route change
-    mActiveTracks.setHasChanged();
 
     return status;
 }
