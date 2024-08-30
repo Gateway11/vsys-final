@@ -1,9 +1,3 @@
-using DeviceTypeSet = std::set<audio_devices_t>;
-const DeviceTypeSet newDevices = getDeviceTypes();
+http://aospxref.com/android-14.0.0_r2/xref/hardware/interfaces/automotive/audiocontrol/2.0/default/Android.bp
 
-DeviceTypeSet getDeviceTypes() const {
-    return isOutput() ? outDeviceTypes() : DeviceTypeSet({inDeviceType()});
-}
-
-audio_devices_t inDeviceType() const { return mInDeviceTypeAddr.mType; }
-status_t AudioFlinger::RecordThread::start(RecordThread::RecordTrack* recordTrack,
+android.hardware.automotive.audiocontrol@2.0-service
