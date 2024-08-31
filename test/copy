@@ -39,3 +39,23 @@ https://source.android.com/docs/core/architecture/partitions?hl=zh-tw
 
 https://blog.51cto.com/u_12187/6608796
 https://zenki2001cn.github.io/Wiki/Android/socket%E9%80%9A%E8%AE%AF.html
+
+
+int s = android_get_control_socket(service);
+4253      if (s < 0) {
+4254          MYLOGE("android_get_control_socket(%s): %s\n", service, strerror(errno));
+4255          return -1;
+4256      }
+4257      fcntl(s, F_SETFD, FD_CLOEXEC);
+4258
+4259      // Set backlog to 0 to make sure that queue size will be minimum.
+4260      // In Linux, because the minimum queue will be 1, connect() will be blocked
+4261      // if the other clients already called connect() and the connection request was not accepted.
+4262      if (listen(s, 0) < 0) {
+4263          MYLOGE("listen(control socket): %s\n", strerror(errno));
+4264          return -1;
+4265      }
+4266
+4267      struct sockaddr addr;
+4268      socklen_t alen = sizeof(addr);
+4269      int fd = accept4(s, &addr, &alen, SOCK_CLOEXEC);
