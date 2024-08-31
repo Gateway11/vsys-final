@@ -62,3 +62,6 @@ int s = android_get_control_socket(service);
 
 
 http://aospxref.com/android-14.0.0_r2/xref/frameworks/native/libs/vr/libpdx_uds/service_endpoint.cpp
+http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/media/libstagefright/rtsp/ARTPWriter.cpp
+http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/media/libmediaplayerservice/StagefrightRecorder.cpp
+http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/media/libmediaplayerservice/fuzzer/mediarecorder_fuzzer.cpp
