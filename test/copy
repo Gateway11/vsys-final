@@ -59,3 +59,6 @@ int s = android_get_control_socket(service);
 4267      struct sockaddr addr;
 4268      socklen_t alen = sizeof(addr);
 4269      int fd = accept4(s, &addr, &alen, SOCK_CLOEXEC);
+
+
+http://aospxref.com/android-14.0.0_r2/xref/frameworks/native/libs/vr/libpdx_uds/service_endpoint.cpp
