@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <linux/types.h>
 
@@ -76,6 +77,32 @@ void ipc_server_socket() {
     }
 }
 
+void ipc_server_socket_unix() {
+    char buf[256];
+
+#define SOCKET_PATH "/data/unix_socket"
+    struct sockaddr_un servaddr, cliaddr;
+    memset(&servaddr, 0, sizeof(struct sockaddr_un));
+    servaddr.sun_family = AF_UNIX;
+    strncpy(servaddr.sun_path, SOCKET_PATH, sizeof(servaddr.sun_path) - 1);
+
+    int32_t serverfd = socket(PF_UNIX, SOCK_STREAM, 0);
+    unlink(SOCKET_PATH);
+    bind(serverfd, (struct sockaddr *)&servaddr, sizeof(struct sockaddr_un));
+    printf("%d, %s\n", __LINE__, strerror(errno));
+
+    listen(serverfd, 5);
+    printf("%d, %s\n", __LINE__, strerror(errno));
+    socklen_t clilen = sizeof(struct sockaddr_un);
+    int32_t clientfd = accept(serverfd, (struct sockaddr *)&cliaddr, &clilen);
+    printf("%d, %s\n", __LINE__, strerror(errno));
+
+    ssize_t num_read = read(clientfd, buf, sizeof(buf));
+    printf("%d, %s\n", __LINE__, strerror(errno));
+    buf[num_read] = '\0';
+    printf("num_read =%zu, Received message: %s\n", num_read , buf);
+}
+
 #ifdef __ANDROID_NDK__
 int main(int argc, const char * argv[]) {
     if(argc < 2) {
@@ -90,6 +117,8 @@ int main(int argc, const char * argv[]) {
         ipc_server_socket();
     } else if (strcmp(argv[1], "ap2") == 0) {
         ipc_server_socket();
+    } else if (strcmp(argv[1], "unix") == 0) {
+        ipc_server_socket_unix();
     } else {
         printf("Domain is not supported!\n");
     }
