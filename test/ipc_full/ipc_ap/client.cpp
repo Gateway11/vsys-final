@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <linux/types.h>
 
@@ -80,6 +81,32 @@ void ipc_client_socket(const char* ip_addr, const char* data, uint32_t size, uin
     }
 }
 
+int32_t ipc_client_socket_unix() {
+    struct sockaddr_un addr;
+    int sock, ret = 0;
+
+    sock = socket(PF_UNIX, SOCK_STREAM, 0);
+    if(sock < 0) {
+        ALOGE("Failed to open socket, error=%s\n", strerror(errno));
+        return -1;
+    }
+    memset(&addr, 0, sizeof(struct sockaddr_un));
+#define SOCKET_PATH "/data/unix_socket"
+    addr.sun_family = AF_UNIX;
+    strncpy(servaddr.sun_path, SOCKET_PATH, sizeof(servaddr.sun_path) - 1);
+
+    while(1) {
+        ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+        if(ret == 0)
+            break;
+
+        ALOGI("Connect to server '%s' failed, socket id=%d, err = %d, %s", SOCKET_PATH, sock, ret, strerror(errno));
+        usleep(10*1000); //10ms
+    }
+    ALOGI("Connected to server '%s' success, socket id=%d", SOCKET_PATH, sock);
+    return sock;
+}
+
 int main(int argc, const char * argv[]) {
     int sendCount = 1;
     if(argc < 3) {
@@ -98,6 +125,8 @@ int main(int argc, const char * argv[]) {
     } else if (strcmp(argv[1], "ap2") == 0) {
         ipc_client_socket("172.20.2.36", argv[2], strlen(argv[2]), sendCount);
     } else if (strcmp(argv[1], "local") == 0) {
+        ipc_client_socket("127.0.0.1", argv[2], strlen(argv[2]), sendCount);
+    } else if (strcmp(argv[1], "unix") == 0) {
         ipc_client_socket("127.0.0.1", argv[2], strlen(argv[2]), sendCount);
     } else {
         printf("Domain is not supported!\n");
