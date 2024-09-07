@@ -143,7 +143,7 @@ void accept_thread(int serverfd) {
     AHAL_DBG("exit\n");
 }
 
-int32_t ipc_server_socket_init() {
+int32_t virtuan_mic_init() {
     AHAL_DBG("enter");
 
     g_clientfd = -1;
