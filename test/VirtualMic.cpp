@@ -36,12 +36,17 @@
 #include <cstring>
 #include <thread>
 #include <sys/time.h>
+#ifndef __ANDROID_NDK__
 #include <log/log.h>
 
 #ifdef DYNAMIC_LOG_ENABLED
 #include <log_xml_parser.h>
 #define LOG_MASK HAL_MOD_FILE_FM
 #include <log_utils.h>
+#endif
+#else
+#define AHAL_ERR printf
+#define AHAL_DBG printf
 #endif
 
 #ifdef __cplusplus
@@ -64,8 +69,8 @@ enum Command {
 };
 
 struct vmic_module {
-    int32_t g_clientfd;
     bool running;
+    int32_t g_clientfd;
 };
 
 static struct vmic_module vmic = {
@@ -80,7 +85,7 @@ int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
             received = read(vmic.g_clientfd, buf + bytes_read, size - bytes_read);
             if (received > 0) {
                 bytes_read += received;
-                AHAL_DBG("Received %d bytes, total received = %d", received, bytes_read);
+                AHAL_DBG("Received %zd bytes, total received = %zd", received, bytes_read);
                 if (bytes_read != size) continue;
             } else if (received == 0) {
                 AHAL_ERR("Client disconnected.");
@@ -164,7 +169,7 @@ void accept_thread(int serverfd) {
             continue;
         }
         print_socket_buffer_size(clientfd);
-        g_clientfd = clientfd;
+        vmic.g_clientfd = clientfd;
     }
     AHAL_DBG("exit\n");
 }
@@ -203,6 +208,13 @@ int32_t virtual_mic_init() {
     AHAL_DBG("exit");
     return 0;
 }
+#ifdef __ANDROID_NDK__
+int32_t main() {
+    virtual_mic_init();
+    virtual_mic_control(SET_STATE, nullptr, 10);
+    virtual_mic_read(nullptr, 20);
+}
+#endif
 
 #ifdef __cplusplus
 }
