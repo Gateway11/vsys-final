@@ -265,8 +265,7 @@ int main() {
 
     Message msg;
 
-    // Step 1: Send handshake message to server
-    msg.cmd = HANDSHAKE;  // No need to set data for HANDSHAKE
+    msg.cmd = HANDSHAKE;
     if (write(clientfd, &msg, sizeof(msg)) < 0) {
         printf("Failed to send handshake message\n");
         close(clientfd);
@@ -275,26 +274,15 @@ int main() {
 
     printf("Handshake sent, waiting for SET_STATE command...\n");
 
-    // Step 2: Receive SET_STATE command from server
     int bytes_read = read(clientfd, &msg, sizeof(msg));
     if (bytes_read > 0) {
-        // Check if the command is SET_STATE
         if (msg.cmd == SET_STATE) {
-            // Check the state in the data[0] field
             if (msg.data[0] == '1') {
                 printf("Received SET_STATE command: ENABLE\n");
-                // Here you can add logic to enable the feature
             } else if (msg.data[0] == '0') {
                 printf("Received SET_STATE command: DISABLE\n");
-                // Here you can add logic to disable the feature
-            } else {
-                printf("Received SET_STATE command with invalid data\n");
             }
-        } else {
-            printf("Received unknown command\n");
         }
-    } else {
-        printf("Failed to receive SET_STATE command\n");
     }
 
     close(clientfd);
