@@ -65,15 +65,47 @@ enum track_type_t{
     BTCALL
 };
 
+enum op_type_t {
+    HANDSHAKE = 100,
+    STATE_ENABLE = 1,
+    STATE_DISABLE = 2,
+};
+
 std::map<track_type_t, std::list<uint8_t*>> map_tracks;
 std::map<track_type_t, std::shared_ptr<MemoryManager>> map_memorys;
 
+int32_t g_clientfd = -1;
+op_type_t g_type;
 std::mutex mutex;
 std::condition_variable condition;
+
+void clear_socket(int32_t sock) {
+    char buf[2048];
+    ssize_t bytes_read;
+
+    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
+    if (bytes_read < 0 && errno != EWOULDBLOCK) {
+        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
+    } else {
+        AHAL_DBG("Socket buffer cleared successfully.");
+    }
+}
+
+void virtual_mic_control(op_type_t type) {
+    g_type = type;
+    if (g_clientfd > 0) {
+        if (write(g_clientfd, &type, sizeof(type)) < 0) {
+            AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
+        }
+    }
+}
 
 void virtual_mic_start(track_type_t type) {
     std::lock_guard<std::mutex> lg(mutex);
     //map_tracks.emplace(type, std::list<uint8_t*>());
+    if (!map_tracks.size()) {
+        virtual_mic_control(STATE_ENABLE);
+    }
 
     size_t total_memorysize = 2 * 1024 * 1024;  // 2MB
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
@@ -87,35 +119,25 @@ void virtual_mic_stop(track_type_t type) {
     std::lock_guard<std::mutex> lg(mutex);
     map_tracks.erase(type);
     map_memorys.erase(type);
+
+    if (!map_tracks.size()) {
+        virtual_mic_control(STATE_DISABLE);
+    }
 }
 
-int times = 0;
+#include <fstream>
+std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 void virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
-    {
     std::lock_guard<std::mutex> lg(mutex);
     if (map_memorys[type] != nullptr && map_tracks[type].size()) {
         uint8_t* block = map_tracks[type].front();
         if (block != nullptr) {
             memcpy(buf, block, size);
-            times++;
 
             map_tracks[type].pop_front();
             map_memorys[type]->deallocate(block);
+            output.write((const char *)buf, BUFFER_SIZE);
         }
-    }
-    }
-    if (times > 20) virtual_mic_stop(type);
-}
-
-void clear_socket(int32_t sock) {
-    char buf[2048];
-    ssize_t bytes_read;
-
-    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
-    if (bytes_read < 0 && errno != EWOULDBLOCK) {
-        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
-    } else {
-        AHAL_DBG("Socket buffer cleared successfully.");
     }
 }
 
@@ -140,6 +162,7 @@ void recv_thread(int32_t clientfd) {
                 break;
             } else if (received == 0) {
                 AHAL_ERR("Client disconnected.\n");
+                goto exit_thread;
             } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 AHAL_ERR("Receive timed out, no data received for 5 seconds\n");
             } else {
@@ -169,8 +192,6 @@ exit_thread:
 }
 
 void accept_thread(int serverfd) {
-//    Message msg;
-
     AHAL_DBG("enter\n");
     while (true) {
         int32_t clientfd = accept(serverfd, nullptr, nullptr);
@@ -181,20 +202,24 @@ void accept_thread(int serverfd) {
 
         AHAL_DBG("Client connected!\n");
 
-//        int32_t bytes_read = read(clientfd, &msg, sizeof(msg));
-//        if (bytes_read <= 0) {
-//            AHAL_ERR("Failed to receive msg, error=%s", strerror(errno));
-//            close(clientfd);
-//            continue;
-//        }
-//
-//        if (msg.cmd != HANDSHAKE) {
-//            AHAL_ERR("Invalid handshake message received. Expected HANDSHAKE.");
-//            close(clientfd);
-//            continue;
-//        }
+        op_type_t type;
+        int32_t bytes_read = read(clientfd, &type, sizeof(type));
+        if (bytes_read <= 0) {
+            AHAL_ERR("Failed to receive msg, error=%s", strerror(errno));
+            close(clientfd);
+            continue;
+        }
+
+        if (type != HANDSHAKE) {
+            AHAL_ERR("Invalid handshake message received. Expected HANDSHAKE.");
+            close(clientfd);
+            continue;
+        }
         std::thread client_recv_thread(recv_thread, clientfd);
         client_recv_thread.detach();
+
+        g_clientfd = clientfd;
+        virtual_mic_control(g_type);
     }
     AHAL_DBG("exit\n");
 }
@@ -235,16 +260,13 @@ int32_t virtual_mic_init() {
 }
 
 #if 1
-#include <fstream>
 int32_t main() {
     uint8_t buf[BUFFER_SIZE];
-    std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
     virtual_mic_init();
     virtual_mic_start(DEFAULT);
     while (true) {
         virtual_mic_read(DEFAULT, buf, BUFFER_SIZE);
-        output.write((const char *)buf, BUFFER_SIZE);
     }
     virtual_mic_stop(DEFAULT);
 }

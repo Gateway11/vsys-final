@@ -5,23 +5,40 @@
 #include <cstring>
 #include <fstream>
 #include <thread>
+#include <condition_variable>
 
 #define SOCKET_PATH "/tmp/unix_socket"
 #define BUFFER_SIZE 3840
+
+enum op_type_t {
+    HANDSHAKE = 100,
+    STATE_ENABLE = 1,
+    STATE_DISABLE = 2,
+};
+
+op_type_t g_type = HANDSHAKE;
+std::mutex mutex;
+std::condition_variable condition;
 
 void send_thread(int32_t sock) {
     uint8_t buf[BUFFER_SIZE];
     //std::ifstream input("/sdcard/Music/16000.4.16bit.pcm", std::ios::in | std::ios::binary);
     std::ifstream input("/Users/daixiang/Music/test.wav", std::ios::in | std::ios::binary);
+    std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 
     while (true) {
+        locker.lock();
+        if (g_type != STATE_ENABLE) {
+            condition.wait(locker, [&]{ return g_type != STATE_ENABLE; });
+        }
+        locker.unlock();
         if (input.good()) {
             input.read((char *)buf, sizeof(buf));
 
             int32_t bytes_sent = send(sock, buf, sizeof(buf), MSG_NOSIGNAL);
             if (bytes_sent == -1) {
                 if (errno == EPIPE || errno == ECONNRESET) {
-                    printf("Server has disconnected.\n");
+                    printf("Server disconnected.\n");
                 } else {
                     printf("Failed to send data.\n");
                 }   
@@ -35,6 +52,24 @@ void send_thread(int32_t sock) {
         }   
     }   
 }
+
+void recv_thread(int32_t clientfd) {
+    while (true) {
+        ssize_t bytes_read = read(clientfd, &g_type, sizeof(g_type));
+        if (bytes_read > 0) {
+            printf("Received %zd bytes, data=%d\n", bytes_read, g_type);
+            condition.notify_one();
+        } else if (bytes_read == 0) {
+            printf("Server disconnected.\n");
+            break;
+        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            printf("Receive timed out, no data received for 5 seconds\n");
+        } else {
+            printf("Failed to receive data, error=%s\n", strerror(errno));
+        }
+    }
+}
+
 
 int main() {
     int32_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -58,40 +93,15 @@ int main() {
     }
 
     printf("Connected to server '%s' success, socket id=%d\n", SOCKET_PATH, sock);
-    send_thread(sock);
-#if 0
-    Message msg;
 
-    msg.cmd = HANDSHAKE;  // No need to set data for HANDSHAKE
-    if (write(sock, &msg, sizeof(msg)) < 0) {
+    if (write(sock, &g_type, sizeof(g_type)) < 0) {
         printf("Failed to send handshake message\n");
         close(sock);
         return -1;
     }
 
-    int bytes_read = read(sock, &msg, sizeof(msg));
-    if (bytes_read > 0) {
-        // Check if the command is SET_STATE
-        if (msg.cmd == SET_STATE) {
-            // Check the state in the data[0] field
-            if (msg.data[0] == '1') {
-                printf("Received SET_STATE command: ENABLE\n");
-                // Here you can add logic to enable the feature
-            } else if (msg.data[0] == '0') {
-                printf("Received SET_STATE command: DISABLE\n");
-                // Here you can add logic to disable the feature
-            } else {
-                printf("Received SET_STATE command with invalid data\n");
-            }
-        } else {
-            printf("Received unknown command\n");
-        }
-    } else {
-        printf("Failed to receive SET_STATE command\n");
-    }
-
-    // Close socket
-    close(sock);
-#endif
+    std::thread client_recv_thread(recv_thread, sock);
+    client_recv_thread.detach();
+    send_thread(sock);
     return 0;
 }
