@@ -106,7 +106,7 @@ void virtual_mic_control(Command type, void *data, ssize_t size) {
     }   
 }
 
-void print_socket_buffer_size(int sock) {
+void print_socket_buffer_size(int32_t sock) {
     int32_t rcvbuf_size;
     socklen_t optlen = sizeof(int32_t);
 
