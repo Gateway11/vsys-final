@@ -50,18 +50,86 @@ extern "C" {
 
 #define SOCKET_PATH "/dev/socket/audioserver/virtual_mic"
 
-static int32_t g_clientfd;
 struct Message {
-    int cmd;         // Command type (e.g., HANDSHAKE, SET_STATE)
+    int cmd;         // Command type (e.g., UNKNOWN, HANDSHAKE, SET_STATE, BTCALL_STATE)
                      // Command type (e.g., HANDSHAKE, ENABLE, DISABLE)
     char data[32];
 };
 
 enum Command {
+    UNKNOWN = 0,
     HANDSHAKE = 1,
     // Uses the data field to specify the state: data[0] = 0 for DISABLE, data[0] = 1 for ENABLE
-    SET_STATE = 2
+    SET_STATE = 2,
+    BTCALL_STATE = 3,
 };
+
+struct vmic_module {
+    int32_t g_clientfd;
+    Command current_state;
+    bool btCallEnable;
+};
+
+static struct vmic_module vmic = {
+    .g_clientfd = -1,
+    .current_state = UNKNOWN,
+    .btCallEnable = false,
+};
+
+int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
+    ssize_t bytes_read = 0, received;
+    if (vmic.g_clientfd > 0) {
+        while(true) {
+            received = read(vmic.g_clientfd, buf + bytes_read, size - bytes_read);
+            if (received > 0) {
+                bytes_read += received;
+                AHAL_DBG("Received %d bytes, total received = %d", received, bytes_read);
+                if (bytes_read != size) continue;
+            } else if (received == 0) {
+                AHAL_ERR("Client disconnected.");
+            } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                AHAL_ERR("Receive timed out, no data received for 5 seconds");
+            } else {
+                AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
+            }
+            break;
+        }
+    }
+    if (bytes_read && vmic.btCallEnable) {
+        // TODO
+    }
+    return bytes_read;
+}
+
+void clear_socket(int32_t sock) {
+    char buf[2048];
+    ssize_t bytes_read;
+
+    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
+    if (bytes_read < 0 && errno != EWOULDBLOCK) {
+        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
+    } else {
+        AHAL_DBG("Socket buffer cleared successfully.");
+    }
+}
+
+void virtual_mic_control(Command type, void *data, ssize_t size) {
+    Message msg;
+
+    if (vmic.current_state != UNKNOWN && *(bool *)data) {
+        clear_socket(vmic.g_clientfd);
+    }
+    msg.cmd = type;
+    if (type == BTCALL_STATE) {
+        vmic.btCallEnable = *(bool *)data;
+        msg.cmd = SET_STATE;
+    }
+    memcpy(msg.data, data, size);
+    if (write(vmic.g_clientfd, &msg, sizeof(msg)) < 0) {
+        AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
+    }
+    vmic.current_state = type;
+}
 
 void print_socket_buffer_size(int32_t sock) {
     int32_t rcvbuf_size;
@@ -115,7 +183,6 @@ void accept_thread(int serverfd) {
 int32_t virtual_mic_init() {
     AHAL_DBG("enter");
 
-    g_clientfd = -1;
     int32_t serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (serverfd < 0) {
         AHAL_ERR("Failed to create socket, error=%s", strerror(errno));
@@ -146,49 +213,6 @@ int32_t virtual_mic_init() {
 
     AHAL_DBG("exit");
     return 0;
-}
-
-int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
-    int32_t bytes_read = 0;
-    if (clientfd > 0) {
-        bytes_read = read(clientfd, buf, size);
-        if (bytes_read > 0) {
-            AHAL_DBG("Received data, num_read=%d", num_read);
-        } else if (bytes_read == 0) {
-            AHAL_ERR("Client disconnected.");
-        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            AHAL_ERR("Receive timed out, no data received for 5 seconds");
-        } else {
-            AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
-        }
-    }
-    return bytes_read < 0 ? 0 : bytes_read;
-}
-
-void clear_socket(int32_t sock) {
-    char buf[2048];
-    int32_t bytes_read;
-
-    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
-    if (bytes_read < 0 && errno != EWOULDBLOCK) {
-        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
-    } else {
-        AHAL_DBG("Socket buffer cleared successfully.");
-    }
-}
-
-void virtual_mic_control(Command type, void *data, ssize_t size) {
-    Message msg;
-
-    if (type == SET_STATE && *(bool *)data) {
-        clear_socket(clientfd);
-    }
-
-    msg.cmd = type;
-    memcpy(msg.data, data, size);
-    if (write(clientfd, &msg, sizeof(msg)) < 0) {
-        AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
-    }
 }
 
 #ifdef __cplusplus
