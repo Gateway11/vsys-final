@@ -104,10 +104,11 @@ void virtual_mic_start(track_type_t type) {
     std::lock_guard<std::mutex> lg(mutex);
     //map_tracks.emplace(type, std::list<uint8_t*>());
     if (!map_tracks.size()) {
+        clear_socket(g_clientfd);
         virtual_mic_control(STATE_ENABLE);
     }
 
-    size_t total_memorysize = 2 * 1024 * 1024;  // 2MB
+    size_t total_memorysize = 1 * 1024 * 1024;  // 1MB
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
     map_tracks.try_emplace(type, std::list<uint8_t*>());
@@ -174,7 +175,6 @@ void recv_thread(int32_t clientfd) {
         if (map_tracks.empty()) {
             printf("dddddddddddddddddddddddddddddddddd  %d\n", __LINE__);
             condition.wait(locker, [&]{ return !map_tracks.empty(); });
-            //clear_socket(clientfd);
         } else {
             for (auto& track: map_tracks) {
                 void* block = map_memorys[track.first]->allocate();
