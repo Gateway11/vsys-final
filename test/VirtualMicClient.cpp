@@ -79,25 +79,22 @@ struct Track {
             return;
         }   
 
-        struct sockaddr_un addr;
-        memset(&addr, 0, sizeof(struct sockaddr_un));
-        addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1); 
+        std::thread thread([&]{
+            struct sockaddr_un addr;
+            memset(&addr, 0, sizeof(struct sockaddr_un));
+            addr.sun_family = AF_UNIX;
+            strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
 
- //       std::thread thread([&]{
             while(1) {
                 int32_t ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-                printf("%d, ret=%d\n", __LINE__, ret);
                 if(ret == 0)
                     break;
 
-                printf("%d\n", __LINE__);
-                AHAL_ERR("Connect to server '%s' failed, error=%s\n", SOCKET_PATH, strerror(errno));
+                AHAL_ERR("Connect to server '%s' failed, %s", SOCKET_PATH, strerror(errno));
                 usleep(10*1000); //10ms
-                printf("%d\n", __LINE__);
             }   
 
-            AHAL_DBG("Connected to server '%s' success, socket id=%d", SOCKET_PATH, sock);
+            AHAL_DBG("Connected to server '%s' success, socket id=%d\n", SOCKET_PATH, sock);
 
             struct timeval tv = { .tv_usec = 300/* ms */ * 1000 };
             if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
@@ -105,8 +102,8 @@ struct Track {
                 close(sock);
             }
             is_connected = true;
- //       });
- //       thread.detach();
+        });
+        thread.detach();
     }
 
     void print_socket_buffer_size() {
@@ -127,7 +124,7 @@ struct Track {
                 received = read(sock, buf + bytes_read, size - bytes_read);
                 if (received > 0) {
                     bytes_read += received;
-                    AHAL_DBG("Received %zd bytes, total received = %zd\n", received, bytes_read);
+                    AHAL_DBG("Received %zd bytes, total received = %zd", received, bytes_read);
                     if (bytes_read != size) continue;
                 } else if (received == 0) {
                     AHAL_ERR("Client disconnected.");
@@ -163,16 +160,15 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
 #include <fstream>
 int32_t main() {
     uint8_t buf[3840];
-    //std::ofstream output("./16000.2.16bit.pcm", std::ios::out | std::ios::binary);
-    std::ofstream output("./16000.2.16bit.wav", std::ios::out | std::ios::binary);
+    std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
     virtual_mic_start(DEFAULT);
     while (true) {
         ssize_t bytes_read = virtual_mic_read(DEFAULT, buf, sizeof(buf));;
-        if (bytes_read <= 0) break;
+        //if (bytes_read <= 0) break;
         output.write((const char *)buf, bytes_read);
     }
-    virtual_mic_start(DEFAULT);
+    virtual_mic_stop(DEFAULT);
 }
 #else
 
