@@ -87,11 +87,9 @@ int32_t main() {
             continue;
         }
 
-        printf("Client connected!, sock=%d, %lu\n", clientfd);
-        {
-            std::lock_guard<std::mutex> lg(mutex);
-            sockets.push_back(clientfd);
-        }
+        printf("Client connected!, sock=%d\n", clientfd);
+        std::lock_guard<std::mutex> lg(mutex);
+        sockets.push_back(clientfd);
         condition.notify_one();
     }
     return 0;
