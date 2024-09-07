@@ -19,11 +19,12 @@ enum op_type_t {
 op_type_t g_type = HANDSHAKE;
 std::mutex mutex;
 std::condition_variable condition;
+std::ifstream input;
 
 void send_thread(int32_t sock) {
     uint8_t buf[BUFFER_SIZE];
     //std::ifstream input("/sdcard/Music/16000.4.16bit.pcm", std::ios::in | std::ios::binary);
-    std::ifstream input("/Users/daixiang/Music/test.wav", std::ios::in | std::ios::binary);
+    //std::ifstream input("/Users/daixiang/Music/test.wav", std::ios::in | std::ios::binary);
     std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 
     while (true) {
@@ -71,7 +72,12 @@ void recv_thread(int32_t clientfd) {
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: ./client [file path] \n");
+        return 0;
+    }
+
     int32_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
         printf("Failed to create socket\n");
@@ -99,6 +105,7 @@ int main() {
         close(sock);
         return -1;
     }
+    input.open(argv[1], std::ios::in | std::ios::binary);
 
     std::thread client_recv_thread(recv_thread, sock);
     client_recv_thread.detach();
