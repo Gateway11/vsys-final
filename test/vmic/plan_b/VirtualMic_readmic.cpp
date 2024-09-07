@@ -129,16 +129,24 @@ void virtual_mic_stop(track_type_t type) {
 #include <fstream>
 std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 void virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
-    std::lock_guard<std::mutex> lg(mutex);
-    if (map_memorys[type] != nullptr && map_tracks[type].size()) {
-        uint8_t* block = map_tracks[type].front();
-        if (block != nullptr) {
-            memcpy(buf, block, size);
+    int32_t time = 3;
+    while (time--) {
+        printf("dddddddddddddddddddddddddddd %d, %zu\n", time, map_tracks[type].size());
+        {
+            std::lock_guard<std::mutex> lg(mutex);
+            if (map_memorys[type] != nullptr && map_tracks[type].size()) {
+                uint8_t* block = map_tracks[type].front();
+                if (block != nullptr) {
+                    memcpy(buf, block, size);
 
-            map_tracks[type].pop_front();
-            map_memorys[type]->deallocate(block);
-            output.write((const char *)buf, BUFFER_SIZE);
+                    map_tracks[type].pop_front();
+                    map_memorys[type]->deallocate(block);
+                    output.write((const char *)buf, BUFFER_SIZE); // debug
+                    break;
+                }
+            }
         }
+        std::this_thread::sleep_for(std::chrono::microseconds(15));
     }
 }
 
@@ -157,8 +165,8 @@ void recv_thread(int32_t clientfd) {
             received = read(clientfd, buf + bytes_read, BUFFER_SIZE - bytes_read);
             if (received > 0) {
                 bytes_read += received;
-                AHAL_DBG("Received %zd bytes, total received = %zd, %lu\n",
-                        received, bytes_read, map_tracks.size());
+                //AHAL_DBG("Received %zd bytes, total received = %zd, %lu\n",
+                //        received, bytes_read, map_tracks.size());
                 if (bytes_read != BUFFER_SIZE) continue;
                 break;
             } else if (received == 0) {
@@ -181,6 +189,8 @@ void recv_thread(int32_t clientfd) {
                 if (block != nullptr) {
                     memcpy(block, buf, bytes_read);
                     track.second.push_back((uint8_t *)block);
+                } else {
+                    printf("Porcess overflow\n");
                 }
             }
         }

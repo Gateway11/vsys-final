@@ -72,7 +72,7 @@ void recv_thread(int32_t clientfd) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Usage: ./client [file path] \n");
+        printf("Usage: ./client /Users/daixiang/Music/test.wav \n");
         return 0;
     }
 
