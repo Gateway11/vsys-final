@@ -108,7 +108,7 @@ void virtual_mic_start(track_type_t type) {
         virtual_mic_control(STATE_ENABLE);
     }
 
-    size_t total_memorysize = 1 * 1024 * 1024;  // 1MB
+    size_t total_memorysize = 2 * 1024 * 1024;  // 2MB
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
     map_tracks.try_emplace(type, std::list<uint8_t*>());
@@ -126,12 +126,10 @@ void virtual_mic_stop(track_type_t type) {
     }
 }
 
-#include <fstream>
-std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
-void virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
-    int32_t time = 3;
+ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
+    ssize_t bytes_read = 0, time = 5;
     while (time--) {
-        printf("dddddddddddddddddddddddddddd %d, %zu\n", time, map_tracks[type].size());
+        printf("dddddddddddddddddddddddddddd %zd, %zu\n", time, map_tracks[type].size());
         {
             std::lock_guard<std::mutex> lg(mutex);
             if (map_memorys[type] != nullptr && map_tracks[type].size()) {
@@ -141,13 +139,14 @@ void virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
 
                     map_tracks[type].pop_front();
                     map_memorys[type]->deallocate(block);
-                    output.write((const char *)buf, BUFFER_SIZE); // debug
+                    bytes_read = size;
                     break;
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(15));
+        std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
+    return bytes_read;
 }
 
 void recv_thread(int32_t clientfd) {
@@ -270,13 +269,17 @@ int32_t virtual_mic_init() {
 }
 
 #if 1
+#include <fstream>
+std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 int32_t main() {
     uint8_t buf[BUFFER_SIZE];
 
     virtual_mic_init();
     virtual_mic_start(DEFAULT);
     while (true) {
-        virtual_mic_read(DEFAULT, buf, BUFFER_SIZE);
+        ssize_t ret = virtual_mic_read(DEFAULT, buf, BUFFER_SIZE);
+        if (ret)
+            output.write((const char *)buf, BUFFER_SIZE);
     }
     virtual_mic_stop(DEFAULT);
 }
