@@ -94,7 +94,7 @@ struct Track {
                 usleep(10*1000); //10ms
             }   
 
-            AHAL_DBG("Connected to server '%s' success, socket id=%d\n", SOCKET_PATH, sock);
+            AHAL_DBG("Connected to server '%s' success, socket id=%d", SOCKET_PATH, sock);
 
             struct timeval tv = { .tv_usec = 300/* ms */ * 1000 };
             if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
