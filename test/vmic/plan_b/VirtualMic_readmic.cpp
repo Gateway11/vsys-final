@@ -81,9 +81,7 @@ void virtual_mic_start(track_type_t type) {
 
     map_tracks.try_emplace(type, std::list<uint8_t*>());
     map_memorys.try_emplace(type, std::make_shared<MemoryManager>(totalmap_memorysize, blockSize));
-
-    //map_memorys[type]->displayUsage();
-    condition.notify_one();
+    condition.notify_all();
 }
 
 void virtual_mic_stop(track_type_t type) {
@@ -92,17 +90,22 @@ void virtual_mic_stop(track_type_t type) {
     map_memorys.erase(type);
 }
 
+int times = 0;
 void virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
+    {
     std::lock_guard<std::mutex> lg(mutex);
-    if (map_tracks[type].size()) {
+    if (map_memorys[type] != nullptr && map_tracks[type].size()) {
         uint8_t* block = map_tracks[type].front();
         if (block != nullptr) {
             memcpy(buf, block, size);
+            times++;
 
             map_tracks[type].pop_front();
             map_memorys[type]->deallocate(block);
         }
     }
+    }
+    if (times > 20) virtual_mic_stop(type);
 }
 
 void clear_socket(int32_t sock) {
@@ -149,16 +152,16 @@ void recv_thread(int32_t clientfd) {
         }
         locker.lock();
         if (map_tracks.empty()) {
+            printf("dddddddddddddddddddddddddddddddddd  %d\n", __LINE__);
             condition.wait(locker, [&]{ return !map_tracks.empty(); });
             //clear_socket(clientfd);
-            printf("00000000000000000000000000 \n");
-            continue;
-        }
-        for (auto& track: map_tracks) {
-            void* block = map_memorys[track.first]->allocate();
-            if (block != nullptr) {
-                memcpy(block, buf, bytes_read);
-                track.second.push_back((uint8_t *)block);
+        } else {
+            for (auto& track: map_tracks) {
+                void* block = map_memorys[track.first]->allocate();
+                if (block != nullptr) {
+                    memcpy(block, buf, bytes_read);
+                    track.second.push_back((uint8_t *)block);
+                }
             }
         }
         locker.unlock();
