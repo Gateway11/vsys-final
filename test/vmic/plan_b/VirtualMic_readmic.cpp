@@ -75,11 +75,11 @@ void virtual_mic_start(track_type_t type) {
     std::lock_guard<std::mutex> lg(mutex);
     //map_tracks.emplace(type, std::list<uint8_t*>());
 
-    size_t totalmap_memorysize = 2 * 1024 * 1024;  // 2MB
+    size_t total_memorysize = 2 * 1024 * 1024;  // 2MB
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
     map_tracks.try_emplace(type, std::list<uint8_t*>());
-    map_memorys.try_emplace(type, std::make_shared<MemoryManager>(totalmap_memorysize, blockSize));
+    map_memorys.try_emplace(type, std::make_shared<MemoryManager>(total_memorysize, blockSize));
     condition.notify_all();
 }
 
