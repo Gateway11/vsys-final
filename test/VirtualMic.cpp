@@ -36,7 +36,7 @@
 #include <cstring>
 #include <thread>
 #include <sys/time.h>
-#ifndef __ANDROID_NDK__
+#if 0
 #include <log/log.h>
 
 #ifdef DYNAMIC_LOG_ENABLED
@@ -49,11 +49,12 @@
 #define AHAL_DBG printf
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
-#define SOCKET_PATH "/dev/socket/audioserver/virtual_mic"
+//#define SOCKET_PATH "/dev/socket/audioserver/virtual_mic"
+#define SOCKET_PATH "/tmp/unix_socket"
 
 struct Message {
     int cmd;         // Command type (e.g., HANDSHAKE, SET_STATE)
@@ -106,7 +107,7 @@ void clear_socket(int32_t sock) {
 
     while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
     if (bytes_read < 0 && errno != EWOULDBLOCK) {
-        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
+        AHAL_ERR("Error reading socket buffer: %s\n", strerror(errno));
     } else {
         AHAL_DBG("Socket buffer cleared successfully.");
     }
@@ -139,7 +140,7 @@ void print_socket_buffer_size(int32_t sock) {
 void accept_thread(int serverfd) {
     Message msg;
 
-    AHAL_DBG("enter");
+    AHAL_DBG("enter\n");
     while (true) {
         int32_t clientfd = accept(serverfd, nullptr, nullptr);
         if (clientfd < 0) {
@@ -147,7 +148,7 @@ void accept_thread(int serverfd) {
             continue;
         }
 
-        AHAL_DBG("Client connected!");
+        AHAL_DBG("Client connected!\n");
 
         struct timeval tv = { .tv_usec = 300/* ms */ * 1000 };
         if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
@@ -175,7 +176,7 @@ void accept_thread(int serverfd) {
 }
 
 int32_t virtual_mic_init() {
-    AHAL_DBG("enter");
+    AHAL_DBG("enter\n");
 
     int32_t serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (serverfd < 0) {
@@ -201,24 +202,31 @@ int32_t virtual_mic_init() {
         return -1;
     }
 
-    AHAL_DBG("Server is waiting for connections...");
+    AHAL_DBG("Server is waiting for connections...\n");
     std::thread accept_thread_handle(accept_thread, serverfd);
     accept_thread_handle.detach();
 
-    AHAL_DBG("exit");
+    AHAL_DBG("exit\n");
     return 0;
 }
-#ifdef __ANDROID_NDK__
+#if 1
+#include <fstream>
 int32_t main() {
+    uint8_t buf[3840];
+    std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
+
     virtual_mic_init();
-    virtual_mic_control(SET_STATE, nullptr, 10);
-    virtual_mic_read(nullptr, 20);
+    virtual_mic_control(SET_STATE, (bool[]){true}, sizeof(bool));
+    while (true) {
+        ssize_t bytes_read = virtual_mic_read(buf, sizeof(buf));
+        output.write((const char *)buf, bytes_read);
+    }
 }
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 
 #if 0
