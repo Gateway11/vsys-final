@@ -63,49 +63,6 @@ enum Command {
     SET_STATE = 2
 };
 
-int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
-    int32_t bytes_read = 0;
-    if (clientfd > 0) {
-        bytes_read = read(clientfd, buf, size);
-        if (bytes_read > 0) {
-            AHAL_DBG("Received data, num_read=%d", num_read);
-        } else if (bytes_read == 0) {
-            AHAL_ERR("Client disconnected.");
-        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            AHAL_ERR("Receive timed out, no data received for 5 seconds");
-        } else {
-            AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
-        }
-    }
-    return bytes_read < 0 ? 0 : bytes_read;
-}
-
-void clear_socket(int32_t sock) {
-    char buf[2048];
-    int32_t bytes_read;
-
-    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
-    if (bytes_read < 0 && errno != EWOULDBLOCK) {
-        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
-    } else {
-        AHAL_DBG("Socket buffer cleared successfully.");
-    }
-}
-
-void virtual_mic_control(Command type, void *data, ssize_t size) {
-    Message msg;
-
-    if (type == SET_STATE && *(bool *)data) {
-        clear_socket(clientfd);
-    }
-
-    msg.cmd = type;
-    memcpy(msg.data, data, size);
-    if (write(clientfd, &msg, sizeof(msg)) < 0) {
-        AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
-    }   
-}
-
 void print_socket_buffer_size(int32_t sock) {
     int32_t rcvbuf_size;
     socklen_t optlen = sizeof(int32_t);
@@ -191,6 +148,107 @@ int32_t virtual_mic_init() {
     return 0;
 }
 
+int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
+    int32_t bytes_read = 0;
+    if (clientfd > 0) {
+        bytes_read = read(clientfd, buf, size);
+        if (bytes_read > 0) {
+            AHAL_DBG("Received data, num_read=%d", num_read);
+        } else if (bytes_read == 0) {
+            AHAL_ERR("Client disconnected.");
+        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            AHAL_ERR("Receive timed out, no data received for 5 seconds");
+        } else {
+            AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
+        }
+    }
+    return bytes_read < 0 ? 0 : bytes_read;
+}
+
+void clear_socket(int32_t sock) {
+    char buf[2048];
+    int32_t bytes_read;
+
+    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
+    if (bytes_read < 0 && errno != EWOULDBLOCK) {
+        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
+    } else {
+        AHAL_DBG("Socket buffer cleared successfully.");
+    }
+}
+
+void virtual_mic_control(Command type, void *data, ssize_t size) {
+    Message msg;
+
+    if (type == SET_STATE && *(bool *)data) {
+        clear_socket(clientfd);
+    }
+
+    msg.cmd = type;
+    memcpy(msg.data, data, size);
+    if (write(clientfd, &msg, sizeof(msg)) < 0) {
+        AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
+    }
+}
+
 #ifdef __cplusplus
+}
+#endif
+
+
+#if 0
+#define VMIC_LIB_PATH LIBS"libvmicpal.so"
+
+//START: VIRTUAL MIC ==============================================================================
+typedef int32_t (*virtual_mic_init_t)();
+typedef int32_t (*virtual_mic_read_t)(uint8_t*, ssize_t);
+typedef void (*virtual_mic_control_t)(Command, void*, ssize_t);
+
+static void* libvmic;
+static virtual_mic_init_t virtual_mic_init;
+static virtual_mic_read_t virtual_mic_read;
+static virtual_mic_control_t virtual_mic_control;
+
+void AudioExtn::audio_extn_virtual_mic_init(bool enabled)
+{
+
+    AHAL_DBG("Enter: enabled: %d", enabled);
+
+    if(enabled){
+        if(!libvmic)
+            libvmic = dlopen(VMIC_LIB_PATH, RTLD_NOW);
+
+        if (!libvmic) {
+            AHAL_ERR("dlopen failed with: %s", dlerror());
+            return;
+        }
+
+        virtual_mic_init = (virtual_mic_init_t) dlsym(libvmic, "virtual_mic_init");
+        virtual_mic_read = (virtual_mic_read_t) dlsym(libvmic, "virtual_mic_read");
+        virtual_mic_control = (virtual_mic_control_t) dlsym(libvmic, "virtual_mic_control");
+
+        if(!virtual_mic_init || !virtual_mic_read || !virtual_mic_control){
+            AHAL_ERR("%s", dlerror());
+            dlclose(libvmic);
+        }
+    }
+    AHAL_DBG("Exit");
+}
+
+int32_t AudioExtn::audio_extn_virtual_mic_init(){
+    if(virtual_mic_init)
+        return virtual_mic_init();
+    return 0;
+}
+
+int32_t AudioExtn::audio_extn_virtual_mic_read(uint8_t* buf, ssize_t size){
+   if(virtual_mic_read)
+        return virtual_mic_read(buf, size);
+   return 0;
+}
+
+void AudioExtn::audio_extn_virtual_mic_control(Command type, void *data, ssize_t size){
+   if(virtual_mic_control)
+        virtual_mic_control(type, data, size);
 }
 #endif
