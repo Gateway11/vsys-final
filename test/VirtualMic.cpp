@@ -81,12 +81,12 @@ int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
 }
 
 void clear_socket(int32_t sock) {
-    char buffer[2048];
+    char buf[2048];
     int32_t bytes_read;
 
-    while ((bytes_read = recv(sock, buffer, sizeof(buffer), MSG_DONTWAIT)) > 0);
+    while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
     if (bytes_read < 0 && errno != EWOULDBLOCK) {
-        AHAL_ERR("Error reading socket buffer: %s\n", strerror(errno));
+        AHAL_ERR("Error reading socket buffer: %s", strerror(errno));
     } else {
         AHAL_DBG("Socket buffer cleared successfully.");
     }
