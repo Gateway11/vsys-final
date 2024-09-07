@@ -17,7 +17,7 @@ std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 void send_thread() {
     uint8_t buf[3840];
     //std::ifstream input("/sdcard/Music/16000.4.16bit.pcm", std::ios::in | std::ios::binary);
-    std::ifstream input("~/Music/test.wav", std::ios::in | std::ios::binary);
+    std::ifstream input("/Users/daixiang/Music/test.wav", std::ios::in | std::ios::binary);
 
     while (true) {
         int32_t sock_tmp = -1;
@@ -29,15 +29,16 @@ void send_thread() {
         }
         if (input.good()) {
             input.read((char *)buf, sizeof(buf));
-        }
-        for (auto sock: sockets) {
-            int32_t bytes_sent = send(sock, buf, sizeof(buf), MSG_NOSIGNAL);
-            if (bytes_sent == -1) {
-                if (errno == EPIPE || errno == ECONNRESET) {
-                    printf("Client has disconnected.\n");
-                    sock_tmp = sock;
-                } else {
-                    printf("Failed to send data.\n");
+
+            for (auto sock: sockets) {
+                int32_t bytes_sent = send(sock, buf, sizeof(buf), MSG_NOSIGNAL);
+                if (bytes_sent == -1) {
+                    if (errno == EPIPE || errno == ECONNRESET) {
+                        printf("Client has disconnected.\n");
+                        sock_tmp = sock;
+                    } else {
+                        printf("Failed to send data.\n");
+                    }
                 }
             }
         }
