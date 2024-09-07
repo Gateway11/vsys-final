@@ -23,8 +23,6 @@ std::ifstream input;
 
 void send_thread(int32_t sock) {
     uint8_t buf[BUFFER_SIZE];
-    //std::ifstream input("/sdcard/Music/16000.4.16bit.pcm", std::ios::in | std::ios::binary);
-    //std::ifstream input("/Users/daixiang/Music/test.wav", std::ios::in | std::ios::binary);
     std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 
     while (true) {
