@@ -12,20 +12,19 @@
 std::list<int32_t> sockets;
 std::mutex mutex;
 std::condition_variable condition;
-std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 
 void send_thread() {
     uint8_t buf[3840];
     //std::ifstream input("/sdcard/Music/16000.4.16bit.pcm", std::ios::in | std::ios::binary);
     std::ifstream input("/Users/daixiang/Music/test.wav", std::ios::in | std::ios::binary);
+    std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 
     while (true) {
         int32_t sock_tmp = -1;
 
         locker.lock();
         if (sockets.empty()) {
-            condition.wait(locker, [&]{return !sockets.empty();});
-            input.seekg(0, std::ios::beg);
+            condition.wait(locker, [&]{ return !sockets.empty(); });
         }
         if (input.good()) {
             input.read((char *)buf, sizeof(buf));
@@ -41,6 +40,11 @@ void send_thread() {
                     }
                 }
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+            input.clear();
+            input.seekg(0, std::ios::beg);
         }
         if (sock_tmp > 0) sockets.remove(sock_tmp);
         locker.unlock();
@@ -83,10 +87,11 @@ int32_t main() {
             continue;
         }
 
-        printf("Client connected!\n");
-
-        std::lock_guard<std::mutex> lg(mutex);
-        sockets.push_back(clientfd);
+        printf("Client connected!, sock=%d, %lu\n", clientfd, sockets.size());
+        {
+            std::lock_guard<std::mutex> lg(mutex);
+            sockets.push_back(clientfd);
+        }
         condition.notify_one();
     }
     return 0;
