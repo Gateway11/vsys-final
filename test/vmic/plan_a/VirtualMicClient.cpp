@@ -124,12 +124,12 @@ struct Track {
                 received = read(sock, buf + bytes_read, size - bytes_read);
                 if (received > 0) {
                     bytes_read += received;
-                    AHAL_DBG("Received %zd bytes, total received = %zd", received, bytes_read);
+                    AHAL_DBG("Received %zd bytes, total received = %zd\n", received, bytes_read);
                     if (bytes_read != size) continue;
                 } else if (received == 0) {
                     AHAL_ERR("Client disconnected.");
                 } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    AHAL_ERR("Receive timed out, no data received for 5 seconds");
+                    AHAL_ERR("Receive timed out, no data received for 5 seconds\n");
                 } else {
                     AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
                 }
