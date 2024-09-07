@@ -51,7 +51,7 @@ extern "C" {
 #define SOCKET_PATH "/dev/socket/audioserver/virtual_mic"
 
 struct Message {
-    int cmd;         // Command type (e.g., UNKNOWN, HANDSHAKE, SET_STATE, BTCALL_STATE)
+    int cmd;         // Command type (e.g., HANDSHAKE, SET_STATE)
                      // Command type (e.g., HANDSHAKE, ENABLE, DISABLE)
     char data[32];
 };
@@ -61,19 +61,16 @@ enum Command {
     HANDSHAKE = 1,
     // Uses the data field to specify the state: data[0] = 0 for DISABLE, data[0] = 1 for ENABLE
     SET_STATE = 2,
-    BTCALL_STATE = 3,
 };
 
 struct vmic_module {
     int32_t g_clientfd;
-    Command current_state;
-    bool btCallEnable;
+    bool running;
 };
 
 static struct vmic_module vmic = {
+    .running = false,
     .g_clientfd = -1,
-    .current_state = UNKNOWN,
-    .btCallEnable = false,
 };
 
 int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
@@ -95,9 +92,6 @@ int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
             break;
         }
     }
-    if (bytes_read && vmic.btCallEnable) {
-        // TODO
-    }
     return bytes_read;
 }
 
@@ -116,19 +110,14 @@ void clear_socket(int32_t sock) {
 void virtual_mic_control(Command type, void *data, ssize_t size) {
     Message msg;
 
-    if (vmic.current_state != UNKNOWN && *(bool *)data) {
+    if (type == SET_STATE && *(bool *)data) {
         clear_socket(vmic.g_clientfd);
     }
     msg.cmd = type;
-    if (type == BTCALL_STATE) {
-        vmic.btCallEnable = *(bool *)data;
-        msg.cmd = SET_STATE;
-    }
     memcpy(msg.data, data, size);
     if (write(vmic.g_clientfd, &msg, sizeof(msg)) < 0) {
         AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
     }
-    vmic.current_state = type;
 }
 
 void print_socket_buffer_size(int32_t sock) {
