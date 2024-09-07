@@ -68,7 +68,6 @@ enum track_type_t{
 std::map<track_type_t, std::list<uint8_t*>> map_tracks;
 std::map<track_type_t, std::shared_ptr<MemoryManager>> map_memorys;
 
-int32_t g_clientfd;
 std::mutex mutex;
 std::condition_variable condition;
 
@@ -127,8 +126,7 @@ void recv_thread(int32_t clientfd) {
     struct timeval tv = { .tv_usec = 300/* ms */ * 1000 };
     if (setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         AHAL_ERR("Failed to set socket receive timeout, error=%s", strerror(errno));
-        close(clientfd);
-        return;
+        goto exit_thread;
     }
     while (true) {
         ssize_t bytes_read = 0, received;
@@ -147,8 +145,7 @@ void recv_thread(int32_t clientfd) {
             } else {
                 AHAL_ERR("Failed to receive data, error=%s\n", strerror(errno));
             }
-            close(clientfd);
-            return;
+            goto exit_thread;
         }
         locker.lock();
         if (map_tracks.empty()) {
@@ -166,7 +163,9 @@ void recv_thread(int32_t clientfd) {
         }
         locker.unlock();
     }
+exit_thread:
     close(clientfd);
+    AHAL_DBG("exit\n");
 }
 
 void accept_thread(int serverfd) {
