@@ -59,6 +59,7 @@ void recv_thread(int32_t clientfd) {
             condition.notify_one();
         } else if (num_read == 0) {
             printf("Server disconnected.\n");
+            close(sock);
             break;
         }
     }

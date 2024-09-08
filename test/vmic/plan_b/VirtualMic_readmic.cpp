@@ -175,7 +175,7 @@ void recv_thread(int32_t clientfd) {
             } else {
                 AHAL_ERR("Failed to receive data, error=%s\n", strerror(errno));
             }
-            goto exit_thread;
+            //goto exit_thread;
         }
         locker.lock();
         if (map_tracks.empty()) {
