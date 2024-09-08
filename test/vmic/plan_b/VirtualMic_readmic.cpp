@@ -164,8 +164,7 @@ void recv_thread(int32_t clientfd) {
             received = read(clientfd, buf + bytes_read, BUFFER_SIZE - bytes_read);
             if (received > 0) {
                 bytes_read += received;
-                //AHAL_DBG("Received %zd bytes, total received = %zd, %lu\n",
-                //        received, bytes_read, map_tracks.size());
+                //AHAL_DBG("Received %zd bytes, total received = %zd\n", received, bytes_read);
                 if (bytes_read != BUFFER_SIZE) continue;
                 break;
             } else if (received == 0) {
