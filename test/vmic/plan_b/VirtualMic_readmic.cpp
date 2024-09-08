@@ -108,7 +108,7 @@ void virtual_mic_start(track_type_t type) {
         virtual_mic_control(STATE_ENABLE);
     }
 
-    size_t total_memorysize = 2 * 1024 * 1024;  // 2MB
+    size_t total_memorysize = 1 * 1024 * 1024;  // 1MB
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
     map_tracks.try_emplace(type, std::list<uint8_t*>());
@@ -127,7 +127,7 @@ void virtual_mic_stop(track_type_t type) {
 }
 
 ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
-    ssize_t bytes_read = 0, time = 5;
+    ssize_t bytes_read = 0, time = 3;
     while (time--) {
         printf("dddddddddddddddddddddddddddd %zd, %zu\n", time, map_tracks[type].size());
         {
@@ -144,7 +144,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
     return bytes_read;
 }

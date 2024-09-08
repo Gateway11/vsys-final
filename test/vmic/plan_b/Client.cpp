@@ -43,9 +43,8 @@ void send_thread(int32_t sock) {
                 }   
                 break;
             }   
-            //std::this_thread::sleep_for(std::chrono::milliseconds(15));
         } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+            std::this_thread::sleep_for(std::chrono::seconds(5));
             input.clear();
             input.seekg(0, std::ios::beg);
         }   
@@ -54,17 +53,13 @@ void send_thread(int32_t sock) {
 
 void recv_thread(int32_t clientfd) {
     while (true) {
-        ssize_t bytes_read = read(clientfd, &g_type, sizeof(g_type));
-        if (bytes_read > 0) {
-            printf("Received %zd bytes, data=%d\n", bytes_read, g_type);
+        ssize_t num_read = read(clientfd, &g_type, sizeof(g_type));
+        if (num_read > 0) {
+            printf("num_read =%zd, Received message: %d\n", num_read , g_type);
             condition.notify_one();
-        } else if (bytes_read == 0) {
+        } else if (num_read == 0) {
             printf("Server disconnected.\n");
             break;
-        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            printf("Receive timed out, no data received for 5 seconds\n");
-        } else {
-            printf("Failed to receive data, error=%s\n", strerror(errno));
         }
     }
 }
