@@ -49,6 +49,7 @@ void send_thread(int32_t sock) {
             input.seekg(0, std::ios::beg);
         }   
     }   
+    close(sock);
 }
 
 void recv_thread(int32_t clientfd) {
@@ -59,7 +60,6 @@ void recv_thread(int32_t clientfd) {
             condition.notify_one();
         } else if (num_read == 0) {
             printf("Server disconnected.\n");
-            close(sock);
             break;
         }
     }
