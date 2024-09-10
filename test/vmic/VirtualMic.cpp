@@ -81,12 +81,12 @@ ssize_t virtual_mic_read(uint8_t* buf, ssize_t size) {
                 if (bytes_read != size) continue;
             } else if (received == 0) {
                 AHAL_ERR("Client disconnected.");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 AHAL_ERR("Receive timed out, no data received for 5 seconds");
             } else {
                 AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             break;
         }
     }

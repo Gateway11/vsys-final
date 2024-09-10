@@ -133,7 +133,7 @@ void virtual_mic_stop(track_type_t type) {
     }
 }
 
-ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
+ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, ssize_t size) {
     ssize_t bytes_read = 0, time = 3;
     while (time--) {
         printf("dddddddddddddddddddddddddddd %zd, %zu\n", time, map_tracks[type].size());
@@ -156,7 +156,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
     return bytes_read;
 }
 
-ssize_t virtual_mic_read2(uint8_t* buf, ssize_t size) {
+ssize_t virtual_mic_read_sync(uint8_t* buf, ssize_t size) {
     ssize_t bytes_read = 0, received;
     if (g_clientfd > 0) {
         while(true) {
@@ -167,12 +167,12 @@ ssize_t virtual_mic_read2(uint8_t* buf, ssize_t size) {
                 if (bytes_read != size) continue;
             } else if (received == 0) {
                 AHAL_ERR("Client disconnected.");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 AHAL_ERR("Receive timed out, no data received for 5 seconds");
             } else {
                 AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             break;
         }
     }
@@ -205,7 +205,6 @@ void recv_thread(int32_t clientfd) {
             } else {
                 AHAL_ERR("Failed to receive data, error=%s\n", strerror(errno));
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         locker.lock();
         if (map_tracks.empty()) {
@@ -307,7 +306,7 @@ int32_t main() {
     virtual_mic_init();
     virtual_mic_start(DEFAULT);
     while (true) {
-        ssize_t ret = virtual_mic_read(DEFAULT, buf, BUFFER_SIZE);
+        ssize_t ret = virtual_mic_read_async(DEFAULT, buf, BUFFER_SIZE);
         if (ret)
             output.write((const char *)buf, BUFFER_SIZE);
     }
