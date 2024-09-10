@@ -41,7 +41,7 @@ void send_thread(int32_t sock) {
             int32_t bytes_sent = send(sock, buf, sizeof(buf), MSG_NOSIGNAL);
             if (bytes_sent == -1) {
                 if (errno == EPIPE || errno == ECONNRESET) {
-                    printf("Server disconnected.\n");
+                    printf("%s, Server disconnected.\n", __func__);
                 } else {
                     printf("Failed to send data.\n");
                 }   
@@ -66,7 +66,7 @@ void recv_thread(int32_t sock) {
             g_type = msg.type;
             condition.notify_one();
         } else if (num_read == 0) {
-            printf("Server disconnected.\n");
+            printf("%s, Server disconnected.\n", __func__);
             break;
         }
     }
