@@ -71,6 +71,10 @@ enum op_type_t {
     STATE_DISABLE = 2,
 };
 
+struct Message {
+    op_type_t type;         // Command type (e.g., HANDSHAKE, STATE_ENABLE, STATE_DISABLE)
+};
+
 std::map<track_type_t, std::list<uint8_t*>> map_tracks;
 std::map<track_type_t, std::shared_ptr<MemoryManager>> map_memorys;
 
@@ -92,9 +96,12 @@ void clear_socket(int32_t sock) {
 }
 
 void virtual_mic_control(op_type_t type) {
+    Message msg;
+
     g_type = type;
     if (g_clientfd > 0) {
-        if (write(g_clientfd, &type, sizeof(type)) < 0) {
+        msg.type = type;
+        if (write(g_clientfd, &msg, sizeof(msg)) < 0) {
             AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
         }
     }
@@ -223,6 +230,8 @@ exit_thread:
 }
 
 void accept_thread(int32_t serverfd) {
+    Message msg;
+
     AHAL_DBG("enter\n");
     while (true) {
         int32_t clientfd = accept(serverfd, nullptr, nullptr);
@@ -233,15 +242,14 @@ void accept_thread(int32_t serverfd) {
 
         AHAL_DBG("Client connected!\n");
 
-        op_type_t type;
-        int32_t bytes_read = read(clientfd, &type, sizeof(type));
+        ssize_t bytes_read = read(clientfd, &msg, sizeof(msg));
         if (bytes_read <= 0) {
             AHAL_ERR("Failed to receive msg, error=%s", strerror(errno));
             close(clientfd);
             continue;
         }
 
-        if (type != HANDSHAKE) {
+        if (msg.type != HANDSHAKE) {
             AHAL_ERR("Invalid handshake message received. Expected HANDSHAKE.");
             close(clientfd);
             continue;

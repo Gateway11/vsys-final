@@ -55,6 +55,7 @@
 
 //#define SOCKET_PATH "/dev/socket/audioserver/virtual_mic"
 #define SOCKET_PATH "/tmp/unix_socket"
+#define BUFFER_SIZE 3840
 
 enum op_type_t {
     HANDSHAKE = 100,
@@ -206,7 +207,7 @@ int32_t virtual_mic_init() {
 #if 1
 #include <fstream>
 int32_t main() {
-    uint8_t buf[3840];
+    uint8_t buf[BUFFER_SIZE];
     std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
     virtual_mic_init();
