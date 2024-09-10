@@ -16,6 +16,10 @@ enum op_type_t {
     STATE_DISABLE = 2,
 };
 
+struct Message {
+    op_type_t type;         // Command type (e.g., HANDSHAKE, STATE_ENABLE, STATE_DISABLE)
+};
+
 op_type_t g_type = HANDSHAKE;
 std::mutex mutex;
 std::condition_variable condition;
@@ -52,9 +56,9 @@ void send_thread(int32_t sock) {
     close(sock);
 }
 
-void recv_thread(int32_t clientfd) {
+void recv_thread(int32_t serverfd) {
     while (true) {
-        ssize_t num_read = read(clientfd, &g_type, sizeof(g_type));
+        ssize_t num_read = read(serverfd, &g_type, sizeof(g_type));
         if (num_read > 0) {
             printf("num_read =%zd, Received message: %d\n", num_read , g_type);
             condition.notify_one();

@@ -56,15 +56,14 @@
 //#define SOCKET_PATH "/dev/socket/audioserver/virtual_mic"
 #define SOCKET_PATH "/tmp/unix_socket"
 
-struct Message {
-    int32_t cmd;         // Command type (e.g., HANDSHAKE, STATE_ENABLE, STATE_DISABLE)
-    char data[32];
-};
-
 enum op_type_t {
     HANDSHAKE = 100,
     STATE_ENABLE = 1,
     STATE_DISABLE = 2,
+};
+
+struct Message {
+    op_type_t type;         // Command type (e.g., HANDSHAKE, STATE_ENABLE, STATE_DISABLE)
 };
 
 int32_t g_clientfd = -1;
@@ -86,6 +85,7 @@ ssize_t virtual_mic_read(uint8_t* buf, ssize_t size) {
             } else {
                 AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             break;
         }
     }
@@ -112,7 +112,7 @@ void virtual_mic_control(op_type_t type) {
         if (type == STATE_ENABLE) {
             clear_socket(g_clientfd);
         }
-        msg.cmd = type;
+        msg.type = type;
         if (write(g_clientfd, &msg, sizeof(msg)) < 0) {
             AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
         }
@@ -157,7 +157,7 @@ void accept_thread(int serverfd) {
             continue;
         }
 
-        if (msg.cmd != HANDSHAKE) {
+        if (msg.type != HANDSHAKE) {
             AHAL_ERR("Invalid handshake message received. Expected HANDSHAKE.");
             close(clientfd);
             continue;

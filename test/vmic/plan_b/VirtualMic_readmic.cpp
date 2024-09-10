@@ -165,6 +165,7 @@ ssize_t virtual_mic_read2(uint8_t* buf, ssize_t size) {
             } else {
                 AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             break;
         }
     }
@@ -197,7 +198,7 @@ void recv_thread(int32_t clientfd) {
             } else {
                 AHAL_ERR("Failed to receive data, error=%s\n", strerror(errno));
             }
-            //goto exit_thread;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         locker.lock();
         if (map_tracks.empty()) {
