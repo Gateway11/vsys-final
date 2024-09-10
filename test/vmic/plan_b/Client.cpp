@@ -56,11 +56,11 @@ void send_thread(int32_t sock) {
     close(sock);
 }
 
-void recv_thread(int32_t serverfd) {
+void recv_thread(int32_t sock) {
     Message msg;
 
     while (true) {
-        ssize_t num_read = read(serverfd, &msg, sizeof(msg));
+        ssize_t num_read = read(sock, &msg, sizeof(msg));
         if (num_read > 0) {
             printf("num_read =%zd, Received message: %d\n", num_read , msg.type);
             condition.notify_one();
