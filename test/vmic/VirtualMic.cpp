@@ -57,33 +57,24 @@
 #define SOCKET_PATH "/tmp/unix_socket"
 
 struct Message {
-    int cmd;         // Command type (e.g., HANDSHAKE, SET_STATE)
-                     // Command type (e.g., HANDSHAKE, ENABLE, DISABLE)
+    int32_t cmd;         // Command type (e.g., HANDSHAKE, STATE_ENABLE, STATE_DISABLE)
     char data[32];
 };
 
-enum Command {
-    UNKNOWN = 0,
-    HANDSHAKE = 1,
-    // Uses the data field to specify the state: data[0] = 0 for DISABLE, data[0] = 1 for ENABLE
-    SET_STATE = 2,
+enum op_type_t {
+    HANDSHAKE = 100,
+    STATE_ENABLE = 1,
+    STATE_DISABLE = 2,
 };
 
-struct vmic_module {
-    bool running;
-    int32_t g_clientfd;
-};
+int32_t g_clientfd = -1;
+op_type_t g_type;
 
-static struct vmic_module vmic = {
-    .running = false,
-    .g_clientfd = -1,
-};
-
-int32_t virtual_mic_read(uint8_t* buf, ssize_t size) {
+ssize_t virtual_mic_read(uint8_t* buf, ssize_t size) {
     ssize_t bytes_read = 0, received;
-    if (vmic.g_clientfd > 0) {
+    if (g_clientfd > 0) {
         while(true) {
-            received = read(vmic.g_clientfd, buf + bytes_read, size - bytes_read);
+            received = read(g_clientfd, buf + bytes_read, size - bytes_read);
             if (received > 0) {
                 bytes_read += received;
                 AHAL_DBG("Received %zd bytes, total received = %zd", received, bytes_read);
@@ -113,16 +104,18 @@ void clear_socket(int32_t sock) {
     }
 }
 
-void virtual_mic_control(Command type, void *data, ssize_t size) {
+void virtual_mic_control(op_type_t type) {
     Message msg;
 
-    if (type == SET_STATE && *(bool *)data) {
-        clear_socket(vmic.g_clientfd);
-    }
-    msg.cmd = type;
-    memcpy(msg.data, data, size);
-    if (write(vmic.g_clientfd, &msg, sizeof(msg)) < 0) {
-        AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
+    g_type = type;
+    if (g_clientfd > 0) {
+        if (type == STATE_ENABLE) {
+            clear_socket(g_clientfd);
+        }
+        msg.cmd = type;
+        if (write(g_clientfd, &msg, sizeof(msg)) < 0) {
+            AHAL_ERR("Failed to write msg, error=%s", strerror(errno));
+        }
     }
 }
 
@@ -157,7 +150,7 @@ void accept_thread(int serverfd) {
             continue;
         }
 
-        int32_t bytes_read = read(clientfd, &msg, sizeof(msg));
+        ssize_t bytes_read = read(clientfd, &msg, sizeof(msg));
         if (bytes_read <= 0) {
             AHAL_ERR("Failed to receive msg, error=%s", strerror(errno));
             close(clientfd);
@@ -170,7 +163,8 @@ void accept_thread(int serverfd) {
             continue;
         }
         print_socket_buffer_size(clientfd);
-        vmic.g_clientfd = clientfd;
+        g_clientfd = clientfd;
+        virtual_mic_control(g_type);
     }
     AHAL_DBG("exit\n");
 }
@@ -216,7 +210,7 @@ int32_t main() {
     std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
     virtual_mic_init();
-    virtual_mic_control(SET_STATE, (bool[]){true}, sizeof(bool));
+    virtual_mic_control(STATE_ENABLE);
     while (true) {
         ssize_t bytes_read = virtual_mic_read(buf, sizeof(buf));
         output.write((const char *)buf, bytes_read);
