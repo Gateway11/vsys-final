@@ -63,6 +63,7 @@ void recv_thread(int32_t sock) {
         ssize_t num_read = read(sock, &msg, sizeof(msg));
         if (num_read > 0) {
             printf("num_read =%zd, Received message: %d\n", num_read , msg.type);
+            g_type = msg.type;
             condition.notify_one();
         } else if (num_read == 0) {
             printf("Server disconnected.\n");
