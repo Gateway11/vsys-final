@@ -57,10 +57,12 @@ void send_thread(int32_t sock) {
 }
 
 void recv_thread(int32_t serverfd) {
+    Message msg;
+
     while (true) {
-        ssize_t num_read = read(serverfd, &g_type, sizeof(g_type));
+        ssize_t num_read = read(serverfd, &msg, sizeof(msg));
         if (num_read > 0) {
-            printf("num_read =%zd, Received message: %d\n", num_read , g_type);
+            printf("num_read =%zd, Received message: %d\n", num_read , msg.type);
             condition.notify_one();
         } else if (num_read == 0) {
             printf("Server disconnected.\n");
@@ -98,7 +100,9 @@ int main(int argc, char *argv[]) {
 
     printf("Connected to server '%s' success, socket id=%d\n", SOCKET_PATH, sock);
 
-    if (write(sock, &g_type, sizeof(g_type)) < 0) {
+    Message msg;
+    msg.type = g_type;
+    if (write(sock, &msg, sizeof(msg)) < 0) {
         printf("Failed to send handshake message\n");
         close(sock);
         return -1;
