@@ -103,7 +103,7 @@ void virtual_mic_control(op_type_t type) {
 void virtual_mic_start(track_type_t type) {
     std::lock_guard<std::mutex> lg(mutex);
     //map_tracks.emplace(type, std::list<uint8_t*>());
-    if (!map_tracks.size()) {
+    if (map_tracks.empty()) {
         clear_socket(g_clientfd);
         virtual_mic_control(STATE_ENABLE);
     }
@@ -121,7 +121,7 @@ void virtual_mic_stop(track_type_t type) {
     map_tracks.erase(type);
     map_memorys.erase(type);
 
-    if (!map_tracks.size()) {
+    if (map_tracks.empty()) {
         virtual_mic_control(STATE_DISABLE);
     }
 }
@@ -145,6 +145,28 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
             }
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+    return bytes_read;
+}
+
+ssize_t virtual_mic_read2(uint8_t* buf, ssize_t size) {
+    ssize_t bytes_read = 0, received;
+    if (g_clientfd > 0) {
+        while(true) {
+            received = read(g_clientfd, buf + bytes_read, size - bytes_read);
+            if (received > 0) {
+                bytes_read += received;
+                AHAL_DBG("Received %zd bytes, total received = %zd", received, bytes_read);
+                if (bytes_read != size) continue;
+            } else if (received == 0) {
+                AHAL_ERR("Client disconnected.");
+            } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                AHAL_ERR("Receive timed out, no data received for 5 seconds");
+            } else {
+                AHAL_ERR("Failed to receive data, error=%s", strerror(errno));
+            }
+            break;
+        }
     }
     return bytes_read;
 }
@@ -199,7 +221,7 @@ exit_thread:
     AHAL_DBG("exit\n");
 }
 
-void accept_thread(int serverfd) {
+void accept_thread(int32_t serverfd) {
     AHAL_DBG("enter\n");
     while (true) {
         int32_t clientfd = accept(serverfd, nullptr, nullptr);
