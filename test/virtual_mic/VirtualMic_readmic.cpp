@@ -73,8 +73,7 @@ struct Message {
     op_type_t type;         // Command type (e.g., HANDSHAKE, STATE_ENABLE, STATE_DISABLE)
 };
 
-std::map<track_type_t, std::list<uint8_t*>> map_tracks;
-std::map<track_type_t, std::shared_ptr<MemoryManager>> map_memorys;
+std::map<track_type_t, std::pair<std::list<uint8_t*>, std::shared_ptr<MemoryManager>>> map_tracks;
 
 int32_t g_clientfd = -1;
 op_type_t g_type;
@@ -117,15 +116,14 @@ void virtual_mic_start(track_type_t type) {
     size_t total_memorysize = BUFFER_SIZE * 3;
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
-    map_tracks.try_emplace(type, std::list<uint8_t*>());
-    map_memorys.try_emplace(type, std::make_shared<MemoryManager>(total_memorysize, blockSize));
+    map_tracks.try_emplace(type, std::list<uint8_t*>(),
+            std::make_shared<MemoryManager>(total_memorysize, blockSize));
     condition.notify_all();
 }
 
 void virtual_mic_stop(track_type_t type) {
     std::lock_guard<std::mutex> lg(mutex);
     map_tracks.erase(type);
-    map_memorys.erase(type);
 
     if (map_tracks.empty()) {
         virtual_mic_control(STATE_DISABLE);
@@ -135,19 +133,17 @@ void virtual_mic_stop(track_type_t type) {
 ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, ssize_t size) {
     ssize_t bytes_read = 0, time = 3;
     while (time--) {
-        printf("dddddddddddddddddddddddddddd %zd, %zu\n", time, map_tracks[type].size());
+        printf("ddddddddddddddddddd %zd, %zu\n", time, map_tracks[type].first.size());
         {
             std::lock_guard<std::mutex> lg(mutex);
-            if (map_memorys[type] != nullptr && map_tracks[type].size()) {
-                uint8_t* block = map_tracks[type].front();
-                if (block != nullptr) {
-                    memcpy(buf, block, size);
+            if (map_tracks[type].first.size()) {
+                uint8_t* block = map_tracks[type].first.front();
+                memcpy(buf, block, size);
 
-                    map_tracks[type].pop_front();
-                    map_memorys[type]->deallocate(block);
-                    bytes_read = size;
-                    break;
-                }
+                map_tracks[type].first.pop_front();
+                map_tracks[type].second->deallocate(block);
+                bytes_read = size;
+                break;
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -210,10 +206,10 @@ void recv_thread(int32_t clientfd) {
             condition.wait(locker, [&]{ return !map_tracks.empty(); });
         } else {
             for (auto& track: map_tracks) {
-                void* block = map_memorys[track.first]->allocate();
+                void* block = track.second.second->allocate();
                 if (block != nullptr) {
                     memcpy(block, buf, bytes_read);
-                    track.second.push_back((uint8_t *)block);
+                    track.second.first.push_back((uint8_t *)block);
                 } else {
                     printf("Porcess overflow\n");
                 }
