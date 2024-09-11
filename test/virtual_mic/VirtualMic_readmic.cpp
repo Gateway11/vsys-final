@@ -133,10 +133,11 @@ void virtual_mic_stop(track_type_t type) {
 ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, ssize_t size) {
     ssize_t bytes_read = 0, time = 3;
     while (time--) {
-        printf("dddddddddd %zd, %zu\n", time, map_tracks[type].first.size());
         {
             std::lock_guard<std::mutex> lg(mutex);
             auto& track = map_tracks[type];
+
+            printf("dddddddddddd %zd, %zu\n", time, track.first.size());
             if (track.first.size()) {
                 uint8_t* block = track.first.front();
                 memcpy(buf, block, size);
