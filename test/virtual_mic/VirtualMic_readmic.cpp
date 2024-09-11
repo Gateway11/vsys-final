@@ -136,7 +136,7 @@ ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, ssize_t size) {
         printf("dddddddddd %zd, %zu\n", time, map_tracks[type].first.size());
         {
             std::lock_guard<std::mutex> lg(mutex);
-            auto track = map_tracks[type];
+            auto& track = map_tracks[type];
             if (track.first.size()) {
                 uint8_t* block = track.first.front();
                 memcpy(buf, block, size);
