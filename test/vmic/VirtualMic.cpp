@@ -170,8 +170,7 @@ void accept_thread(int serverfd) {
             close(clientfd);
             continue;
         }
-        print_socket_buffer_size(clientfd);
-        set_socket_buffer_size(clientfd);
+        //set_socket_buffer_size(clientfd);
         print_socket_buffer_size(clientfd);
         g_clientfd = clientfd;
         virtual_mic_control(g_type);

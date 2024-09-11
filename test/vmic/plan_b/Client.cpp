@@ -40,9 +40,9 @@ void send_thread(int32_t sock) {
     uint8_t buf[BUFFER_SIZE];
     std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
 
-    int32_t sendbuf_size = 1 * 1024 * 1024;  // 1MB
-    setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuf_size, sizeof(sendbuf_size));
-    print_socket_buffer_size(sock);
+    //int32_t sendbuf_size = 1 * 1024 * 1024;  // 1MB
+    //setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuf_size, sizeof(sendbuf_size));
+    //print_socket_buffer_size(sock);
 
     while (true) {
         locker.lock();
@@ -54,6 +54,7 @@ void send_thread(int32_t sock) {
         locker.unlock();
         if (input.good()) {
             input.read((char *)buf, sizeof(buf));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
             int32_t bytes_sent = send(sock, buf, sizeof(buf), MSG_NOSIGNAL);
             if (bytes_sent == -1) {
