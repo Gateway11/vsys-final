@@ -33,12 +33,9 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <cstring>
 #include <thread>
 #include <map>
 #include <list>
-#include <condition_variable>
-#include <sys/time.h>
 #if 0
 #include <log/log.h>
 
@@ -69,6 +66,7 @@ enum op_type_t {
     HANDSHAKE = 100,
     STATE_ENABLE = 1,
     STATE_DISABLE = 2,
+    RATE_CH_FMT = 3,
 };
 
 struct Message {
@@ -115,7 +113,8 @@ void virtual_mic_start(track_type_t type) {
         virtual_mic_control(STATE_ENABLE);
     }
 
-    size_t total_memorysize = 1 * 1024 * 1024;  // 1MB
+    //size_t total_memorysize = 1 * 1024 * 1024;  // 1MB
+    size_t total_memorysize = BUFFER_SIZE * 3;
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
     map_tracks.try_emplace(type, std::list<uint8_t*>());
@@ -151,7 +150,7 @@ ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, ssize_t size) {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     return bytes_read;
 }
@@ -208,7 +207,6 @@ void recv_thread(int32_t clientfd) {
         }
         locker.lock();
         if (map_tracks.empty()) {
-            printf("dddddddddddddddddddddddddddddddddd  %d\n", __LINE__);
             condition.wait(locker, [&]{ return !map_tracks.empty(); });
         } else {
             for (auto& track: map_tracks) {
@@ -317,68 +315,3 @@ int32_t main() {
 //#ifdef __cplusplus
 //}
 //#endif
-
-#if 0
-#define VMIC_LIB_PATH LIBS"libvmicpal.so"
-
-//START: VIRTUAL MIC ==============================================================================
-typedef int32_t (*virtual_mic_init_t)();
-typedef ssize_t (*virtual_mic_read_t)(track_type_t, uint8_t*, ssize_t);
-typedef void (*virtual_mic_start_t)(track_type_t);
-typedef void (*virtual_mic_stop_t)(track_type_t);
-
-static void* libvmic;
-static virtual_mic_init_t virtual_mic_init;
-static virtual_mic_read_t virtual_mic_read;
-static virtual_mic_start_t virtual_mic_start;
-static virtual_mic_stop_t virtual_mic_stop;
-
-void AudioExtn::audio_extn_virtual_mic_init(bool enabled)
-{
-
-    AHAL_DBG("Enter: enabled: %d", enabled);
-
-    if(enabled){
-        if(!libvmic)
-            libvmic = dlopen(VMIC_LIB_PATH, RTLD_NOW);
-
-        if (!libvmic) {
-            AHAL_ERR("dlopen failed with: %s", dlerror());
-            return;
-        }
-
-        virtual_mic_init = (virtual_mic_init_t) dlsym(libvmic, "virtual_mic_init");
-        virtual_mic_read = (virtual_mic_read_t) dlsym(libvmic, "virtual_mic_read");
-        virtual_mic_start = (virtual_mic_start_t) dlsym(libvmic, "virtual_mic_start");
-        virtual_mic_stop = (virtual_mic_stop_t) dlsym(libvmic, "virtual_mic_stop");
-
-        if(!virtual_mic_init || !virtual_mic_read || !virtual_mic_start || !virtual_mic_stop){
-            AHAL_ERR("%s", dlerror());
-            dlclose(libvmic);
-        }
-    }
-    AHAL_DBG("Exit");
-}
-
-int32_t AudioExtn::audio_extn_virtual_mic_init(){
-    if(virtual_mic_init)
-        return virtual_mic_init();
-    return 0;
-}
-
-int32_t AudioExtn::audio_extn_virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size){
-   if(virtual_mic_read)
-        return virtual_mic_read(type, buf, size);
-   return 0;
-}
-
-void AudioExtn::audio_extn_virtual_mic_start(track_type_t type){
-   if(virtual_mic_start)
-        virtual_mic_start(type);
-}
-
-void AudioExtn::audio_extn_virtual_mic_stop(track_type_t type){
-   if(virtual_mic_stop)
-        virtual_mic_stop(type);
-}
-#endif

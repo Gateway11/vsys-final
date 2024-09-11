@@ -37,7 +37,7 @@ void send_thread(int32_t sock) {
         locker.unlock();
         if (input.good()) {
             input.read((char *)buf, sizeof(buf));
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(15));
 
             int32_t bytes_sent = send(sock, buf, sizeof(buf), MSG_NOSIGNAL);
             if (bytes_sent == -1) {
