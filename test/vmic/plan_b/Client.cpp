@@ -25,9 +25,24 @@ std::mutex mutex;
 std::condition_variable condition;
 std::ifstream input;
 
+void print_socket_buffer_size(int32_t sock) {
+    int32_t sendbuf_size;
+    socklen_t optlen = sizeof(int32_t);
+
+    if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuf_size, &optlen) == -1) {
+        printf("getsockopt (SO_SNDBUF) failed, error=%s\n", strerror(errno));
+        return;
+    }
+    printf("Default send buffer size: %d KB\n", sendbuf_size / 1024);
+}
+
 void send_thread(int32_t sock) {
     uint8_t buf[BUFFER_SIZE];
     std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
+
+    int32_t sendbuf_size = 1 * 1024 * 1024;  // 1MB
+    setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuf_size, sizeof(sendbuf_size));
+    print_socket_buffer_size(sock);
 
     while (true) {
         locker.lock();

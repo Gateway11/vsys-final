@@ -128,7 +128,14 @@ void print_socket_buffer_size(int32_t sock) {
         AHAL_ERR("getsockopt (SO_RCVBUF) failed, error=%s", strerror(errno));
         return;
     }
-    AHAL_DBG("Default receive buffer size: %d bytes\n", rcvbuf_size);
+    AHAL_DBG("Default receive buffer size: %d KB\n", rcvbuf_size / 1024);
+}
+
+void set_socket_buffer_size(int32_t sock) {
+    int32_t rcvbuf_size = 1 * 1024 * 1024;  // 1MB
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &rcvbuf_size, sizeof(rcvbuf_size)) == -1) {
+        AHAL_ERR("setsockopt (SO_RCVBUF) failed, error=%s", strerror(errno));
+    }
 }
 
 void accept_thread(int serverfd) {
@@ -163,6 +170,8 @@ void accept_thread(int serverfd) {
             close(clientfd);
             continue;
         }
+        print_socket_buffer_size(clientfd);
+        set_socket_buffer_size(clientfd);
         print_socket_buffer_size(clientfd);
         g_clientfd = clientfd;
         virtual_mic_control(g_type);
