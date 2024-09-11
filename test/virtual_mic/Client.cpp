@@ -1,11 +1,8 @@
-#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <cstring>
 #include <fstream>
 #include <thread>
-#include <condition_variable>
 
 #define SOCKET_PATH "/tmp/unix_socket"
 #define BUFFER_SIZE 3840
@@ -25,24 +22,9 @@ std::mutex mutex;
 std::condition_variable condition;
 std::ifstream input;
 
-void print_socket_buffer_size(int32_t sock) {
-    int32_t sendbuf_size;
-    socklen_t optlen = sizeof(int32_t);
-
-    if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuf_size, &optlen) == -1) {
-        printf("getsockopt (SO_SNDBUF) failed, error=%s\n", strerror(errno));
-        return;
-    }
-    printf("Default send buffer size: %d KB\n", sendbuf_size / 1024);
-}
-
 void send_thread(int32_t sock) {
     uint8_t buf[BUFFER_SIZE];
     std::unique_lock<decltype(mutex)> locker(mutex, std::defer_lock);
-
-    //int32_t sendbuf_size = 1 * 1024 * 1024;  // 1MB
-    //setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuf_size, sizeof(sendbuf_size));
-    //print_socket_buffer_size(sock);
 
     while (true) {
         locker.lock();
@@ -65,10 +47,6 @@ void send_thread(int32_t sock) {
                 }   
                 break;
             }   
-        } else {
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-            input.clear();
-            input.seekg(0, std::ios::beg);
         }   
     }   
     close(sock);
@@ -114,7 +92,7 @@ int main(int argc, char *argv[]) {
             break;
 
         printf("Connect to server '%s' failed, %s\n", SOCKET_PATH, strerror(errno));
-        usleep(10*1000); //10ms
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     printf("Connected to server '%s' success, socket id=%d\n", SOCKET_PATH, sock);
