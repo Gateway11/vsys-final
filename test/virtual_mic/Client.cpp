@@ -68,7 +68,6 @@ void recv_thread(int32_t sock) {
     }
 }
 
-
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("Usage: ./client /Users/daixiang/Music/test.wav \n");
