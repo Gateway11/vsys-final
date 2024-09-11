@@ -32,6 +32,8 @@ void send_thread(int32_t sock) {
     while (true) {
         locker.lock();
         if (g_type != STATE_ENABLE) {
+            input.clear();
+            input.seekg(0, std::ios::beg);
             condition.wait(locker, [&]{ return g_type != STATE_ENABLE; });
         }
         locker.unlock();
