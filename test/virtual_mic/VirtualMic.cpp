@@ -33,9 +33,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <cstring>
 #include <thread>
-#include <sys/time.h>
+#include <fstream>
 #if 0
 #include <log/log.h>
 
@@ -70,6 +69,7 @@ struct Message {
 
 int32_t g_clientfd = -1;
 op_type_t g_type;
+std::ofstream output("/data/virtual_mic/44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
 ssize_t virtual_mic_read(uint8_t* buf, ssize_t size) {
     ssize_t bytes_read = 0, received;
@@ -91,6 +91,7 @@ ssize_t virtual_mic_read(uint8_t* buf, ssize_t size) {
             break;
         }
     }
+    output.write((const char *)buf, bytes_read);
     return bytes_read;
 }
 
@@ -213,79 +214,18 @@ int32_t virtual_mic_init() {
     AHAL_DBG("exit\n");
     return 0;
 }
+
 #if 1
-#include <fstream>
 int32_t main() {
     uint8_t buf[BUFFER_SIZE];
-    std::ofstream output("./44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
     virtual_mic_init();
     virtual_mic_control(STATE_ENABLE);
-    while (true) {
+    while (true)
         ssize_t bytes_read = virtual_mic_read(buf, sizeof(buf));
-        output.write((const char *)buf, bytes_read);
-    }
 }
 #endif
 
 //#ifdef __cplusplus
 //}
 //#endif
-
-
-#if 0
-#define VMIC_LIB_PATH LIBS"libvmicpal.so"
-
-//START: VIRTUAL MIC ==============================================================================
-typedef int32_t (*virtual_mic_init_t)();
-typedef int32_t (*virtual_mic_read_t)(uint8_t*, ssize_t);
-typedef void (*virtual_mic_control_t)(Command, void*, ssize_t);
-
-static void* libvmic;
-static virtual_mic_init_t virtual_mic_init;
-static virtual_mic_read_t virtual_mic_read;
-static virtual_mic_control_t virtual_mic_control;
-
-void AudioExtn::audio_extn_virtual_mic_init(bool enabled)
-{
-
-    AHAL_DBG("Enter: enabled: %d", enabled);
-
-    if(enabled){
-        if(!libvmic)
-            libvmic = dlopen(VMIC_LIB_PATH, RTLD_NOW);
-
-        if (!libvmic) {
-            AHAL_ERR("dlopen failed with: %s", dlerror());
-            return;
-        }
-
-        virtual_mic_init = (virtual_mic_init_t) dlsym(libvmic, "virtual_mic_init");
-        virtual_mic_read = (virtual_mic_read_t) dlsym(libvmic, "virtual_mic_read");
-        virtual_mic_control = (virtual_mic_control_t) dlsym(libvmic, "virtual_mic_control");
-
-        if(!virtual_mic_init || !virtual_mic_read || !virtual_mic_control){
-            AHAL_ERR("%s", dlerror());
-            dlclose(libvmic);
-        }
-    }
-    AHAL_DBG("Exit");
-}
-
-int32_t AudioExtn::audio_extn_virtual_mic_init(){
-    if(virtual_mic_init)
-        return virtual_mic_init();
-    return 0;
-}
-
-int32_t AudioExtn::audio_extn_virtual_mic_read(uint8_t* buf, ssize_t size){
-   if(virtual_mic_read)
-        return virtual_mic_read(buf, size);
-   return 0;
-}
-
-void AudioExtn::audio_extn_virtual_mic_control(Command type, void *data, ssize_t size){
-   if(virtual_mic_control)
-        virtual_mic_control(type, data, size);
-}
-#endif

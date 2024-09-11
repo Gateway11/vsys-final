@@ -11,6 +11,7 @@ enum op_type_t {
     HANDSHAKE = 100,
     STATE_ENABLE = 1,
     STATE_DISABLE = 2,
+    RATE_CH_FMT = 3,
 };
 
 struct Message {
