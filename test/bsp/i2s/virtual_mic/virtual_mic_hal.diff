@@ -1,0 +1,223 @@
+diff --git a/configs/pineapple/audio-modules.mk b/configs/pineapple/audio-modules.mk
+index ad17cc78..2b296421 100644
+--- a/configs/pineapple/audio-modules.mk
++++ b/configs/pineapple/audio-modules.mk
+@@ -120,6 +120,7 @@ AUDIO_MODULES += texture_tick.pcm
+ AUDIO_MODULES += thud.pcm
+ AUDIO_MODULES += tick.pcm
+ AUDIO_MODULES += libfmpal
++AUDIO_MODULES += libvmicpal
+ AUDIO_MODULES += event.eai
+ AUDIO_MODULES += music.eai
+ AUDIO_MODULES += speech.eai
+diff --git a/hal/AudioDevice.cpp b/hal/AudioDevice.cpp
+index e4efb4d1..707a84a4 100644
+--- a/hal/AudioDevice.cpp
++++ b/hal/AudioDevice.cpp
+@@ -1226,6 +1226,7 @@ int AudioDevice::Init(hw_device_t **device, const hw_module_t *module) {
+     AudioExtn::a2dp_source_feature_init(property_get_bool("vendor.audio.feature.a2dp_offload.enable", false));
+ 
+     AudioExtn::audio_extn_fm_init();
++    AudioExtn::audio_extn_virtual_mic_init();
+     AudioExtn::audio_extn_kpi_optimize_feature_init(
+             property_get_bool("vendor.audio.feature.kpi_optimize.enable", false));
+     AudioExtn::battery_listener_feature_init(
+diff --git a/hal/AudioStream.cpp b/hal/AudioStream.cpp
+index cc60b0e0..142b1c4f 100644
+--- a/hal/AudioStream.cpp
++++ b/hal/AudioStream.cpp
+@@ -49,6 +49,7 @@
+ #include <thread>
+ 
+ #include "PalApi.h"
++#include "VirtualMic.h"
+ #include <audio_effects/effect_aec.h>
+ #include <audio_effects/effect_ns.h>
+ #include "audio_extn.h"
+@@ -4646,6 +4647,8 @@ int StreamInPrimary::Standby() {
+     stream_mutex_.lock();
+     if (pal_stream_handle_) {
+         if (!is_st_session) {
++            if (mPalInDevice->id == PAL_DEVICE_IN_HANDSET_MIC)
++                AudioExtn::audio_extn_virtual_mic_control(STATE_DISABLE);
+             ret = pal_stream_stop(pal_stream_handle_);
+         } else if (audio_extn_sound_trigger_check_session_activity(this)) {
+             ret = pal_stream_set_param(pal_stream_handle_,
+@@ -5369,6 +5372,8 @@ exit:
+         free(device_cap_query);
+         device_cap_query = NULL;
+     }
++    if (mPalInDevice->id == PAL_DEVICE_IN_HANDSET_MIC)
++        AudioExtn::audio_extn_virtual_mic_control(STATE_ENABLE);
+     AHAL_DBG("Exit ret: %d", ret);
+     return ret;
+ }
+@@ -5504,6 +5509,7 @@ ssize_t StreamInPrimary::onReadError(size_t bytes, size_t ret) {
+     return bytes;
+ }
+ 
++#include <thread>
+ ssize_t StreamInPrimary::read(const void *buffer, size_t bytes) {
+     ssize_t ret = 0;
+     int retry_count = MAX_READ_RETRY_COUNT;
+@@ -5594,7 +5600,18 @@ ssize_t StreamInPrimary::read(const void *buffer, size_t bytes) {
+        effects_applied_ = true;
+     }
+ 
+-    ret = pal_stream_read(pal_stream_handle_, &palBuffer);
++    {
++        std::chrono::steady_clock::time_point tp = std::chrono::steady_clock::now();
++        if (mPalInDevice->id == PAL_DEVICE_IN_HANDSET_MIC) {
++            ret = AudioExtn::audio_extn_virtual_mic_read(palBuffer.buffer, palBuffer.size);
++        } else
++            ret = pal_stream_read(pal_stream_handle_, &palBuffer);
++        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - tp);
++        AHAL_ERR("############ mic read %d, ret %d, time %d, bufsize %zu",
++                mPalInDevice->id, ret, elapsed.count(), palBuffer.size);
++    }
++
++    //ret = pal_stream_read(pal_stream_handle_, &palBuffer);
+     AHAL_VERBOSE("received size= %d",palBuffer.size);
+     if (usecase_ == USECASE_AUDIO_RECORD_COMPRESS && ret > 0) {
+         size = palBuffer.size;
+diff --git a/hal/audio_extn/Android.mk b/hal/audio_extn/Android.mk
+index 7b4770e7..b4034343 100644
+--- a/hal/audio_extn/Android.mk
++++ b/hal/audio_extn/Android.mk
+@@ -85,6 +85,42 @@ LOCAL_HEADER_LIBRARIES += libsystem_headers
+ LOCAL_HEADER_LIBRARIES += libaudio_hal_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
++#-------------------------------------------
++#            Build VirtualMic LIB
++#-------------------------------------------
++include $(CLEAR_VARS)
++
++LOCAL_MODULE := libvmicpal
++LOCAL_VENDOR_MODULE := true
++
++LOCAL_SRC_FILES:= VirtualMic.cpp
++
++LOCAL_CFLAGS += \
++    -Wall \
++    -Werror \
++    -Wno-unused-function \
++    -Wno-unused-variable
++
++LOCAL_SHARED_LIBRARIES := \
++    libaudioroute \
++    libaudioutils \
++    libcutils \
++    libdl \
++    libexpat \
++    liblog \
++    libar-pal
++
++LOCAL_C_INCLUDES := \
++    $(LOCAL_PATH)/inc \
++    external/expat/lib \
++    system/media/audio_utils/include \
++    $(call include-path-for, audio-route) \
++
++LOCAL_HEADER_LIBRARIES += libhardware_headers
++LOCAL_HEADER_LIBRARIES += libsystem_headers
++LOCAL_HEADER_LIBRARIES += libaudio_hal_headers
++include $(BUILD_SHARED_LIBRARY)
++
+ #-------------------------------------------
+ #            Build BATTERY_LISTENER
+ #-------------------------------------------
+diff --git a/hal/audio_extn/AudioExtn.cpp b/hal/audio_extn/AudioExtn.cpp
+index df3b22fc..5d7f837c 100644
+--- a/hal/audio_extn/AudioExtn.cpp
++++ b/hal/audio_extn/AudioExtn.cpp
+@@ -80,6 +80,7 @@ using android::OK;
+ #define BATTERY_LISTENER_LIB_PATH LIBS"libbatterylistener.so"
+ #define HFP_LIB_PATH LIBS"libhfp_pal.so"
+ #define FM_LIB_PATH LIBS"libfmpal.so"
++#define VMIC_LIB_PATH LIBS"libvmicpal.so"
+ 
+ #define BT_IPC_SOURCE_LIB_NAME LIBS"btaudio_offload_if.so"
+ #define AFS_PARAMETER_QVA_VERSION "qva.version"
+@@ -1038,6 +1039,57 @@ void AudioExtn::audio_extn_fm_get_parameters(std::shared_ptr<AudioDevice> adev,
+         fm_get_params(adev, query, reply);
+ }
+ 
++//START: VIRTUAL MIC ==============================================================================
++typedef int32_t (*virtual_mic_init_t)();
++typedef void (*virtual_mic_control_t)(op_type_t);
++typedef ssize_t (*virtual_mic_read_t)(uint8_t*, ssize_t);
++
++static void* libvmic;
++static virtual_mic_init_t virtual_mic_init;
++static virtual_mic_control_t virtual_mic_control;
++static virtual_mic_read_t virtual_mic_read;
++
++void AudioExtn::audio_extn_virtual_mic_init(bool enabled)
++{
++
++    AHAL_DBG("Enter: enabled: %d", enabled);
++
++    if(enabled){
++        if(!libvmic)
++            libvmic = dlopen(VMIC_LIB_PATH, RTLD_NOW);
++
++        if (!libvmic) {
++            AHAL_ERR("dlopen failed with: %s", dlerror());
++            return;
++        }
++
++        virtual_mic_init = (virtual_mic_init_t) dlsym(libvmic, "virtual_mic_init");
++        virtual_mic_control = (virtual_mic_control_t) dlsym(libvmic, "virtual_mic_control");
++        virtual_mic_read = (virtual_mic_read_t) dlsym(libvmic, "virtual_mic_read");
++
++        if(!virtual_mic_init || !virtual_mic_read || !virtual_mic_control){
++            AHAL_ERR("%s", dlerror());
++            dlclose(libvmic);
++        }
++    }
++    if(virtual_mic_init)
++        virtual_mic_init();
++    AHAL_DBG("Exit");
++}
++
++void AudioExtn::audio_extn_virtual_mic_control(op_type_t type)
++{
++   if(virtual_mic_control)
++       virtual_mic_control(type);
++}
++
++ssize_t AudioExtn::audio_extn_virtual_mic_read(uint8_t* buf, ssize_t size)
++{
++   if(virtual_mic_read)
++        return virtual_mic_read(buf, size);
++   return 0;
++}
++
+ //START: KPI_OPTIMIZE =============================================================================
+ void AudioExtn::audio_extn_kpi_optimize_feature_init(bool is_feature_enabled)
+ {
+diff --git a/hal/audio_extn/inc/AudioExtn.h b/hal/audio_extn/inc/AudioExtn.h
+index fcd23c94..0ddd057d 100644
+--- a/hal/audio_extn/inc/AudioExtn.h
++++ b/hal/audio_extn/inc/AudioExtn.h
+@@ -38,6 +38,7 @@
+ #include <atomic>
+ #include <unordered_map>
+ #include "PalDefs.h"
++#include "VirtualMic.h"
+ #include "audio_defs.h"
+ #include <log/log.h>
+ #include "battery_listener.h"
+@@ -251,6 +252,11 @@ public:
+     static void audio_extn_fm_set_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *params);
+     static void audio_extn_fm_get_parameters(std::shared_ptr<AudioDevice> adev, struct str_parms *query, struct str_parms *reply);
+ 
++    // Virtual Mic
++    static void audio_extn_virtual_mic_init(bool enabled=true);
++    static void audio_extn_virtual_mic_control(op_type_t type);
++    static ssize_t audio_extn_virtual_mic_read(uint8_t* buf, ssize_t size);
++
+     //Karaoke
+     int karaoke_open(pal_device_id_t device_out, pal_stream_callback pal_callback, pal_channel_info ch_info);
+     int karaoke_start();

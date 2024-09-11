@@ -1,0 +1,39 @@
+diff --git a/generic/vendor/common/file.te b/generic/vendor/common/file.te
+index 36803ecc..082e8da0 100644
+--- a/generic/vendor/common/file.te
++++ b/generic/vendor/common/file.te
+@@ -138,6 +138,7 @@ type vendor_hal_bootctl_socket, file_type;
+ type vendor_location_socket, file_type;
+ type vendor_qsap_location_socket, file_type;
+ type vendor_wifihal_socket, file_type;
++type vendor_audioserver_socket, file_type;
+ type vendor_pps_socket, file_type;
+ 
+ # imshelper_app file types
+diff --git a/generic/vendor/common/file_contexts b/generic/vendor/common/file_contexts
+index 01be9a69..b637303f 100644
+--- a/generic/vendor/common/file_contexts
++++ b/generic/vendor/common/file_contexts
+@@ -137,6 +137,7 @@
+ /dev/socket/location(/.*)?                      u:object_r:vendor_location_socket:s0
+ /dev/socket/qsap_location(/.*)?                 u:object_r:vendor_qsap_location_socket:s0
+ /dev/socket/wifihal(/.*)?                       u:object_r:vendor_wifihal_socket:s0
++/dev/socket/audioserver(/.*)?                   u:object_r:vendor_audioserver_socket:s0
+ /dev/socket/pps                                 u:object_r:vendor_pps_socket:s0
+ /dev/socket/notify-topology                     u:object_r:vendor_notify-topology_socket:s0
+ /dev/socket/vuidmgr                             u:object_r:vendor_vuidmgr_socket:s0
+diff --git a/generic/vendor/common/hal_audio_default.te b/generic/vendor/common/hal_audio_default.te
+index ab2ed553..094438d8 100644
+--- a/generic/vendor/common/hal_audio_default.te
++++ b/generic/vendor/common/hal_audio_default.te
+@@ -95,6 +95,10 @@ qtr_sdk_use(hal_audio_default)
+ #allow access to dev/socket/vuidmgr socket
+ allow hal_audio_default vendor_vuidmgr_socket:sock_file rw_file_perms;
+ 
++allow hal_audio_default vendor_audioserver_socket:dir rw_dir_perms;
++allow hal_audio_default vendor_audioserver_socket:sock_file rw_file_perms;
++allow hal_audio_default vendor_audioserver_socket:sock_file unlink;
++
+ #allow acess to wcd_cpe
+ allow hal_audio vendor_sysfs_audio:file rw_file_perms;
+ allow hal_audio vendor_sysfs_audio:dir r_dir_perms ;
