@@ -8,14 +8,12 @@
 class MemoryManager {
 private:
     char* memory;                        // Pointer to the dynamically allocated memory
-    size_t totalSize;                    // Total size of the memory
     size_t blockSize;                    // Size of each memory block
     size_t numBlocks;                    // Total number of memory blocks
     std::vector<bool> blockUsage;        // Tracks the usage of each block
 
 public:
-    MemoryManager(size_t totalSize, size_t blockSize)
-        : totalSize(totalSize), blockSize(blockSize) {
+    MemoryManager(size_t totalSize, size_t blockSize) : blockSize(blockSize) {
 
         memory = new char[totalSize];
 
