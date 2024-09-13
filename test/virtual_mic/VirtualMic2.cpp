@@ -37,7 +37,7 @@
 #include <shared_mutex>
 #include <log/log.h>
 
-#include "VirtualMic2.h"
+#include "VirtualMic.h"
 #include "MemoryManager.h"
 #include "AudioCommon.h"
 
@@ -48,34 +48,46 @@
 #endif
 
 #define BUFFER_SIZE 3840
+#define MAX_DELAY 15
 
 std::map<track_type_t, std::pair<std::list<uint8_t*>, std::shared_ptr<MemoryManager>>> map_tracks;
 std::shared_mutex mutex;
 uint32_t session = 0;
 std::ofstream output;
+std::chrono::steady_clock::time_point g_tp;
+
+void time_check(const size_t& bytes) {
+    auto elapsed = std::chrono::duration_cast<
+        std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_tp);
+
+    AHAL_DBG("time %d, size %d.", elapsed.count(), bytes);
+
+    if (elapsed.count() < MAX_DELAY && bytes == BUFFER_SIZE)
+        std::this_thread::sleep_for(std::chrono::milliseconds(MAX_DELAY - elapsed.count()));
+    g_tp = std::chrono::steady_clock::now();
+}
 
 void virtual_mic_write(const uint8_t* buf, size_t bytes) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(15));
-
-    AHAL_DBG("Received buffer size: %d.", bytes);
-    output.write((const char *)buf, bytes);
-
-    std::unique_lock<std::shared_mutex> lock(mutex);
-    if (map_tracks.size() && bytes == BUFFER_SIZE) {
-        for (auto& track: map_tracks) {
-            void* block = track.second.second->allocate();
-            if (block != nullptr) {
-                memcpy(block, buf, BUFFER_SIZE);
-                track.second.first.push_back((uint8_t *)block);
-            } else {
-                AHAL_ERR("Overflow!\n");
+    {
+        std::unique_lock<std::shared_mutex> lock(mutex);
+        if (map_tracks.size() && bytes == BUFFER_SIZE) {
+            for (auto& track: map_tracks) {
+                void* block = track.second.second->allocate();
+                if (block != nullptr) {
+                    memcpy(block, buf, BUFFER_SIZE);
+                    track.second.first.push_back((uint8_t *)block);
+                } else {
+                    AHAL_WARN("overrun\n");
+                }
             }
         }
     }
+    output.write((const char *)buf, bytes);
+    time_check(bytes);
 }
 
-ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, size_t size) {
-    ssize_t bytes_read = 0, time = 3;
+ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
+    uint32_t time = 3;
     while (time--) {
         {
             std::shared_lock<std::shared_mutex> lock(mutex);
@@ -88,13 +100,13 @@ ssize_t virtual_mic_read_async(track_type_t type, uint8_t* buf, size_t size) {
 
                 track.first.pop_front();
                 track.second->deallocate(block);
-                bytes_read = size;
-                break;
+                return size;
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
-    return bytes_read;
+    AHAL_WARN("underrun\n");
+    return 0;
 }
 
 void virtual_mic_start(track_type_t type) {
