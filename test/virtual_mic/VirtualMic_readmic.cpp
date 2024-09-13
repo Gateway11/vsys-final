@@ -58,8 +58,8 @@
 #define SOCKET_PATH "/tmp/unix_socket"
 #define BUFFER_SIZE 3840
 enum track_type_t{
-    DEFAULT = 0,
-    BTCALL
+    TRACK_DEFAULT = 0,
+    TRACK_BTCALL
 };
 
 enum op_type_t {
@@ -276,9 +276,9 @@ int32_t main() {
     uint8_t buf[BUFFER_SIZE];
 
     virtual_mic_init();
-    virtual_mic_start(DEFAULT);
+    virtual_mic_start(TRACK_DEFAULT);
     while (true) {
-        ssize_t ret = virtual_mic_read_async(DEFAULT, buf, BUFFER_SIZE);
+        ssize_t ret = virtual_mic_read(TRACK_DEFAULT, buf, BUFFER_SIZE);
         if (ret)
             output.write((const char *)buf, BUFFER_SIZE);
     }
