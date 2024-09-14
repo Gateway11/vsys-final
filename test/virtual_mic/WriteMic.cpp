@@ -48,26 +48,34 @@
 #endif
 
 #define BUFFER_SIZE 3840
-#define MAX_DELAY 15
+#define MAX_DELAY 18
 
-std::map<track_type_t, std::pair<std::list<uint8_t*>, std::shared_ptr<MemoryManager>>> map_tracks;
-std::shared_mutex mutex;
-uint32_t session = 0;
-std::ofstream output;
-std::chrono::steady_clock::time_point g_tp;
+static std::map<track_type_t, std::pair<std::list<uint8_t*>, std::shared_ptr<MemoryManager>>> map_tracks;
+static std::shared_mutex mutex;
+static std::chrono::steady_clock::time_point tp_write, tp_read;
 
-void time_check(const size_t& bytes) {
-    auto elapsed = std::chrono::duration_cast<
-        std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_tp);
+static uint32_t session = 0;
+static std::ofstream output;
 
-    AHAL_DBG("time %d, size %d.", elapsed.count(), bytes);
+void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay) {
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - tp);
 
-    if (elapsed.count() < MAX_DELAY && bytes == BUFFER_SIZE)
-        std::this_thread::sleep_for(std::chrono::milliseconds(MAX_DELAY - elapsed.count()));
-    g_tp = std::chrono::steady_clock::now();
+    AHAL_DBG("time %d ms", elapsed.count());
+
+    if (elapsed.count() < max_delay && elapsed.count() > 0)
+        std::this_thread::sleep_for(std::chrono::milliseconds(max_delay - elapsed.count()));
+
+    tp = std::chrono::steady_clock::now();
+
+    if (elapsed.count() > max_delay) {
+        auto adjustment = std::chrono::milliseconds(elapsed.count() - max_delay);
+        tp += adjustment;
+    }
 }
 
 void virtual_mic_write(const uint8_t* buf, size_t bytes) {
+    AHAL_DBG("Enter, %zu", bytes);
     {
         std::unique_lock<std::shared_mutex> lock(mutex);
         if (map_tracks.size() && bytes == BUFFER_SIZE) {
@@ -83,11 +91,12 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
         }
     }
     output.write((const char *)buf, bytes);
-    time_check(bytes);
+    time_check(tp_write, MAX_DELAY);
+    AHAL_DBG("Exit");
 }
 
 ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
-    uint32_t time = 3;
+    ssize_t bytes_read = 0, time = 3;
     while (time--) {
         {
             std::shared_lock<std::shared_mutex> lock(mutex);
@@ -100,31 +109,40 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
 
                 track.first.pop_front();
                 track.second->deallocate(block);
-                return size;
+                bytes_read = size;
+                break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    AHAL_WARN("underrun\n");
-    return 0;
+
+    if (time <= 0)
+        AHAL_WARN("underrun\n");
+
+    time_check(tp_read, MAX_DELAY);
+    return bytes_read;
 }
 
 void virtual_mic_start(track_type_t type) {
     //size_t total_memorysize = 1 * 1024 * 1024;  // 1MB
-    size_t total_memorysize = BUFFER_SIZE * 3;
+    size_t total_memorysize = BUFFER_SIZE * 6;
     size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
     std::unique_lock<std::shared_mutex> lock(mutex);
     map_tracks.try_emplace(type, std::list<uint8_t*>(),
             std::make_shared<MemoryManager>(total_memorysize, blockSize));
 
-    char path[64];
-    snprintf(path, sizeof(path), "/data/virtual_mic/48000.2.16bit_%02d.pcm", session++);
-    output.open(path, std::ios::out | std::ios::binary);
+    if (map_tracks.size() == 1) {
+        char path[64];
+        snprintf(path, sizeof(path), "/data/virtual_mic/48000.2.16bit_%02d.pcm", session++);
+        output.open(path, std::ios::out | std::ios::binary);
+    }
 }
 
 void virtual_mic_stop(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
     map_tracks.erase(type);
-    output.close();
+
+    if (map_tracks.empty())
+        output.close();
 }
