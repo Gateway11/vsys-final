@@ -75,10 +75,13 @@ void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay) {
 }
 
 void virtual_mic_write(const uint8_t* buf, size_t bytes) {
+    uint32_t num_tracks = 0;
     AHAL_DBG("Enter, %zu", bytes);
     {
         std::unique_lock<std::shared_mutex> lock(mutex);
-        if (map_tracks.size() && bytes == BUFFER_SIZE) {
+        num_tracks = track.size();
+
+        if (num_tracks && bytes == BUFFER_SIZE) {
             for (auto& track: map_tracks) {
                 void* block = track.second.second->allocate();
                 if (block != nullptr) {
@@ -90,8 +93,10 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
             }
         }
     }
-    output.write((const char *)buf, bytes);
-    time_check(tp_write, MAX_DELAY);
+    if (num_tracks) {
+        output.write((const char *)buf, bytes);
+        time_check(tp_write, MAX_DELAY);
+    }
     AHAL_DBG("Exit");
 }
 
@@ -113,7 +118,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(6));
     }
 
     if (time <= 0)
