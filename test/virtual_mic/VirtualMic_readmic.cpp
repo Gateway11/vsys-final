@@ -282,7 +282,7 @@ int32_t main() {
         if (ret)
             output.write((const char *)buf, BUFFER_SIZE);
     }
-    virtual_mic_stop(DEFAULT);
+    virtual_mic_stop(TRACK_DEFAULT);
 }
 #endif
 

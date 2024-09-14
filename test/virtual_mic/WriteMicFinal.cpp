@@ -35,6 +35,7 @@
 #include <list>
 #include <map>
 #include <shared_mutex>
+#if 0
 #include <log/log.h>
 
 #include "VirtualMic.h"
@@ -45,6 +46,15 @@
 #include <log_xml_parser.h>
 #define LOG_MASK HAL_MOD_FILE_FM
 #include <log_utils.h>
+#endif
+#else
+#include "MemoryManager.h"
+enum track_type_t {
+    TRACK_DEFAULT = 1,
+};
+
+#define AHAL_DBG printf
+#define AHAL_WARN printf
 #endif
 
 #define BUFFER_SIZE 3840
@@ -77,7 +87,7 @@ void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay, c
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - tp);
 
-    AHAL_DBG("%s: time %02d ms, %d", tag, elapsed.count(), max_delay);
+    AHAL_DBG("%s: time %02lld ms, %d", tag, elapsed.count(), max_delay);
 
     if (elapsed.count() < max_delay && elapsed.count() >= 0)
         std::this_thread::sleep_for(std::chrono::milliseconds(max_delay) - elapsed);
@@ -154,7 +164,7 @@ done:
 
 void virtual_mic_start(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
-    list_tracks.emplace_front(type);
+    list_tracks.emplace_front(std::make_shared<Track>(type));
 
     if (list_tracks.size() == 1) {
         char path[64];
@@ -165,7 +175,7 @@ void virtual_mic_start(track_type_t type) {
 
 void virtual_mic_stop(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
-    for (auto& it = list_tracks.begin(); it != list_tracks.end(); it++) {
+    for (auto it = list_tracks.begin(); it != list_tracks.end(); it++) {
         if ((*it)->type == type) {
             std::lock_guard<std::mutex> lg((*it)->mutex);
             list_tracks.erase(it);
@@ -175,3 +185,14 @@ void virtual_mic_stop(track_type_t type) {
     if (list_tracks.empty())
         output.close();
 }
+
+#if 1
+int32_t main() {
+    uint8_t buf[BUFFER_SIZE];
+
+    virtual_mic_start(TRACK_DEFAULT);
+    while (true)
+        virtual_mic_read(TRACK_DEFAULT, buf, BUFFER_SIZE);
+    virtual_mic_stop(TRACK_DEFAULT);
+}
+#endif
