@@ -48,7 +48,7 @@
 #endif
 
 #define BUFFER_SIZE 3840
-#define MAX_DELAY 18
+#define MAX_DELAY 19
 
 static std::map<track_type_t, std::pair<std::list<uint8_t*>, std::shared_ptr<MemoryManager>>> map_tracks;
 static std::shared_mutex mutex;
@@ -57,14 +57,14 @@ static std::chrono::steady_clock::time_point tp_write, tp_read;
 static uint32_t session = 0;
 static std::ofstream output;
 
-void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay) {
+void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay, char* tag) {
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - tp);
 
-    AHAL_DBG("time %d ms", elapsed.count());
+    AHAL_DBG("%s: time %02d ms, %d", tag, elapsed.count(), max_delay);
 
-    if (elapsed.count() < max_delay && elapsed.count() > 0)
-        std::this_thread::sleep_for(std::chrono::milliseconds(max_delay - elapsed.count()));
+    if (elapsed.count() < max_delay && elapsed.count() >= 0)
+        std::this_thread::sleep_for(std::chrono::milliseconds(max_delay) - elapsed);
 
     tp = std::chrono::steady_clock::now();
 
@@ -76,10 +76,11 @@ void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay) {
 
 void virtual_mic_write(const uint8_t* buf, size_t bytes) {
     uint32_t num_tracks = 0;
+
     AHAL_DBG("Enter, %zu", bytes);
     {
         std::unique_lock<std::shared_mutex> lock(mutex);
-        num_tracks = track.size();
+        num_tracks = map_tracks.size();
 
         if (num_tracks && bytes == BUFFER_SIZE) {
             for (auto& track: map_tracks) {
@@ -93,10 +94,10 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
             }
         }
     }
-    if (num_tracks) {
+    //if (num_tracks) {
         output.write((const char *)buf, bytes);
-        time_check(tp_write, MAX_DELAY);
-    }
+        time_check(tp_write, MAX_DELAY - 1, "write");
+    //}
     AHAL_DBG("Exit");
 }
 
@@ -118,13 +119,13 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(6));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    if (time <= 0)
+    if (time < 0)
         AHAL_WARN("underrun\n");
 
-    time_check(tp_read, MAX_DELAY);
+    time_check(tp_read, MAX_DELAY, "read");
     return bytes_read;
 }
 
