@@ -67,17 +67,19 @@ struct Track {
         size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
         memory = std::make_shared<MemoryManager>(total_memorysize, blockSize);
+        locker = std::unique_lock<std::mutex>(mutex, std::defer_lock);
     }
 
     std::shared_ptr<MemoryManager> memory;
     std::mutex mutex;
+    std::unique_lock<std::mutex> locker;
     std::list<uint8_t*> data;
     std::chrono::steady_clock::time_point tp;
     track_type_t type;
 };
 
 std::shared_mutex mutex;
-std::list<std::shared_ptr<Track>> list_tracks;
+std::list<Track> list_tracks;
 std::chrono::steady_clock::time_point tp_write;
 
 uint32_t session = 0;
@@ -110,10 +112,10 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
 
         if (num_tracks && bytes == BUFFER_SIZE) {
             for (auto& track: list_tracks) {
-                void* block = track->memory->allocate();
+                void* block = track.memory->allocate();
                 if (block != nullptr) {
                     memcpy(block, buf, BUFFER_SIZE);
-                    track->data.push_back((uint8_t *)block);
+                    track.data.push_back((uint8_t *)block);
                 } else {
                     AHAL_WARN("overrun\n");
                 }
@@ -129,24 +131,25 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
 
 ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
     ssize_t bytes_read = 0, time = 3;
-    std::unique_lock<std::mutex> locker;
+    std::unique_lock<std::mutex> *locker;
     std::chrono::steady_clock::time_point* tp;
 
     while (time--) {
         {
             std::shared_lock<std::shared_mutex> lock(mutex);
             for (auto& track: list_tracks) {
-                AHAL_DBG("############ %zd, %zu", time, track->data.size());
-                if (track->type == type) {
-                    uint8_t* block = track->data.front();
+                AHAL_DBG("############ %zd, %zu", time, track.data.size());
+                if (track.type == type) {
+                    uint8_t* block = track.data.front();
                     memcpy(buf, block, size);
 
-                    track->data.pop_front();
-                    track->memory->deallocate(block);
+                    track.data.pop_front();
+                    track.memory->deallocate(block);
                     bytes_read = size;
 
-                    locker = std::unique_lock<std::mutex>(track->mutex);
-                    tp = &(track->tp);
+                    locker = &(track.locker);
+                    tp = &(track.tp);
+                    locker->lock();
                     goto done;
                 }
             }
@@ -156,14 +159,16 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
 done:
     if (time < 0) {
         AHAL_WARN("underrun\n");
-    } else time_check(*tp, MAX_DELAY, "read");
-
+    } else {
+        time_check(*tp, MAX_DELAY, "read");
+        locker->unlock();
+    }
     return bytes_read;
 }
 
 void virtual_mic_start(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
-    list_tracks.emplace_front(std::make_shared<Track>(type));
+    list_tracks.emplace_front(type);
 
     if (list_tracks.size() == 1) {
         char path[64];
@@ -175,8 +180,8 @@ void virtual_mic_start(track_type_t type) {
 void virtual_mic_stop(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
     for (auto it = list_tracks.begin(); it != list_tracks.end(); ++it) {
-        if ((*it)->type == type) {
-            std::lock_guard<std::mutex> lg((*it)->mutex);
+        if ((*it).type == type) {
+            std::lock_guard<std::mutex> lg((*it).mutex);
             list_tracks.erase(it);
             break;
         }
