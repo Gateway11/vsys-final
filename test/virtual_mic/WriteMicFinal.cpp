@@ -67,10 +67,12 @@ struct Track {
         size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
         memory = std::make_shared<MemoryManager>(total_memorysize, blockSize);
+        locker = std::unique_lock<std::mutex>(mutex, std::defer_lock);
     }
 
     std::shared_ptr<MemoryManager> memory;
     std::mutex mutex;
+    std::unique_lock<std::mutex> locker;
     std::list<uint8_t*> data;
     std::chrono::steady_clock::time_point tp;
     track_type_t type;
@@ -129,7 +131,7 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
 
 ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
     ssize_t bytes_read = 0, time = 3;
-    std::unique_lock<std::mutex> locker;
+    std::unique_lock<std::mutex> *locker;
     std::chrono::steady_clock::time_point* tp;
 
     while (time--) {
@@ -145,8 +147,10 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                     track->memory->deallocate(block);
                     bytes_read = size;
 
-                    locker = std::unique_lock<std::mutex>(track->mutex);
+                    //locker = std::unique_lock<std::mutex>(track->mutex);
+                    locker = &(track.locker);
                     tp = &(track->tp);
+                    locker->lock();
                     goto done;
                 }
             }
@@ -156,8 +160,10 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
 done:
     if (time < 0) {
         AHAL_WARN("underrun\n");
-    } else time_check(*tp, MAX_DELAY, "read");
-
+    } else {
+        time_check(*tp, MAX_DELAY, "read");
+        locker->unlock();
+    }
     return bytes_read;
 }
 

@@ -147,6 +147,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                     track.memory->deallocate(block);
                     bytes_read = size;
 
+                    //locker = std::unique_lock<std::mutex>(track->mutex);
                     locker = &(track.locker);
                     tp = &(track.tp);
                     locker->lock();
