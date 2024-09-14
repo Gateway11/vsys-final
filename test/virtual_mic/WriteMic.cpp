@@ -96,7 +96,7 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
     }
     //if (num_tracks) {
         output.write((const char *)buf, bytes);
-        time_check(tp_write, MAX_DELAY - 1, "write");
+        time_check(tp_write, MAX_DELAY, "write");
     //}
     AHAL_DBG("Exit");
 }
@@ -119,7 +119,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(8));
     }
 
     if (time < 0)
