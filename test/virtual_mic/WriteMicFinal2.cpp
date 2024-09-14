@@ -135,7 +135,6 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
     while (time--) {
         {
             std::shared_lock<std::shared_mutex> lock(mutex);
-
             for (auto& track: list_tracks) {
                 AHAL_DBG("############ %zd, %zu", time, track->data.size());
                 if (track->type == type) {
