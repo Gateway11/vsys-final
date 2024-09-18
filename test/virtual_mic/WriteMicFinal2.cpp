@@ -139,7 +139,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
             std::shared_lock<std::shared_mutex> lock(mutex);
             for (auto& track: list_tracks) {
                 AHAL_DBG("############ %zd, %zu", time, track.data.size());
-                if (track.type == type) {
+                if (track.type == type && track.data.size()) {
                     uint8_t* block = track.data.front();
                     memcpy(buf, block, size);
 
@@ -161,7 +161,7 @@ done:
     if (time < 0) {
         AHAL_WARN("underrun\n");
     } else {
-        time_check(*tp, MAX_DELAY, "read");
+        time_check(*tp, MAX_DELAY, "read ");
         locker->unlock();
     }
     return bytes_read;
