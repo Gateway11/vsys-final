@@ -66,7 +66,6 @@ struct Track {
         size_t blockSize = BUFFER_SIZE;  // Block size of 3840 bytes
 
         memory = std::make_shared<MemoryManager>(total_memorysize, blockSize);
-        locker = std::unique_lock<std::mutex>(mutex, std::defer_lock);
     }
 
     std::shared_ptr<MemoryManager> memory;
@@ -171,7 +170,7 @@ void virtual_mic_start(track_type_t type) {
         snprintf(path, sizeof(path), "/data/virtual_mic/48000.2.16bit_%02d.pcm", session++);
         output.open(path, std::ios::out | std::ios::binary);
     }
-
+}
 
 void virtual_mic_stop(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
