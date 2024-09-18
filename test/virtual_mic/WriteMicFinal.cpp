@@ -33,7 +33,6 @@
 #include <thread>
 #include <fstream>
 #include <list>
-#include <map>
 #include <shared_mutex>
 #if 0
 #include <log/log.h>
@@ -123,7 +122,7 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
     }
     //if (num_tracks) {
         output.write((const char *)buf, bytes);
-        time_check(tp_write, MAX_DELAY, "write");
+        time_check(tp_write, MAX_DELAY - 500, "write");
     //}
     AHAL_DBG("Exit");
 }
@@ -152,12 +151,13 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(8));
+        std::this_thread::sleep_for(std::chrono::microseconds(MAX_DELAY / 2));
     }
 done:
     if (time < 0) {
         AHAL_WARN("underrun\n");
-    } else time_check(*tp, MAX_DELAY, "read");
+    } else
+        time_check(*tp, MAX_DELAY, "read");
 
     return bytes_read;
 }
@@ -171,7 +171,7 @@ void virtual_mic_start(track_type_t type) {
         snprintf(path, sizeof(path), "/data/virtual_mic/48000.2.16bit_%02d.pcm", session++);
         output.open(path, std::ios::out | std::ios::binary);
     }
-}
+
 
 void virtual_mic_stop(track_type_t type) {
     std::unique_lock<std::shared_mutex> lock(mutex);
