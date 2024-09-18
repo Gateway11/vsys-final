@@ -57,7 +57,7 @@ enum track_type_t {
 #endif
 
 #define BUFFER_SIZE 3840
-#define MAX_DELAY 19
+#define MAX_DELAY 19000
 
 struct Track {
     Track(track_type_t type) : type(type) {
@@ -84,17 +84,17 @@ std::ofstream output;
 
 void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay, char* tag) {
     auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - tp);
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - tp);
 
     AHAL_DBG("%s: time %02lld ms, %d", tag, elapsed.count(), max_delay);
 
     if (elapsed.count() < max_delay && elapsed.count() >= 0)
-        std::this_thread::sleep_for(std::chrono::milliseconds(max_delay) - elapsed);
+        std::this_thread::sleep_for(std::chrono::microseconds(max_delay) - elapsed);
 
     tp = std::chrono::steady_clock::now();
 
     if (elapsed.count() > max_delay) {
-        auto adjustment = std::chrono::milliseconds(elapsed.count() - max_delay);
+        auto adjustment = std::chrono::microseconds(elapsed.count() - max_delay);
         tp += adjustment;
     }
 }
