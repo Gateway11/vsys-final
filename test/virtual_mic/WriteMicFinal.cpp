@@ -34,7 +34,7 @@
 #include <fstream>
 #include <list>
 #include <shared_mutex>
-#if 0
+#if 1
 #include <log/log.h>
 
 #include "VirtualMic.h"
@@ -81,6 +81,12 @@ std::chrono::steady_clock::time_point tp_write;
 
 uint32_t session = 0;
 std::ofstream output;
+
+uint32_t calculate_wait_time(size_t block_size, size_t total_size, uint32_t wait_time) {
+#define max(a, b)  ((a) > (b) ? (a) : (b))
+    //return (block_size >= total_size * 2 / 3) ? std::max(0, wait_time - 500) : wait_time;
+    return (block_size >= total_size - 1) ? max(0, wait_time - 500) : wait_time;
+}
 
 void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay, char* tag) {
     auto now = std::chrono::steady_clock::now();
@@ -136,7 +142,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
             std::shared_lock<std::shared_mutex> lock(mutex);
             for (auto& track: list_tracks) {
                 AHAL_DBG("############ %zd, %zu", time, track->data.size());
-                if (track->type == type) {
+                if (track->type == type && track->data.size()) {
                     uint8_t* block = track->data.front();
                     memcpy(buf, block, size);
 
@@ -156,7 +162,7 @@ done:
     if (time < 0) {
         AHAL_WARN("underrun\n");
     } else
-        time_check(*tp, MAX_DELAY, "read");
+        time_check(*tp, MAX_DELAY, "read ");
 
     return bytes_read;
 }
@@ -185,7 +191,7 @@ void virtual_mic_stop(track_type_t type) {
         output.close();
 }
 
-#if 1
+#if 0
 int32_t main() {
     uint8_t buf[BUFFER_SIZE];
 

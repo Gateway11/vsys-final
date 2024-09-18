@@ -125,7 +125,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
     if (time < 0)
         AHAL_WARN("underrun\n");
 
-    time_check(tp_read, MAX_DELAY, "read");
+    time_check(tp_read, MAX_DELAY, "read ");
     return bytes_read;
 }
 
