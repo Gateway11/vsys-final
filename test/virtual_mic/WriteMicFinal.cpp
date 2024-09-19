@@ -99,10 +99,17 @@ void time_check(std::chrono::steady_clock::time_point& tp, uint32_t max_delay, c
 
     tp = std::chrono::steady_clock::now();
 
+#if 0
     if (elapsed.count() > max_delay) {
         auto adjustment = std::chrono::microseconds(elapsed.count() - max_delay);
         tp += adjustment;
     }
+#else
+    auto adjustment = elapsed.count() - max_delay;
+    if (adjustment > 0 && adjustment <= max_delay) {
+        tp -= std::chrono::microseconds(adjustment);
+    }
+#endif
 }
 
 void virtual_mic_write(const uint8_t* buf, size_t bytes) {
