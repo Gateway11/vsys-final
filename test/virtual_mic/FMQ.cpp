@@ -106,7 +106,7 @@ Return<void> Device::prepareForWriting(uint32_t frameSize, uint32_t framesCount,
         sendError(Result::INVALID_ARGUMENTS);
         return Void();
     }
-    if (frameSize > Stream::MAX_BUFFER_SIZE / framesCount) { //TODO
+    if (frameSize > Stream::MAX_BUFFER_SIZE / framesCount) {
         ALOGE("Buffer too big: %u*%u bytes > MAX_BUFFER_SIZE (%u)", frameSize, framesCount,
               Stream::MAX_BUFFER_SIZE);
         sendError(Result::INVALID_ARGUMENTS);
