@@ -1,3 +1,5 @@
+https://source.android.google.cn/docs/core/architecture/hidl/fmq?hl=zh-cn
+
 //////////////////////////////////// hidl ///////////////////////////////////////
 
     struct WriteStatus {
