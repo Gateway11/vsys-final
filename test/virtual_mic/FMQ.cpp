@@ -22,7 +22,7 @@ https://source.android.google.cn/docs/core/architecture/hidl/fmq?hl=zh-cn
 
 class WriteThread : public Thread {
    public:
-    // WriteThread's lifespan never exceeds StreamOut's lifespan.
+    // WriteThread's lifespan never exceeds Device's lifespan.
     WriteThread(audio_hw_device_t* device, StreamOut::DataMQ* dataMQ,
                 StreamOut::StatusMQ* statusMQ, EventFlag* efGroup)
         : Thread(false /*canCallJava*/),
@@ -59,7 +59,7 @@ void WriteThread::doWrite() {
         if (writeResult >= 0) {
             mStatus.reply.written = writeResult;
         } else {
-            mStatus.retval = Stream::analyzeStatus("write", writeResult);
+            mStatus.retval = Device::analyzeStatus("virtualMicWrite", writeResult);
         }
     }
 }
@@ -86,7 +86,7 @@ bool WriteThread::threadLoop() {
 
 }  // namespace
 
-Return<void> StreamOut::prepareForWriting(uint32_t frameSize, uint32_t framesCount,
+Return<void> Device::prepareForWriting(uint32_t frameSize, uint32_t framesCount,
                                           prepareForWriting_cb _hidl_cb) {
     status_t status;
 
@@ -156,14 +156,14 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize, uint32_t framesCou
 
 ///////////////////////////////////// client /////////////////////////////////////////
 
-status_t StreamOutHalHidl::write(const void *buffer, size_t bytes, size_t *written) {
+status_t DeviceHalHidl::virtualMicWrite(const void *buffer, size_t bytes, size_t *written) {
     // TIME_CHECK();  // TODO(b/243839867) reenable only when optimized.
-    if (mStream == 0) return NO_INIT;
+    if (mDevice == 0) return NO_INIT;
     *written = 0;
 
     if (bytes == 0 && !mDataMQ) {
         // Can't determine the size for the MQ buffer. Wait for a non-empty write request.
-        ALOGW_IF(mCallback.load().unsafe_get(), "First call to async write with 0 bytes");
+        ALOGW("First call to async write with 0 bytes");
         return OK;
     }
 
@@ -173,18 +173,12 @@ status_t StreamOutHalHidl::write(const void *buffer, size_t bytes, size_t *writt
         // that need to be written is less than the actual buffer size. Need to use
         // full buffer size for the MQ since otherwise after seeking back to the middle
         // data will be truncated.
-        size_t bufferSize;
-        if ((status = getCachedBufferSize(&bufferSize)) != OK) {
-            return status;
-        }
-        if (bytes > bufferSize) bufferSize = bytes;
         if ((status = prepareForWriting(bufferSize)) != OK) {
             return status;
         }
     }
 
-    status = callWriterThread(
-            WriteCommand::WRITE, "write", static_cast<const uint8_t*>(buffer), bytes,
+    status = callWriterThread("write", static_cast<const uint8_t*>(buffer), bytes,
             [&] (const WriteStatus& writeStatus) {
                 *written = writeStatus.reply.written;
                 // Diagnostics of the cause of b/35813113.
@@ -192,17 +186,11 @@ status_t StreamOutHalHidl::write(const void *buffer, size_t bytes, size_t *writt
                         "hal reports more bytes written than asked for: %lld > %lld",
                         (long long)*written, (long long)bytes);
             });
-    mStreamPowerLog.log(buffer, *written);
     return status;
 }
 
-status_t StreamOutHalHidl::callWriterThread(
-        WriteCommand cmd, const char* cmdName,
+status_t DeviceHalHidl::callWriterThread(const char* cmdName,
         const uint8_t* data, size_t dataSize, StreamOutHalHidl::WriterCallback callback) {
-    if (!mCommandMQ->write(&cmd)) {
-        ALOGE("command message queue write failed for \"%s\"", cmdName);
-        return -EAGAIN;
-    }
     if (data != nullptr) {
         size_t availableToWrite = mDataMQ->availableToWrite();
         if (dataSize > availableToWrite) {
@@ -241,11 +229,11 @@ retry:
     return ret;
 }
 
-status_t StreamOutHalHidl::prepareForWriting(size_t bufferSize) {
+status_t DeviceHalHidl::prepareForWriting(size_t bufferSize) {
     std::unique_ptr<DataMQ> tempDataMQ;
     std::unique_ptr<StatusMQ> tempStatusMQ;
     Result retval;
-    Return<void> ret = mStream->prepareForWriting(
+    Return<void> ret = mDevice->prepareForWriting(
             1, bufferSize,
             [&](Result r, const DataMQ::Descriptor& dataMQ, const StatusMQ::Descriptor& statusMQ) {
                 retval = r;
