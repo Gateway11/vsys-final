@@ -71,7 +71,7 @@ int32_t g_clientfd = -1;
 op_type_t g_type;
 std::ofstream output("/data/virtual_mic/44100.2.16bit.wav", std::ios::out | std::ios::binary);
 
-ssize_t virtual_mic_read(uint8_t* buf, ssize_t size) {
+ssize_t virtual_mic_read(uint8_t* buf, size_t size) {
     ssize_t bytes_read = 0, received;
     if (g_clientfd > 0) {
         while(true) {
