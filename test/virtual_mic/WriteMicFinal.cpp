@@ -57,7 +57,7 @@ enum track_type_t {
 #endif
 
 #define BUFFER_SIZE 3840
-#define MAX_DELAY 19000
+#define MAX_DELAY 19500
 
 struct Track {
     Track(track_type_t type) : type(type) {
@@ -134,7 +134,7 @@ void virtual_mic_write(const uint8_t* buf, size_t bytes) {
     }
     //if (num_tracks) {
         output.write((const char *)buf, bytes);
-        time_check(tp_write, MAX_DELAY - 500, "write");
+        time_check(tp_write, MAX_DELAY - 200, "write");
     //}
     AHAL_DBG("Exit");
 }
@@ -163,7 +163,7 @@ ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(MAX_DELAY / 2));
+        std::this_thread::sleep_for(std::chrono::microseconds(MAX_DELAY + 500));
     }
 done:
     if (time < 0) {

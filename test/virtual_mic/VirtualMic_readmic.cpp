@@ -81,7 +81,7 @@ std::mutex mutex;
 std::condition_variable condition;
 
 void clear_socket(int32_t sock) {
-    char buf[2048];
+    char buf[4096];
     ssize_t bytes_read;
 
     while ((bytes_read = recv(sock, buf, sizeof(buf), MSG_DONTWAIT)) > 0);
@@ -129,7 +129,7 @@ void virtual_mic_stop(track_type_t type) {
     }
 }
 
-ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, ssize_t size) {
+ssize_t virtual_mic_read(track_type_t type, uint8_t* buf, size_t size) {
     ssize_t bytes_read = 0, time = 3;
     while (time--) {
         {
