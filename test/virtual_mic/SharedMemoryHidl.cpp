@@ -69,13 +69,13 @@ int main() {
         return -1;
     }
     sp<IMemory> memory;
-    Return<void> result = ashmem->allocate(memorySize, [&](bool success, const hidl_memory& memory) {
-                if (success) {
-                    sp<IMemory> mMemory = mapMemory(memory);
-                }
-            });
+    bool success = false;
+    Return<void> result = ashmem->allocate(memorySize, [&](bool s, const hidl_memory& m) {
+        success = s;
+        if (success) memory = mapMemory(m);
+    });
     //sp<IMemory> memory = mapMemory(createMemory("ashmem", memorySize));
-    if (memory == nullptr) {
+    if (!success && memory == nullptr) {
         printf("Failed to allocate %d bytes from ashmem\n", memorySize);
         return -1;
     }
