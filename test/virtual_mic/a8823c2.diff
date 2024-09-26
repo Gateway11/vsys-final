@@ -1,0 +1,264 @@
+From a8823c23727c64c9ff2d252c286cad53dba38813 Mon Sep 17 00:00:00 2001
+From: hhuimeng1 <huimeng1@lenovo.com>
+Date: Thu, 26 Sep 2024 15:01:46 +0800
+Subject: [PATCH] [MULTI-321] 【公版NEW】【硬件共享】AUDIO HAL提供接口打通到build in MIC,上层添加向虚拟mic写入数据的接口(2/7) [scope of influence] AudioFlinger
+
+Change-Id: Ida2abe576d3cdffc61f639c5b7d8c27895dd1749
+---
+
+diff --git a/media/libaudioclient/AudioSystem.cpp b/media/libaudioclient/AudioSystem.cpp
+index 0cd805c..6b2615d 100644
+--- a/media/libaudioclient/AudioSystem.cpp
++++ b/media/libaudioclient/AudioSystem.cpp
+@@ -2067,6 +2067,15 @@
+     return statusTFromBinderStatus(aps->setActiveAssistantServicesUids(activeUidsAidl));
+ }
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++void AudioSystem::setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) {
++    const sp<IAudioFlinger>& af = AudioSystem::get_audio_flinger();
++    if (af == 0) return;
++    af->setCaptureBuffer(buffer, len, command);
++    return;
++}
++//END MULTI-321
++
+ status_t AudioSystem::setA11yServicesUids(const std::vector<uid_t>& uids) {
+     const sp<IAudioPolicyService>& aps = AudioSystem::get_audio_policy_service();
+     if (aps == 0) return PERMISSION_DENIED;
+diff --git a/media/libaudioclient/IAudioFlinger.cpp b/media/libaudioclient/IAudioFlinger.cpp
+index 342b988..82a08e9 100644
+--- a/media/libaudioclient/IAudioFlinger.cpp
++++ b/media/libaudioclient/IAudioFlinger.cpp
+@@ -448,6 +448,12 @@
+ }
+ //Lenovo,caoqing1, Multi-Volume, 20210816,ZUIS-54,end
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++status_t AudioFlingerClientAdapter::setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) {
++    return statusTFromBinderStatus(mDelegate->setCaptureBuffer(buffer, len, command));
++}
++//END MULTI-321
++
+ size_t AudioFlingerClientAdapter::getInputBufferSize(uint32_t sampleRate, audio_format_t format,
+                                                      audio_channel_mask_t channelMask) const {
+     auto result = [&]() -> ConversionResult<size_t> {
+@@ -1104,6 +1110,13 @@
+ }
+ //Lenovo,caoqing1, Multi-Volume, 20210816,ZUIS-54,end
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++Status AudioFlingerServerAdapter::setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) {
++    mDelegate->setCaptureBuffer(buffer, len, command);
++    return Status::ok();
++}
++//END MULTI-321
++
+ Status AudioFlingerServerAdapter::getInputBufferSize(int32_t sampleRate,
+                                                      const AudioFormatDescription& format,
+                                                      const AudioChannelLayout& channelMask,
+diff --git a/media/libaudioclient/aidl/android/media/IAudioFlingerService.aidl b/media/libaudioclient/aidl/android/media/IAudioFlingerService.aidl
+index e1d5647..75c1003 100644
+--- a/media/libaudioclient/aidl/android/media/IAudioFlingerService.aidl
++++ b/media/libaudioclient/aidl/android/media/IAudioFlingerService.aidl
+@@ -133,6 +133,11 @@
+ 
+     // Retrieve the audio recording buffer size in bytes.
+     // FIXME This API assumes a route, and so should be deprecated.
++
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    void setCaptureBuffer(in byte[] buffer, int len, int command);
++    //END MULTI-321
++
+     long getInputBufferSize(int sampleRate,
+                             in AudioFormatDescription format,
+                             in AudioChannelLayout channelMask);
+diff --git a/media/libaudioclient/include/media/AudioSystem.h b/media/libaudioclient/include/media/AudioSystem.h
+index 1aaa81a..5364cf1 100644
+--- a/media/libaudioclient/include/media/AudioSystem.h
++++ b/media/libaudioclient/include/media/AudioSystem.h
+@@ -505,6 +505,10 @@
+     static status_t setAssistantServicesUids(const std::vector<uid_t>& uids);
+     static status_t setActiveAssistantServicesUids(const std::vector<uid_t>& activeUids);
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    static void setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command);
++    //END MULTI-321
++
+     static status_t setA11yServicesUids(const std::vector<uid_t>& uids);
+     static status_t setCurrentImeUid(uid_t uid);
+ 
+diff --git a/media/libaudioclient/include/media/IAudioFlinger.h b/media/libaudioclient/include/media/IAudioFlinger.h
+index 82984bd..af5b27f 100644
+--- a/media/libaudioclient/include/media/IAudioFlinger.h
++++ b/media/libaudioclient/include/media/IAudioFlinger.h
+@@ -355,6 +355,10 @@
+ 
+     virtual status_t setAudioHalPids(const std::vector<pid_t>& pids) = 0;
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    virtual status_t setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) = 0;
++    //END MULTI-321
++
+     // Set vibrators' information.
+     // The values will be used to initialize HapticGenerator.
+     virtual status_t setVibratorInfos(
+@@ -490,6 +494,9 @@
+     size_t frameCountHAL(audio_io_handle_t ioHandle) const override;
+     status_t getMicrophones(std::vector<media::MicrophoneInfoFw>* microphones) override;
+     status_t setAudioHalPids(const std::vector<pid_t>& pids) override;
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    status_t setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) override;
++    //END MULTI-321
+     status_t setVibratorInfos(const std::vector<media::AudioVibratorInfo>& vibratorInfos) override;
+     status_t updateSecondaryOutputs(
+             const TrackSecondaryOutputsMap& trackSecondaryOutputs) override;
+@@ -732,6 +739,9 @@
+     Status getMicrophones(std::vector<media::MicrophoneInfoFw>* _aidl_return) override;
+     Status setAudioHalPids(const std::vector<int32_t>& pids) override;
+     Status setVibratorInfos(const std::vector<media::AudioVibratorInfo>& vibratorInfos) override;
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    Status setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) override;
++    //END MULTI-321
+     Status updateSecondaryOutputs(
+             const std::vector<media::TrackSecondaryOutputInfo>& trackSecondaryOutputInfos) override;
+     Status getMmapPolicyInfos(
+diff --git a/media/libaudiohal/impl/DeviceHalAidl.cpp b/media/libaudiohal/impl/DeviceHalAidl.cpp
+index 3125e311..08ab31e 100644
+--- a/media/libaudiohal/impl/DeviceHalAidl.cpp
++++ b/media/libaudiohal/impl/DeviceHalAidl.cpp
+@@ -991,6 +991,13 @@
+     return status;
+ }
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++status_t DeviceHalAidl::setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) {
++    ALOGD("DeviceHalAidl::setCaptureBuffer len:%d, command:%", len, command);
++    return NO_ERROR;
++}
++//END MULTI-321
++
+ status_t DeviceHalAidl::setConnectedState(const struct audio_port_v7 *port, bool connected) {
+     TIME_CHECK();
+     if (!mModule) return NO_INIT;
+diff --git a/media/libaudiohal/impl/DeviceHalAidl.h b/media/libaudiohal/impl/DeviceHalAidl.h
+index 37d800b..6bd88f0 100644
+--- a/media/libaudiohal/impl/DeviceHalAidl.h
++++ b/media/libaudiohal/impl/DeviceHalAidl.h
+@@ -171,6 +171,10 @@
+ 
+     status_t setConnectedState(const struct audio_port_v7 *port, bool connected) override;
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    status_t setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) override;
++    //END MULTI-321
++
+     status_t setSimulateDeviceConnections(bool enabled) override;
+ 
+     status_t dump(int __unused, const Vector<String16>& __unused) override;
+diff --git a/media/libaudiohal/impl/DeviceHalHidl.cpp b/media/libaudiohal/impl/DeviceHalHidl.cpp
+index 826461f..b790bdc 100644
+--- a/media/libaudiohal/impl/DeviceHalHidl.cpp
++++ b/media/libaudiohal/impl/DeviceHalHidl.cpp
+@@ -136,6 +136,18 @@
+     return processReturn("setVoiceVolume", mPrimaryDevice->setVoiceVolume(volume));
+ }
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++status_t DeviceHalHidl::setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) {
++    ALOGD("DeviceHalHidl::setCaptureBuffer len:%d, command:%", len, command);
++    Return<void> ret = mDevice->virtualMicWrite(buffer);
++    if(!ret.isOk()) {
++        ALOGE("setCaptureBuffer error!!!,will sleep 5ms");
++        std::this_thread::sleep_for(std::chrono::milliseconds(5));
++    }
++    return processReturn("virtualMicWrite", ret);
++}
++//END MULTI-321
++
+ status_t DeviceHalHidl::setMasterVolume(float volume) {
+     TIME_CHECK();
+     if (mDevice == 0) return NO_INIT;
+diff --git a/media/libaudiohal/impl/DeviceHalHidl.h b/media/libaudiohal/impl/DeviceHalHidl.h
+index c5addde..fae1ee2 100644
+--- a/media/libaudiohal/impl/DeviceHalHidl.h
++++ b/media/libaudiohal/impl/DeviceHalHidl.h
+@@ -132,6 +132,10 @@
+ 
+     status_t setConnectedState(const struct audio_port_v7 *port, bool connected) override;
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    status_t setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) override;
++    //END MULTI-321
++
+     status_t setSimulateDeviceConnections(bool enabled __unused) override {
+         // Only supported by AIDL HALs.
+         return INVALID_OPERATION;
+diff --git a/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h b/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h
+index 71e5e7a..d094130 100644
+--- a/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h
++++ b/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h
+@@ -147,6 +147,10 @@
+     // Update the connection status of an external device.
+     virtual status_t setConnectedState(const struct audio_port_v7* port, bool connected) = 0;
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    virtual status_t setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command) = 0;
++    //END MULTI-321
++
+     // Enable simulation of external devices connection at the HAL level.
+     virtual status_t setSimulateDeviceConnections(bool enabled) = 0;
+ 
+diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
+index f6e9dfd..f426990 100644
+--- a/services/audioflinger/AudioFlinger.cpp
++++ b/services/audioflinger/AudioFlinger.cpp
+@@ -2541,6 +2541,24 @@
+     }
+ }
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++status_t AudioFlinger::setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command){
++    if(buffer.size() != (size_t)len) {
++        return BAD_VALUE;
++    }
++    AutoMutex lock(mHardwareLock);
++    for (size_t i = 0; i < mAudioHwDevs.size(); i++) {
++        if (strncmp(mAudioHwDevs.valueAt(i)->moduleName(), AUDIO_HARDWARE_MODULE_ID_PRIMARY, strlen(AUDIO_HARDWARE_MODULE_ID_PRIMARY)) == 0)
++        {
++            sp<DeviceHalInterface> dev = mAudioHwDevs.valueAt(i)->hwDevice();
++            dev->setCaptureBuffer(buffer,len, command);
++            break;
++        }
++    }
++    return NO_ERROR;
++}
++//END MULTI-321
++
+ status_t AudioFlinger::setAudioAppListCallback(bool enable)
+ {
+     // check calling permissions
+@@ -3224,7 +3242,7 @@
+ 
+     mAudioHwDevs.add(handle, audioDevice);
+ 
+-    ALOGI("loadHwModule() Loaded %s audio interface, handle %d", name, handle);
++    ALOGD("load audio HwModule() Loaded %s audio interface, handle %d", name, handle);
+ 
+     return audioDevice;
+ }
+diff --git a/services/audioflinger/AudioFlinger.h b/services/audioflinger/AudioFlinger.h
+index 0641231..7e85e61 100644
+--- a/services/audioflinger/AudioFlinger.h
++++ b/services/audioflinger/AudioFlinger.h
+@@ -227,6 +227,10 @@
+     virtual     status_t    setAudioAppListCallback(bool state);
+ //Lenovo,caoqing1, Multi-Volume, 20210816,ZUIS-54,end
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    virtual     status_t    setCaptureBuffer(const std::vector<uint8_t>& buffer, int len, int command);
++    //END MULTI-321
++
+     virtual     size_t      getInputBufferSize(uint32_t sampleRate, audio_format_t format,
+                                                audio_channel_mask_t channelMask) const;
+ 

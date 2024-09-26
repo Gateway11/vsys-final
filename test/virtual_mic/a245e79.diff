@@ -1,0 +1,98 @@
+From a245e79ae71bff243f0148dc3a01ae21b802db6b Mon Sep 17 00:00:00 2001
+From: hhuimeng1 <huimeng1@lenovo.com>
+Date: Thu, 26 Sep 2024 14:44:20 +0800
+Subject: [PATCH] [MULTI-321] 【公版NEW】【硬件共享】AUDIO HAL提供接口打通到build in MIC,上层添加向虚拟mic写入数据的接口(1/7) [scope of influence] AudioManager
+
+Change-Id: I102da121d09c64bf44d401ddeee69e2ab8ffcf70
+---
+
+diff --git a/core/api/test-current.txt b/core/api/test-current.txt
+index 8031c51..4fab990 100644
+--- a/core/api/test-current.txt
++++ b/core/api/test-current.txt
+@@ -1915,6 +1915,7 @@
+   public class AudioSystem {
+     method @RequiresPermission(android.Manifest.permission.MODIFY_AUDIO_SETTINGS) public static float getMasterBalance();
+     method public static final int getNumStreamTypes();
++    method public static void setCaptureBuffer(@NonNull byte[], int, int);
+     method @RequiresPermission(android.Manifest.permission.MODIFY_AUDIO_SETTINGS) public static int setMasterBalance(float);
+     method @NonNull public static String streamToString(int);
+     field public static final int DEVICE_ROLE_DISABLED = 2; // 0x2
+diff --git a/core/jni/android_media_AudioSystem.cpp b/core/jni/android_media_AudioSystem.cpp
+index 78feba6..71b5572 100644
+--- a/core/jni/android_media_AudioSystem.cpp
++++ b/core/jni/android_media_AudioSystem.cpp
+@@ -482,6 +482,26 @@
+     return (jint) status;
+ }
+ 
++//BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++static void
++android_media_AudioSystem_setCaptureBuffer(JNIEnv *env, jobject thiz, jbyteArray jbuffer, int len, int command)
++{
++    if(jbuffer == NULL) {
++        return;
++    }
++    jbyte * arrayBody = env->GetByteArrayElements(jbuffer, 0);
++    jsize lengthJ = env->GetArrayLength(jbuffer);
++    uint8_t * starter = (uint8_t *) arrayBody;
++
++    AudioSystem::setCaptureBuffer(std::vector<uint8_t>(starter, starter + len),len, command);
++    env->ReleaseByteArrayElements(jbuffer, arrayBody, 0);
++}
++//END MULTI-321
++
+ static jstring
+ android_media_AudioSystem_getParameters(JNIEnv *env, jobject thiz, jstring keys)
+ {
+@@ -3270,6 +3290,10 @@
+ static const JNINativeMethod gMethods[] =
+         {{"setParameters", "(Ljava/lang/String;)I",
+           (void *)android_media_AudioSystem_setParameters},
++        //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++         {"setCaptureBuffer","([BII)V",
++          (void *)android_media_AudioSystem_setCaptureBuffer},
++        //END MULTI-321
+          {"getParameters", "(Ljava/lang/String;)Ljava/lang/String;",
+           (void *)android_media_AudioSystem_getParameters},
+          {"muteMicrophone", "(Z)I", (void *)android_media_AudioSystem_muteMicrophone},
+diff --git a/media/java/android/media/AudioManager.java b/media/java/android/media/AudioManager.java
+index 1dedaa5..fdf9290 100644
+--- a/media/java/android/media/AudioManager.java
++++ b/media/java/android/media/AudioManager.java
+@@ -3729,6 +3729,21 @@
+      */
+     public static final int AUDIO_SESSION_ID_GENERATE = AudioSystem.AUDIO_SESSION_ALLOCATE;
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    /**
++     * @hide
++     */
++    public void setCaptureBuffer(@NonNull byte[] buffer, int length, int command) {
++        if (DEBUG) {
++            Log.d(TAG, "setCaptureBuffer  length:" + length + " command:" + command);
++        }
++        if(buffer == null || length < 0) {
++            return;
++        }
++        AudioSystem.setCaptureBuffer(buffer, length, command);
++    }
++    //END MULTI-321
++
+ 
+     /*
+      * Sets a generic audio configuration parameter. The use of these parameters
+diff --git a/media/java/android/media/AudioSystem.java b/media/java/android/media/AudioSystem.java
+index 3bb4d9d..95e3a7c 100644
+--- a/media/java/android/media/AudioSystem.java
++++ b/media/java/android/media/AudioSystem.java
+@@ -629,6 +629,9 @@
+      */
+     public static native int newAudioRecorderId();
+ 
++    //BEGIN VClab huimeng1,24/09/26, MULTI-321,Add virtual mic interface
++    public static native void setCaptureBuffer(@NonNull byte[] buffer, int length, int comamnd);
++    //END MULTI-321
+ 
+     /**
+      * @hide
