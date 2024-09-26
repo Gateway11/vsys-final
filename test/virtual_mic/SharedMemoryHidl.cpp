@@ -99,6 +99,65 @@ int main() {
 http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/media/libaudiohal/impl/EffectBufferHalHidl.cpp
 // ####################################################################################
 
+// Backs up by the vector with the contents of shared memory.
+// It is assumed that the passed hidl_vector is empty, so it's
+// not cleared if the memory is a null object.
+// The caller needs to keep the returned sp<IMemory> as long as
+// the data is needed.
+std::pair<bool, sp<IMemory>> memoryAsVector(const hidl_memory& m, hidl_vec<uint8_t>* vec) {
+    sp<IMemory> memory;
+    if (m.size() == 0) {
+        return std::make_pair(true, memory);
+    }
+    memory = mapMemory(m);
+    if (memory != nullptr) {
+        memory->read();
+        vec->setToExternal(static_cast<uint8_t*>(static_cast<void*>(memory->getPointer())),
+                           memory->getSize());
+        return std::make_pair(true, memory);
+    }
+    ALOGE("%s: Could not map HIDL memory to IMemory", __func__);
+    return std::make_pair(false, memory);
+}
+
+// Moves the data from the vector into allocated shared memory,
+// emptying the vector.
+// It is assumed that the passed hidl_memory is a null object, so it's
+// not reset if the vector is empty.
+// The caller needs to keep the returned sp<IMemory> as long as
+// the data is needed.
+std::pair<bool, sp<IMemory>> moveVectorToMemory(hidl_vec<uint8_t>* v, hidl_memory* mem) {
+    sp<IMemory> memory;
+    if (v->size() == 0) {
+        return std::make_pair(true, memory);
+    }
+    sp<IAllocator> ashmem = IAllocator::getService("ashmem");
+    if (ashmem == 0) {
+        ALOGE("Failed to retrieve ashmem allocator service");
+        return std::make_pair(false, memory);
+    }
+    bool success = false;
+    Return<void> r = ashmem->allocate(v->size(), [&](bool s, const hidl_memory& m) {
+        success = s;
+        if (success) *mem = m;
+    });
+    if (r.isOk() && success) {
+        memory = hardware::mapMemory(*mem);
+        if (memory != 0) {
+            memory->update();
+            memcpy(memory->getPointer(), v->data(), v->size());
+            memory->commit();
+            v->resize(0);
+            return std::make_pair(true, memory);
+        } else {
+            ALOGE("Failed to map allocated ashmem");
+        }
+    } else {
+        ALOGE("Failed to allocate %llu bytes from ashmem", (unsigned long long)v->size());
+    }
+    return std::make_pair(false, memory);
+}
+
 //1
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <hidlmemory/HidlMemoryDealer.h>
