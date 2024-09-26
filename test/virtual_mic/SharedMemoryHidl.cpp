@@ -57,22 +57,30 @@ int main() {
     // Get the service
     sp<ISharedMemoryExample> service = ISharedMemoryExample::getService();
     if (service == nullptr) {
-        printf("Failed to get service!\n");
+        ALOGE("Failed to get service!\n");
         return -1;
     }
 
     // Create shared memory once (1 KB in size)
     size_t memorySize = 1024;
-    sp<IMemory> memory = mapMemory(createMemory("ashmem", memorySize));
-
+    sp<IAllocator> ashmem = IAllocator::getService("ashmem");
+    if (ashmem == 0) {
+        ALOGE("Failed to retrieve ashmem allocator service");
+        return NO_INIT;
+    }
+    sp<IMemory> memory;
+    Return<void> result = ashmem->allocate(memorySize, [&](bool success, const hidl_memory& memory) {
+                if (success) {
+                    sp<IMemory> mMemory = mapMemory(memory);
+                }
+            });
+    //sp<IMemory> memory = mapMemory(createMemory("ashmem", memorySize));
     if (memory == nullptr) {
-        printf("Failed to create shared memory!\n");
+        ALOGE("Failed to allocate %d bytes from ashmem", memorySize);
         return -1;
     }
 
-    // Use the same shared memory multiple times to send data
     for (int i = 0; i < 3; ++i) {
-        // Write different data into the shared memory
         std::string data = "Hello from Client, message " + std::to_string(i + 1);
         memory->update();
         void* memPointer = static_cast<void*>(memory->getPointer());
@@ -81,7 +89,7 @@ int main() {
             memcpy(memPointer, data.c_str(), data.length() + 1);  // Copy new data to shared memory
             memory->commit();  // Commit the changes
         } else {
-            printf("Memory pointer is null!\n");
+            ALOGE("Memory pointer is null!\n");
             return -1;
         }
 
@@ -90,9 +98,9 @@ int main() {
 
         bool result = service->transferDataFromSharedMemory(hidlMem);
         if (result) {
-            printf("Data transferred successfully for message %d!\n", i + 1);
+            ALOGE("Data transferred successfully for message %d!\n", i + 1);
         } else {
-            printf("Failed to transfer data for message %d!\n", i + 1);
+            ALOGE("Failed to transfer data for message %d!\n", i + 1);
         }
     }
 
@@ -100,37 +108,6 @@ int main() {
 }
 // ####################################################################################
 http://aospxref.com/android-14.0.0_r2/xref/frameworks/av/media/libaudiohal/impl/EffectBufferHalHidl.cpp
-status_t EffectBufferHalHidl::init() {
-    sp<IAllocator> ashmem = IAllocator::getService("ashmem");
-    if (ashmem == 0) {
-        ALOGE("Failed to retrieve ashmem allocator service");
-        return NO_INIT;
-    }
-    status_t retval = NO_MEMORY;
-    Return<void> result = ashmem->allocate(
-            mBufferSize,
-            [&](bool success, const hidl_memory& memory) {
-                if (success) {
-                    mHidlBuffer.data = memory;
-                    retval = OK;
-                }
-            });
-    if (result.isOk() && retval == OK) {
-        mMemory = hardware::mapMemory(mHidlBuffer.data);
-        if (mMemory != 0) {
-            mMemory->update();
-            mAudioBuffer.raw = static_cast<void*>(mMemory->getPointer());
-            memset(mAudioBuffer.raw, 0, mMemory->getSize());
-            mMemory->commit();
-        } else {
-            ALOGE("Failed to map allocated ashmem");
-            retval = NO_MEMORY;
-        }
-    } else {
-        ALOGE("Failed to allocate %d bytes from ashmem", (int)mBufferSize);
-    }
-    return result.isOk() ? retval : FAILED_TRANSACTION;
-}
 // ####################################################################################
 
 //1
