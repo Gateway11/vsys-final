@@ -68,42 +68,26 @@ int main() {
         printf("Failed to retrieve ashmem allocator service\n");
         return -1;
     }
-    sp<IMemory> memory;
     bool success = false;
-    Return<void> result = ashmem->allocate(memorySize, [&](bool s, const hidl_memory& m) {
+    hidl_memory mem;
+    Return<void> r = ashmem->allocate(memorySize, [&](bool s, const hidl_memory& m) {
         success = s;
-        if (success) memory = mapMemory(m);
+        if (success) mem = m;
     });
-    //sp<IMemory> memory = mapMemory(createMemory("ashmem", memorySize));
-    if (!success && memory == nullptr) {
+    if (r.isOk() && success) {
+        sp<IMemory> memory = mapMemory(mem);
+        if (memory != 0) {
+            std::string data = "Hello from Client, message " + std::to_string(1);
+            memory->update();
+            memcpy(memory->getPointer(), data.c_str(), data.length());
+            memory->commit();
+            bool result = service->transferDataFromSharedMemory(hidlMem);
+        } else {
+            printf("Failed to map allocated ashmem\n");
+        }
+    } else {
         printf("Failed to allocate %d bytes from ashmem\n", memorySize);
-        return -1;
     }
-
-    for (int i = 0; i < 3; ++i) {
-        std::string data = "Hello from Client, message " + std::to_string(i + 1);
-        memory->update();
-        void* memPointer = static_cast<void*>(memory->getPointer());
-
-        if (memPointer != nullptr) {
-            memcpy(memPointer, data.c_str(), data.length() + 1);  // Copy new data to shared memory
-            memory->commit();  // Commit the changes
-        } else {
-            printf("Memory pointer is null!\n");
-            return -1;
-        }
-
-        // Create hidl_memory object and pass it to the server
-        hidl_memory hidlMem = memory->getMemory();
-
-        bool result = service->transferDataFromSharedMemory(hidlMem);
-        if (result) {
-            printf("Data transferred successfully for message %d!\n", i + 1);
-        } else {
-            printf("Failed to transfer data for message %d!\n", i + 1);
-        }
-    }
-
     return 0;
 }
 // ####################################################################################
