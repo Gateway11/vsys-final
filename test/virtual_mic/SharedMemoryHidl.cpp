@@ -78,7 +78,6 @@ int main() {
         success = s;
         if (success) memory = mapMemory(m);
     });
-    //sp<IMemory> memory = mapMemory(createMemory("ashmem", memorySize));
     if (!success && memory == nullptr) {
         printf("Failed to allocate %d bytes from ashmem\n", memorySize);
         return -1;
