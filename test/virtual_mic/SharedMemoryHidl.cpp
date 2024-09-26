@@ -68,6 +68,7 @@ int main() {
         printf("Failed to retrieve ashmem allocator service\n");
         return -1;
     }
+    //hardware/interfaces/soundtrigger/2.1/default/SoundTriggerHw.cpp
     bool success = false;
     hidl_memory mem;
     Return<void> r = ashmem->allocate(memorySize, [&](bool s, const hidl_memory& m) {
