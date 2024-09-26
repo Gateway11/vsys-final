@@ -10,13 +10,14 @@ using android::sp;
 
 class SharedMemoryExample : public ISharedMemoryExample {
 public:
-    Return<bool> transferDataFromSharedMemory(hidl_memory memory) override {
+    Return<bool> transferDataFromSharedMemory(const hidl_memory& memory) override {
         // Map the passed hidl_memory to a void* pointer
         sp<IMemory> mappedMemory = mapMemory(memory);
         if (mappedMemory == nullptr) {
             return false; // Mapping failed
         }
 
+#if 1
         // Lock memory access
         mappedMemory->update();
 
@@ -36,7 +37,10 @@ public:
 
         // Unlock memory
         mappedMemory->commit();
-
+#else
+        mappedMemory->read();
+        ALOGV("Received data: %s\n", static_cast<char*>(mappedMemory->getPointer())));
+#endif
         return true;
     }
 };
