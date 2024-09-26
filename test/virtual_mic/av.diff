@@ -1,3 +1,9 @@
+hardware/interfaces
+hardware/libhardware/include/hardware/audio.h
+
+
+
+
 From a8823c23727c64c9ff2d252c286cad53dba38813 Mon Sep 17 00:00:00 2001
 From: hhuimeng1 <huimeng1@lenovo.com>
 Date: Thu, 26 Sep 2024 15:01:46 +0800
