@@ -32,7 +32,7 @@ public:
         // For example, print the data
         char* charData = static_cast<char*>(data);
         std::string receivedData(charData, size);
-        printf("Received data: %s\n", receivedData.c_str());
+        ALOGV("Received data: %s\n", receivedData.c_str());
 
         // Unlock memory
         mappedMemory->commit();
@@ -57,7 +57,7 @@ int main() {
     // Get the service
     sp<ISharedMemoryExample> service = ISharedMemoryExample::getService();
     if (service == nullptr) {
-        ALOGE("Failed to get service!\n");
+        printf("Failed to get service!\n");
         return -1;
     }
 
@@ -65,8 +65,8 @@ int main() {
     size_t memorySize = 1024;
     sp<IAllocator> ashmem = IAllocator::getService("ashmem");
     if (ashmem == 0) {
-        ALOGE("Failed to retrieve ashmem allocator service");
-        return NO_INIT;
+        printf("Failed to retrieve ashmem allocator service\n");
+        return -1;
     }
     sp<IMemory> memory;
     Return<void> result = ashmem->allocate(memorySize, [&](bool success, const hidl_memory& memory) {
@@ -76,7 +76,7 @@ int main() {
             });
     //sp<IMemory> memory = mapMemory(createMemory("ashmem", memorySize));
     if (memory == nullptr) {
-        ALOGE("Failed to allocate %d bytes from ashmem", memorySize);
+        printf("Failed to allocate %d bytes from ashmem\n", memorySize);
         return -1;
     }
 
@@ -89,7 +89,7 @@ int main() {
             memcpy(memPointer, data.c_str(), data.length() + 1);  // Copy new data to shared memory
             memory->commit();  // Commit the changes
         } else {
-            ALOGE("Memory pointer is null!\n");
+            printf("Memory pointer is null!\n");
             return -1;
         }
 
@@ -98,9 +98,9 @@ int main() {
 
         bool result = service->transferDataFromSharedMemory(hidlMem);
         if (result) {
-            ALOGE("Data transferred successfully for message %d!\n", i + 1);
+            printf("Data transferred successfully for message %d!\n", i + 1);
         } else {
-            ALOGE("Failed to transfer data for message %d!\n", i + 1);
+            printf("Failed to transfer data for message %d!\n", i + 1);
         }
     }
 
