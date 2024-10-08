@@ -6,7 +6,7 @@ snd_afe_dai_trigger; SND_SOC_DAIFMT_CBM_CFM/SND_SOC_DAIFMT_CBS_CFS sck_polar
 DSP TDM_SCK, AMP TDM_SCK; DSP TDM_SD, AMP TDM_SD
 
 
-
+docker start a55de3303123; docker attach a55de3303123
 
 
 buildsystem/res/tools/res/early_app/audio
