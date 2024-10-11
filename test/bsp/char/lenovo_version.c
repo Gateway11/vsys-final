@@ -7,7 +7,8 @@
 
 static const char *version_info = "Version: 1.0.0\n";
 
-static ssize_t version_read(struct file *file, char __user *buffer, size_t length, loff_t *offset)
+static ssize_t version_read(struct file *file,
+        char __user *buffer, size_t length, loff_t *offset)
 {
     ssize_t ret = 0;
     size_t version_info_size = strlen(version_info);
