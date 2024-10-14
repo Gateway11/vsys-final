@@ -1,0 +1,65 @@
+=================================================================================
+[Version]CIU98_B V2 Host SDK[V1.2.7b-release]
+[Date]2024-2-20
+[Description]This SDK is not an open source product and cannot be provided to third parties without permission
+=================================================================================
+
+
+[communication interface]
+HED-SPI
+HED-I2C
+
+[application function]
+1. Communication function
+2. Control function
+3. Device authentication
+4. Key management
+5. Cryptography
+6. File management
+7. Information management
+8. Firmware upgrade 
+9. Pin related options
+10. V2X key derive function
+
+[1.2.7b upgrade modification instruction]
+1.Modify the api_get_IVD interface.    
+2.Modify the api_loader_download interface. 
+
+
+[1.2.7a upgrade modification instruction]
+1.Api_get_info interface support to get the COS version
+2.Add api_get_IVD interface.
+
+
+[1.2.7 upgrade modification instruction]
+1.Update the soft crypto algorithm 
+
+[1.2.5 upgrade modification instruction]
+1.Modify the api_get_info
+
+[1.2.4 upgrade modification instruction]
+1.Add api_update_EM_flag and api_read_EM_flag interfaces
+2.Extend the api_import_key to support the ED25519 public key imported 
+3.Optimize the loader update process
+
+[1.2.3 upgrade modification instruction]
+1.Update the driver optimization
+2.SPI driver supported the IRQ mode receive the data 
+3.Support the RSA openssl engine
+
+
+[1.2.2 upgrade modification instruction]
+1.Add 2x_private_key_multiply_add and v2x_get_derive_seed api 
+2.Before calling v2x_reconsitution_key api need obtain the security file write permission
+3.Before calling v2x_gen_key_derive_seed api need obtain the administrator permission
+
+[1.2.1 upgrade modification instruction]
+1.Add V2X key derive function.
+2.Solve the problem that is the SM3 soft algorithm calculation results mistakenly on 64 bit linux OS.   
+3.Solve the compatibility problem that is the custom data type "bool" in C++ environment.
+4.Add prefixes "util_*" before the functions about queue. 
+5.Add "api_write_id" interface to write SEID.
+6.Modify the problem that the "api_get_id" interface can not get the complete SEID information.
+7.Solve the problem that the response datas of interface "api_read_file" is one byte less than the expect length(15+n*16).
+8.Solve the problem that the I2C protocol layer may be out of memory in a multi-threaded environment. 
+9.Modify the input parameter of the "api_switch_mode" interface and "api_get_info" interface.      
