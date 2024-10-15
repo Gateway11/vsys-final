@@ -155,9 +155,9 @@ se_error_t proto_spi_receive(peripheral *periph, uint8_t *outbuf, uint32_t outbu
   Function:	  proto_spi_crc16
   Description:  Calculates the CRC value for the specified length of data
   Input:	
-            CRCType£ºcalculation type of CRC
-            Length£ºcalculttion data length
-            Data£ºstart address of the calculttion data
+            CRCTypeï¿½ï¿½calculation type of CRC
+            Lengthï¿½ï¿½calculttion data length
+            Dataï¿½ï¿½start address of the calculttion data
   Return:	value of crc	
   Others:		
 *************************************************/
@@ -423,6 +423,11 @@ se_error_t proto_spi_receive_active_frame(peripheral *periph, spi_param_t *param
 		{
 			break;
 		}
+
+		printf("FRAME_HEAD_LEN & EDC_LEN [");
+		for (int i = 0; i < (FRAME_HEAD_LEN + len); i++)
+			printf("0x%02x", output[i]);
+		printf("]\n");
 		
 		//check edc
 		edc_value = 0;
@@ -1248,7 +1253,7 @@ se_error_t proto_spi_transceive(peripheral *periph, uint8_t *sbuf, uint32_t  sle
 		else if(ret_code == SE_ERR_LRC_CRC||ret_code == SE_ERR_TIMEOUT)
 		{
 
-     			//·¢ËÍresetÃüÁîÐòÁÐ
+     			//ï¿½ï¿½ï¿½ï¿½resetï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      		        p_spi_periph->delay(SPI_SEND_BGT_TIME); 	//delay BGT
      		        rec_len = PROTO_SPI_RERESET_MAX_LEN ;
 	     
