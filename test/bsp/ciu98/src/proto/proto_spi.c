@@ -404,9 +404,9 @@ se_error_t proto_spi_receive_active_frame(peripheral *periph, spi_param_t *param
 			break;
 		}
 
-		printf("FRAME_HEAD_LEN & EDC_LEN [");
+		printf("%s: PIB + LEN + DATA + EDC[", __func__);
 		for (int i = 0; i < (FRAME_HEAD_LEN + len); i++)
-			printf("0x%02x", output[i]);
+			printf("0x%02x ", output[i]);
 		printf("]\n");
 
 		// check edc
