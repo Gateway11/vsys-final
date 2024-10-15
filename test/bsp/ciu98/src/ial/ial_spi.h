@@ -42,8 +42,9 @@
 #define HAL_SPI_PERIPHERAL_STRUCT_POINTER PERIPHERAL_STRUCT_DEFINE(PERIPHERAL_SPI)*
 
 
-//brief ÍâÉèÍ¨ÐÅÇý¶¯³éÏó½Ó¿Ú
+//brief ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
 
+//struct peripheral_PERIPHERAL_SPI
 PERIPHERAL_STRUCT_DEFINE(PERIPHERAL_SPI) {
     peripheral periph;  //Peripheral interface
     int32_t (*init)       (HAL_SPI_PERIPHERAL_STRUCT_POINTER periph);  //  Initialization
