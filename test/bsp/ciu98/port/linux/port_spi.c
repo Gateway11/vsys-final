@@ -295,7 +295,7 @@ int port_spi_tx(void *handle, int channel, uint8_t *tx_data, int len)
 */
 int port_spi_rx(void *handle, int channel, uint8_t *rx_data, int len)
 {
-	int fd, i;
+	int fd;
 	int ret;
 	struct spi_ioc_transfer spi ;
 	SPI_SetDef *spiSetHandle = (SPI_SetDef *)handle;
@@ -317,10 +317,7 @@ int port_spi_rx(void *handle, int channel, uint8_t *rx_data, int len)
 		return ret;
 	}
 
-    for (i = 0; i < len; i++) {
-        if (rx_data[i] != 0xFF) break;
-    }
-    if (i != len) hex_dump(rx_data, len, 32, "RX");
+    if (*(uint16_t *)rx_data != 0xFFFF) hex_dump(rx_data, len, 32, "RX");
 	return SE_SUCCESS;
 
 }
