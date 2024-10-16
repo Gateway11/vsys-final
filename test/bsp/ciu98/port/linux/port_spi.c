@@ -218,6 +218,33 @@ int port_spi_set(void *handle, int channel, int mode, int speed, uint8_t bpw)
 	return fd ;
 }
 
+static void hex_dump(const void *src, size_t length, size_t line_size,
+             char *prefix)
+{
+    int i = 0;
+    const unsigned char *address = src;
+    const unsigned char *line = address;
+    unsigned char c;
+
+    printf("%s | ", prefix);
+    while (length-- > 0) {
+        printf("%02X ", *address++);
+        if (!(++i % line_size) || (length == 0 && i % line_size)) {
+            if (length == 0) {
+                while (i++ % line_size)
+                    printf("__ ");
+            }
+            printf(" |");
+            while (line < address) {
+                c = *line++;
+                printf("%c", (c < 32 || c > 126) ? '.' : c);
+            }
+            printf("|\n");
+            if (length > 0)
+                printf("%s | ", prefix);
+        }
+    }
+}
 
 /**
 * @brief send multi byte data throuth SPI 
@@ -239,13 +266,7 @@ int port_spi_tx(void *handle, int channel, uint8_t *tx_data, int len)
 
 	fd = spiSetHandle->aiSpiFds[channel];
 
-    printf("{");
-    for (int i = 0; i < len; i++) {
-        printf("0x%02x ", tx_data[i]);
-        count += tx_data[i];
-    }
-    printf("} ");
-    if (count != 0) printf("\n");
+    hex_dump(tx_data, len, 32, "TX");
 
 	spi.tx_buf        = (unsigned long)tx_data ;
 	spi.rx_buf        = (unsigned long)NULL ;
@@ -262,8 +283,6 @@ int port_spi_tx(void *handle, int channel, uint8_t *tx_data, int len)
 	return SE_SUCCESS;
 
 }
-
-
 
 /**
 * @brief receive multi byte data throuth SPI 
@@ -301,14 +320,7 @@ int port_spi_rx(void *handle, int channel, uint8_t *rx_data, int len)
     for (i = 0; i < len; i++) {
         if (rx_data[i] != 0xFF) break;
     }
-    if (i != len) {
-        printf("[");
-        for (int j = 0; j < len; j++) {
-            printf("0x%02x ", rx_data[j]);
-        }
-        printf("] ");
-        if (rx_data[0] != PIB_ACTIVE_FRAME && rx_data[0] != PIB_PROCESS_FRAME) printf("\n");
-    }
+    if (i != len) hex_dump(rx_data, len, 32, "RX");
 	return SE_SUCCESS;
 
 }
