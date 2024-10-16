@@ -230,7 +230,7 @@ int port_spi_set(void *handle, int channel, int mode, int speed, uint8_t bpw)
 */
 int port_spi_tx(void *handle, int channel, uint8_t *tx_data, int len)
 {
-	int fd ;
+	int fd, count = 0;
 	int ret;
 	struct spi_ioc_transfer spi ;
 	SPI_SetDef *spiSetHandle = (SPI_SetDef *)handle;
@@ -238,6 +238,14 @@ int port_spi_tx(void *handle, int channel, uint8_t *tx_data, int len)
 	memset (&spi, 0, sizeof (spi)) ;
 
 	fd = spiSetHandle->aiSpiFds[channel];
+
+    printf("{");
+    for (int i = 0; i < len; i++) {
+        printf("0x%02x ", tx_data[i]);
+        count += tx_data[i];
+    }
+    printf("} ");
+    if (count != 0) printf("\n");
 
 	spi.tx_buf        = (unsigned long)tx_data ;
 	spi.rx_buf        = (unsigned long)NULL ;
@@ -268,7 +276,7 @@ int port_spi_tx(void *handle, int channel, uint8_t *tx_data, int len)
 */
 int port_spi_rx(void *handle, int channel, uint8_t *rx_data, int len)
 {
-	int fd ;
+	int fd, i;
 	int ret;
 	struct spi_ioc_transfer spi ;
 	SPI_SetDef *spiSetHandle = (SPI_SetDef *)handle;
@@ -289,6 +297,18 @@ int port_spi_rx(void *handle, int channel, uint8_t *rx_data, int len)
 	{
 		return ret;
 	}
+
+    for (i = 0; i < len; i++) {
+        if (rx_data[i] != 0xFF) break;
+    }
+    if (i != len) {
+        printf("[");
+        for (int j = 0; j < len; j++) {
+            printf("0x%02x ", rx_data[j]);
+        }
+        printf("] ");
+        if (rx_data[0] != PIB_ACTIVE_FRAME && rx_data[0] != PIB_PROCESS_FRAME) printf("\n");
+    }
 	return SE_SUCCESS;
 
 }
