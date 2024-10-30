@@ -233,7 +233,8 @@ static void adi_a2b_Concat_Addr_Data(uint8_t pDstBuf[], uint32_t nAddrwidth, uin
 
 void adi_a2b_Delay(uint32_t nTime)
 {
-    usleep(nTime);
+    printf("Sleep %dms\n", nTime);
+    usleep(nTime * 1000);
 }
 
 int32_t adi_a2b_I2COpen(uint16_t nDeviceAddress)
