@@ -281,8 +281,8 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
     msg.len   = nWrite;
     msg.buf = wBuf;
 
-    ret = ioctl(fd, I2C_RDWR, &msg_rdwr);
-    if (ret < 0) {
+    nResult = ioctl(fd, I2C_RDWR, &msg_rdwr);
+    if (nResult < 0) {
         return -1;
     }
 
