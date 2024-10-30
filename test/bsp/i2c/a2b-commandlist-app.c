@@ -21,16 +21,26 @@ and its licensors.
 
 /*============= I N C L U D E S =============*/
 
+//#include <linux/i2c.h>
+//#include <linux/i2c-dev.h>
+
+#include <stdio.h>
+#include <stdint.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+
 #include "adi_a2b_i2c_commandlist.h"
 
 /*============= D E F I N E S =============*/
 
-#define I2C_DEV_PATH "/dev/i2c-13" // Adjust as necessary
-#define I2C_MASTER_ADDR 0x68
-#define I2C_SLAVE_ADDR 0x69
+#define I2C_DEV_PATH                    "/dev/i2c-13"
+#define I2C_MASTER_ADDR                 0x68
+#define I2C_SLAVE_ADDR                  0x69
 
 #define I2C_TIMEOUT_DEFAULT             700             /*!< timeout: 700ms*/
-#define I2C_RETRY_DEFAULT                 3             /*!< retry times: 3 */
+#define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
@@ -134,7 +144,7 @@ int32_t adi_a2b_NetworkSetup()
 				adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
 				(void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
 				/* PAL Call, replace with custom implementation  */
-				status = adi_a2b_I2CWrite((uint16)pOPUnit->nDeviceAddr, (uint16)(pOPUnit->nAddrWidth + pOPUnit->nDataCount), &aDataBuffer[0u]);
+				status = adi_a2b_I2CWrite((uint16_t)pOPUnit->nDeviceAddr, (uint16_t)(pOPUnit->nAddrWidth + pOPUnit->nDataCount), &aDataBuffer[0u]);
 				break;
 
 				/* Read */
@@ -142,7 +152,7 @@ int32_t adi_a2b_NetworkSetup()
 				(void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
 				adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
 				/* PAL Call, replace with custom implementation  */
-				status = adi_a2b_I2CWriteRead((uint16)pOPUnit->nDeviceAddr, (uint16)pOPUnit->nAddrWidth, &aDataWriteReadBuf[0u], (uint16)pOPUnit->nDataCount, &aDataBuffer[0u]);
+				status = adi_a2b_I2CWriteRead((uint16_t)pOPUnit->nDeviceAddr, (uint16_t)pOPUnit->nAddrWidth, &aDataWriteReadBuf[0u], (uint16_t)pOPUnit->nDataCount, &aDataBuffer[0u]);
 				break;
 
 				/* Delay */
@@ -234,6 +244,7 @@ int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress)
         return -1;
     }
 
+#if 0
     /* Set the I2C slave device address */
     if (ioctl(fd, I2C_SLAVE, nDeviceAddress) < 0) {
         printf("Can't set I2C slave address: %s\n", strerror(errno));
@@ -244,6 +255,7 @@ int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress)
     /* Set timeout and retry count */
     ioctl(fd, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
     ioctl(fd, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
+#endif
 
     return fd;
 }
@@ -252,6 +264,7 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
 {
     int32_t nResult = 0, fd;
 
+#if 0
     struct i2c_rdwr_ioctl_data msg_rdwr;
     struct i2c_msg msg;
 
@@ -269,6 +282,7 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
     if (ret < 0) {
         return -1;
     }
+#endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < nWrite; i++) {
@@ -284,6 +298,7 @@ int32_t adi_a2b_I2CWriteRead(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_U
 {
     int32_t nResult = 0, fd;
 
+#if 0
     struct i2c_rdwr_ioctl_data msg_rdwr;
     struct i2c_msg msg[2];
 
@@ -306,6 +321,7 @@ int32_t adi_a2b_I2CWriteRead(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_U
     if (nResult < 0) {
         return -1;
     }
+#endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < nRead; i++) {
