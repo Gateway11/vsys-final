@@ -29,6 +29,7 @@ and its licensors.
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <string.h>
 
 #include "adi_a2b_i2c_commandlist.h"
