@@ -43,9 +43,9 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
   struct i2c_msg msg[1];
 
   msg[0].addr = addr;
-  msg[0].buf = (uint8_t*)wBuf;
-  msg[0].len = nWrite;
   msg[0].flags = 0;
+  msg[0].len = nWrite;
+  msg[0].buf = (uint8_t*)wBuf;
 
   nReturnValue = i2c_transfer(ad2428_global_data->client->adapter, msg, ARRAY_SIZE(msg));
 #ifdef A2B_PRINT_CONSOLE
@@ -69,13 +69,13 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd, uint16_t addr, uint16_t nWr
   struct i2c_msg msg[2];
 
   msg[0].addr = addr;
-  msg[0].buf = (uint8_t*)wBuf;
-  msg[0].len = nWrite;
   msg[0].flags = 0;
-  msg[1].addr = addr;
-  msg[1].buf = rBuf;
-  msg[1].len = nRead;
+  msg[0].len = nWrite;
+  msg[0].buf = (uint8_t*)wBuf;
   msg[1].flags = I2C_M_RD;
+  msg[1].addr = addr;
+  msg[1].len = nRead;
+  msg[1].buf = rBuf;
 
   nReturnValue = i2c_transfer(ad2428_global_data->client->adapter, msg, ARRAY_SIZE(msg));
 

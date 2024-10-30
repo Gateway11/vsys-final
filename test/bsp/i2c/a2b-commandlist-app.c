@@ -110,6 +110,9 @@ int main(int argc, char *argv[])
 
 	}while(0);
 
+	close(arrayAddrs[0]);
+	close(arrayAddrs[1]);
+
 	return 0;
 }
 
@@ -247,7 +250,6 @@ int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress)
         return -1;
     }
 
-#if 0
     /* Set the I2C slave device address */
     if (ioctl(fd, I2C_SLAVE, nDeviceAddress) < 0) {
         printf("Can't set I2C slave address: %s\n", strerror(errno));
@@ -258,7 +260,6 @@ int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress)
     /* Set timeout and retry count */
     ioctl(fd, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
     ioctl(fd, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
-#endif
 
     return fd;
 }
@@ -267,7 +268,6 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
 {
     int32_t nResult = 0, fd;
 
-#if 0
     struct i2c_rdwr_ioctl_data msg_rdwr;
     struct i2c_msg msg;
 
@@ -276,16 +276,15 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
     msg_rdwr.msgs = &msg;
     msg_rdwr.nmsgs = 1;
 
-    msg.addr  = wBuf;
-    msg.flags = 0;    //write
+    msg.addr  = nDeviceAddress;
+    msg.flags = 0;
     msg.len   = nWrite;
-    msg.buf = wBuf + 1;
+    msg.buf = wBuf;
 
     ret = ioctl(fd, I2C_RDWR, &msg_rdwr);
     if (ret < 0) {
         return -1;
     }
-#endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < nWrite; i++) {
@@ -301,30 +300,27 @@ int32_t adi_a2b_I2CWriteRead(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_U
 {
     int32_t nResult = 0, fd;
 
-#if 0
     struct i2c_rdwr_ioctl_data msg_rdwr;
     struct i2c_msg msg[2];
 
     fd = nDeviceAddress == I2C_MASTER_ADDR ? arrayAddrs[0] : arrayAddrs[1];
 
-
     msg_rdwr.msgs = &msg;
     msg_rdwr.nmsgs = 2;
 
-    msg[0].addr = wBuf;
-    msg[0].buf = wBuf + 1;
-    msg[0].len = nWrite - 1;
+    msg[0].addr = nDeviceAddress;
     msg[0].flags = 0;
-    msg[1].addr = wBuf;
-    msg[1].buf = rBuf;
-    msg[1].len = nRead;
+    msg[0].len = nWrite;
+    msg[0].buf = wBuf;
+    msg[1].addr = nDeviceAddress;
     msg[1].flags = I2C_M_RD;
+    msg[1].len = nRead;
+    msg[1].buf = rBuf;
 
     nResult = ioctl(fd, I2C_RDWR, &msg_rdwr);
     if (nResult < 0) {
         return -1;
     }
-#endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < nRead; i++) {
