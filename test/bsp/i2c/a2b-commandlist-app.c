@@ -36,6 +36,8 @@ and its licensors.
 
 /*============= D E F I N E S =============*/
 
+#define A2B_PRINT_CONSOLE
+
 #define I2C_DEV_PATH                    "/dev/i2c-13"
 #define I2C_MASTER_ADDR                 0x68
 #define I2C_SLAVE_ADDR                  0x69
@@ -288,7 +290,7 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < nWrite; i++) {
         printf(I2C_DEV_PATH" write device(%#x) reg=0x%02x %02d val=0x%02x ("PRINTF_BINARY_PATTERN_INT8") cnt=%d\n",
-                addr, wBuf[0] + i, wBuf[0] + i, wBuf[i + 1], PRINTF_BYTE_TO_BINARY_INT8(wBuf[i + 1]), nWrite);
+                nDeviceAddress, wBuf[0] + i, wBuf[0] + i, wBuf[i + 1], PRINTF_BYTE_TO_BINARY_INT8(wBuf[i + 1]), nWrite);
     }
 #endif
 
@@ -327,7 +329,7 @@ int32_t adi_a2b_I2CWriteRead(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_U
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < nRead; i++) {
         printf(I2C_DEV_PATH" write device(%#x) reg=0x%02x %02d val=0x%02x ("PRINTF_BINARY_PATTERN_INT8") cnt=%d\n",
-                addr, wBuf[0] + i, wBuf[0] + i, rBuf[i], PRINTF_BYTE_TO_BINARY_INT8(rBuf[i]), nRead);
+                nDeviceAddress, wBuf[0] + i, wBuf[0] + i, rBuf[i], PRINTF_BYTE_TO_BINARY_INT8(rBuf[i]), nRead);
     }
 #endif
 
