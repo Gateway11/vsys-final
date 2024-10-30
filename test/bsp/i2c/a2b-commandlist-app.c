@@ -62,7 +62,7 @@ and its licensors.
       PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
 
 typedef uint8_t             a2b_UInt8;
-typedef uint16_t             a2b_UInt16;
+typedef uint16_t            a2b_UInt16;
 typedef uint32_t            a2b_UInt32;
 
 /*============= D A T A =============*/
