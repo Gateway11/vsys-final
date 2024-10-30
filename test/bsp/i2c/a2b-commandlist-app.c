@@ -61,10 +61,6 @@ and its licensors.
 #define PRINTF_BYTE_TO_BINARY_INT16(i) \
       PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
 
-typedef uint8_t             a2b_UInt8;
-typedef uint16_t            a2b_UInt16;
-typedef uint32_t            a2b_UInt32;
-
 /*============= D A T A =============*/
 
 int32_t arrayAddrs[2];
@@ -73,12 +69,12 @@ int32_t arrayAddrs[2];
 
 void parseXML(const char *path);
 static int32_t adi_a2b_NetworkSetup(void);
-static void adi_a2b_Concat_Addr_Data(a2b_UInt8 pDstBuf[], a2b_UInt32 nAddrwidth, a2b_UInt32 nAddr);
+static void adi_a2b_Concat_Addr_Data(uint8_t pDstBuf[], uint32_t nAddrwidth, uint32_t nAddr);
 int32_t adi_a2b_SystemInit(void);
-void  adi_a2b_Delay(a2b_UInt32 nTime);
-int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress);
-int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8* wBuf);
-int32_t adi_a2b_I2CWriteRead(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8* wBuf, a2b_UInt16 nRead, a2b_UInt8* rBuf);
+void  adi_a2b_Delay(uint32_t nTime);
+int32_t adi_a2b_I2COpen(uint16_t nDeviceAddress);
+int32_t adi_a2b_I2CWrite(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf);
+int32_t adi_a2b_I2CWriteRead(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf, uint16_t nRead, uint8_t* rBuf);
 
 /** 
  * If you want to use command program arguments, then place them in the following string. 
@@ -199,34 +195,34 @@ int32_t adi_a2b_NetworkSetup()
  - 1: Failure
  */
 /********************************************************************************/
-static void adi_a2b_Concat_Addr_Data(a2b_UInt8 pDstBuf[], a2b_UInt32 nAddrwidth, a2b_UInt32 nAddr)
+static void adi_a2b_Concat_Addr_Data(uint8_t pDstBuf[], uint32_t nAddrwidth, uint32_t nAddr)
 {
 	/* Store the read values in the place holder */
 	switch (nAddrwidth)
 	{ /* Byte */
 		case 1u:
-			pDstBuf[0u] = (a2b_UInt8)nAddr;
+			pDstBuf[0u] = (uint8_t)nAddr;
 			break;
 			/* 16 bit word*/
 		case 2u:
 
-			pDstBuf[0u] = (a2b_UInt8)(nAddr >> 8u);
-			pDstBuf[1u] = (a2b_UInt8)(nAddr & 0xFFu);
+			pDstBuf[0u] = (uint8_t)(nAddr >> 8u);
+			pDstBuf[1u] = (uint8_t)(nAddr & 0xFFu);
 
 			break;
 			/* 24 bit word */
 		case 3u:
-			pDstBuf[0u] = (a2b_UInt8)((nAddr & 0xFF0000u) >> 16u);
-			pDstBuf[1u] = (a2b_UInt8)((nAddr & 0xFF00u) >> 8u);
-			pDstBuf[2u] = (a2b_UInt8)(nAddr & 0xFFu);
+			pDstBuf[0u] = (uint8_t)((nAddr & 0xFF0000u) >> 16u);
+			pDstBuf[1u] = (uint8_t)((nAddr & 0xFF00u) >> 8u);
+			pDstBuf[2u] = (uint8_t)(nAddr & 0xFFu);
 			break;
 
 			/* 32 bit word */
 		case 4u:
-			pDstBuf[0u] = (a2b_UInt8)(nAddr >> 24u);
-			pDstBuf[1u] = (a2b_UInt8)((nAddr & 0xFF0000u) >> 16u);
-			pDstBuf[2u] = (a2b_UInt8)((nAddr & 0xFF00u) >> 8u);
-			pDstBuf[3u] = (a2b_UInt8)(nAddr & 0xFFu);
+			pDstBuf[0u] = (uint8_t)(nAddr >> 24u);
+			pDstBuf[1u] = (uint8_t)((nAddr & 0xFF0000u) >> 16u);
+			pDstBuf[2u] = (uint8_t)((nAddr & 0xFF00u) >> 8u);
+			pDstBuf[3u] = (uint8_t)(nAddr & 0xFFu);
 			break;
 
 		default:
@@ -235,12 +231,12 @@ static void adi_a2b_Concat_Addr_Data(a2b_UInt8 pDstBuf[], a2b_UInt32 nAddrwidth,
 	}
 }
 
-void adi_a2b_Delay(a2b_UInt32 nTime)
+void adi_a2b_Delay(uint32_t nTime)
 {
     usleep(nTime);
 }
 
-int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress)
+int32_t adi_a2b_I2COpen(uint16_t nDeviceAddress)
 {
     int32_t fd;
 
@@ -264,7 +260,7 @@ int32_t adi_a2b_I2COpen(a2b_UInt16 nDeviceAddress)
     return fd;
 }
 
-int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8* wBuf)
+int32_t adi_a2b_I2CWrite(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf)
 {
     int32_t nResult = 0, fd;
 
@@ -296,7 +292,7 @@ int32_t adi_a2b_I2CWrite(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8
     return nResult;
 }
 
-int32_t adi_a2b_I2CWriteRead(a2b_UInt16 nDeviceAddress, a2b_UInt16 nWrite, a2b_UInt8* wBuf, a2b_UInt16 nRead, a2b_UInt8* rBuf)
+int32_t adi_a2b_I2CWriteRead(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf, uint16_t nRead, uint8_t* rBuf)
 {
     int32_t nResult = 0, fd;
 
