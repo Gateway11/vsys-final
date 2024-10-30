@@ -83,7 +83,7 @@ char __argv_string[] = "";
 
 int main(int argc, char *argv[])
 {
-	uint32_t nResult = 0;
+	int32_t nResult = 0;
 	
 	/* Begin adding your custom code here */
     if(argc == 2) {
