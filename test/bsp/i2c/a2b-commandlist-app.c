@@ -120,7 +120,9 @@ void parseXML(const char *path)
 /****************************************************************************/
 /*!
  @brief          This function does A2B network discovery and the peripheral configuration
- @return          None
+ @return         Return code
+ -  0: Success
+ - -1: Failure
 
  */
 /********************************************************************************/
@@ -189,10 +191,8 @@ int32_t adi_a2b_NetworkSetup()
  @param [in]     pDstBuf               Pointer to destination array
  @param [in]     nAddrwidth            Data unpacking boundary(1 byte / 2 byte /4 byte )
  @param [in]     nAddr            	  Number of words to be copied
-
- @return          Return code
- - 0: Success
- - 1: Failure
+ 
+ @return         None
  */
 /********************************************************************************/
 static void adi_a2b_Concat_Addr_Data(uint8_t pDstBuf[], uint32_t nAddrwidth, uint32_t nAddr)
