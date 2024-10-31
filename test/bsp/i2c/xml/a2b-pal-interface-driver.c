@@ -17,6 +17,11 @@ and its licensors.
 #include <errno.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
 
 #include "a2b-pal-interface.h"
 
@@ -88,5 +93,48 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t wri
 }
 
 char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
+    struct file* file;
+    mm_segment_t old_fs;
+    char* buffer;
+    loff_t file_size;
+    size_t read_size;
+
+    // Set the memory segment for user access
+    old_fs = get_fs();
+    set_fs(KERNEL_DS); // Change to kernel address space
+
+    file = filp_open(filename, O_RDONLY, 0);
+    if (IS_ERR(file)) {
+        set_fs(old_fs); // Restore the original memory segment
+        printk(KERN_ERR "Failed to open file: %ld\n", PTR_ERR(file));
+        return NULL;
+    }
+
+    file_size = i_size_read(file->f_inode);
+    buffer = kmalloc(file_size + 1, GFP_KERNEL); // +1 for null terminator
+    if (!buffer) {
+        filp_close(file, NULL);
+        set_fs(old_fs); // Restore the original memory segment
+        printk(KERN_ERR "Failed to allocate memory\n");
+        return NULL;
+    }
+
+    read_size = kernel_read(file, buffer, file_size, &file->f_pos);
+    if (read_size < 0) {
+        kfree(buffer);
+        filp_close(file, NULL);
+        set_fs(old_fs); // Restore the original memory segment
+        printk(KERN_ERR "Failed to read file: %ld\n", read_size);
+        return NULL;
+    }
+
+    buffer[read_size] = '\0'; // Null terminate the string
+    if (outSize) {
+        *outSize = read_size; // Set the output size
+    }
+
+    filp_close(file, NULL);
+    set_fs(old_fs);
+
     return buffer;
 }
