@@ -144,7 +144,7 @@ int32_t setupNetwork() {
     uint32_t index, innerIndex;
     int32_t status = 0, handle;
 
-    static uint8_t dataBuffer[6000];
+    static uint8_t dataBuffer[128];
     static uint8_t dataWriteReadBuffer[4u];
     uint32_t delayValue;
 
