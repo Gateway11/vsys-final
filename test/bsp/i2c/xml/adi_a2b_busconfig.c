@@ -109,7 +109,6 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, int* actionCou
             size_t actionLength = actionEnd - actionStart + 1;
             if (actionLength >= sizeof(action)) {
                 printf("Warning: Action length exceeds buffer size!\n");
-
                 break;
             }
 
