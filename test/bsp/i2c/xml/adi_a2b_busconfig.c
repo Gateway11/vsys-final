@@ -2,42 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "adi_a2b_commandlist.h"
+
 #define MAX_ACTIONS 100
 #define MAX_CONFIG_DATA 256
 
-typedef struct {
-    unsigned char nDeviceAddr;
-    unsigned char eOpCode;
-    unsigned char nSpiCmdWidth;
-    unsigned int nSpiCmd;
-    unsigned char nAddrWidth;
-    unsigned int nAddr;
-    unsigned char nDataWidth;
-    unsigned short nDataCount;
-    unsigned char paConfigData[MAX_CONFIG_DATA]; // 直接在结构体中定义数组
-    unsigned char eProtocol;
-} ADI_A2B_DISCOVERY_CONFIG;
+unsigned char gBuffer[MAX_CONFIG_DATA];
+static unsigned int gBufferOffset = 0;
 
-#define WRITE   ((unsigned char) 0x00u)
-#define READ    ((unsigned char) 0x01u)
-#define DELAY   ((unsigned char) 0x02u)
-#define INVALID ((unsigned char) 0xffu)
-
-#define I2C     ((unsigned char) 0x00u)
-#define SPI     ((unsigned char) 0x01u)
 
 void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned char deviceAddr) {
     char instr[20], protocol[10];
     char addr[10], len[10], spiCmd[10], spiCmdWidth[10], addrWidth[10], dataWidth[10];
 
     config->nDeviceAddr = deviceAddr;
-    config->nDataCount = 0; // 重置数据计数
+    config->nDataCount = 0;
 
-    // 提取属性
     if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%[^\"]\" SpiCmdWidth=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\" Protocol=\"%[^\"]\"",
                instr, spiCmd, spiCmdWidth, addrWidth, dataWidth, len, addr, &config->nDeviceAddr, protocol) >= 8) {
         
-        // 设置操作码
         if (strcmp(instr, "writeXbytes") == 0) {
             config->eOpCode = WRITE;
         } else if (strcmp(instr, "read") == 0) {
@@ -45,18 +28,14 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         } else {
             config->eOpCode = INVALID;
         }
-        printf("%s\n", action);
 
-        // 设置协议
         config->eProtocol = (strcmp(protocol, "I2C") == 0) ? I2C : SPI;
 
-        // 转换字符串值到相应类型
         config->nAddrWidth = (unsigned char)atoi(addrWidth);
         config->nDataWidth = (unsigned char)atoi(dataWidth);
         config->nAddr = (unsigned int)atoi(addr);
         config->nDataCount = (unsigned short)atoi(len) - 1;
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
-        // 处理 delay 指令
         char* dataStart = strstr(action, ">") + 1; // 找到 '>' 后的位置
         char* dataEnd = strstr(dataStart, "</action>");
         if (dataEnd) {
@@ -65,19 +44,17 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
             strncpy(dataStr, dataStart, length);
             dataStr[length] = '\0'; // Null-terminate
 
-            // 解析单个数字
+            config->paConfigData = &(gBuffer[gBufferOffset++]);
             config->paConfigData[0] = (unsigned char)atoi(dataStr);
             config->eOpCode = DELAY;
-            config->nDataCount = 1; // 只存一个数字
+            config->nDataCount = 1;
         }
     } else {
-        config->eOpCode = INVALID; // 如果解析失败，设置为无效
+        config->eOpCode = INVALID;
         return;
     }
 
-    // 解析 paConfigData（用于写入指令）
-    if (strcmp(instr, "writeXbytes") == 0 || strcmp(instr, "readdd") == 0) {
-        // 提取后面的数据
+    if (strcmp(instr, "writeXbytes") == 0) {
         char* dataStart = strstr(action, ">") + 1; // 找到 '>' 后的位置
         char* dataEnd = strchr(dataStart, '\n'); // 使用 '\n' 作为结束标志
         if (dataEnd) {
@@ -90,9 +67,11 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
             char* token = strtok(dataStr, " ");
             int index = 0;
             while (token != NULL && config->nDataCount) {
+                config->paConfigData = gBuffer + gBufferOffset;
                 config->paConfigData[index++] = (unsigned char)strtoul(token, NULL, 16); // 转换为十六进制
                 token = strtok(NULL, " ");
             }
+            gBufferOffset += index;
             config->nDataCount = index; // 更新数据计数
         }
     }
