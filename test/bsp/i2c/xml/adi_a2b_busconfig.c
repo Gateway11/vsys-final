@@ -150,7 +150,7 @@ int32_t setupNetwork() {
 
     for (index = 0; index < actionCount; index++) {
         pOpUnit = &configs[index];
-        handle = pOpUnit->nDeviceAddr == I2C_MASTER_ADDR ? arrayHandles[0] : arrayHandles[1];
+        handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? arrayHandles[0] : arrayHandles[1];
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
@@ -226,8 +226,8 @@ int main(int argc, char* argv[]) {
 #endif
 
     /* PAL call, open I2C driver */
-    arrayHandles[0] = adi_a2b_I2C_Open(I2C_MASTER_ADDR);
-    arrayHandles[1] = adi_a2b_I2C_Open(I2C_SLAVE_ADDR);
+    arrayHandles[0] = adi_a2b_I2C_Open(A2B_MASTER_ADDR);
+    arrayHandles[1] = adi_a2b_I2C_Open(A2B_SLAVE_ADDR);
     
     /* Configure A2B system */
     setupNetwork();
