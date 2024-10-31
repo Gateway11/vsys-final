@@ -6,6 +6,7 @@
 
 #include "adi_a2b_commandlist.h"
 #include "a2b-pal-interface.h"
+#include "regdefs.h"
 
 #define MAX_ACTIONS 100
 #define MAX_CONFIG_DATA 256
@@ -145,7 +146,7 @@ int32_t setupNetwork() {
     uint32_t index, innerIndex;
     int32_t status = 0, handle;
 
-    static uint8_t dataBuffer[128];
+    static uint8_t dataBuffer[8];
     static uint8_t dataWriteReadBuffer[4u];
     uint32_t delayValue;
 
