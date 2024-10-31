@@ -37,10 +37,10 @@ and its licensors.
 #define PRINTF_BYTE_TO_BINARY_INT16(i) \
       PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
 
-int32_t arrayAddrs[2];
-
-int32_t adi_a2b_I2COpen(uint16_t nDeviceAddress);
-int32_t adi_a2b_I2CWrite(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf);
-int32_t adi_a2b_I2CWriteRead(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf, uint16_t nRead, uint8_t* rBuf);
+int32_t adi_a2b_I2C_Open(uint16_t deviceAddress);
+void adi_a2b_I2C_Close(int32_t handle);
+int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer);
+int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer);
+char* a2b_pal_File_Read(const char* filename, size_t* outSize);
 
 #endif /* __A2B_PAL_INTERFACE_H__ */

@@ -11,112 +11,146 @@ and its licensors.
 *****************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #include <errno.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <string.h>
-
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
 
 #include "a2b-pal-interface.h"
 
-int32_t adi_a2b_I2COpen(uint16_t nDeviceAddress)
-{
-    int32_t fd;
+int32_t adi_a2b_I2C_Open(uint16_t deviceAddress) {
+    int32_t handle = -1;
 
 #if 0
-    fd = open(I2C_DEV_PATH, O_RDWR);
-    if (fd < 0) {
+    handle = open(I2C_DEV_PATH, O_RDWR);
+    if (handle < 0) {
         printf("Unable to open I2C device: %s\n", strerror(errno));
         return -1;
     }
 
     /* Set the I2C slave device address */
-    if (ioctl(fd, I2C_SLAVE, nDeviceAddress) < 0) {
+    if (ioctl(handle, I2C_SLAVE, deviceAddress) < 0) {
         printf("Can't set I2C slave address: %s\n", strerror(errno));
-        close(fd); // Close the file descriptor before returning
+        close(handle); // Close the file descriptor before returning
         return -1;
     }
 
     /* Set timeout and retry count */
-    ioctl(fd, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
-    ioctl(fd, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
+    ioctl(handle, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
+    ioctl(handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
 #endif
 
-    return fd;
+    return handle;
 }
 
-int32_t adi_a2b_I2CWrite(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf)
-{
-    int32_t nResult = 0, fd;
+void adi_a2b_I2C_Close(int32_t handle) {
+    //close(handle);
+}
 
-    struct i2c_rdwr_ioctl_data msg_rdwr;
+int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer) {
+    int32_t result = 0;
+    int32_t fd = *(int32_t *)handle;
+
+    struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg;
 
-    fd = nDeviceAddress == I2C_MASTER_ADDR ? arrayAddrs[0] : arrayAddrs[1];
+    msgRdwr.msgs = &msg;
+    msgRdwr.nmsgs = 1;
 
-    msg_rdwr.msgs = &msg;
-    msg_rdwr.nmsgs = 1;
-
-    msg.addr  = nDeviceAddress;
+    msg.addr  = deviceAddress;
     msg.flags = 0;
-    msg.len   = nWrite;
-    msg.buf = wBuf;
+    msg.len   = writeLength;
+    msg.buf   = writeBuffer;
 
 #if 0
-    nResult = ioctl(fd, I2C_RDWR, &msg_rdwr);
-    if (nResult < 0) {
+    result = ioctl(fd, I2C_RDWR, &msgRdwr);
+    if (result < 0) {
         return -1;
     }
 #endif
 
 #ifdef A2B_PRINT_CONSOLE
-    for (uint8_t i = 0; i < nWrite - 1; i++) {
-        printf(I2C_DEV_PATH" write device(%#x) reg=0x%02x %03d val=0x%02x ("PRINTF_BINARY_PATTERN_INT8") cnt=%d\n",
-                nDeviceAddress, wBuf[0] + i, wBuf[0] + i, wBuf[i + 1], PRINTF_BYTE_TO_BINARY_INT8(wBuf[i + 1]), nWrite - 1);
+    for (uint8_t i = 0; i < writeLength - 1; i++) {
+        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02x %03d val=0x%02x (" PRINTF_BINARY_PATTERN_INT8 ") cnt=%d\n",
+               deviceAddress, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
 #endif
 
-    return nResult;
+    return result;
 }
 
-int32_t adi_a2b_I2CWriteRead(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* wBuf, uint16_t nRead, uint8_t* rBuf)
-{
-    int32_t nResult = 0, fd;
+int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
+    int32_t result = 0;
+    int32_t fd = *(int32_t *)handle;
 
-    struct i2c_rdwr_ioctl_data msg_rdwr;
+    struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg[2];
 
-    fd = nDeviceAddress == I2C_MASTER_ADDR ? arrayAddrs[0] : arrayAddrs[1];
+    msgRdwr.msgs = msg;
+    msgRdwr.nmsgs = 2;
 
-    msg_rdwr.msgs = msg;
-    msg_rdwr.nmsgs = 2;
-
-    msg[0].addr = nDeviceAddress;
+    msg[0].addr = deviceAddress;
     msg[0].flags = 0;
-    msg[0].len = nWrite;
-    msg[0].buf = wBuf;
-    msg[1].addr = nDeviceAddress;
+    msg[0].len = writeLength;
+    msg[0].buf = writeBuffer;
+
+    msg[1].addr = deviceAddress;
     msg[1].flags = I2C_M_RD;
-    msg[1].len = nRead;
-    msg[1].buf = rBuf;
+    msg[1].len = readLength;
+    msg[1].buf = readBuffer;
 
 #if 0
-    nResult = ioctl(fd, I2C_RDWR, &msg_rdwr);
-    if (nResult < 0) {
+    result = ioctl(fd, I2C_RDWR, &msgRdwr);
+    if (result < 0) {
         return -1;
     }
 #endif
 
 #ifdef A2B_PRINT_CONSOLE
-    for (uint8_t i = 0; i < nRead; i++) {
-        printf(I2C_DEV_PATH" read  device(%#x) reg=0x%02x %03d val=0x%02x ("PRINTF_BINARY_PATTERN_INT8") cnt=%d\n",
-                nDeviceAddress, wBuf[0] + i, wBuf[0] + i, rBuf[i], PRINTF_BYTE_TO_BINARY_INT8(rBuf[i]), nRead);
+    for (uint8_t i = 0; i < readLength; i++) {
+        printf(I2C_DEV_PATH " read  device(%#x) reg=0x%02x %03d val=0x%02x (" PRINTF_BINARY_PATTERN_INT8 ") cnt=%d\n",
+               deviceAddress, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
     }
 #endif
 
-    return nResult;
+    return result;
+}
+
+char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        perror("Failed to open file");
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* buffer = malloc(fileSize + 1); // +1 for null terminator
+    if (!buffer) {
+        fclose(file);
+        perror("Failed to allocate memory");
+        return NULL;
+    }
+
+    size_t readSize = fread(buffer, 1, fileSize, file);
+    if (readSize != fileSize) {
+        free(buffer);
+        fclose(file);
+        perror("Failed to read file");
+        return NULL;
+    }
+
+    buffer[readSize] = '\0';
+    fclose(file);
+
+    if (outSize) {
+        *outSize = readSize;
+    }
+    return buffer;
 }
