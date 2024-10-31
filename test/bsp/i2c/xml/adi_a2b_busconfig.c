@@ -11,7 +11,7 @@
 #define MAX_ACTIONS 100
 #define MAX_CONFIG_DATA 256
 
-ADI_A2B_DISCOVERY_CONFIG configs[MAX_ACTIONS];
+ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static int actionCount = 0;
 
 unsigned char configBuffer[MAX_CONFIG_DATA];
@@ -146,12 +146,12 @@ int32_t setupNetwork() {
     uint32_t index, innerIndex;
     int32_t status = 0, handle;
 
-    static uint8_t dataBuffer[8];
+    static uint8_t dataBuffer[4096];
     static uint8_t dataWriteReadBuffer[4u];
     uint32_t delayValue;
 
     for (index = 0; index < actionCount; index++) {
-        pOpUnit = &configs[index];
+        pOpUnit = &pA2BConfig[index];
         handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? arrayHandles[0] : arrayHandles[1];
         /* Operation code */
         switch (pOpUnit->eOpCode) {
@@ -196,32 +196,36 @@ int main(int argc, char* argv[]) {
     if (argc == 2) filename = argv[1];
 
     char* content = a2b_pal_File_Read(filename, &size);
-    if (!content) return 0;
-
-    printf("File content (%zu bytes):\n%s\n", size, content);
-    parseXML(content, configs, &actionCount);
-    free(content);
+    if (content) {
+        parseXML(content, parseA2BConfig, &actionCount);
+        pA2BConfig = parseA2BConfig;
+        printf("File content (%zu bytes):\n%s\n", size, content);
+        free(content);
+    } else {
+        pA2BConfig = gaA2BConfig;
+        actionCount = CONFIG_LEN;
+    }
     printf("Action count=%d\n", actionCount);
 
 #if 0
     // Print the results
     for (int i = 0; i < actionCount; i++) {
-        switch (configs[i].eOpCode) {
+        switch (pA2BConfig[i].eOpCode) {
             case WRITE:
-                printf("Action %02d: nDeviceAddr=%#x, eOpCode=write, nAddrWidth=%d, nAddr=%03d 0x%02x, nDataCount=%hu, eProtocol=%d, paConfigData=",
-                       i, configs[i].nDeviceAddr, configs[i].nAddrWidth, configs[i].nAddr, configs[i].nAddr, configs[i].nDataCount, configs[i].eProtocol);
+                printf("Action %02d: nDeviceAddr=0x%02x, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, paConfigData=",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth, pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount);
                 break;
             case READ:
-                printf("Action %02d: nDeviceAddr=%#x, eOpCode=read, nAddrWidth=%d, nAddr=%03d 0x%02x, nDataCount=%hu, eProtocol=%d\n",
-                       i, configs[i].nDeviceAddr, configs[i].nAddrWidth, configs[i].nAddr, configs[i].nAddr, configs[i].nDataCount, configs[i].eProtocol);
+                printf("Action %02d: nDeviceAddr=0x%02x, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu\n",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth, pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount);
                 continue;
             case DELAY:
-                printf("Action %02d: delay, nDataCount=%hu, sleep=", i, configs[i].nDataCount);
+                printf("Action %02d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
                 break;
         }
 
-        for (int j = 0; j < configs[i].nDataCount; j++) {
-            printf(configs[i].eOpCode != DELAY ? "0x%02x " : "%02dms ", configs[i].paConfigData[j]);
+        for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
+            printf(pA2BConfig[i].eOpCode != DELAY ? "0x%02x " : "%02dms ", pA2BConfig[i].paConfigData[j]);
         }
         printf("\n");
     }
