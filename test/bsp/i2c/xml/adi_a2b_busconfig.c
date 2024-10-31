@@ -8,8 +8,8 @@
 #include "a2b-pal-interface.h"
 #include "regdefs.h"
 
-#define MAX_ACTIONS 100 //TODO
-#define MAX_CONFIG_DATA 256
+#define MAX_ACTIONS 128
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static int actionCount = 0;
@@ -74,7 +74,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         char* dataStart = strstr(action, ">") + 1; // Find position after '>'
         char* dataEnd = strchr(dataStart, '\n'); // Use '\n' as end marker
         if (dataEnd) {
-            //char dataStr[50]; //TODO
+            //char dataStr[50];
             char dataStr[config->nDataCount];
             size_t length = dataEnd - dataStart;
             strncpy(dataStr, dataStart, length);
@@ -158,7 +158,7 @@ int32_t setupNetwork() {
     uint32_t index, innerIndex;
     int32_t status = 0, handle;
 
-    static uint8_t dataBuffer[4096]; //TODO
+    static uint8_t dataBuffer[4096];
     static uint8_t dataWriteReadBuffer[4u];
     uint32_t delayValue;
 
