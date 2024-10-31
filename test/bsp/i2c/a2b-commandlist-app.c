@@ -21,9 +21,6 @@ and its licensors.
 
 /*============= I N C L U D E S =============*/
 
-//#include <linux/i2c.h>
-//#include <linux/i2c-dev.h>
-
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
@@ -31,6 +28,9 @@ and its licensors.
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
 
 #include "adi_a2b_i2c_commandlist.h"
 
@@ -302,7 +302,7 @@ int32_t adi_a2b_I2CWriteRead(uint16_t nDeviceAddress, uint16_t nWrite, uint8_t* 
 
     fd = nDeviceAddress == I2C_MASTER_ADDR ? arrayAddrs[0] : arrayAddrs[1];
 
-    msg_rdwr.msgs = &msg;
+    msg_rdwr.msgs = msg;
     msg_rdwr.nmsgs = 2;
 
     msg[0].addr = nDeviceAddress;
