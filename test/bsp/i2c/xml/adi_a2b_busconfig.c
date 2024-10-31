@@ -72,7 +72,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
                 token = strtok(NULL, " ");
             }
             gBufferOffset += index;
-            config->nDataCount = index; // 更新数据计数
+            config->nDataCount = index;
         }
     }
 }
@@ -90,17 +90,63 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, int* count) {
 
             char action[256];
             size_t actionLength = actionEnd - actionStart + 1;
-            if (actionLength >= sizeof(action)) break; // 确保不溢出
+            if (actionLength >= sizeof(action)) break;
 
             strncpy(action, actionStart, actionLength);
             action[actionLength] = '\0'; // Null-terminate
 
-            parseAction(action, &configs[*count], 104); // 假定 i2caddr 是 104
+            parseAction(action, &configs[*count], 104);
             (*count)++;
             actionStart = strstr(actionEnd, "<action");
         }
     }
 }
+
+
+#if 0
+#include <linux/fs.h>
+#include <linux/slab.h>
+
+#define BUFFER_SIZE 4096
+
+ssize_t read_file(const char *filename, char **buffer) {
+    struct file *file;
+    mm_segment_t oldfs;
+    ssize_t bytes_read;
+    char *temp_buffer;
+
+    file = filp_open(filename, O_RDONLY, 0);
+    if (IS_ERR(file)) {
+        return PTR_ERR(file);
+    }
+
+    oldfs = get_fs();
+    set_fs(KERNEL_DS);
+
+    temp_buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
+    if (!temp_buffer) {
+        filp_close(file, NULL);
+        set_fs(oldfs);
+        return -ENOMEM;
+    }
+
+    bytes_read = kernel_read(file, temp_buffer, BUFFER_SIZE - 1, &file->f_pos);
+    if (bytes_read < 0) {
+        kfree(temp_buffer);
+        filp_close(file, NULL);
+        set_fs(oldfs);
+        return bytes_read;
+    }
+
+    temp_buffer[bytes_read] = '\0';
+    *buffer = temp_buffer;
+    set_fs(oldfs);
+    filp_close(file, NULL);
+
+    return bytes_read;
+}
+
+#else
 
 #include <stdlib.h>
 char* read_file(const char* filename, size_t* out_size) {
@@ -137,6 +183,7 @@ char* read_file(const char* filename, size_t* out_size) {
     }
     return buffer;
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -161,15 +208,15 @@ int main(int argc, char *argv[])
     for (int i = 0; i < count; i++) {
         switch(configs[i].eOpCode) {
             case WRITE:
-                printf("Action %d: nDeviceAddr=%#x, eOpCode=write, nAddrWidth=%d, nAddr=%03d 0x%02x, nDataCount=%hu, eProtocol=%d, paConfigData=",
+                printf("Action %02d: nDeviceAddr=%#x, eOpCode=write, nAddrWidth=%d, nAddr=%03d 0x%02x, nDataCount=%hu, eProtocol=%d, paConfigData=",
                         i, configs[i].nDeviceAddr, configs[i].nAddrWidth, configs[i].nAddr, configs[i].nAddr, configs[i].nDataCount, configs[i].eProtocol);
                 break;
             case READ:
-                printf("Action %d: nDeviceAddr=%#x, eOpCode=read , nAddrWidth=%d, nAddr=%03d 0x%02x, nDataCount=%hu, eProtocol=%d\n",
+                printf("Action %02d: nDeviceAddr=%#x, eOpCode=read , nAddrWidth=%d, nAddr=%03d 0x%02x, nDataCount=%hu, eProtocol=%d\n",
                         i, configs[i].nDeviceAddr, configs[i].nAddrWidth, configs[i].nAddr, configs[i].nAddr, configs[i].nDataCount, configs[i].eProtocol);
                 continue;
             case DELAY:
-                printf("Action %d: delay, nDataCount=%hu, sleep=", i, configs[i].nDataCount);
+                printf("Action %02d: delay, nDataCount=%hu, sleep=", i, configs[i].nDataCount);
                 break;
         };
         for (int j = 0; j < configs[i].nDataCount; j++)
