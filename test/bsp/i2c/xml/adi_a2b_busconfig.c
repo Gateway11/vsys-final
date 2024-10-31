@@ -51,7 +51,8 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
             dataStr[length] = '\0'; // Null-terminate
 
             config->paConfigData = &(configBuffer[bufferOffset++]);
-            config->paConfigData[0] = (unsigned char)atoi(dataStr);
+            //config->paConfigData[0] = (unsigned char)atoi(dataStr);
+            config->paConfigData[0] = (unsigned char)strtoul(dataStr, NULL, 16);
             config->eOpCode = DELAY;
             config->nDataCount = 1;
         }
@@ -135,7 +136,7 @@ void concatAddrData(uint8_t destBuffer[], uint32_t addrWidth, uint32_t addr) {
 }
 
 void delay(uint32_t time) {
-    printf("Sleep %dms\n", time);
+    printf("Sleep 0x%02xms\n", time);
     usleep(time * 1000);
 }
 
