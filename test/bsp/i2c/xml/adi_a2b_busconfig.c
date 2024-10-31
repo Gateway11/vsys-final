@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #include "adi_a2b_commandlist.h"
+#include "a2b-pal-interface.h"
 
 #define MAX_ACTIONS 100
 #define MAX_CONFIG_DATA 256
+
+ADI_A2B_DISCOVERY_CONFIG configs[MAX_ACTIONS];
+int count = 0;
 
 unsigned char gBuffer[MAX_CONFIG_DATA];
 static unsigned int gBufferOffset = 0;
@@ -185,6 +191,107 @@ char* read_file(const char* filename, size_t* out_size) {
 }
 #endif
 
+void adi_a2b_Concat_Addr_Data(uint8_t pDstBuf[], uint32_t nAddrwidth, uint32_t nAddr)
+{
+	/* Store the read values in the place holder */
+	switch (nAddrwidth)
+	{ /* Byte */
+		case 1u:
+			pDstBuf[0u] = (uint8_t)nAddr;
+			break;
+			/* 16 bit word*/
+		case 2u:
+
+			pDstBuf[0u] = (uint8_t)(nAddr >> 8u);
+			pDstBuf[1u] = (uint8_t)(nAddr & 0xFFu);
+
+			break;
+			/* 24 bit word */
+		case 3u:
+			pDstBuf[0u] = (uint8_t)((nAddr & 0xFF0000u) >> 16u);
+			pDstBuf[1u] = (uint8_t)((nAddr & 0xFF00u) >> 8u);
+			pDstBuf[2u] = (uint8_t)(nAddr & 0xFFu);
+			break;
+
+			/* 32 bit word */
+		case 4u:
+			pDstBuf[0u] = (uint8_t)(nAddr >> 24u);
+			pDstBuf[1u] = (uint8_t)((nAddr & 0xFF0000u) >> 16u);
+			pDstBuf[2u] = (uint8_t)((nAddr & 0xFF00u) >> 8u);
+			pDstBuf[3u] = (uint8_t)(nAddr & 0xFFu);
+			break;
+
+		default:
+			break;
+
+	}
+}
+
+void adi_a2b_Delay(uint32_t nTime)
+{
+    printf("Sleep %dms\n", nTime);
+    usleep(nTime * 1000);
+}
+
+int32_t adi_a2b_NetworkSetup()
+{
+	ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
+	uint32_t nIndex, nIndex1;
+	int32_t status = 0;
+	/* Maximum number of writes */
+	static uint8_t aDataBuffer[6000];
+	static uint8_t aDataWriteReadBuf[4u];
+	uint32_t nDelayVal;
+
+	/* Loop over all the configuration */
+	//for (nIndex = 0; nIndex < CONFIG_LEN; nIndex++)
+	for (nIndex = 0; nIndex < count; nIndex++)
+	{
+		//pOPUnit = &gaA2BConfig[nIndex];
+		pOPUnit = &configs[nIndex];
+		/* Operation code*/
+		switch (pOPUnit->eOpCode)
+		{
+			/* Write */
+			case WRITE:
+				adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+				(void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+				/* PAL Call, replace with custom implementation  */
+				status = adi_a2b_I2CWrite((uint16_t)pOPUnit->nDeviceAddr, (uint16_t)(pOPUnit->nAddrWidth + pOPUnit->nDataCount), &aDataBuffer[0u]);
+				break;
+
+				/* Read */
+			case READ:
+				(void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
+				adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+				/* PAL Call, replace with custom implementation  */
+				status = adi_a2b_I2CWriteRead((uint16_t)pOPUnit->nDeviceAddr, (uint16_t)pOPUnit->nAddrWidth, &aDataWriteReadBuf[0u], (uint16_t)pOPUnit->nDataCount, &aDataBuffer[0u]);
+				break;
+
+				/* Delay */
+			case DELAY:
+				nDelayVal = 0u;
+				for(nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++)
+				{
+					nDelayVal = pOPUnit->paConfigData[nIndex1] | nDelayVal << 8u;
+				}
+				(void)adi_a2b_Delay(nDelayVal);
+				break;
+
+			default:
+				break;
+
+		}
+		if (status != 0)
+		{
+			/* I2C read/write failed! No point in continuing! */
+			break;
+		}
+	}
+
+	return status;
+}
+
 int main(int argc, char *argv[])
 {
     const char* filename = "adi_a2b_commandlist.xml";
@@ -197,8 +304,8 @@ int main(int argc, char *argv[])
 
     printf("File content (%zu bytes):\n%s\n", size, content);
 
-    ADI_A2B_DISCOVERY_CONFIG configs[MAX_ACTIONS];
-    int count = 0;
+    //ADI_A2B_DISCOVERY_CONFIG configs[MAX_ACTIONS];
+    //int count = 0;
 
     parseXML(content, configs, &count);
     free(content);
@@ -224,7 +331,17 @@ int main(int argc, char *argv[])
         printf("\n");
     }
 
+#if 1
+    /* PAL call, open I2C driver */
+    arrayAddrs[0] = adi_a2b_I2COpen(I2C_MASTER_ADDR);
+    arrayAddrs[1] = adi_a2b_I2COpen(I2C_SLAVE_ADDR);
+    
+    /* Configure a2b system */
+    adi_a2b_NetworkSetup();
+
+    //close(arrayAddrs[0]);
+    //close(arrayAddrs[1]);
+#endif
+
     return 0;
 }
-
-   
