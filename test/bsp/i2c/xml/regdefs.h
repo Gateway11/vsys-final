@@ -4010,12 +4010,12 @@ A2B_SWSTAT2                          Pos/Masks         Description
 #define A2B_BITM_SWSTAT2_LS_ILIM             0x00000001u    /*  Current Limit on Low-Side FET Reached */
 /*======================= D A T A T Y P E S =======================*/
 
-A2B_BEGIN_DECLS
+//A2B_BEGIN_DECLS
 
 /*======================= P U B L I C  P R O T O T Y P E S ========*/
 
 
-A2B_END_DECLS
+//A2B_END_DECLS
 
 /*======================= D A T A =================================*/
 
