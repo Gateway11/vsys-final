@@ -9,7 +9,7 @@
 #include "regdefs.h"
 
 #define MAX_ACTIONS 100 //TODO
-#define MAX_CONFIG_DATA 256 //TODO
+#define MAX_CONFIG_DATA 256
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static int actionCount = 0;
@@ -67,6 +67,10 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
     }
 
     if (strcmp(instr, "writeXbytes") == 0 || strcmp(instr, "delay") == 0) {
+        if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
+            printf("Warning: Exceeding maximum configuration data limit!\n");
+            exit(EXIT_FAILURE);
+        }
         char* dataStart = strstr(action, ">") + 1; // Find position after '>'
         char* dataEnd = strchr(dataStart, '\n'); // Use '\n' as end marker
         if (dataEnd) {
@@ -101,9 +105,13 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, int* actionCou
             const char* actionEnd = strstr(actionStart, "\n");
             if (!actionEnd) break;
 
-            char action[256]; //TODO
+            char action[256];
             size_t actionLength = actionEnd - actionStart + 1;
-            if (actionLength >= sizeof(action)) break;
+            if (actionLength >= sizeof(action)) {
+                printf("Warning: Action length exceeds buffer size!\n");
+
+                break;
+            }
 
             strncpy(action, actionStart, actionLength);
             action[actionLength] = '\0'; // Null-terminate
@@ -202,9 +210,9 @@ int main(int argc, char* argv[]) {
 
     char* content = a2b_pal_File_Read(filename, &size);
     if (content) {
+        printf("File content (%zu bytes):\n%s\n", size, content);
         parseXML(content, parseA2BConfig, &actionCount);
         pA2BConfig = parseA2BConfig;
-        printf("File content (%zu bytes):\n%s\n", size, content);
         free(content);
     } else {
         pA2BConfig = gaA2BConfig;
