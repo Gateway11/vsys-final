@@ -105,12 +105,17 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, int* actionCou
             const char* actionEnd = strstr(actionStart, "\n");
             if (!actionEnd) break;
 
+#if 0
             char action[256];
             size_t actionLength = actionEnd - actionStart + 1;
             if (actionLength >= sizeof(action)) {
                 printf("Warning: Action length exceeds buffer size!\n");
                 break;
             }
+#else
+            size_t actionLength = actionEnd - actionStart + 1;
+            char action[actionLength + 1];
+#endif
 
             strncpy(action, actionStart, actionLength);
             action[actionLength] = '\0'; // Null-terminate
