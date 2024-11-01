@@ -75,7 +75,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         char* dataEnd = strchr(dataStart, '\n'); // Use '\n' as end marker
         if (dataEnd) {
             //char dataStr[50];
-            char dataStr[config->nDataCount];
+            char dataStr[config->nDataCount + 1];
             size_t length = dataEnd - dataStart;
             strncpy(dataStr, dataStart, length);
             dataStr[length] = '\0'; // Null-terminate
