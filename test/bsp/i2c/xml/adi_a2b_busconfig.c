@@ -26,7 +26,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
     config->nDeviceAddr = deviceAddr;
     config->nDataCount = 0;
 
-    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%[^\"]\" SpiCmdWidth=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\" Protocol=\"%[^\"]\"",
+    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%[^\"]\" SpiCmdWidth=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\" AddrIncr=\"%*[^\"\n]\" Protocol=\"%[^\"]\"",
                instr, spiCmd, spiCmdWidth, addrWidth, dataWidth, length, addr, &config->nDeviceAddr, protocol) >= 8) {
         
         if (strcmp(instr, "writeXbytes") == 0) {
@@ -173,6 +173,7 @@ int32_t setupNetwork() {
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
+                if (pOpUnit->eProtocol == SPI) break;
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
                 status = adi_a2b_I2C_Write(&handle, (uint16_t)pOpUnit->nDeviceAddr,
@@ -180,6 +181,7 @@ int32_t setupNetwork() {
                 break;
 
             case READ:
+                if (pOpUnit->eProtocol == SPI) break;
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 status = adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
