@@ -14,7 +14,7 @@ and its licensors.
 
 #define A2B_PRINT_CONSOLE
 
-#define I2C_DEV_PATH                    "/dev/i2c-13"
+#define I2C_DEV_PATH                    "/dev/i2c-16"
 #define A2B_MASTER_ADDR                 0x68
 #define A2B_SLAVE_ADDR                  0x69
 
