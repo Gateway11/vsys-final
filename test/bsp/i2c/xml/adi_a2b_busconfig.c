@@ -25,8 +25,10 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
     config->nDeviceAddr = deviceAddr;
     config->nDataCount = 0;
 
-    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
-               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 8 ||
+    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
+                =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*[^\"\n]\" Protocol=\"%[^\"]\"",
+               instr, &config->nSpiCmd, &config->nSpiCmdWidth, 
+               &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) >= 9 ||
         sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
                instr, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 6) {
         if (strcmp(instr, "writeXbytes") == 0) {
@@ -36,7 +38,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         } else {
             config->eOpCode = INVALID;
         }
-        //config->eProtocol = (strcmp(protocol, "I2C") == 0) ? I2C : SPI;
+        config->eProtocol = (strcmp(protocol, "SPI") == 0) ? SPI : I2C;
         config->nDataCount -= 1;
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = DELAY;
@@ -143,6 +145,7 @@ int32_t setupNetwork() {
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
+                if (pOpUnit->eProtocol == SPI) break;
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
                 status = adi_a2b_I2C_Write(&handle, (uint16_t)pOpUnit->nDeviceAddr,
@@ -150,6 +153,7 @@ int32_t setupNetwork() {
                 break;
 
             case READ:
+                if (pOpUnit->eProtocol == SPI) break;
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 status = adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
