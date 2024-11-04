@@ -83,8 +83,8 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
             // Parse multiple numbers
             char* token = strtok(dataStr, " ");
             int index = 0;
+            config->paConfigData = configBuffer + bufferOffset;
             while (token != NULL && config->nDataCount) {
-                config->paConfigData = configBuffer + bufferOffset;
                 config->paConfigData[index++] = (unsigned char)strtoul(token, NULL, 16); // Convert to hexadecimal
                 token = strtok(NULL, " ");
             }
