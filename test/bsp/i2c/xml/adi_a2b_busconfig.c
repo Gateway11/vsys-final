@@ -27,9 +27,9 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
     config->nDataCount = 0;
 
     //if (sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\"",
-    //           instr, addrWidth, dataWidth, length, addr, &config->nDeviceAddr) >= 5) {
+    //           instr, addrWidth, dataWidth, length, addr, &config->nDeviceAddr) >= 6) {
     if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%[^\"]\" SpiCmdWidth=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\" AddrIncr=\"%*[^\"\n]\" Protocol=\"%[^\"]\"",
-               instr, spiCmd, spiCmdWidth, addrWidth, dataWidth, length, addr, &config->nDeviceAddr, protocol) >= 8) {
+               instr, spiCmd, spiCmdWidth, addrWidth, dataWidth, length, addr, &config->nDeviceAddr, protocol) >= 9) {
         
         if (strcmp(instr, "writeXbytes") == 0) {
             config->eOpCode = WRITE;
