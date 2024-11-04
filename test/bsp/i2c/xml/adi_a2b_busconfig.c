@@ -12,14 +12,14 @@
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
-static int actionCount = 0;
+static uint32_t actionCount = 0;
 
-unsigned char configBuffer[MAX_CONFIG_DATA];
-static unsigned int bufferOffset = 0;
+uint8_t configBuffer[MAX_CONFIG_DATA];
+static uint32_t bufferOffset = 0;
 
 int32_t arrayHandles[2];
 
-void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned char deviceAddr) {
+void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
     char instr[20], protocol[10];
 
     config->nDeviceAddr = deviceAddr;
@@ -66,7 +66,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
             int index = 0;
             config->paConfigData = configBuffer + bufferOffset;
             while (token != NULL && config->nDataCount) {
-                config->paConfigData[index++] = (unsigned char)strtoul(token, NULL, 16); // Convert to hexadecimal
+                config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
                 token = strtok(NULL, " ");
             }
             bufferOffset += index;
@@ -75,7 +75,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
     }
 }
 
-void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, int* actionCount) {
+void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, uint32_t* actionCount) {
     const char* pageStart = strstr(xml, "<page");
     const char* actionStart;
     *actionCount = 0;
