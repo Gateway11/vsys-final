@@ -21,13 +21,17 @@ int32_t arrayHandles[2];
 
 void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned char deviceAddr) {
     char instr[20], protocol[10];
+    char addr[10], length[10], spiCmd[10], spiCmdWidth[10], addrWidth[10], dataWidth[10];
 
     config->nDeviceAddr = deviceAddr;
     config->nDataCount = 0;
 
-    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*[^\"\n]\" Protocol=\"%[^\"]\"",
-               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) >= 9 || sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
-                   instr, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 6) {
+    //if (sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
+    //           instr, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 6) {
+    //if (sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\"",
+    //           instr, addrWidth, dataWidth, length, addr, &config->nDeviceAddr) >= 6) {
+    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%[^\"]\" SpiCmdWidth=\"%[^\"]\" addr_width=\"%[^\"]\" data_width=\"%[^\"]\" len=\"%[^\"]\" addr=\"%[^\"]\" i2caddr=\"%hhu\" AddrIncr=\"%*[^\"\n]\" Protocol=\"%[^\"]\"",
+               instr, spiCmd, spiCmdWidth, addrWidth, dataWidth, length, addr, &config->nDeviceAddr, protocol) >= 9) {
         if (strcmp(instr, "writeXbytes") == 0) {
             config->eOpCode = WRITE;
         } else if (strcmp(instr, "read") == 0) {
@@ -35,8 +39,29 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         } else {
             config->eOpCode = INVALID;
         }
-        config->nDataCount -= 1;
+
+        config->eProtocol = (strcmp(protocol, "I2C") == 0) ? I2C : SPI;
+        config->nAddrWidth = (unsigned char)atoi(addrWidth);
+        config->nDataWidth = (unsigned char)atoi(dataWidth);
+        config->nAddr = (unsigned int)atoi(addr);
+        config->nDataCount = (unsigned short)atoi(length) - 1;
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
+#if 0
+        char* dataStart = strstr(action, ">") + 1; // Find position after '>'
+        char* dataEnd = strstr(dataStart, "</action>");
+        if (dataEnd) {
+            char dataStr[10];
+            size_t length = dataEnd - dataStart;
+            strncpy(dataStr, dataStart, length);
+            dataStr[length] = '\0'; // Null-terminate
+
+            config->paConfigData = &(configBuffer[bufferOffset++]);
+            //config->paConfigData[0] = (unsigned char)atoi(dataStr);
+            config->paConfigData[0] = (unsigned char)strtoul(dataStr, NULL, 16);
+            config->eOpCode = DELAY;
+            config->nDataCount = 1;
+        }
+#endif
         config->eOpCode = DELAY;
         config->nDataCount = 1;
     } else {
@@ -52,6 +77,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         char* dataStart = strstr(action, ">") + 1; // Find position after '>'
         char* dataEnd = strchr(dataStart, '\n'); // Use '\n' as end marker
         if (dataEnd) {
+            //char dataStr[50];
             char dataStr[config->nDataCount + 1];
             size_t length = dataEnd - dataStart;
             strncpy(dataStr, dataStart, length);
@@ -82,8 +108,17 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, int* actionCou
             const char* actionEnd = strstr(actionStart, "\n");
             if (!actionEnd) break;
 
+#if 0
+            char action[256];
+            size_t actionLength = actionEnd - actionStart + 1;
+            if (actionLength >= sizeof(action)) {
+                printf("Warning: Action length exceeds buffer size!\n");
+                break;
+            }
+#else
             size_t actionLength = actionEnd - actionStart + 1;
             char action[actionLength + 1];
+#endif
 
             strncpy(action, actionStart, actionLength);
             action[actionLength] = '\0'; // Null-terminate
