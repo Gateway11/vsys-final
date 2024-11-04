@@ -12,6 +12,7 @@ bin
 .project
 proguard-project.txt
 project.properties
+adi_a2b_busconfig
 gen
 tmp
 mac
