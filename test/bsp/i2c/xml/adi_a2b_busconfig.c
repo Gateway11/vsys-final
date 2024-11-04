@@ -25,9 +25,10 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
     config->nDeviceAddr = deviceAddr;
     config->nDataCount = 0;
 
-    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*[^\"\n]\" Protocol=\"%[^\"]\"",
-               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) >= 9 || sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
-                   instr, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 6) {
+    if (sscanf(action, "<action instr=\"%[^\"]\" SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
+               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 8 ||
+        sscanf(action, "<action instr=\"%[^\"]\" addr_width=\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\"",
+               instr, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr) >= 6) {
         if (strcmp(instr, "writeXbytes") == 0) {
             config->eOpCode = WRITE;
         } else if (strcmp(instr, "read") == 0) {
@@ -35,6 +36,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, unsigned 
         } else {
             config->eOpCode = INVALID;
         }
+        //config->eProtocol = (strcmp(protocol, "I2C") == 0) ? I2C : SPI;
         config->nDataCount -= 1;
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = DELAY;
