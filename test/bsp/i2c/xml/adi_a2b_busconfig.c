@@ -190,7 +190,6 @@ void processInterrupt() {
         return;
     }
     for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
-        //if (intTypeString[i].type == A2B_ENUM_INTTYPE_PWRERR_CDISC_REV) {
         if (intTypeStr[i].type == dataBuffer[1]) {
             printf("%s\n", intTypeString[i].message);
         }
@@ -224,8 +223,8 @@ int32_t setupNetwork() {
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
-                    processInterrupt();
-                    continue;
+                    //processInterrupt();
+                    //continue;
                 }
                 status = adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
