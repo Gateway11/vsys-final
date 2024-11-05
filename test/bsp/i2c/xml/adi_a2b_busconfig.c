@@ -130,6 +130,73 @@ void delay(uint32_t time) {
     usleep(time * 1000);
 }
 
+typedef struct {
+    uint8_t type;
+    const char *message;
+} IntTypeString_t;
+
+IntTypeString_t intTypeString[] = {
+    {A2B_ENUM_INTTYPE_HDCNTERR             ,        "HDCNTERR "},
+    {A2B_ENUM_INTTYPE_DDERR                ,        "DDERR "},
+    {A2B_ENUM_INTTYPE_CRCERR               ,        "CRCERR "},
+    {A2B_ENUM_INTTYPE_DPERR                ,        "DPERR "},
+    {A2B_ENUM_INTTYPE_BECOVF               ,        "BECOVF "},
+    {A2B_ENUM_INTTYPE_SRFERR               ,        "SRFERR "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS_GND        ,        "PWRERR (Cable Shorted to GND) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS_VBAT       ,        "PWRERR (Cable Shorted to VBat) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS            ,        "PWRERR (Cable Shorted Together) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC         ,        "PWRERR (Cable Disconnected or Open Circuit) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CREV          ,        "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV     ,        "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse Connected (AD243x Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_FAULT         ,        "PWRERR (Indeterminate Fault) "},
+    {A2B_ENUM_INTTYPE_IO0PND               ,        "IO0PND - Slave Only "},
+    {A2B_ENUM_INTTYPE_IO1PND               ,        "IO1PND - Slave Only "},
+    {A2B_ENUM_INTTYPE_IO2PND               ,        "IO2PND - Slave Only "},
+    {A2B_ENUM_INTTYPE_IO3PND               ,        "IO3PND "},
+    {A2B_ENUM_INTTYPE_IO4PND               ,        "IO4PND "},
+    {A2B_ENUM_INTTYPE_IO5PND               ,        "IO5PND "},
+    {A2B_ENUM_INTTYPE_IO6PND               ,        "IO6PND "},
+    {A2B_ENUM_INTTYPE_IO7PND               ,        "IO7PND "},
+    {A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only "},
+    {A2B_ENUM_INTTYPE_I2CERR               ,        "I2CERR - Master Only "},
+    {A2B_ENUM_INTTYPE_ICRCERR              ,        "ICRCERR - Master Only "},
+    {A2B_ENUM_INTTYPE_PWRERR_NLS_GND       ,        "PWRERR - Non-Localized Short to GND "},
+    {A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT      ,        "PWRERR - Non-Localized Short to VBat "},
+    {A2B_ENUM_INTTYPE_PWRERR_OTH           ,        "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
+    {A2B_ENUM_INTTYPE_SPIDONE              ,        "SPI Done"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR   ,        "SPI Remote Register Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR   ,        "SPI Remote I2C Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR     ,        "SPI Data Tunnel Access Error"},
+    {A2B_ENUM_INTTYPE_SPI_BAD_CMD          ,        "SPI Bad Command"},
+    {A2B_ENUM_INTTYPE_SPI_FIFO_OVRFLW      ,        "SPI FIFO Overflow"},
+    {A2B_ENUM_INTTYPE_SPI_FIFO_UNDERFLW    ,        "SPI FIFO Underflow"},
+    {A2B_ENUM_INTTYPE_VMTR                 ,        "VMTR Interrupt"},
+    {A2B_ENUM_INTTYPE_IRPT_MSG_ERR         ,        "PWRERR - Interrupt Messaging Error "},
+    {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF       ,        "Startup Error - Return to Factory "},
+    {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR    ,        "Slave INTTYPE Read Error - Master Only "},
+    {A2B_ENUM_INTTYPE_STANDBY_DONE         ,        "Standby Done - Master Only "},
+    {A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
+};
+
+void processInterrupt() {
+    uint8_t dataBuffer[2]; //A2B_REG_INTSRC, A2B_REG_INTTYPE
+
+    adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, sizeof(dataBuffer), dataBuffer);
+    if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
+        printf("Master : ");
+    } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
+        printf("Slave%d: ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+    } else {
+        return;
+    }
+    for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
+        //if (intTypeString[i].type == A2B_ENUM_INTTYPE_PWRERR_CDISC_REV) {
+        if (intTypeStr[i].type == dataBuffer[1]) {
+            printf("%s\n", intTypeString[i].message);
+        }
+    }
+}
+
 int32_t setupNetwork() {
     ADI_A2B_DISCOVERY_CONFIG* pOpUnit;
     uint32_t index, innerIndex;
@@ -156,6 +223,10 @@ int32_t setupNetwork() {
                 if (pOpUnit->eProtocol == SPI) break;
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
+                if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
+                    processInterrupt();
+                    continue;
+                }
                 status = adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
                 break;
