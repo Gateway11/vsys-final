@@ -12,7 +12,7 @@ and its licensors.
 #ifndef __A2B_PAL_INTERFACE_H__
 #define __A2B_PAL_INTERFACE_H__
 
-#define A2B_PRINT_CONSOLE
+//#define A2B_PRINT_CONSOLE
 
 #define I2C_DEV_PATH                    "/dev/i2c-16"
 #define A2B_MASTER_ADDR                 0x68
