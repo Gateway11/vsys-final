@@ -190,7 +190,7 @@ void processInterrupt() {
         return;
     }
     for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
-        if (intTypeStr[i].type == dataBuffer[1]) {
+        if (intTypeString[i].type == dataBuffer[1]) {
             printf("%s\n", intTypeString[i].message);
         }
     }
