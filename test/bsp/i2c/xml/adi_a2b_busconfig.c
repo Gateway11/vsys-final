@@ -253,6 +253,7 @@ int32_t setupNetwork() {
     return status;
 }
 
+#if 1
 int main(int argc, char* argv[]) {
     const char* filename = "adi_a2b_commandlist.xml";
     size_t size;
@@ -309,3 +310,142 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
+#else
+/* Define how often to check (and clear) the fault status register (in ms) */
+#define A2B_BUS_CONFIG_FAULT_CHECK_INTERVAL 2000
+
+struct ad2433_data {
+    struct device *dev;
+    struct regmap *regmap;
+    struct i2c_client *client;
+    struct delayed_work fault_check_work;
+};
+
+static void ad2433_fault_check_work(struct work_struct *work)
+{
+    struct ad2433_data *ad2433 = container_of(work, struct ad2433_data,
+                            fault_check_work.work);
+    struct device *dev = ad2433->dev;
+
+    processInterrupt();
+    /* Schedule the next fault check at the specified interval */
+    schedule_delayed_work(&ad2433->fault_check_work,
+                  msecs_to_jiffies(A2B_BUS_CONFIG_FAULT_CHECK_INTERVAL));
+}
+
+static const struct regmap_config ad2433_regmap_config = {
+    .reg_bits = 8,
+    .val_bits = 8,
+};
+
+#if IS_ENABLED(CONFIG_OF)
+static const struct of_device_id ad2433_of_ids[] = {
+    { .compatible = "lenovo,ad2433", },
+    { },
+};
+MODULE_DEVICE_TABLE(of, ad2433_of_ids);
+#endif
+
+static int ad2433_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
+    struct device *dev = &client->dev;
+    struct ad2433_data *ad2433;
+    int ret;
+    const char* filename = "adi_a2b_commandlist.xml";
+    size_t size;
+
+
+    ad2433 = devm_kzalloc(dev, sizeof(*ad2433), GFP_KERNEL);
+    if (!ad2433)
+        return -ENOMEM;
+    dev_set_drvdata(dev, ad2433);
+
+    ad2433->dev = dev;
+    ad2433->client = client;
+
+    ad2433->regmap = devm_regmap_init_i2c(client, &ad2433_regmap_config);
+    if (IS_ERR(ad2433->regmap)) {
+        ret = PTR_ERR(ad2433->regmap);
+        dev_err(dev, "unable to allocate register map: %d\n", ret);
+        return ret;
+    }
+
+    char* content = a2b_pal_File_Read(filename, &size);
+    if (content) {
+        dev_info(dev, "File content (%zu bytes):\n%s\n", size, content);
+        parseXML(content, parseA2BConfig, &actionCount);
+        pA2BConfig = parseA2BConfig;
+        free(content);
+    } else {
+        pA2BConfig = gaA2BConfig;
+        actionCount = CONFIG_LEN;
+    }
+    dev_info(dev, "Action count=%d\n", actionCount);
+
+#if 0
+    // Print the results
+    for (int i = 0; i < actionCount; i++) {
+        switch (pA2BConfig[i].eOpCode) {
+            case WRITE:
+                pr_info("Action %03d: nDeviceAddr=0x%02x, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, eProtocol=%s, paConfigData=",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
+                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
+                break;
+            case READ:
+                pr_info("Action %03d: nDeviceAddr=0x%02x, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, eProtocol=%s\n",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
+                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
+                continue;
+            case DELAY:
+                pr_info("Action %03d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
+                break;
+        }
+
+        for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
+            pr_info(pA2BConfig[i].eOpCode != DELAY ? "0x%02x " : "%02dms ", pA2BConfig[i].paConfigData[j]);
+        }
+        printf("\n");
+    }
+#endif
+
+    /* Configure A2B system */
+    setupNetwork();
+
+    INIT_DELAYED_WORK(&ad2433->fault_check_work, ad2433_fault_check_work);
+    schedule_delayed_work(&ad2433->fault_check_work, msecs_to_jiffies(A2B_BUS_CONFIG_FAULT_CHECK_INTERVAL));
+
+    return 0;
+}
+
+static int ad2433_i2c_remove(struct i2c_client *client)
+{
+    struct device *dev = &client->dev;
+    struct ad2433_data *ad2433 = dev_get_drvdata(dev);
+
+    cancel_delayed_work_sync(&ad2433->fault_check_work);
+
+    return 0;
+}
+
+static const struct i2c_device_id ad2433_i2c_ids[] = {
+    { "ad2433", 0 },
+    { }
+};
+MODULE_DEVICE_TABLE(i2c, ad2433_i2c_ids);
+
+static struct i2c_driver ad2433_i2c_driver = {
+    .driver = {
+        .name = "ad2433",
+        .of_match_table = of_match_ptr(ad2433_of_ids),
+    },
+    .probe = ad2433_i2c_probe,
+    .remove = ad2433_i2c_remove,
+    .id_table = ad2433_i2c_ids,
+};
+module_i2c_driver(ad2433_i2c_driver);
+
+MODULE_DESCRIPTION("ASoC AD2433 driver");
+MODULE_AUTHOR("Johnny Hsu <johnnyhsu@realtek.com>");
+MODULE_LICENSE("GPL v2");
+#endif
