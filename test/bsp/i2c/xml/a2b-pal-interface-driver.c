@@ -36,21 +36,18 @@ void adi_a2b_I2C_Close(int32_t handle) {
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer) {
     int32_t result = 0;
-    int32_t fd = *(int32_t *)handle;
+    struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
     struct i2c_msg msg;
-
     msg.addr  = deviceAddress;
     msg.flags = 0;
     msg.len   = writeLength;
     msg.buf   = writeBuffer;
 
-#if 0
-    result = i2c_transfer(ad2428_global_data->client->adapter, msg, ARRAY_SIZE(msg));
+    result = i2c_transfer(adap, &msg, ARRAY_SIZE(&msg));
     if (result < 0) {
         return -1;
     }
-#endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < writeLength - 1; i++) {
@@ -64,23 +61,22 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLe
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
     int32_t result = 0;
+    struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
+    struct i2c_msg msg[2];
     msg[0].addr = deviceAddress;
     msg[0].flags = 0;
     msg[0].len = writeLength;
     msg[0].buf = writeBuffer;
-
     msg[1].addr = deviceAddress;
     msg[1].flags = I2C_M_RD;
     msg[1].len = readLength;
     msg[1].buf = readBuffer;
 
-#if 0
-    result = i2c_transfer(ad2428_global_data->client->adapter, msg, ARRAY_SIZE(msg));
+    result = i2c_transfer(adap, msg, ARRAY_SIZE(msg));
     if (result < 0) {
         return -1;
     }
-#endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint8_t i = 0; i < readLength; i++) {
