@@ -124,9 +124,9 @@ char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
         return NULL;
     }
 
-    buffer[read_size] = '\0'; // Null terminate the string
+    buffer[read_size] = '\0';
     if (outSize) {
-        *outSize = read_size; // Set the output size
+        *outSize = read_size;
     }
 
     filp_close(file, NULL);
