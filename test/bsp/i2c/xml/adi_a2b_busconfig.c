@@ -181,17 +181,20 @@ IntTypeString_t intTypeString[] = {
 void processInterrupt() {
     uint8_t dataBuffer[2]; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, sizeof(dataBuffer), dataBuffer);
-    if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
-        printf("Master : ");
-    } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
-        printf("Slave%d: ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
-    } else {
-        return;
-    }
-    for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
-        if (intTypeString[i].type == dataBuffer[1]) {
-            printf("%s\n", intTypeString[i].message);
+    adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    if (dataBuffer[0]) {
+        adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
+            printf("Master : ");
+        } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
+            printf("Slave%d: ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+        } else {
+            return;
+        }
+        for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
+            if (intTypeString[i].type == dataBuffer[1]) {
+                printf("%s\n", intTypeString[i].message);
+            }
         }
     }
 }
@@ -223,8 +226,8 @@ int32_t setupNetwork() {
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
-                    //processInterrupt();
-                    //continue;
+                    processInterrupt();
+                    continue;
                 }
                 status = adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
