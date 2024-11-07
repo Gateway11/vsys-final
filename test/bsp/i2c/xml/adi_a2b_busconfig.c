@@ -383,32 +383,6 @@ static int ad2433_i2c_probe(struct i2c_client *client, const struct i2c_device_i
     }
     dev_info(dev, "Action count=%d\n", actionCount);
 
-#if 0
-    // Print the results
-    for (int i = 0; i < actionCount; i++) {
-        switch (pA2BConfig[i].eOpCode) {
-            case WRITE:
-                pr_info("Action %03d: nDeviceAddr=0x%02x, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, eProtocol=%s, paConfigData=",
-                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
-                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
-                break;
-            case READ:
-                pr_info("Action %03d: nDeviceAddr=0x%02x, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, eProtocol=%s\n",
-                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
-                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
-                continue;
-            case DELAY:
-                pr_info("Action %03d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
-                break;
-        }
-
-        for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            pr_info(pA2BConfig[i].eOpCode != DELAY ? "0x%02x " : "%02dms ", pA2BConfig[i].paConfigData[j]);
-        }
-        printf("\n");
-    }
-#endif
-
     /* Configure A2B system */
     setupNetwork();
 
