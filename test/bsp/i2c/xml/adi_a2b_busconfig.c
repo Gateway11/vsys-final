@@ -200,7 +200,7 @@ void processInterrupt() {
                 exit(EXIT_FAILURE);
             }
         }
-        printf("Interrupt Type: Normal interrupt (Code: %d)\n", dataBuffer[1]);
+        printf("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
     }
 }
 
