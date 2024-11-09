@@ -157,13 +157,13 @@ IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_IO5PND               ,        "IO5PND "},
     {A2B_ENUM_INTTYPE_IO6PND               ,        "IO6PND "},
     {A2B_ENUM_INTTYPE_IO7PND               ,        "IO7PND "},
-    {A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only "},
+    //{A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only "},
     {A2B_ENUM_INTTYPE_I2CERR               ,        "I2CERR - Master Only "},
     {A2B_ENUM_INTTYPE_ICRCERR              ,        "ICRCERR - Master Only "},
     {A2B_ENUM_INTTYPE_PWRERR_NLS_GND       ,        "PWRERR - Non-Localized Short to GND "},
     {A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT      ,        "PWRERR - Non-Localized Short to VBat "},
     {A2B_ENUM_INTTYPE_PWRERR_OTH           ,        "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
-    {A2B_ENUM_INTTYPE_SPIDONE              ,        "SPI Done"},
+    //{A2B_ENUM_INTTYPE_SPIDONE              ,        "SPI Done"},
     {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR   ,        "SPI Remote Register Access Error - Master Only"},
     {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR   ,        "SPI Remote I2C Access Error - Master Only"},
     {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR     ,        "SPI Data Tunnel Access Error"},
@@ -174,8 +174,8 @@ IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_IRPT_MSG_ERR         ,        "PWRERR - Interrupt Messaging Error "},
     {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF       ,        "Startup Error - Return to Factory "},
     {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR    ,        "Slave INTTYPE Read Error - Master Only "},
-    {A2B_ENUM_INTTYPE_STANDBY_DONE         ,        "Standby Done - Master Only "},
-    {A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
+    //{A2B_ENUM_INTTYPE_STANDBY_DONE         ,        "Standby Done - Master Only "},
+    //{A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
 };
 
 void processInterrupt() {
@@ -192,12 +192,15 @@ void processInterrupt() {
             printf("No recognized interrupt source. Exiting...\n");
             return;
         }
+
+        // Find and print the interrupt type
         for (uint32_t i = 0; i < sizeof(intTypeString) / sizeof(intTypeString[0]); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 printf("Interrupt Type: %s\n", intTypeString[i].message);
+                exit(EXIT_FAILURE);
             }
         }
-        if (dataBuffer[1] != A2B_ENUM_INTTYPE_DSCDONE) exit(EXIT_FAILURE);
+        printf("Interrupt Type: Normal interrupt (Code: %d)\n", dataBuffer[1]);
     }
 }
 
