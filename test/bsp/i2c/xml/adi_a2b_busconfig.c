@@ -185,16 +185,16 @@ void processInterrupt() {
     if (dataBuffer[0]) {
         adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
-            printf("Master : ");
+            printf("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
-            printf("Slave%d: ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+            printf("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
         } else {
+            printf("No recognized interrupt source. Exiting...\n");
             return;
         }
-        for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
+        for (uint32_t i = 0; i < sizeof(intTypeString) / sizeof(intTypeString[0]); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
-                printf("%s\n", intTypeString[i].message);
-                break;
+                printf("Interrupt Type: %s\n", intTypeString[i].message);
             }
         }
         if (dataBuffer[1] != A2B_ENUM_INTTYPE_DSCDONE) exit(EXIT_FAILURE);
