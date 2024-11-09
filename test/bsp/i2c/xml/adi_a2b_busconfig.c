@@ -196,6 +196,7 @@ void processInterrupt() {
                 printf("%s\n", intTypeString[i].message);
             }
         }
+        if (dataBuffer[1] != A2B_ENUM_INTTYPE_DSCDONE) exit(EXIT_FAILURE);
     }
 }
 
