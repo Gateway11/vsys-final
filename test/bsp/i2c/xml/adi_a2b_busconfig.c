@@ -135,7 +135,7 @@ typedef struct {
     const char *message;
 } IntTypeString_t;
 
-IntTypeString_t intTypeString[] = {
+const IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_HDCNTERR             ,        "HDCNTERR "},
     {A2B_ENUM_INTTYPE_DDERR                ,        "DDERR "},
     {A2B_ENUM_INTTYPE_CRCERR               ,        "CRCERR "},
