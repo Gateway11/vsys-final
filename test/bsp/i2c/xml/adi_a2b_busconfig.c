@@ -194,6 +194,7 @@ void processInterrupt() {
         for (uint32_t i = 0; i < sizeof(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 printf("%s\n", intTypeString[i].message);
+                break;
             }
         }
         if (dataBuffer[1] != A2B_ENUM_INTTYPE_DSCDONE) exit(EXIT_FAILURE);
