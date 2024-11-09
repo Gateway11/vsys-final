@@ -192,8 +192,6 @@ void processInterrupt() {
             printf("No recognized interrupt source. Exiting...\n");
             return;
         }
-
-        // Find and print the interrupt type
         for (uint32_t i = 0; i < sizeof(intTypeString) / sizeof(intTypeString[0]); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 printf("Interrupt Type: %s\n", intTypeString[i].message);
