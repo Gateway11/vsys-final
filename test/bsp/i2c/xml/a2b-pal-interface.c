@@ -95,7 +95,6 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t wri
     msg[0].flags = 0;
     msg[0].len = writeLength;
     msg[0].buf = writeBuffer;
-
     msg[1].addr = deviceAddress;
     msg[1].flags = I2C_M_RD;
     msg[1].len = readLength;
