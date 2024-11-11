@@ -14,8 +14,9 @@ and its licensors.
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <errno.h>
 #include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
@@ -25,7 +26,6 @@ and its licensors.
 int32_t adi_a2b_I2C_Open(uint16_t deviceAddress) {
     int32_t handle = -1;
 
-#if 0
     handle = open(I2C_DEV_PATH, O_RDWR);
     if (handle < 0) {
         printf("Unable to open I2C device: %s\n", strerror(errno));
@@ -42,7 +42,6 @@ int32_t adi_a2b_I2C_Open(uint16_t deviceAddress) {
     /* Set timeout and retry count */
     ioctl(handle, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
     ioctl(handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
-#endif
 
     return handle;
 }
@@ -80,7 +79,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLe
     }
 #endif
 
-    return result;
+    return (result >= 0 ? 0 : result);
 }
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
@@ -117,7 +116,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t wri
     }
 #endif
 
-    return result;
+    return (result >= 0 ? 0 : result);
 }
 
 char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
