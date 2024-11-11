@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
     }
     printf("Action count=%d\n", actionCount);
 
-#if 1
+#if 0
     // Print the results
     for (int i = 0; i < actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
