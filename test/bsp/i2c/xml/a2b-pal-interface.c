@@ -13,7 +13,7 @@ and its licensors.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -150,4 +150,9 @@ char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
         *outSize = readSize;
     }
     return buffer;
+}
+
+void adi_a2b_Delay(uint32_t time) {
+    printf("Sleep 0x%02xms\n", time);
+    usleep(time * 1000);
 }

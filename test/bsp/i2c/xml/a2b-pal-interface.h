@@ -37,6 +37,7 @@ and its licensors.
 #define PRINTF_BYTE_TO_BINARY_INT16(i) \
       PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
 
+void adi_a2b_Delay(uint32_t time);
 int32_t adi_a2b_I2C_Open(uint16_t deviceAddress);
 void adi_a2b_I2C_Close(int32_t handle);
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer);

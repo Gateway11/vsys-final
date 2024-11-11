@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <unistd.h>
+//#include <stdint.h>
+//#include <unistd.h>
 
 #include "adi_a2b_commandlist.h"
 #include "a2b-pal-interface.h"
@@ -125,11 +125,6 @@ void concatAddrData(uint8_t destBuffer[], uint32_t addrWidth, uint32_t addr) {
     }
 }
 
-void delay(uint32_t time) {
-    printf("Sleep 0x%02xms\n", time);
-    usleep(time * 1000);
-}
-
 typedef struct {
     uint8_t type;
     const char *message;
@@ -241,7 +236,7 @@ int32_t setupNetwork() {
                 for (innerIndex = 0u; innerIndex < pOpUnit->nDataCount; innerIndex++) {
                     delayValue = pOpUnit->paConfigData[innerIndex] | delayValue << 8u;
                 }
-                delay(delayValue);
+                adi_a2b_Delay(delayValue);
                 break;
 
             default:
