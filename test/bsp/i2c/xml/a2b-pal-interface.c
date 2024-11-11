@@ -66,8 +66,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLe
     msg.buf   = writeBuffer;
 
 #if 0
-    result = ioctl(fd, I2C_RDWR, &msgRdwr);
-    if (result < 0) {
+    if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         return -1;
     }
 #endif
@@ -79,7 +78,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLe
     }
 #endif
 
-    return (result >= 0 ? 0 : result);
+    return 0;
 }
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
@@ -103,8 +102,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t wri
     msg[1].buf = readBuffer;
 
 #if 0
-    result = ioctl(fd, I2C_RDWR, &msgRdwr);
-    if (result < 0) {
+    if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         return -1;
     }
 #endif
@@ -116,7 +114,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t wri
     }
 #endif
 
-    return (result >= 0 ? 0 : result);
+    return 0;
 }
 
 char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
