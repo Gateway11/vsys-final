@@ -33,7 +33,7 @@ int32_t adi_a2b_I2C_Open(uint16_t deviceAddress) {
 
 void adi_a2b_I2C_Close(int32_t handle) {
     // Nothing to do
-    (void)handle
+    (void)handle;
 }
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer) {
