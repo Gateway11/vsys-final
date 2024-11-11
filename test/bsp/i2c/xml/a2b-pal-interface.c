@@ -72,7 +72,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLe
 #endif
 
 #ifdef A2B_PRINT_CONSOLE
-    for (uint8_t i = 0; i < writeLength - 1; i++) {
+    for (uint16_t i = 0; i < writeLength - 1; i++) {
         printf(I2C_DEV_PATH " write device(%#x) reg=0x%02x %03d, val=0x%02x (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                deviceAddress, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
