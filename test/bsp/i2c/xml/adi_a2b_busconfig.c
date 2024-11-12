@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <stdint.h>
-//#include <unistd.h>
+#include <stdint.h>
 
 #include "adi_a2b_commandlist.h"
 #include "a2b-pal-interface.h"
