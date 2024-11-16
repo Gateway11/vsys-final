@@ -11,7 +11,7 @@
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
-static uint32_t actionCount = 0;
+static size_t actionCount = 0;
 int32_t arrayHandles[2];
 
 uint8_t configBuffer[MAX_CONFIG_DATA];
@@ -64,27 +64,23 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
     }
 }
 
-void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, uint32_t* actionCount) {
-    const char* pageStart = strstr(xml, "<page");
-    const char* actionStart;
+void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* actionCount) {
+    const char* actionStart = strstr(xml, "<action");
     *actionCount = 0;
 
-    if (pageStart) {
-        actionStart = strstr(pageStart, "<action");
-        while (actionStart && *actionCount < MAX_ACTIONS) {
-            const char* actionEnd = strchr(actionStart, '\n');
-            if (!actionEnd) break;
+    while (actionStart && *actionCount < MAX_ACTIONS) {
+        const char* actionEnd = strchr(actionStart, '\n');
+        if (!actionEnd) break;
 
-            size_t actionLength = actionEnd - actionStart + 1;
-            char action[actionLength + 1];
+        size_t actionLength = actionEnd - actionStart + 1;
+        char action[actionLength + 1];
 
-            strncpy(action, actionStart, actionLength);
-            action[actionLength] = '\0'; // Null-terminate
+        strncpy(action, actionStart, actionLength);
+        action[actionLength] = '\0'; // Null-terminate
 
-            parseAction(action, &configs[*actionCount], 104);
-            (*actionCount)++;
-            actionStart = strstr(actionEnd, "<action");
-        }
+        parseAction(action, &configs[*actionCount], 104);
+        (*actionCount)++;
+        actionStart = strstr(actionEnd, "<action");
     }
 }
 
@@ -257,7 +253,7 @@ int main(int argc, char* argv[]) {
         pA2BConfig = gaA2BConfig;
         actionCount = CONFIG_LEN;
     }
-    printf("Action count=%d, bufferOffset=%zu\n", actionCount, bufferOffset);
+    printf("Action count=%zu, bufferOffset=%zu\n", actionCount, bufferOffset);
 
 #if 0
     // Print the results
