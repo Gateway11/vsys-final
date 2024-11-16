@@ -52,25 +52,16 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
             printf("Warning: Exceeding maximum configuration data limit!\n");
             exit(EXIT_FAILURE);
         }
-        char* dataStart = strstr(action, ">") + 1; // Find position after '>'
-        char* dataEnd = strchr(dataStart, '\n'); // Use '\n' as end marker
-        if (dataEnd) {
-            size_t dataLength = dataEnd - dataStart;
-            char dataStr[dataLength + 1];
-            strncpy(dataStr, dataStart, dataLength);
-            dataStr[dataLength] = '\0'; // Null-terminate
-
-            // Parse multiple numbers
-            char* token = strtok(dataStr, " ");
-            int index = 0;
-            config->paConfigData = configBuffer + bufferOffset;
-            while (token != NULL && config->nDataCount) {
-                config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
-                token = strtok(NULL, " ");
-            }
-            bufferOffset += index;
-            config->nDataCount = index;
+        // Parse multiple numbers
+        char* token = strtok(strstr(action, ">") + 1 /* Find position after '>' */, " ");
+        int index = 0;
+        config->paConfigData = configBuffer + bufferOffset;
+        while (token != NULL && config->nDataCount) {
+            config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
+            token = strtok(NULL, " ");
         }
+        bufferOffset += index;
+        config->nDataCount = index;
     }
 }
 
