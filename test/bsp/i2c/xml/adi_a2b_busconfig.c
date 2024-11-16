@@ -55,10 +55,10 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
         char* dataStart = strstr(action, ">") + 1; // Find position after '>'
         char* dataEnd = strchr(dataStart, '\n'); // Use '\n' as end marker
         if (dataEnd) {
-            char dataStr[config->nDataCount + 1];
-            size_t length = dataEnd - dataStart;
-            strncpy(dataStr, dataStart, length);
-            dataStr[length] = '\0'; // Null-terminate
+            size_t dataLength = dataEnd - dataStart;
+            char dataStr[dataLength + 1];
+            strncpy(dataStr, dataStart, dataLength);
+            dataStr[dataLength] = '\0'; // Null-terminate
 
             // Parse multiple numbers
             char* token = strtok(dataStr, " ");
