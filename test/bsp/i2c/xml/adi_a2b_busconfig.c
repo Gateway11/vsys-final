@@ -53,8 +53,8 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
             exit(EXIT_FAILURE);
         }
         // Parse multiple numbers
-        char* token = strtok(strstr(action, ">") + 1 /* Find position after '>' */, " ");
-        int index = 0;
+        char* token = strtok(strchr(action, '>') + 1 /* Find position after '>' */, " ");
+        size_t index = 0;
         config->paConfigData = configBuffer + bufferOffset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
@@ -73,7 +73,7 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, uint32_t* acti
     if (pageStart) {
         actionStart = strstr(pageStart, "<action");
         while (actionStart && *actionCount < MAX_ACTIONS) {
-            const char* actionEnd = strstr(actionStart, "\n");
+            const char* actionEnd = strchr(actionStart, '\n');
             if (!actionEnd) break;
 
             size_t actionLength = actionEnd - actionStart + 1;
