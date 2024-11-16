@@ -70,8 +70,6 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* action
 
     while (actionStart && *actionCount < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
-        if (!actionEnd) break;
-
         size_t actionLength = actionEnd - actionStart + 1;
         char action[actionLength + 1];
 
