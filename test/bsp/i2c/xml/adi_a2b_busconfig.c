@@ -12,11 +12,10 @@
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static uint32_t actionCount = 0;
+int32_t arrayHandles[2];
 
 uint8_t configBuffer[MAX_CONFIG_DATA];
-static uint32_t bufferOffset = 0;
-
-int32_t arrayHandles[2];
+static size_t bufferOffset = 0;
 
 void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
     char instr[20], protocol[10];
@@ -258,7 +257,7 @@ int main(int argc, char* argv[]) {
         pA2BConfig = gaA2BConfig;
         actionCount = CONFIG_LEN;
     }
-    printf("Action count=%d\n", actionCount);
+    printf("Action count=%d, bufferOffset=%zu\n", actionCount, bufferOffset);
 
 #if 0
     // Print the results
