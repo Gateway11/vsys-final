@@ -49,7 +49,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
     if (strcmp(instr, "writeXbytes") == 0 || strcmp(instr, "delay") == 0) {
         if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
             printf("Warning: Exceeding maximum configuration data limit!\n");
-            return;
+            exit(EXIT_FAILURE);
         }
         // Parse multiple numbers
         char* token = strtok(strchr(action, '>') + 1 /* Find position after '>' */, " ");
@@ -173,7 +173,7 @@ void processInterrupt() {
         for (uint32_t i = 0; i < sizeof(intTypeString) / sizeof(intTypeString[0]); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 printf("Interrupt Type: %s\n", intTypeString[i].message);
-                return;
+                exit(EXIT_FAILURE);
             }
         }
         printf("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
