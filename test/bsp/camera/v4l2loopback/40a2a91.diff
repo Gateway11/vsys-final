@@ -1,0 +1,58 @@
+From 40a2a9184ae399bf9087cf5f9e5c68d7361a6465 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:46:42 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 13/14
+
+[scope of influence] None
+
+Change-Id: I2cab8668164faab8801ea4ff594efda2bc154f07
+---
+
+diff --git a/public/app.te b/public/app.te
+index 5527f99..e729ad4 100644
+--- a/public/app.te
++++ b/public/app.te
+@@ -397,7 +397,6 @@
+     dm_device
+     radio_device
+     rpmsg_device
+-    video_device
+ }:chr_file { read write };
+ 
+ # Note: Try expanding list of app domains in the future.
+diff --git a/public/domain.te b/public/domain.te
+index 799a2f1..cbf707d 100644
+--- a/public/domain.te
++++ b/public/domain.te
+@@ -481,7 +481,7 @@
+ # Only the init property service should write to /data/property and /dev/__properties__
+ neverallow { domain -init } property_data_file:dir no_w_dir_perms;
+ neverallow { domain -init } property_data_file:file { no_w_file_perms no_x_file_perms };
+-neverallow { domain -init } property_type:file { no_w_file_perms no_x_file_perms };
++neverallow { domain -init -system_app -hal_camera } property_type:file { no_w_file_perms no_x_file_perms };
+ neverallow { domain -init } properties_device:file { no_w_file_perms no_x_file_perms };
+ neverallow { domain -init } properties_serial:file { no_w_file_perms no_x_file_perms };
+ 
+diff --git a/public/hal_camera.te b/public/hal_camera.te
+index 45fad56..c08ecbe 100644
+--- a/public/hal_camera.te
++++ b/public/hal_camera.te
+@@ -36,3 +36,5 @@
+ 
+ # Only camera HAL may directly access the camera hardware
+ neverallow { halserverdomain -hal_camera_server } camera_device:chr_file *;
++
++#allow hal_camera { vendor_camera_prop }:file { read open getattr map };
+diff --git a/public/hal_configstore.te b/public/hal_configstore.te
+index 069da47..2e29e5b 100644
+--- a/public/hal_configstore.te
++++ b/public/hal_configstore.te
+@@ -1,6 +1,8 @@
+ # HwBinder IPC from client to server
+ binder_call(hal_configstore_client, hal_configstore_server)
+ 
++# zhangxf added
++typeattribute cameraserver hal_configstore_client;
+ hal_attribute_hwservice(hal_configstore, hal_configstore_ISurfaceFlingerConfigs)
+ 
+ # hal_configstore runs with a strict seccomp filter. Use crash_dump's

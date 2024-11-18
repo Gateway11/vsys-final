@@ -1,0 +1,118 @@
+From 68c0363f33b66a7e2dd507a646dc8374afb88ec6 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:42:41 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 8/14
+
+[scope of influence] None
+
+Change-Id: Ifea3991b0d64a6890452cc7350fb560e4bcea8b7
+---
+
+diff --git a/device.mk b/device.mk
+index 8ce42e1..f696701 100644
+--- a/device.mk
++++ b/device.mk
+@@ -26,3 +26,16 @@
+ 
+ PRODUCT_PROPERTY_OVERRIDES += ro.boot.wificountrycode=CN
+ # DO NOT modify this file
++
++PRODUCT_COPY_FILES += \
++    frameworks/native/data/etc/android.hardware.camera.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.xml \
++    frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml \
++    frameworks/native/data/etc/android.hardware.camera.external.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.external.xml \
++    device/lenovo/inception_prc_wifi/external_camera_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/external_camera_config.xml
++
++PRODUCT_PACKAGES += \
++    camera.device@1.0-impl \
++    camera.device@3.2-impl \
++    android.hardware.camera.provider@2.4-impl \
++    android.hardware.camera.metadata@3.2 \
++    android.hardware.camera.provider@2.4-external-service
+diff --git a/external_camera_config.xml b/external_camera_config.xml
+new file mode 100644
+index 0000000..66c964d
+--- /dev/null
++++ b/external_camera_config.xml
+@@ -0,0 +1,72 @@
++<ExternalCamera>
++    <Provider>
++        <ignore> <!-- Internal video devices to be ignored by external camera HAL -->
++        <!-- <id>0</id> -->  <!-- No leading/trailing spaces -->
++        </ignore>
++    </Provider>
++    <!-- See ExternalCameraUtils.cpp for default values of Device configurations below-->
++    <Device>
++        <!-- Max JPEG buffer size in bytes-->
++        <MaxJpegBufferSize  bytes="3145728"/>  <!-- 3MB (~= 1080p YUV420) -->
++        <!-- Size of v4l2 buffer queue when streaming >= 30fps -->
++        <!-- Larger value: more request can be cached pipeline (less janky) -->
++        <!-- Smaller value: use less memory -->
++        <NumVideoBuffers  count="4"/>
++        <!-- Size of v4l2 buffer queue when streaming < 30fps -->
++        <NumStillBuffers  count="2"/>
++        <!-- List of maximum fps for various output sizes -->
++        <!-- Any image size smaller than the size listed in Limit row will report
++        fps (as minimum frame duration) up to the fpsBound value. -->
++        <FpsList>
++            <!-- width/height must be increasing, fpsBound must be decreasing-->
++            <Limit  width="176" height="144" fpsBound="60.0" />
++            <Limit  width="176" height="144" fpsBound="30.0" />
++            <Limit  width="176" height="144" fpsBound="20.0" />
++            <Limit  width="176" height="144" fpsBound="15.0" />
++            <Limit  width="320" height="240" fpsBound="60.0" />
++            <Limit  width="320" height="240" fpsBound="30.0" />
++            <Limit  width="320" height="240" fpsBound="20.0" />
++            <Limit  width="320" height="240" fpsBound="15.0" />
++            <Limit  width="352" height="288" fpsBound="30.0" />
++            <Limit  width="352" height="288" fpsBound="20.0" />
++            <Limit  width="352" height="288" fpsBound="15.0" />
++            <Limit  width="640" height="480" fpsBound="60.0" />
++            <Limit  width="640" height="480" fpsBound="30.0" />
++            <Limit  width="640" height="480" fpsBound="20.0" />
++            <Limit  width="640" height="480" fpsBound="15.0" />
++            <Limit  width="640" height="480" fpsBound="10.0" />
++            <Limit  width="800" height="600" fpsBound="30.0" />
++            <Limit  width="800" height="600" fpsBound="20.0" />
++            <Limit  width="800" height="600" fpsBound="15.0" />
++            <Limit  width="1024" height="768" fpsBound="30.0" />
++            <Limit  width="1024" height="768" fpsBound="20.0" />
++            <Limit  width="1024" height="768" fpsBound="15.0" />
++            <Limit  width="1024" height="768" fpsBound="10.0" />
++            <Limit  width="1280" height="720" fpsBound="60.0" />
++            <Limit  width="1280" height="720" fpsBound="30.0" />
++            <Limit  width="1280" height="720" fpsBound="20.0" />
++            <Limit  width="1280" height="720" fpsBound="15.0" />
++            <Limit  width="1280" height="720" fpsBound="10.0" />
++            <Limit  width="1280" height="800" fpsBound="30.0" />
++            <Limit  width="1280" height="800" fpsBound="20.0" />
++            <Limit  width="1280" height="800" fpsBound="15.0" />
++            <Limit  width="1280" height="960" fpsBound="30.0" />
++            <Limit  width="1280" height="960" fpsBound="20.0" />
++            <Limit  width="1280" height="960" fpsBound="15.0" />
++            <Limit  width="1280" height="1024" fpsBound="30.0" />
++            <Limit  width="1280" height="1024" fpsBound="20.0" />
++            <Limit  width="1280" height="1024" fpsBound="15.0" />
++            <Limit  width="1600" height="1200" fpsBound="30.0" />
++            <Limit  width="1600" height="1200" fpsBound="15.0" />
++            <Limit  width="1920" height="1080" fpsBound="30.0" />
++            <Limit  width="1920" height="1080" fpsBound="15.0" />
++            <Limit  width="2592" height="1944" fpsBound="30.0" />
++            <Limit  width="2592" height="1944" fpsBound="15.0" />
++            <Limit  width="2592" height="1944" fpsBound="10.0" />
++            <Limit  width="2592" height="1944" fpsBound="5.0" />
++            <!-- image size larger than the last entry will not be supported-->
++        </FpsList>
++        <!-- orientation -->
++        <Orientation  degree="0"/>
++    </Device>
++</ExternalCamera>
+diff --git a/ko_order_table.csv b/ko_order_table.csv
+index afccebe..31ac070 100644
+--- a/ko_order_table.csv
++++ b/ko_order_table.csv
+@@ -384,3 +384,4 @@
+ i2c-hid.ko,/drivers/hid/i2c-hid/i2c-hid.ko,vendor,Y,N,user/userdebug/eng
+ lenovo_sys_temp.ko,/drivers/thermal/lenovo_sys_temp.ko,ramdisk,Y,Y,user/userdebug/eng
+ smsc95xx.ko,/drivers/net/usb/smsc95xx.ko,ramdisk,Y,Y,user/userdebug/eng
++v4l2loopback.ko,/drivers/v4l2loopback/v4l2loopback.ko,vendor,N,N,user/userdebug/eng

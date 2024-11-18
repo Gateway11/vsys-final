@@ -1,0 +1,317 @@
+From 11e1cd9eb62e01585cab1f1f7842b7764b0722d3 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:40:24 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 5/14
+
+[scope of influence] None
+
+Change-Id: I4354a03688880ed6b7968e35d2e7c20010f7ab99
+---
+
+diff --git a/av/services/camera/libcameraservice/cameraPandora/CameraPandora.cpp b/av/services/camera/libcameraservice/cameraPandora/CameraPandora.cpp
+index 50ebdc0..3bd2a17 100644
+--- a/av/services/camera/libcameraservice/cameraPandora/CameraPandora.cpp
++++ b/av/services/camera/libcameraservice/cameraPandora/CameraPandora.cpp
+@@ -4,6 +4,11 @@
+ #include <ui/GraphicBuffer.h>
+ #include <cutils/properties.h>
+ 
++#include <sys/ioctl.h>
++#include <fcntl.h>
++#include <linux/videodev2.h>
++#include <cstdlib>
++
+ #include "Common.h"
+ #include "CameraPandora.h"
+ #include "gpuImageRotate/gpuImageRotate.h"
+@@ -38,12 +43,73 @@
+     mMask(0),
+     mNv12(nullptr)
+ {
++    bool failed = false;
++    isCopyFrame = false;
++    
++    char devicesUsed[PROPERTY_VALUE_MAX] = {0};
++    if (property_get("persist.vendor.lenovo.v4l2vcam.devicesUsed", devicesUsed, "") > 0) {
++        PANDORA_LOG_I("FXA: devicesUsed: %s",devicesUsed);
++    } else {
++        PANDORA_LOG_E("FXA: Error while getting property: persist.vendor.lenovo.v4l2vcam.devicesUsed");
++        failed = true;
++        mVcamUsed = 0;
++    }
++
++    char devicesPathList[PROPERTY_VALUE_MAX] = {0};
++    std::vector<std::string> device_ids = {"0", "0", "0", "0", "0", "0", "0", "0"};
++    if (!failed && (mVcamUsed > 0) && property_get("persist.vendor.lenovo.v4l2vcam.devicesPathList", devicesPathList, "") > 0) {
++        device_ids = splitString(devicesPathList, ',');
++    } else {
++        PANDORA_LOG_E("FXA: Previous error OR Error while getting property: persist.vendor.lenovo.v4l2vcam.devicesPathList");
++        failed = true;
++    }
++    
++    if (device_ids.size() <= 0){
++        PANDORA_LOG_E("FXA: Previous error OR persist.vendor.lenovo.v4l2vcam.devicesPathList length is 0");
++        failed = true;
++    }
++
++    char cameraIDToBeCopied[PROPERTY_VALUE_MAX] = {0};
++    if (property_get("persist.vendor.lenovo.v4l2vcam.cameraIDToBeCopied", cameraIDToBeCopied, "") > 0) {
++        PANDORA_LOG_I("FXA: cameraIDToBeCopied: %s",cameraIDToBeCopied);
++    } else {
++        PANDORA_LOG_E("FXA: Previous error OR Error while getting property: persist.vendor.lenovo.v4l2vcam.cameraIDToBeCopied");
++        failed = true;
++    }
++
++    isCopyFrame = !failed && atoi(devicesUsed) > 0 && atoi(cameraIDToBeCopied) == mCameraId;
++    if (isCopyFrame) {
++        mVcamUsed = atoi(devicesUsed);
++        for (int i = 0; i < mVcamUsed; i++){
++            std::string videoPath = "/dev/video" + device_ids[i];
++            mVcam[i] = open(videoPath.c_str(), O_RDWR);
++            PANDORA_LOG_I("FXA: mVcam[%d]: %d", i, mVcam[i]);
++        }
++    } else {
++        mVcamUsed = 0;
++    }
++}
++
++std::vector<std::string> CameraPandora::splitString(const std::string& str, char delimiter) {
++    std::vector<std::string> tokens;
++    std::stringstream ss(str);
++    std::string item;
++
++    while (std::getline(ss, item, delimiter)) {
++        tokens.push_back(item);
++    }
++    return tokens;
+ }
+ 
+ CameraPandora::~CameraPandora()
+ {
+     SECURE_FREE(mNv12);
+     SECURE_DELETE(mCameraPandoraImpl);
++    if (isCopyFrame){
++        for (int i=0; i<mVcamUsed; i++) {
++            close(mVcam[i]);
++        }
++    }
+ }
+ 
+ const std::map<std::string,int> packageNameMap ={
+@@ -318,7 +384,7 @@
+         }
+     }
+ 
+-    PANDORA_LOG_I("Camera Pandora: get orientation is %s, w:%d, h:%d", prop, frame.w, frame.h);
++    PANDORA_LOG_I("Camera Pandora: camera %d get orientation is %s, w:%d, h:%d", mCameraId, prop, frame.w, frame.h);
+ 
+     if(NULL == gpuImageRotate::getInstance(frame.w, frame.h)) {
+         gpuImageRotate::createInstance(frame.w, frame.h);
+@@ -482,6 +548,13 @@
+                     YV12toNV12(img, mNv12, frame.h, frame.stride);
+                     frame.ydata = mNv12;
+                     frame.uvdata = ((uint8_t *)mNv12 + frame.stride * frame.scanline);
++                } else if (buf->getPixelFormat() == HAL_PIXEL_FORMAT_YCRCB_420_SP && isCopyFrame) {
++                    if (mNv12 == nullptr) {
++                        mNv12 = (uint8_t *)malloc(frame.stride * frame.h * 3 / 2);
++                    }
++                    NV21toNV12(img, mNv12, frame.h, frame.stride);
++                    frame.ydata = mNv12;
++                    frame.uvdata = ((uint8_t *)mNv12 + frame.stride * frame.scanline);
+                 } else {
+                     frame.ydata = img;
+                     frame.uvdata = ((uint8_t *)img + frame.stride * frame.scanline);
+@@ -497,6 +570,13 @@
+                     }
+                     gThis[mCameraId]->process(frame, mMask, streamId);
+                 }
++
++                if ((buf->getPixelFormat() == HAL_PIXEL_FORMAT_YCRCB_420_SP) && isCopyFrame) {
++                    for (int i=0; i<mVcamUsed; i++) {
++                        copyFrame(frame, mVcam[i]);
++                    }
++                }
++
+                 if (buf->getPixelFormat() == HAL_PIXEL_FORMAT_YV12) {
+                     NV12toYV12(mNv12, img, frame.h, frame.stride);
+                 }
+@@ -565,11 +645,39 @@
+     }
+ }
+ 
++void CameraPandora::NV21toNV12(uint8_t *nv21, uint8_t *nv12, int32_t h, int32_t stride)
++{
++    PANDORA_LOG_I("NV21 to NV12");
++	if(nv21 == nullptr || nv12 == nullptr){
++		return;
++	}
++    memcpy(nv12, nv21, stride * h);
++
++    for(int i = 0; i < stride * h / 2; i += 2){ 
++        nv12[stride * h + i + 1] = nv21[i + stride * h]; 
++        nv12[stride * h + i] = nv21[stride * h + i + 1];
++    }
++}
++
++void CameraPandora::NV12toNV21(uint8_t *nv12, uint8_t *nv21, int32_t h, int32_t stride)
++{
++    PANDORA_LOG_I("NV12 to NV21");
++	if(nv12 == nullptr || nv21 == nullptr){
++		return;
++	}
++    memcpy(nv21, nv12, stride * h);
++
++    for(int i = 0; i < stride * h / 2; i += 2){ 
++        nv21[stride * h + i + 1] = nv12[i + stride * h]; 
++        nv21[stride * h + i] = nv12[stride * h + i + 1];
++    }
++}
++
+ void CameraPandora::dump(FrameInfo &frame, const char *prefix)
+ {
+     static int frameId = 0;
+     char filename[256];
+-    sprintf(filename, "/data/vendor/camera/%d_%s_%dx%d.yuv", frameId, prefix, frame.stride, frame.h);
++    sprintf(filename, "/sdcard/Download/%d_%s_%dx%d.yuv", frameId, prefix, frame.stride, frame.h);
+     frameId++;
+     FILE* fp = fopen(filename, "w");
+     if (NOTNULL(fp)) {
+@@ -581,5 +689,43 @@
+     }
+ }
+ 
++int32_t CameraPandora::copyFrame(FrameInfo &frame, int dev_fd) 
++{
++    PANDORA_LOG_I("copy frame to virtual camera %d", dev_fd);
++
++    if (frame.ydata == nullptr || frame.uvdata == nullptr) {
++        PANDORA_LOG_E("image ptr is null!");
++        return -1;
++    }
++
++    struct v4l2_format v;
++    PANDORA_LOG_I("frame.size: %zu", frame.size);
++    PANDORA_LOG_I("frame.stride: %d", frame.stride);
++    PANDORA_LOG_I("frame.h: %d", frame.h);
++
++    if (dev_fd == -1) {
++        PANDORA_LOG_E("cannot open video device");
++        return -1;
++    }
++    v.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
++    if (ioctl(dev_fd, VIDIOC_G_FMT, &v) == -1) {
++        PANDORA_LOG_E("cannot read video device");
++        return -1;
++    }
++    v.fmt.pix.width = frame.stride;
++    v.fmt.pix.height = frame.h;
++    v.fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
++    v.fmt.pix.sizeimage = frame.size;
++    v.fmt.pix.field = V4L2_FIELD_NONE;
++    if ((ioctl(dev_fd, VIDIOC_S_FMT, &v) == -1)) {
++        PANDORA_LOG_E("cannot write video device");
++        return -1;
++    }
++
++    write(dev_fd, frame.ydata, frame.stride * frame.scanline * 3 / 2);
++    
++    return 0;
++}
++
+ }
+ 
+diff --git a/av/services/camera/libcameraservice/cameraPandora/CameraPandora.h b/av/services/camera/libcameraservice/cameraPandora/CameraPandora.h
+index 9752d5a..0029ae1 100644
+--- a/av/services/camera/libcameraservice/cameraPandora/CameraPandora.h
++++ b/av/services/camera/libcameraservice/cameraPandora/CameraPandora.h
+@@ -4,6 +4,8 @@
+ #include <pthread.h>
+ #include <atomic>
+ #include <string>
++#include <sstream>
++#include <vector>
+ 
+ #include "device3/Camera3StreamInterface.h"
+ #include "CameraPandoraImpl.h"
+@@ -40,7 +42,11 @@
+     int32_t check();
+     void    YV12toNV12(uint8_t *yv12, uint8_t *nv12, int32_t h, int32_t stride);
+     void    NV12toYV12(uint8_t *nv12, uint8_t *yv12, int32_t h, int32_t stride);
++    void    NV21toNV12(uint8_t *nv21, uint8_t *nv12, int32_t h, int32_t stride);
++    void    NV12toNV21(uint8_t *nv12, uint8_t *nv21, int32_t h, int32_t stride);
+     void    dump(FrameInfo &frame, const char *prefix);
++    int32_t copyFrame(FrameInfo &frame, int dev_fd);
++    std::vector<std::string> splitString(const std::string& str, char delimiter);
+ 
+ private:
+     static CameraPandora  *gThis[MAX_CAMERA_NUM];
+@@ -54,7 +60,9 @@
+     uint8_t           *mNv12;
+     CameraPandoraImpl *mCameraPandoraImpl;
+     std::map<int32_t, bool> mCroppedMap;
+-
++    int                mVcam[8];
++    int                mVcamUsed;
++    bool               isCopyFrame;
+ };
+ };
+ #endif
+diff --git a/av/services/camera/libcameraservice/cameraPandora/CameraPandoraImpl.cpp b/av/services/camera/libcameraservice/cameraPandora/CameraPandoraImpl.cpp
+index bf3c6dd..eaf074f 100644
+--- a/av/services/camera/libcameraservice/cameraPandora/CameraPandoraImpl.cpp
++++ b/av/services/camera/libcameraservice/cameraPandora/CameraPandoraImpl.cpp
+@@ -135,8 +135,15 @@
+             } else {
+                 PANDORA_LOG_E("Failed to set xml root path, %d", rc);
+             }
++            
++            // rsb added
++            pandora::Source source;
++            if (mCameraId > 1) {
++                source = pandora::Source::SOURCE_CAM_BACK_CUSTOM0;
++            } else {
++                source = sourceMap[mCameraId];
++            }
+ 
+-            pandora::Source source = sourceMap[mCameraId];
+             mSwitchParser.readXmls(source,"/vendor/etc/camera/pandora");
+         }
+     }
+@@ -158,7 +165,14 @@
+     inputFrame.planes[1].stride = frame.stride;
+     inputFrame.planes[1].scanline = frame.scanline / 2;
+     inputFrame.planes[1].dataLength = inputFrame.planes[1].stride * inputFrame.planes[1].scanline;
+-    pandora::Source source = sourceMap[mCameraId];
++    //pandora::Source source = sourceMap[mCameraId];
++    // rsb added
++    pandora::Source source;
++    if (mCameraId > 1) {
++        source = pandora::Source::SOURCE_CAM_BACK_CUSTOM0;
++    } else {
++        source = sourceMap[mCameraId];
++    }
+     pandora::Usecase usecase = usecaseMap[0];
+ 
+     if (streamId <= 2) {
+@@ -327,7 +341,14 @@
+     }
+ 
+     requestMap << switcherList;
+-    pandora::Source source = sourceMap[mCameraId];
++    //pandora::Source source = sourceMap[mCameraId];
++    // rsb added
++    pandora::Source source;
++    if (mCameraId > 1) {
++        source = pandora::Source::SOURCE_CAM_BACK_CUSTOM0;
++    } else {
++        source = sourceMap[mCameraId];
++    }
+ 
+     mPandora->request(&requestMap, source);
+     mPandora->update(&updateMap, source);
+@@ -378,5 +399,4 @@
+ 
+     return countryCodeValue;
+ }
+-
+ }

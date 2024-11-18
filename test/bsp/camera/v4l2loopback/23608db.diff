@@ -1,0 +1,74 @@
+From 23608db57f28e9364ba556d8944d21b6d488d3a5 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:47:33 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 14/14
+
+[scope of influence] None
+
+Change-Id: I32417956bb395d375bbb4e688024aeb5fb81d085
+---
+
+diff --git a/components/sepolicy/zuicamerahal/vendor/cameraserver.te b/components/sepolicy/zuicamerahal/vendor/cameraserver.te
+index d0143aa..e2d7640 100644
+--- a/components/sepolicy/zuicamerahal/vendor/cameraserver.te
++++ b/components/sepolicy/zuicamerahal/vendor/cameraserver.te
+@@ -1 +1,8 @@
+ allow cameraserver cam_moto:chr_file { read write open getattr ioctl };
++allow cameraserver system_data_file:dir { search };
++allow cameraserver hal_configstore_ISurfaceFlingerConfigs:hwservice_manager { find };
++allow cameraserver device:dir r_dir_perms;
++allow cameraserver video_device:dir r_dir_perms;
++allow cameraserver video_device:chr_file rw_file_perms;
++allow cameraserver { vendor_camera_prop }:file { read open getattr map };
++
+diff --git a/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te b/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te
+index a0fb462..757229f 100644
+--- a/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te
++++ b/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te
+@@ -8,3 +8,9 @@
+ binder_call(mtk_hal_camera, system_server)
+ #performance:for mpctl
+ allow mtk_hal_camera sysfs_devices_system_cpu:file rw_file_perms;
++
++allow hal_camera_default hal_graphics_mapper_hwservice:hwservice_manager {find};
++set_prop(hal_camera_default, vendor_camera_prop)
++get_prop(hal_camera_default, vendor_camera_prop)
++allow hal_camera_default { vendor_camera_prop }:file { read open getattr map };
++allow hal_camera_default { property_socket }:sock_file { read write getattr append };
+diff --git a/components/sepolicy/zuicamerahal/vendor/property_contexts b/components/sepolicy/zuicamerahal/vendor/property_contexts
+index b591430..043f2db 100644
+--- a/components/sepolicy/zuicamerahal/vendor/property_contexts
++++ b/components/sepolicy/zuicamerahal/vendor/property_contexts
+@@ -21,3 +21,14 @@
+ persist.vendor.camera.blur.level            u:object_r:vendor_camera_prop:s0
+ persist.vendor.camera.seg.index             u:object_r:vendor_camera_prop:s0
+ 
++persist.vendor.lenovo.v4l2vcam.devicesUsed         u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.devicesPathList     u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.devicesIDList       u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.cameraIDToBeCopied  u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.copiedCameraInUse   u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.connected           u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.cameraFacingToBeInjected    u:object_r:vendor_camera_prop:s0 exact string
++persist.vendor.lenovo.v4l2vcam.cameraShareToID    u:object_r:vendor_camera_prop:s0 exact string
++ro.vendor.lenovo.v4l2vcam.frontCameraIDList       u:object_r:vendor_camera_prop:s0 exact string
++ro.vendor.lenovo.v4l2vcam.backCameraIDList        u:object_r:vendor_camera_prop:s0 exact string
++ro.vendor.lenovo.v4l2vcam.devicesCreated          u:object_r:vendor_camera_prop:s0 exact string
+diff --git a/components/sepolicy/zuicamerahal/vendor/system_app.te b/components/sepolicy/zuicamerahal/vendor/system_app.te
+index 5c97721..a9051de 100644
+--- a/components/sepolicy/zuicamerahal/vendor/system_app.te
++++ b/components/sepolicy/zuicamerahal/vendor/system_app.te
+@@ -3,3 +3,13 @@
+ allow system_app vendor_camera_data_file:file {create open read write getattr unlink};
+ allow system_app vendor_persist_camera_prop:file {open read getattr map};
+ 
++set_prop(system_app, vendor_camera_prop)
++get_prop(system_app, vendor_camera_prop)
++allow system_app video_device:chr_file { open ioctl read write map };
++allow system_app { vendor_camera_prop }:file { read write open getattr map append };
++allow { untrusted_app untrusted_app_all } { vendor_camera_prop }:file { read open getattr map };
++
++#set_prop(untrusted_app, vendor_camera_prop)
++#get_prop(untrusted_app, vendor_camera_prop)
++#set_prop(untrusted_app_all, vendor_camera_prop)
++#get_prop(untrusted_app_all, vendor_camera_prop)

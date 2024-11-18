@@ -1,0 +1,252 @@
+From 833d07033f781d6b343a11485848610b10cfe100 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:39:42 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 4/14
+
+[scope of influence] None
+
+Change-Id: I3032735a0b4dc47e5d0fcc124b306053d92aa955
+---
+
+diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware/Camera.java
+index 36fa033..b1ed5fe 100644
+--- a/core/java/android/hardware/Camera.java
++++ b/core/java/android/hardware/Camera.java
+@@ -64,6 +64,10 @@
+ import java.util.ArrayList;
+ import java.util.LinkedHashMap;
+ import java.util.List;
++import java.util.stream.Stream;
++import android.os.SystemProperties;
++import android.hardware.camera2.CameraManager;
++import java.util.Arrays;
+ 
+ /**
+  * The Camera class is used to set image capture settings, start/stop preview,
+@@ -280,12 +284,12 @@
+      *   cameras or an error was encountered enumerating them.
+      */
+     public static int getNumberOfCameras() {
++	// rsb added
++	/*
+         boolean exposeAuxCamera = false;
+         String packageName = ActivityThread.currentOpPackageName();
+-        /* Force to expose only two cameras
+-         * if the package name does not falls in this bucket
+-         */
+-       // String packageList = SystemProperties.get("vendor.camera.aux.packagelist");
++       
++	// String packageList = SystemProperties.get("vendor.camera.aux.packagelist");
+         String packageList = "com.zui.camera,com.validation,com.motorola.motocit";
+         if (packageList.length() > 0) {
+             TextUtils.StringSplitter splitter = new TextUtils.SimpleStringSplitter(',');
+@@ -301,6 +305,8 @@
+         if (exposeAuxCamera == false && (numberOfCameras > 2)) {
+             numberOfCameras = 2;
+         }
++	*/
++        int numberOfCameras = _getNumberOfCameras();
+         return numberOfCameras;
+     }
+ 
+@@ -319,9 +325,9 @@
+      *    low-level failure).
+      */
+     public static void getCameraInfo(int cameraId, CameraInfo cameraInfo) {
+-        if(cameraId >= getNumberOfCameras()){
+-            throw new RuntimeException("Unknown camera ID");
+-        }
++        // if(cameraId >= getNumberOfCameras()){
++        //     throw new RuntimeException("Unknown camera ID");
++        // }
+         _getCameraInfo(cameraId, cameraInfo);
+         IBinder b = ServiceManager.getService(Context.AUDIO_SERVICE);
+         IAudioService audioService = IAudioService.Stub.asInterface(b);
+@@ -522,9 +528,43 @@
+ 
+     /** used by Camera#open, Camera#open(int) */
+     Camera(int cameraId) {
+-        if(cameraId >= getNumberOfCameras()){
+-             throw new RuntimeException("Unknown camera ID");
++        // fengxa2
++        String packageName = ActivityThread.currentOpPackageName();
++        Log.i("FXA", TAG+": Camera(int cameraId): packageName: "+packageName+", original cameraId: "+cameraId);
++        try{
++            String isConnected = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.connected", "");
++            String packageList = "com.microsoft.teams,com.tencent.wemeet.app,com.tencent.mm,com.ss.android.ugc.aweme,";
++            String[] packages = packageList.split(",");
++            if (!isConnected.isEmpty() 
++                && isConnected.equals("1")
++                && Stream.of(packages).anyMatch(packageName::equals)
++                ) 
++            {
++                String cameraFacingToBeInjected = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.cameraFacingToBeInjected", "front");
++                String cameraIDListKey = cameraFacingToBeInjected.equals("front") ? "ro.vendor.lenovo.v4l2vcam.frontCameraIDList" : "ro.vendor.lenovo.v4l2vcam.backCameraIDList";
++                String cameraIDList = SystemProperties.get(cameraIDListKey, "");
++                String[] cameraIDs = cameraIDList.split(",");
++                
++                if (Stream.of(cameraIDs).anyMatch(String.valueOf(cameraId)::equals)){
++                    String VCamIDList = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.devicesIDList", "");
++                    String[] VCamIds = VCamIDList.split(",");
++                    String VCamID = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.cameraShareToID", "");
++                    int cameraIdIndex = Arrays.asList(VCamIds).indexOf(VCamID);
++                    cameraId = (cameraIdIndex == -1) ? (getNumberOfCameras() - 1) : (cameraIdIndex + 3);
++                    // SystemProperties.set("persist.vendor.lenovo.v4l2vcam.cameraShareToID", VCamIds[cameraId - 3]);
++                    Log.i("FXA", TAG+": Camera(int cameraId): cameraId changed to : index "+cameraId + " ID "+VCamIds[cameraId - 3]);
++                }
++            }
++        } catch (SecurityException e) {
++            Log.e("FXA", "SecurityException: Insufficient permissions to read property.");
++        } catch (IllegalArgumentException e) {
++            Log.e("FXA", "IllegalArgumentException: Invalid property name.");
++        } catch (Exception e) {
++            Log.e("FXA", "Unexpected error: " + e.getMessage());
+         }
++        // if(cameraId >= getNumberOfCameras()){
++        //      throw new RuntimeException("Unknown camera ID");
++        // }
+         Log.d(TAG, "sendCameraStateBoardcast  Camera init");
+         int err = cameraInit(cameraId);
+         if (checkInitErrors(err)) {
+diff --git a/core/java/android/hardware/camera2/CameraManager.java b/core/java/android/hardware/camera2/CameraManager.java
+index b425e9f..1a12c23 100644
+--- a/core/java/android/hardware/camera2/CameraManager.java
++++ b/core/java/android/hardware/camera2/CameraManager.java
+@@ -75,6 +75,11 @@
+ import java.util.concurrent.ScheduledExecutorService;
+ import java.util.concurrent.TimeUnit;
+ 
++import java.util.List;
++import android.hardware.camera2.CameraMetadata;
++import java.util.stream.Stream;
++import android.os.SystemProperties;
++
+ /**
+  * <p>A system service manager for detecting, characterizing, and connecting to
+  * {@link CameraDevice CameraDevices}.</p>
+@@ -675,6 +680,40 @@
+     private CameraDevice openCameraDeviceUserAsync(String cameraId,
+             CameraDevice.StateCallback callback, Executor executor, final int uid,
+             final int oomScoreOffset) throws CameraAccessException {
++        // fengxa begin
++        String packageName = ActivityThread.currentOpPackageName();
++        Log.i("FXA", TAG+": openCameraDeviceUserAsync(String cameraId, ...): packageName: "+packageName+", original cameraId: "+cameraId);
++        String[] cameraIDs = getCameraIdList();
++        Log.i("FXA", TAG+": openCameraDeviceUserAsync(String cameraId, ...): cameraIDs : "+Arrays.toString(cameraIDs));
++        try{
++            String isConnected = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.connected", "");
++            String packageList = "com.microsoft.teams,com.tencent.wemeet.app,com.tencent.mm,com.ss.android.ugc.aweme,";
++            String[] packages = packageList.split(",");
++            if (!isConnected.isEmpty() 
++                && isConnected.equals("1")
++                && Stream.of(packages).anyMatch(packageName::equals)
++                ) 
++            {
++                String cameraFacingToBeInjected = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.cameraFacingToBeInjected", "front");
++                String internalCameraIDListKey = cameraFacingToBeInjected.equals("front") ? "ro.vendor.lenovo.v4l2vcam.frontCameraIDList" : "ro.vendor.lenovo.v4l2vcam.backCameraIDList";
++                String internalCameraIDList = SystemProperties.get(internalCameraIDListKey, "");
++                String[] internalCameraIDs = internalCameraIDList.split(",");
++                if (Stream.of(internalCameraIDs).anyMatch(String.valueOf(cameraId)::equals)){
++                    String VCamID = SystemProperties.get("persist.vendor.lenovo.v4l2vcam.cameraShareToID", "");
++                    int cameraIdIndex = Arrays.asList(cameraIDs).indexOf(VCamID);
++                    cameraId = (cameraIdIndex == -1) ? String.valueOf(cameraIDs.length - 1) : String.valueOf(cameraIdIndex);
++                    // SystemProperties.set("persist.vendor.lenovo.v4l2vcam.cameraShareToID", cameraIDs[Integer.parseInt(cameraId)]);
++                    Log.i("FXA", TAG+": openCameraDeviceUserAsync(String cameraId, ...): cameraId changed to : index "+cameraId + " ID "+cameraIDs[Integer.parseInt(cameraId)]);
++                }
++            }
++        } catch (SecurityException e) {
++            Log.e("FXA", "SecurityException: Insufficient permissions to read property.");
++        } catch (IllegalArgumentException e) {
++            Log.e("FXA", "IllegalArgumentException: Invalid property name.");
++        } catch (Exception e) {
++            Log.e("FXA", "Unexpected error: " + e.getMessage());
++        }
++        // fengxa end
+         CameraCharacteristics characteristics = getCameraCharacteristics(cameraId);
+         CameraDevice device = null;
+         Map<String, CameraCharacteristics> physicalIdsToChars =
+@@ -1652,6 +1691,9 @@
+ 
+         private String[] extractCameraIdListLocked() {
+             String[] cameraIds = null;
++
++	    // rsb added
++	    /*
+             boolean exposeAuxCamera = false;
+             String packageName = ActivityThread.currentOpPackageName();
+             //String packageList = SystemProperties.get("vendor.camera.aux.packagelist");
+@@ -1666,9 +1708,12 @@
+                     }
+                 }
+             }
++	    */
++
+             int idCount = 0;
+             for (int i = 0; i < mDeviceStatus.size(); i++) {
+-                if(!exposeAuxCamera && (i == 2)) break;
++		// rsb added
++                //if(!exposeAuxCamera && (i == 2)) break;
+                 int status = mDeviceStatus.valueAt(i);
+                 if (status == ICameraServiceListener.STATUS_NOT_PRESENT
+                         || status == ICameraServiceListener.STATUS_ENUMERATING) continue;
+@@ -1677,7 +1722,8 @@
+             cameraIds = new String[idCount];
+             idCount = 0;
+             for (int i = 0; i < mDeviceStatus.size(); i++) {
+-                if(!exposeAuxCamera && (i == 2)) break;
++		// rsb added
++                //if(!exposeAuxCamera && (i == 2)) break;
+                 int status = mDeviceStatus.valueAt(i);
+                 if (status == ICameraServiceListener.STATUS_NOT_PRESENT
+                         || status == ICameraServiceListener.STATUS_ENUMERATING) continue;
+@@ -1945,6 +1991,8 @@
+                 /* Force to expose only two cameras
+                  * if the package name does not falls in this bucket
+                  */
++		// rsb added
++		/*
+                 boolean exposeAuxCamera = false;
+                 String packageName = ActivityThread.currentOpPackageName();
+                 //String packageList = SystemProperties.get("vendor.camera.aux.packagelist");
+@@ -1962,6 +2010,7 @@
+                 if (exposeAuxCamera == false && (Integer.parseInt(cameraId) >= 2)) {
+                     throw new IllegalArgumentException("invalid cameraId");
+                 }
++		*/
+ 
+                 ICameraService cameraService = getCameraService();
+                 if (cameraService == null) {
+@@ -2233,6 +2282,8 @@
+ 		    /* Force to ignore the last mono/aux camera status update
+              * if the package name does not falls in this bucket
+              */
++	    // rsb added
++	    /*
+             boolean exposeMonoCamera = false;
+             String packageName = ActivityThread.currentOpPackageName();
+             //String packageList = SystemProperties.get("vendor.camera.aux.packagelist");
+@@ -2254,6 +2305,7 @@
+                     return;
+                 }
+             }
++	    */
+             if (DEBUG) {
+                 Log.v(TAG,
+                         String.format("Camera id %s has status changed to 0x%x", id, status));
+@@ -2388,6 +2440,8 @@
+             /* Force to ignore the aux or composite camera torch status update
+              * if the package name does not falls in this bucket
+              */
++	    // rsb added
++	    /*
+             boolean exposeMonoCamera = false;
+             String packageName = ActivityThread.currentOpPackageName();
+             //String packageList = SystemProperties.get("vendor.camera.aux.packagelist");
+@@ -2409,6 +2463,7 @@
+                     return;
+                 }
+             }
++	    */
+ 
+ 
+             if (!validTorchStatus(status)) {

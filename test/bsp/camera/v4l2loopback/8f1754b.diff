@@ -1,0 +1,406 @@
+From 8f1754bf413b1b85b3ff02de39e1ead38ca3e198 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:45:41 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 11/14
+
+[scope of influence] None
+
+Change-Id: Id1ac6e159238a350e33221538b9aa294ddfe709c
+---
+
+diff --git a/camera/device/3.4/default/ExternalCameraDevice.cpp b/camera/device/3.4/default/ExternalCameraDevice.cpp
+index 677b496..d1bf9ee 100644
+--- a/camera/device/3.4/default/ExternalCameraDevice.cpp
++++ b/camera/device/3.4/default/ExternalCameraDevice.cpp
+@@ -22,10 +22,13 @@
+ #include <array>
+ #include <regex>
+ #include <linux/videodev2.h>
++#include <linux/v4l2-subdev.h>
++#include <linux/videodev2.h>
+ #include "android-base/macros.h"
+ #include "CameraMetadata.h"
+ #include "../../3.2/default/include/convert.h"
+ #include "ExternalCameraDevice_3_4.h"
++#include <cutils/properties.h>
+ 
+ namespace android {
+ namespace hardware {
+@@ -64,6 +67,19 @@
+ 
+ ExternalCameraDevice::~ExternalCameraDevice() {}
+ 
++std::set<int> ExternalCameraDevice::extractNumbers(const std::string& input) {
++    std::set<int> numbers;
++    std::regex re("\\d+");
++    std::smatch match;
++    std::string::const_iterator searchStart(input.cbegin());
++
++    while (std::regex_search(searchStart, input.cend(), match, re)) {
++        numbers.insert(std::stoi(match[0]));  // Convert to int and insert into set
++        searchStart = match.suffix().first;   // Continue searching after this match
++    }
++    return numbers;
++}
++
+ bool ExternalCameraDevice::isInitFailed() {
+     Mutex::Autolock _l(mLock);
+     return isInitFailedLocked();
+@@ -275,6 +291,8 @@
+         switch (fmt.fourcc) {
+             case V4L2_PIX_FMT_Z16: hasDepth = true; break;
+             case V4L2_PIX_FMT_MJPEG: hasColor = true; break;
++            // rsb added
++            case V4L2_PIX_FMT_NV12: hasColor = true; break;
+             default: ALOGW("%s: Unsupported format found", __FUNCTION__);
+         }
+     }
+@@ -697,10 +715,11 @@
+ 
+     bool hasDepth = false;
+     bool hasColor = false;
++    bool hasColor_nv12 = false;
+ 
+     // For V4L2_PIX_FMT_Z16
+     std::array<int, /*size*/ 1> halDepthFormats{{HAL_PIXEL_FORMAT_Y16}};
+-    // For V4L2_PIX_FMT_MJPEG
++    // For V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_NV12
+     std::array<int, /*size*/ 3> halFormats{{HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                             HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED}};
+ 
+@@ -712,6 +731,10 @@
+             case V4L2_PIX_FMT_MJPEG:
+                 hasColor = true;
+                 break;
++            // rsb added
++            case V4L2_PIX_FMT_NV12:
++                hasColor_nv12 = true;
++                break;
+             default:
+                 ALOGW("%s: format %c%c%c%c is not supported!", __FUNCTION__,
+                       supportedFormat.fourcc & 0xFF, (supportedFormat.fourcc >> 8) & 0xFF,
+@@ -732,6 +755,13 @@
+                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+                 ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
+                 ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
++    } else if (hasColor_nv12) {
++        // rsb added
++        initOutputCharskeysByFormat(metadata, V4L2_PIX_FMT_NV12, halFormats,
++                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
++                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
++                ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
++                ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
+     }
+ 
+     calculateMinFps(metadata);
+@@ -796,6 +826,18 @@
+         }
+     }
+ 
++    // rsb added
++    struct v4l2_capability capability_v4l2;
++    int ret_query_v4l2 = ioctl(fd, VIDIOC_QUERYCAP, &capability_v4l2);
++    if (ret_query_v4l2 < 0) {
++        ALOGE("v4l2 QUERYCAP %s failed: %s", __FUNCTION__, strerror(errno));
++    }
++    if(strstr((const char*)capability_v4l2.driver,"v4l2")){
++        ALOGD("======%s: capability_v4l2.driver:%s ========", __func__, capability_v4l2.driver);
++        SupportedV4L2Format::FrameRate fr = {1,30};
++        format->frameRates.push_back(fr);
++    }
++
+     if (format->frameRates.empty()) {
+         ALOGE("%s: failed to get supported frame rates for format:%c%c%c%c w %d h %d",
+                 __FUNCTION__,
+@@ -867,9 +909,28 @@
+     struct v4l2_fmtdesc fmtdesc {
+         .index = 0,
+         .type = V4L2_BUF_TYPE_VIDEO_CAPTURE};
++    
++    // rsb added
++    struct v4l2_capability capability;
++    int ret_query = ioctl(fd, VIDIOC_QUERYCAP, &capability);
++    if (ret_query < 0) {
++        ALOGE("v4l2 QUERYCAP %s failed: %s", __FUNCTION__, strerror(errno));
++    }
++    if (capability.device_caps & V4L2_CAP_VIDEO_CAPTURE_MPLANE) {
++        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
++    }
++
+     int ret = 0;
+     while (ret == 0) {
+         ret = TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc));
++
++        // rsb added
++        if(ret < 0 && strstr((const char*)capability.driver, "v4l2")) {
++            ALOGE("driver.find :%s",capability.driver);
++            fmtdesc.pixelformat = V4L2_PIX_FMT_NV12; 
++	        ret = 0;
++        }
++
+         ALOGV("index:%d,ret:%d, format:%c%c%c%c", fmtdesc.index, ret,
+                 fmtdesc.pixelformat & 0xFF,
+                 (fmtdesc.pixelformat >> 8) & 0xFF,
+@@ -916,6 +977,33 @@
+                     }
+                 }
+             }
++            // rsb added
++            if(strstr((const char*)capability.driver, "v4l2")) {
++                ALOGD("driver.find :%s",capability.driver);
++
++                SupportedV4L2Format format_640x360{.width = 640, .height = 360, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_640x360, outFmts);
++
++                SupportedV4L2Format format_640x480{.width = 640, .height = 480, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_640x480, outFmts);
++
++                SupportedV4L2Format format_1280x720{.width = 1280, .height = 720, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1280x720, outFmts);
++
++                SupportedV4L2Format format_1280x960{.width = 1280, .height = 960, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1280x960, outFmts);
++
++                SupportedV4L2Format format_1600x1200{.width = 1600, .height = 1200, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1600x1200, outFmts);
++
++                SupportedV4L2Format format_1920x1080{.width = 1920, .height = 1080, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1920x1080,outFmts);
++
++                SupportedV4L2Format format_1920x1440{.width = 1920, .height = 1440, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1920x1440,outFmts);
++                
++                ret = -1;
++            }
+         }
+         fmtdesc.index++;
+     }
+diff --git a/camera/device/3.4/default/ExternalCameraDeviceSession.cpp b/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
+index 5f86742..1f102e8 100644
+--- a/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
++++ b/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
+@@ -44,7 +44,7 @@
+ // Size of request/result metadata fast message queue. Change to 0 to always use hwbinder buffer.
+ static constexpr size_t kMetadataMsgQueueSize = 1 << 18 /* 256kB */;
+ 
+-const int kBadFramesAfterStreamOn = 1; // drop x frames after streamOn to get rid of some initial
++const int kBadFramesAfterStreamOn = 4; // drop x frames after streamOn to get rid of some initial
+                                        // bad frames. TODO: develop a better bad frame detection
+                                        // method
+ constexpr int MAX_RETRY = 15; // Allow retry some ioctl failures a few times to account for some
+@@ -1438,7 +1438,10 @@
+         return false;
+     };
+ 
+-    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16) {
++    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG &&
++          req->frameIn->mFourcc != V4L2_PIX_FMT_Z16 &&
++          // rsb added
++          req->frameIn->mFourcc != V4L2_PIX_FMT_NV12) {
+         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
+                 req->frameIn->mFourcc & 0xFF,
+                 (req->frameIn->mFourcc >> 8) & 0xFF,
+@@ -1485,6 +1488,43 @@
+         }
+     }
+ 
++    // rsb added
++    if (req->frameIn->mFourcc == V4L2_PIX_FMT_NV12) {
++        ALOGV("%s NV12toI420", __FUNCTION__);
++        ATRACE_BEGIN("NV12toI420");
++        ALOGD("format is BLOB or YV12, use software NV12ToI420");
++        YCbCrLayout input;
++        input.y = inData;
++        input.yStride = mYu12Frame->mWidth;
++        input.cb = inData + mYu12Frame->mWidth * mYu12Frame->mHeight;
++        input.cStride = mYu12Frame->mWidth;
++
++        int res = libyuv::NV12ToI420(
++                static_cast<uint8_t*>(input.y),
++                input.yStride,
++                static_cast<uint8_t*>(input.cb),
++                input.cStride,
++                static_cast<uint8_t*>(mYu12FrameLayout.y),
++                mYu12FrameLayout.yStride,
++                static_cast<uint8_t*>(mYu12FrameLayout.cb),
++                mYu12FrameLayout.cStride,
++                static_cast<uint8_t*>(mYu12FrameLayout.cr),
++                mYu12FrameLayout.cStride,
++                mYu12Frame->mWidth, mYu12Frame->mHeight);
++        ATRACE_END();
++
++        if (res != 0) {
++            // For some webcam, the first few V4L2 frames might be malformed...
++            ALOGE("%s: Convert V4L2 frame to YU12 failed! res %d", __FUNCTION__, res);
++            lk.unlock();
++            Status st = parent->processCaptureRequestError(req);
++            if (st != Status::OK) {
++                return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
++            }
++            signalRequestDone();
++            return true;
++        }
++    }
+     ATRACE_BEGIN("Wait for BufferRequest done");
+     res = waitForBufferRequestDone(&req->buffers);
+     ATRACE_END();
+@@ -1580,6 +1620,11 @@
+                     halBuf.acquireFence = relFence;
+                 }
+             } break;
++            // rsb
++            // case PixelFormat::YCBCR_420_888:
++            case PixelFormat::IMPLEMENTATION_DEFINED:
++            case PixelFormat::YCRCB_420_SP:
++                break;
+             default:
+                 lk.unlock();
+                 return onDeviceError("%s: unknown output format %x", __FUNCTION__, halBuf.format);
+@@ -1957,7 +2002,7 @@
+ }
+ 
+ int ExternalCameraDeviceSession::configureV4l2StreamLocked(
+-        const SupportedV4L2Format& v4l2Fmt, double requestFps) {
++        SupportedV4L2Format& v4l2Fmt, double requestFps) {
+     ATRACE_CALL();
+     int ret = v4l2StreamOffLocked();
+     if (ret != OK) {
+@@ -1991,7 +2036,7 @@
+ 
+     if (v4l2Fmt.width != fmt.fmt.pix.width || v4l2Fmt.height != fmt.fmt.pix.height ||
+             v4l2Fmt.fourcc != fmt.fmt.pix.pixelformat) {
+-        ALOGE("%s: S_FMT expect %c%c%c%c %dx%d, got %c%c%c%c %dx%d instead!", __FUNCTION__,
++        ALOGE("%s: S_FMT expect %c%c%c%c %dx%d, got %c%c%c%c %dx%d instead! ERROR IGNORED :)", __FUNCTION__,
+                 v4l2Fmt.fourcc & 0xFF,
+                 (v4l2Fmt.fourcc >> 8) & 0xFF,
+                 (v4l2Fmt.fourcc >> 16) & 0xFF,
+@@ -2002,15 +2047,19 @@
+                 (fmt.fmt.pix.pixelformat >> 16) & 0xFF,
+                 (fmt.fmt.pix.pixelformat >> 24) & 0xFF,
+                 fmt.fmt.pix.width, fmt.fmt.pix.height);
+-        return -EINVAL;
++	    // rsb added
++        //return -EINVAL;
++        v4l2Fmt.width = fmt.fmt.pix.width;
++	    v4l2Fmt.height = fmt.fmt.pix.height;
+     }
+     uint32_t bufferSize = fmt.fmt.pix.sizeimage;
+     ALOGI("%s: V4L2 buffer size is %d", __FUNCTION__, bufferSize);
+     uint32_t expectedMaxBufferSize = kMaxBytesPerPixel * fmt.fmt.pix.width * fmt.fmt.pix.height;
+     if ((bufferSize == 0) || (bufferSize > expectedMaxBufferSize)) {
+-        ALOGE("%s: V4L2 buffer size: %u looks invalid. Expected maximum size: %u", __FUNCTION__,
++        ALOGE("%s: V4L2 buffer size: %u looks invalid. Expected maximum size: %u. ERROR IGNORED :)", __FUNCTION__,
+                 bufferSize, expectedMaxBufferSize);
+-        return -EINVAL;
++	    // rsb added
++        //return -EINVAL;
+     }
+     mMaxV4L2BufferSize = bufferSize;
+ 
+@@ -2035,11 +2084,13 @@
+         }
+     }
+ 
+-    int fpsRet = setV4l2FpsLocked(fps);
+-    if (fpsRet != 0 && fpsRet != -EINVAL) {
+-        ALOGE("%s: set fps failed: %s", __FUNCTION__, strerror(fpsRet));
+-        return fpsRet;
+-    }
++    // rsb added
++    // int fpsRet = setV4l2FpsLocked(fps);
++    // if (fpsRet != 0 && fpsRet != -EINVAL) {
++    //     ALOGE("%s: set fps failed: %s", __FUNCTION__, strerror(fpsRet));
++    //     return fpsRet;
++    // }
++    mV4l2StreamingFps = fps;
+ 
+     uint32_t v4lBufferCount = (fps >= kDefaultFps) ?
+             mCfg.numVideoBuffers : mCfg.numStillBuffers;
+@@ -2072,6 +2123,18 @@
+             return -errno;
+         }
+ 
++        // rsb added
++        ALOGD("==========mV4L2Buffer[%d] = (char*)mmap()==========", i);
++        if (buffer.memory == V4L2_MEMORY_MMAP) {    
++            mV4L2Buffer[i] = (char*)mmap(0 /* start anywhere */ ,
++                        buffer.length, PROT_READ, MAP_SHARED, mV4l2Fd.get(),
++                        buffer.m.offset);
++            if (mV4L2Buffer[i] == MAP_FAILED) {
++                ALOGE("%s(%d): Unable to map buffer(length:0x%x offset:0x%x) %s(err:%d)\n",__FUNCTION__,__LINE__, buffer.length,buffer.m.offset,strerror(errno),errno);
++            }
++        }
++        V4l2BufferLen = buffer.length;
++
+         if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
+             ALOGE("%s: QBUF %d failed: %s", __FUNCTION__, i,  strerror(errno));
+             return -errno;
+@@ -2311,7 +2374,7 @@
+     uint32_t maxDim = 0;
+     for (const auto& stream : config.streams) {
+         float aspectRatio = ASPECT_RATIO(stream);
+-        ALOGI("%s: request stream %dx%d", __FUNCTION__, stream.width, stream.height);
++        ALOGI("%s: request stream %dx%d, format: 0x%x", __FUNCTION__, stream.width, stream.height, stream.format);
+         if ((mCroppingType == VERTICAL && aspectRatio < desiredAr) ||
+                 (mCroppingType == HORIZONTAL && aspectRatio > desiredAr)) {
+             desiredAr = aspectRatio;
+diff --git a/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDeviceSession.h b/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDeviceSession.h
+index 180f0c1..1478197 100644
+--- a/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDeviceSession.h
++++ b/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDeviceSession.h
+@@ -262,7 +262,8 @@
+             uint32_t blobBufferSize = 0);
+     // fps = 0.0 means default, which is
+     // slowest fps that is at least 30, or fastest fps if 30 is not supported
+-    int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
++    // rsb added
++    int configureV4l2StreamLocked(SupportedV4L2Format& fmt, double fps = 0.0);
+     int v4l2StreamOffLocked();
+     int setV4l2FpsLocked(double fps);
+     static Status isStreamCombinationSupported(const V3_2::StreamConfiguration& config,
+@@ -342,6 +343,11 @@
+     double mV4l2StreamingFps = 0.0;
+     size_t mV4L2BufferCount = 0;
+ 
++    // rsb added
++    #define V4L2_BUFFER_MAX             32
++    char *mV4L2Buffer[V4L2_BUFFER_MAX] = {nullptr};
++    unsigned int V4l2BufferLen = 0;
++
+     static const int kBufferWaitTimeoutSec = 3; // TODO: handle long exposure (or not allowing)
+     std::mutex mV4l2BufferLock; // protect the buffer count and condition below
+     std::condition_variable mV4L2BufferReturned;
+diff --git a/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDevice_3_4.h b/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDevice_3_4.h
+index 88726f4..5afa4e1 100644
+--- a/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDevice_3_4.h
++++ b/camera/device/3.4/default/include/ext_device_v3_4_impl/ExternalCameraDevice_3_4.h
+@@ -26,6 +26,7 @@
+ #include "ExternalCameraDeviceSession.h"
+ 
+ #include <vector>
++#include <set>
+ 
+ namespace android {
+ namespace hardware {
+@@ -202,6 +203,8 @@
+         ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
+         ANDROID_SYNC_MAX_LATENCY};
+ 
++        std::set<int> extractNumbers(const std::string& input);
++
+ private:
+ 
+     struct TrampolineDeviceInterface_3_4 : public ICameraDevice {
+diff --git a/camera/provider/2.4/default/android.hardware.camera.provider@2.4-external-service.rc b/camera/provider/2.4/default/android.hardware.camera.provider@2.4-external-service.rc
+index 52ade97..54d1862 100644
+--- a/camera/provider/2.4/default/android.hardware.camera.provider@2.4-external-service.rc
++++ b/camera/provider/2.4/default/android.hardware.camera.provider@2.4-external-service.rc
+@@ -2,7 +2,7 @@
+     interface android.hardware.camera.provider@2.4::ICameraProvider external/0
+     class hal
+     user cameraserver
+-    group audio camera input drmrpc usb
++    group audio camera input drmrpc usb system 
+     ioprio rt 4
+     capabilities SYS_NICE
+     task_profiles CameraServiceCapacity MaxPerformance

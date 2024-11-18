@@ -1,0 +1,20 @@
+From c99d696ff997037c4e626cd773c437dcc7624af0 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:40:56 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 6/14
+
+[scope of influence] None
+
+Change-Id: I699a5ca05ba516b87b360985054a247bcde17d3f
+---
+
+diff --git a/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te b/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te
+index a0fb462..b6a7964 100644
+--- a/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te
++++ b/components/sepolicy/zuicamerahal/vendor/hal_camera_default.te
+@@ -8,3 +8,5 @@
+ binder_call(mtk_hal_camera, system_server)
+ #performance:for mpctl
+ allow mtk_hal_camera sysfs_devices_system_cpu:file rw_file_perms;
++
++allow hal_camera_default hal_graphics_mapper_hwservice:hwservice_manager {find};

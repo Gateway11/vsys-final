@@ -1,0 +1,23 @@
+From 33ce37b2d704a3b272484d9cc99882f780b6d217 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:44:13 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 9/14
+
+[scope of influence] None
+
+Change-Id: I9f1ff3928d90234c15388a96cdf68f6f3e0d50e7
+---
+
+diff --git a/ueventd.mt6983.rc b/ueventd.mt6983.rc
+index 0dd76bd..0699754 100644
+--- a/ueventd.mt6983.rc
++++ b/ueventd.mt6983.rc
+@@ -92,7 +92,7 @@
+ /dev/teeperf              0666   system     system
+ 
+ #v4l2 device
+-/dev/video*      0660 camera system
++/dev/video*      0666 camera system
+ /dev/media*      0660 camera system
+ /dev/v4l-subdev* 0660 camera system
+ 

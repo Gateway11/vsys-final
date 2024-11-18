@@ -1,0 +1,40 @@
+From 982c228e6e875f16c907edd127f3d80375026778 Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:42:11 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 7/14
+
+[scope of influence] None
+
+Change-Id: Ib47980c9fa1650f9e815078c971ca036d0f0924d
+---
+
+diff --git a/init.common.rc b/init.common.rc
+index ab44efe..6ee56dd 100644
+--- a/init.common.rc
++++ b/init.common.rc
+@@ -1,3 +1,25 @@
+ # ctn730
+ on property:sys.lenovobt.pen_pairing=1
+ 	write /sys/class/misc/ctn730/pen_cmd 1
++
++# fengxa2
++on early-init
++    setprop ro.vendor.lenovo.v4l2vcam.frontCameraIDList "1"
++    setprop ro.vendor.lenovo.v4l2vcam.backCameraIDList "0,2"
++    setprop ro.vendor.lenovo.v4l2vcam.devicesCreated "8"
++
++on boot
++    setprop persist.vendor.lenovo.v4l2vcam.devicesPathList "175,176,177,178,179,180,181,182"
++    setprop persist.vendor.lenovo.v4l2vcam.devicesIDList "275,276,277,278,279,280,281,282"
++    setprop persist.vendor.lenovo.v4l2vcam.devicesUsed "2"
++    setprop persist.vendor.lenovo.v4l2vcam.cameraIDToBeCopied "1"
++    setprop persist.vendor.lenovo.v4l2vcam.copiedCameraInUse "0"
++    setprop persist.vendor.lenovo.v4l2vcam.connected "0"
++    setprop persist.vendor.lenovo.v4l2vcam.cameraFacingToBeInjected "front"
++    setprop persist.vendor.lenovo.v4l2vcam.cameraShareToID "282"
++
++on property:sys.boot_completed=1
++    insmod /vendor_dlkm/lib/modules/v4l2loopback.ko devices=8
++
++on property:persist.vendor.lenovo.v4l2vcam.connected=1
++    setprop persist.vendor.lenovo.v4l2vcam.devicesUsed "0"

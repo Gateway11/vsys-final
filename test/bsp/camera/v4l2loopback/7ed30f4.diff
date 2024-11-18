@@ -1,0 +1,22 @@
+From 7ed30f4e8799fefe1c0a0979c0e7ed6c6f6ac5ae Mon Sep 17 00:00:00 2001
+From: Shibo Rui <ruisb1@lenovo.com>
+Date: Tue, 12 Nov 2024 10:38:09 +0800
+Subject: [PATCH] [MULTI-589] 增加摄像头共享功能模块 1/14
+
+[scope of influence] None
+
+Change-Id: Ib7053c356a1e6d46f6c5762a5b8b33e46cc88aec
+---
+
+diff --git a/device_framework_matrix.xml b/device_framework_matrix.xml
+index f3ad21d..b0d07d5 100644
+--- a/device_framework_matrix.xml
++++ b/device_framework_matrix.xml
+@@ -50,6 +50,7 @@
+         <interface>
+             <name>ICameraProvider</name>
+             <instance>internal/0</instance>
++	        <instance>external/0</instance>
+         </interface>
+     </hal>
+     <hal format="hidl" optional="true">
