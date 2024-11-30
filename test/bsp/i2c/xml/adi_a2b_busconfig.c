@@ -273,7 +273,7 @@ int main(int argc, char* argv[]) {
         }
 
         for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            printf(pA2BConfig[i].eOpCode != DELAY ? "0x%02x " : "%02dms ", pA2BConfig[i].paConfigData[j]);
+            printf(pA2BConfig[i].eOpCode != DELAY ? "0x%02x " : "0x%02xms ", pA2BConfig[i].paConfigData[j]);
         }
         printf("\n");
     }
