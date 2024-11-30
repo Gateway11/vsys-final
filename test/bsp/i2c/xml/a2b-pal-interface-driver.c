@@ -25,9 +25,9 @@ and its licensors.
 
 #include "a2b-pal-interface.h"
 
-int32_t adi_a2b_I2C_Open(uint16_t deviceAddress) {
+int32_t adi_a2b_I2C_Open(uint16_t deviceAddr) {
     // Nothing to do
-    (void)deviceAddress;
+    (void)deviceAddr;
     return 0;
 }
 
@@ -36,12 +36,12 @@ void adi_a2b_I2C_Close(int32_t handle) {
     (void)handle;
 }
 
-int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer) {
+int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
     int32_t result = 0;
     struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
     struct i2c_msg msg;
-    msg.addr  = deviceAddress;
+    msg.addr  = deviceAddr;
     msg.flags = 0;
     msg.len   = writeLength;
     msg.buf   = writeBuffer;
@@ -53,23 +53,23 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddress, uint16_t writeLe
 #ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < writeLength - 1; i++) {
         pr_info(I2C_DEV_PATH " write device(%#x) reg=0x%02x %03d, val=0x%02x (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
-               deviceAddress, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
+               deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
 #endif
 
     return 0;
 }
 
-int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
+int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
     int32_t result = 0;
     struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
     struct i2c_msg msg[2];
-    msg[0].addr = deviceAddress;
+    msg[0].addr = deviceAddr;
     msg[0].flags = 0;
     msg[0].len = writeLength;
     msg[0].buf = writeBuffer;
-    msg[1].addr = deviceAddress;
+    msg[1].addr = deviceAddr;
     msg[1].flags = I2C_M_RD;
     msg[1].len = readLength;
     msg[1].buf = readBuffer;
@@ -81,7 +81,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddress, uint16_t wri
 #ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < readLength; i++) {
         pr_info(I2C_DEV_PATH "  read device(%#x) reg=0x%02x %03d, val=0x%02x (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
-               deviceAddress, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
+               deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
     }
 #endif
 
