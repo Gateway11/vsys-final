@@ -12,9 +12,13 @@ OBJ = $(SRC:.c=.o)
 
 $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET)
+	tar -zcvf output.tar.gz $(TARGET) adi_a2b_commandlist.xml
+	base64 output.tar.gz > encrypt.txt
+	base64 -d encrypt.txt > output_dencrypt.tar.gz
+	tar -zxvf output_dencrypt.tar.gz
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ) $(TARGET) encrypt.txt dencrypt.bin output*
