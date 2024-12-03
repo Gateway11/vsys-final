@@ -14,6 +14,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET)
 	#tar -zcvf - $(TARGET) adi_a2b_commandlist.xml | base64 > output.txt
 	tar -cvf - $(TARGET) adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
+	#%y+
 	#base64 -d output.txt | tar -xvf -
 
 %.o: %.c
