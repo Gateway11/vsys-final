@@ -17,6 +17,7 @@ gen
 tmp
 mac
 *.o
+*.txt
 model
 workdir_cn
 !3rd-party/workdir_cn
