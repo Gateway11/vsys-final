@@ -128,12 +128,6 @@ char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
     fseek(file, 0, SEEK_SET);
 
     char* buffer = malloc(fileSize + 1); // +1 for null terminator
-    if (!buffer) {
-        fclose(file);
-        perror("Failed to allocate memory");
-        return NULL;
-    }
-
     size_t readSize = fread(buffer, 1, fileSize, file);
     if (readSize != fileSize) {
         free(buffer);
