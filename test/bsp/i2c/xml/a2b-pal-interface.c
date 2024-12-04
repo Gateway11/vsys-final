@@ -119,7 +119,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
 char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        perror("Failed to open file");
+        //perror("Failed to open file");
         return NULL;
     }
 
