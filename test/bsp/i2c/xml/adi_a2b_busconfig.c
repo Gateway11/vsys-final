@@ -46,7 +46,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
         return;
     }
 
-    if (strcmp(instr, "writeXbytes") == 0 || strcmp(instr, "delay") == 0) {
+    if (config->eOpCode == WRITE || config->eOpCode == DELAY) {
         if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
             printf("Warning: Exceeding maximum configuration data limit!\n");
             exit(EXIT_FAILURE);
