@@ -9,6 +9,7 @@ and its licensors.
  * @date:    $Date$
  * Developed by: Automotive Software and Systems team, Bengaluru, India
 *****************************************************************************/
+
 #ifndef __A2B_PAL_INTERFACE_H__
 #define __A2B_PAL_INTERFACE_H__
 

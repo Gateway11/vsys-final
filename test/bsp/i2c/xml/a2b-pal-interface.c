@@ -27,7 +27,7 @@ int32_t adi_a2b_I2C_Open(uint16_t deviceAddr) {
 
     handle = open(I2C_DEV_PATH, O_RDWR);
     if (handle < 0) {
-        perror("Unable to open I2C device");
+        perror("Unable to open I2C device " I2C_DEV_PATH);
         return -1;
     }
 
