@@ -15,7 +15,6 @@ and its licensors.
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
@@ -28,13 +27,13 @@ int32_t adi_a2b_I2C_Open(uint16_t deviceAddr) {
 
     handle = open(I2C_DEV_PATH, O_RDWR);
     if (handle < 0) {
-        printf("Unable to open I2C device: %s\n", strerror(errno));
+        perror("Unable to open I2C device");
         return -1;
     }
 
     /* Set the I2C slave device address */
     if (ioctl(handle, I2C_SLAVE, deviceAddr) < 0) {
-        printf("Can't set I2C slave address: %s\n", strerror(errno));
+        perror("Can't set I2C slave address");
         close(handle); // Close the file descriptor before returning
         return -1;
     }
@@ -119,7 +118,6 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
 char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        //perror("Failed to open file");
         return NULL;
     }
 
