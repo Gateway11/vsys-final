@@ -1,5 +1,6 @@
 #!/bin/bash
 
+line_count=0
 xml_content=$(cat "adi_a2b_commandlist.xml")
 actions=$(echo "$xml_content" | grep -Eo '<action[^>]*>.*?</action>|<action[^>]*\s*/>')
 
@@ -33,5 +34,5 @@ echo "$actions" | while read -r action; do
         echo "Unknown instruction: $instr"
     fi
 
-    echo "-------------------------"
+    echo "------------- $((++line_count)) -------------"
 done
