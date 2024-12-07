@@ -3,7 +3,7 @@ NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
 #CROSSBIN = ../aarch64--glibc--stable-2022.03-1//bin/aarch64-buildroot-linux-gnu-
 CC = $(CROSSBIN)gcc
 
-CFLAGS = -Ia2b-commandlist -Wall -ffunction-sections -fdata-sections -fvisibility=hidden# -O2# -g
+CFLAGS = -Ia2b-commandlist -Wall -ffunction-sections -fdata-sections -fvisibility=hidden -Os -flto# -g
 LDFLAGS = -Wl,-s
 
 TARGET = adi_a2b_busconfig

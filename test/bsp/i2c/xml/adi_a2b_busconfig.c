@@ -157,7 +157,7 @@ const IntTypeString_t intTypeString[] = {
 };
 
 void processInterrupt() {
-    uint8_t dataBuffer[2]; //A2B_REG_INTSRC, A2B_REG_INTTYPE
+    uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
     adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
