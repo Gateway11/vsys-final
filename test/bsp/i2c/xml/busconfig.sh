@@ -21,7 +21,8 @@ echo "$actions" | while read -r action; do
     content=$(echo "$action" | sed -n 's/.*>\(.*\)<\/action>/\1/p')
 
     if [[ "$instr" == "writeXbytes" ]]; then
-        debug "i2cset -y 16 "$i2caddr" "$addr" $(echo "$content" | sed 's/\([^ ]*\)/0x\1/g')"
+        content_with_prefix=$(echo "$content" | sed 's/\([^ ]*\)/0x\1/g')
+        debug 'i2cset -y 16 "$i2caddr" "$addr" $content_with_prefix'
     elif [[ "$instr" == "read" ]]; then
         debug 'i2cget -y 16 "$i2caddr" "$addr" "$((len - 1))"'
     elif [[ "$instr" == "delay" ]]; then
