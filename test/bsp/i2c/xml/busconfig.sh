@@ -1,12 +1,10 @@
 #!/bin/bash
 
-line_count=0
 xml_content=$(cat "adi_a2b_commandlist.xml")
 actions=$(echo "$xml_content" | grep -Eo '<action[^>]*>.*?</action>|<action[^>]*\s*/>')
 
-function debug {
-    eval echo "Running command $((++line_count)): $1"; eval $1
-}
+line_count=0
+debug() { eval echo "Running command $((++line_count)): $1" && eval $1; }
 
 echo "$actions" | while read -r action; do
     instr=$(echo "$action" | sed -n 's/.*instr="\([^"]*\)".*/\1/p')
