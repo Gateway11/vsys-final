@@ -71,7 +71,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < writeLength - 1; i++) {
-        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02x %03d, val=0x%02x (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
+        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
 #endif
@@ -106,7 +106,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < readLength; i++) {
-        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02x %03d, val=\033[4m0x%02x\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
+        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
     }
 #endif

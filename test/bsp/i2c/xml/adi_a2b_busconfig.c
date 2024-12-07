@@ -258,12 +258,12 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case WRITE:
-                printf("Action %03d: nDeviceAddr=0x%02x, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, eProtocol=%s, paConfigData=",
+                printf("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
                        i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 break;
             case READ:
-                printf("Action %03d: nDeviceAddr=0x%02x, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04x, nDataCount=%hu, eProtocol=%s\n",
+                printf("Action %03d: nDeviceAddr=0x%02X, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s\n",
                        i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 continue;
@@ -273,7 +273,7 @@ int main(int argc, char* argv[]) {
         }
 
         for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            printf(pA2BConfig[i].eOpCode != DELAY ? "0x%02x " : "0x%02xms ", pA2BConfig[i].paConfigData[j]);
+            printf(pA2BConfig[i].eOpCode != DELAY ? "0x%02X " : "0x%02Xms ", pA2BConfig[i].paConfigData[j]);
         }
         printf("\n");
     }
