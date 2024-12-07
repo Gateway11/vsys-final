@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 line_count=0
 debug() { eval echo "Running command $((++line_count)): $1" && eval $1; }
