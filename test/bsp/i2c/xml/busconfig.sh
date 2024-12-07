@@ -19,10 +19,9 @@ echo "$actions" | while read -r action; do
     #Protocol=$(echo "$action" | sed -n 's/.*Protocol="\([^"]*\)".*/\1/p')
 
     content=$(echo "$action" | sed -n 's/.*>\(.*\)<\/action>/\1/p')
-    content_with_prefix=$(echo "$content" | sed 's/\([^ ]*\)/0x\1/g')
 
     if [[ "$instr" == "writeXbytes" ]]; then
-        debug 'i2cset -y 16 "$i2caddr" "$addr" $content_with_prefix'
+        debug "i2cset -y 16 "$i2caddr" "$addr" $(echo "$content" | sed 's/\([^ ]*\)/0x\1/g')"
     elif [[ "$instr" == "read" ]]; then
         debug 'i2cget -y 16 "$i2caddr" "$addr" "$((len - 1))"'
     elif [[ "$instr" == "delay" ]]; then
