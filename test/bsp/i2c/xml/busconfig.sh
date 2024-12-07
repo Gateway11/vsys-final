@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 i2c_dev=16
-xml_content=$(cat "adi_a2b_commandlist.xml")
+xml_content=$(cat "$1" 2>/dev/null || cat "adi_a2b_commandlist.xml")
 actions=$(echo "$xml_content" | grep -Eo '<action[^>]*>.*?</action>|<action[^>]*\s*/>')
 
 debug() { eval echo "Running command $((++line_count)): $1"; eval $1; }
