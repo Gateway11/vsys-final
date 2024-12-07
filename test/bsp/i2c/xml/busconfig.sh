@@ -27,7 +27,7 @@ echo "$actions" | while read -r action; do
         debug 'i2cget -y $i2c_dev "$i2caddr" "$addr" "$((len - 1))"'
     elif [[ "$instr" == "delay" ]]; then
         delay_sec=$(bc <<< "scale=3; $((16#$content)) / 1000")
-        debug 'perl -e "select(undef, undef, undef, $delay_sec)"'
+        debug 'perl -e "select(undef, undef, undef, $delay_sec)"' #sleep $delay_sec
     else
         echo "Unknown instruction: $instr"
     fi
