@@ -4,7 +4,8 @@ NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
 CC = $(CROSSBIN)gcc
 
 CFLAGS = -Wall -ffunction-sections -fdata-sections -fvisibility=hidden -Os -flto# -g
-LDFLAGS = -Wl,-s
+#CFLAGS = -Ia2b-commandlist -Wall -ffunction-sections -fdata-sections -fvisibility=hidden -fno-common -Os -flto -fomit-frame-pointer
+LDFLAGS = -Wl,-s# -flto
 
 TARGET = adi_a2b_busconfig
 
