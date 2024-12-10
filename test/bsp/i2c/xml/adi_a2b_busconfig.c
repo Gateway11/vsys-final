@@ -283,14 +283,14 @@ int main(int argc, char* argv[]) {
     /* PAL call, open I2C driver */
     arrayHandles[0] = adi_a2b_I2C_Open(A2B_MASTER_ADDR);
     arrayHandles[1] = adi_a2b_I2C_Open(A2B_SLAVE_ADDR);
-    arrayHandles[2] = adi_a2b_I2C_Open(DSP_XXXX);
+    //arrayHandles[2] = adi_a2b_I2C_Open(DSP_XXXX);
     
     /* Configure A2B system */
     setupNetwork();
 
     adi_a2b_I2C_Close(arrayHandles[0]);
     adi_a2b_I2C_Close(arrayHandles[1]);
-    adi_a2b_I2C_Close(arrayHandles[2]);
+    //adi_a2b_I2C_Close(arrayHandles[2]);
 
     return 0;
 }
