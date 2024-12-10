@@ -29,11 +29,11 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     int32_t result = 0;
     struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
-    struct i2c_msg msg;
-    msg.addr  = deviceAddr;
-    msg.flags = 0;
-    msg.len   = writeLength;
-    msg.buf   = writeBuffer;
+    struct i2c_msg msg[1];
+    msg[0].addr  = deviceAddr;
+    msg[0].flags = 0;
+    msg[0].len   = writeLength;
+    msg[0].buf   = writeBuffer;
 
     if ((result = i2c_transfer(adap, msg, ARRAY_SIZE(msg)) < 0) {
         return -1;
