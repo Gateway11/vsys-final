@@ -12,7 +12,7 @@
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
-int32_t arrayHandles[2];
+int32_t arrayHandles[3];
 
 uint8_t configBuffer[MAX_CONFIG_DATA];
 static size_t bufferOffset = 0;
@@ -170,7 +170,7 @@ void processInterrupt() {
             printf("No recognized interrupt source. Exiting...\n");
             return;
         }
-        for (uint32_t i = 0; i < sizeof(intTypeString) / sizeof(intTypeString[0]); i++) {
+        for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 printf("Interrupt Type: %s\n", intTypeString[i].message);
                 exit(EXIT_FAILURE);
@@ -191,7 +191,8 @@ int32_t setupNetwork() {
 
     for (index = 0; index < actionCount; index++) {
         pOpUnit = &pA2BConfig[index];
-        handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? arrayHandles[0] : arrayHandles[1];
+        handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? arrayHandles[0] :
+            (pOpUnit->nDeviceAddr == A2B_SLAVE_ADDR ? arrayHandles[1] : arrayHandles[2]);
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
@@ -282,12 +283,14 @@ int main(int argc, char* argv[]) {
     /* PAL call, open I2C driver */
     arrayHandles[0] = adi_a2b_I2C_Open(A2B_MASTER_ADDR);
     arrayHandles[1] = adi_a2b_I2C_Open(A2B_SLAVE_ADDR);
+    arrayHandles[2] = adi_a2b_I2C_Open(DSP_XXXX);
     
     /* Configure A2B system */
     setupNetwork();
 
     adi_a2b_I2C_Close(arrayHandles[0]);
     adi_a2b_I2C_Close(arrayHandles[1]);
+    adi_a2b_I2C_Close(arrayHandles[2]);
 
     return 0;
 }
