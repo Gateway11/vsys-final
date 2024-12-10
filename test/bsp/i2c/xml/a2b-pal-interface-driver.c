@@ -25,17 +25,6 @@ and its licensors.
 
 #include "a2b-pal-interface.h"
 
-int32_t adi_a2b_I2C_Open(uint16_t deviceAddr) {
-    // Nothing to do
-    (void)deviceAddr;
-    return 0;
-}
-
-void adi_a2b_I2C_Close(int32_t handle) {
-    // Nothing to do
-    (void)handle;
-}
-
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
     int32_t result = 0;
     struct i2c_adapter *adap = (struct i2c_adapter*)handle;
