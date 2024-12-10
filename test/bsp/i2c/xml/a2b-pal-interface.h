@@ -18,7 +18,7 @@ and its licensors.
 #define I2C_DEV_PATH                    "/dev/i2c-16"
 #define A2B_MASTER_ADDR                 0x68
 #define A2B_SLAVE_ADDR                  0x69
-#define DSP_XXXX                        0x00
+#define DSP_XXXX                        0x38
 
 #define I2C_TIMEOUT_DEFAULT             700             /*!< timeout: 700ms*/
 #define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
