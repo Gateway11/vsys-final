@@ -79,7 +79,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     }
 
 #ifdef A2B_PRINT_CONSOLE
-    for (uint16_t i = 0; i < readLength; i++) {
+    for (uint16_t i = 0; i < readLength && writeLength == 1; i++) {
         pr_info(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
     }
