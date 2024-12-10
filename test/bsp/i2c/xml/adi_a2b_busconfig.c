@@ -12,7 +12,7 @@
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
-int32_t arrayHandles[3];
+int32_t deviceHandles[3];
 
 uint8_t configBuffer[MAX_CONFIG_DATA];
 static size_t bufferOffset = 0;
@@ -159,9 +159,9 @@ const IntTypeString_t intTypeString[] = {
 void processInterrupt() {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(deviceHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
-        adi_a2b_I2C_WriteRead(arrayHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        adi_a2b_I2C_WriteRead(deviceHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             printf("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
@@ -191,8 +191,8 @@ int32_t setupNetwork() {
 
     for (index = 0; index < actionCount; index++) {
         pOpUnit = &pA2BConfig[index];
-        handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? arrayHandles[0] :
-            (pOpUnit->nDeviceAddr == A2B_SLAVE_ADDR ? arrayHandles[1] : arrayHandles[2]);
+        handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? deviceHandles[0] :
+            (pOpUnit->nDeviceAddr == A2B_SLAVE_ADDR ? deviceHandles[1] : deviceHandles[2]);
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
@@ -281,16 +281,20 @@ int main(int argc, char* argv[]) {
 #endif
 
     /* PAL call, open I2C driver */
-    arrayHandles[0] = adi_a2b_I2C_Open(A2B_MASTER_ADDR);
-    arrayHandles[1] = adi_a2b_I2C_Open(A2B_SLAVE_ADDR);
-    //arrayHandles[2] = adi_a2b_I2C_Open(DSP_XXXX);
+    deviceHandles[0] = adi_a2b_I2C_Open(A2B_MASTER_ADDR);
+    deviceHandles[1] = adi_a2b_I2C_Open(A2B_SLAVE_ADDR);
+#if DSP_DEVICE_ADDR
+    deviceHandles[2] = adi_a2b_I2C_Open(DSP_DEVICE_ADDR);
+#endif
     
     /* Configure A2B system */
     setupNetwork();
 
-    adi_a2b_I2C_Close(arrayHandles[0]);
-    adi_a2b_I2C_Close(arrayHandles[1]);
-    //adi_a2b_I2C_Close(arrayHandles[2]);
+    adi_a2b_I2C_Close(deviceHandles[0]);
+    adi_a2b_I2C_Close(deviceHandles[1]);
+#if DSP_DEVICE_ADDR
+    adi_a2b_I2C_Close(deviceHandles[2]);
+#endif
 
     return 0;
 }
