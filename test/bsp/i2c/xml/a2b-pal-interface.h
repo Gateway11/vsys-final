@@ -40,6 +40,7 @@ and its licensors.
       PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 void adi_a2b_Delay(uint32_t time);
 int32_t adi_a2b_I2C_Open(uint16_t deviceAddr);
