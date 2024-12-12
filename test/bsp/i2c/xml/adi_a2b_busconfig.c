@@ -7,7 +7,7 @@
 #include "a2b-pal-interface.h"
 #include "regdefs.h"
 
-#define MAX_ACTIONS 128
+#define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
