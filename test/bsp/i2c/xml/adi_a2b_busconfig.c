@@ -185,12 +185,12 @@ int32_t setupNetwork() {
     uint32_t index, innerIndex;
     int32_t status = 0, handle;
 
-    static uint8_t dataBuffer[4096];
     static uint8_t dataWriteReadBuffer[4u];
     uint32_t delayValue;
 
     for (index = 0; index < actionCount; index++) {
         pOpUnit = &pA2BConfig[index];
+        uint8_t dataBuffer[pOpUnit->nAddrWidth + pOpUnit->nDataCount];
         handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? deviceHandles[0] :
             (pOpUnit->nDeviceAddr == A2B_SLAVE_ADDR ? deviceHandles[1] : deviceHandles[2]);
         /* Operation code */
