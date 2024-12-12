@@ -8,13 +8,13 @@
 #include "regdefs.h"
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
 int32_t deviceHandles[3];
 
-uint8_t configBuffer[MAX_CONFIG_DATA];
+static uint8_t configBuffer[MAX_CONFIG_DATA];
 static size_t bufferOffset = 0;
 
 void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
