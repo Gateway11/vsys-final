@@ -7,7 +7,7 @@ actions=$(echo "$xml_content" | grep -Eo '<action[^>]*>.*?</action>|<action[^>]*
 debug() { eval echo "Running command $((++line_count)): $1"; eval $1; }
 
 echo "$actions" | while read -r action; do
-    instr=$(echo "$action" | sed -n 's/.*instr="\([^"]*\)".*/\1/p')
+    instr=$(echo "${action#*instr=\"}" | cut -d'"' -f1)
 
     #SpiCmd=$(echo "$action" | sed -n 's/.*SpiCmd="\([^"]*\)".*/\1/p')
     #SpiCmdWidth=$(echo "$action" | sed -n 's/.*SpiCmdWidth="\([^"]*\)".*/\1/p')
