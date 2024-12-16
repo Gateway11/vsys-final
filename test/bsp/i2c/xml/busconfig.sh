@@ -11,7 +11,7 @@ echo "$actions" | while read -r action; do
 
     #SpiCmd=$(echo "$action" | sed -n 's/.*SpiCmd="\([^"]*\)".*/\1/p')
     #SpiCmdWidth=$(echo "$action" | sed -n 's/.*SpiCmdWidth="\([^"]*\)".*/\1/p')
-    #addr_width=$(echo "$action" | sed -n 's/.*addr_width="\([^"]*\)".*/\1/p')
+    addr_width=$(echo "$action" | sed -n 's/.*addr_width="\([^"]*\)".*/\1/p')
     #data_width=$(echo "$action" | sed -n 's/.*data_width="\([^"]*\)".*/\1/p')
     len=$(echo "$action" | sed -n 's/.*len="\([^"]*\)".*/\1/p')
     addr=$(echo "$action" | sed -n 's/.* addr="\([^"]*\)".*/\1/p' | xargs -I {} printf "0x%02X" {})
@@ -22,9 +22,11 @@ echo "$actions" | while read -r action; do
 
     if [[ "$instr" == "writeXbytes" ]]; then
         content_with_prefix=$(echo "$content" | sed 's/\([^ ]*\)/0x\1/g')
-        debug 'i2cset -y $i2c_dev "$i2caddr" "$addr" $content_with_prefix'
+        #debug 'i2cset -y $i2c_dev "$i2caddr" "$addr" $content_with_prefix'
+        debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr" "$addr" $content_with_prefix'
     elif [[ "$instr" == "read" ]]; then
-        debug 'i2cget -y $i2c_dev "$i2caddr" "$addr" "$((len - 1))"'
+        #debug 'i2cget -y $i2c_dev "$i2caddr" "$addr" "$((len - 1))"'
+        debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr" "$addr" r"$((len - 1))"'
     elif [[ "$instr" == "delay" ]]; then
         delay_sec=$(bc <<< "scale=3; $((16#$content)) / 1000")
         debug 'perl -e "select(undef, undef, undef, $delay_sec)"' #sleep $delay_sec
