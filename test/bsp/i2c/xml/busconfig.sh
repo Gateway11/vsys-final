@@ -14,7 +14,7 @@ echo "$actions" | while read -r action; do
     addr_width=$(echo "$action" | sed -n 's/.*addr_width="\([^"]*\)".*/\1/p')
     #data_width=$(echo "$action" | sed -n 's/.*data_width="\([^"]*\)".*/\1/p')
     len=$(echo "$action" | sed -n 's/.*len="\([^"]*\)".*/\1/p')
-    addr=$(echo "$action" | sed -n 's/.* addr="\([^"]*\)".*/\1/p' | xargs -I {} printf "%02X" {})
+    addr=$(echo "$action" | sed -n 's/.* addr="\([^"]*\)".*/\1/p' | xargs -I {} printf "%0$((addr_width << 1))X" {})
     i2caddr=$(echo "$action" | sed -n 's/.*i2caddr="\([^"]*\)".*/\1/p' | xargs -I {} printf "0x%02X" {})
     #Protocol=$(echo "$action" | sed -n 's/.*Protocol="\([^"]*\)".*/\1/p')
 
