@@ -143,6 +143,6 @@ char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
 }
 
 void adi_a2b_Delay(uint32_t time) {
-    printf("Sleep 0x%02xms\n", time);
+    printf("sleep 0x%02xms\n", time);
     usleep(time * 1000);
 }
