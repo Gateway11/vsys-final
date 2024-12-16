@@ -8,19 +8,19 @@ debug() { eval echo "Running command $((++line_count)): $1"; eval $1; }
 
 echo "$actions" | while read -r action; do
     instr=$(echo "${action#*instr=\"}" | cut -d'"' -f1)
+    content=$(echo "${action#*\">}" | cut -d'<' -f1)
 
-    #SpiCmd=$(echo "$action" | sed -n 's/.*SpiCmd="\([^"]*\)".*/\1/p')
-    #SpiCmdWidth=$(echo "$action" | sed -n 's/.*SpiCmdWidth="\([^"]*\)".*/\1/p')
-    addr_width=$(echo "$action" | sed -n 's/.*addr_width="\([^"]*\)".*/\1/p')
-    #data_width=$(echo "$action" | sed -n 's/.*data_width="\([^"]*\)".*/\1/p')
-    len=$(echo "$action" | sed -n 's/.*len="\([^"]*\)".*/\1/p')
-    addr=$(echo "$action" | sed -n 's/.* addr="\([^"]*\)".*/\1/p' | xargs -I {} printf "%0$((addr_width * 2))X" {})
-    i2caddr=$(echo "$action" | sed -n 's/.*i2caddr="\([^"]*\)".*/\1/p' | xargs -I {} printf "0x%02X" {})
-    #protocol=$(echo "$action" | sed -n 's/.*Protocol="\([^"]*\)".*/\1/p')
-    content=$(echo "$action" | sed -n 's/.*>\(.*\)<\/action>/\1/p')
-
-    addr_bytes=""
     if [[ "$instr" != "delay" ]]; then
+        #SpiCmd=$(echo "$action" | sed -n 's/.*SpiCmd="\([^"]*\)".*/\1/p')
+        #SpiCmdWidth=$(echo "$action" | sed -n 's/.*SpiCmdWidth="\([^"]*\)".*/\1/p')
+        addr_width=$(echo "${action#*addr_width=\"}" | cut -d'"' -f1)
+        #data_width=$(echo "$action" | sed -n 's/.*data_width="\([^"]*\)".*/\1/p')
+        len=$(echo "${action#*len=\"}" | cut -d'"' -f1)
+        addr=$(printf "%0$((addr_width * 2))X" "$(echo "${action#* addr=\"}" | cut -d'"' -f1)")
+        i2caddr=$(printf "0x%02X" "$(echo "${action#*i2caddr=\"}" | cut -d'"' -f1)")
+        #protocol=$(echo "$action" | sed -n 's/.*Protocol="\([^"]*\)".*/\1/p')
+
+        addr_bytes=""
         for ((i = 0; i < $addr_width; i++)); do addr_bytes+=" 0x${addr:$((i * 2)):2}"; done
     fi
 
