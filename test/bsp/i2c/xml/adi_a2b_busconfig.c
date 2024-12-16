@@ -37,7 +37,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
             config->eOpCode = INVALID;
         }
         config->eProtocol = (strcmp(protocol, "SPI") == 0) ? SPI : I2C;
-        config->nDataCount -= 1;
+        config->nDataCount -= config->nAddrWidth;
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = DELAY;
         config->nDataCount = 1;
