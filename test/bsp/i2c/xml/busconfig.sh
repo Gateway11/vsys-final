@@ -19,8 +19,8 @@ echo "$actions" | while read -r action; do
     #protocol=$(echo "$action" | sed -n 's/.*Protocol="\([^"]*\)".*/\1/p')
     content=$(echo "$action" | sed -n 's/.*>\(.*\)<\/action>/\1/p')
 
+    addr_bytes=""
     if [[ "$instr" != "delay" ]]; then
-        addr_bytes=""
         for ((i = 0; i < $addr_width; i++)); do
             byte=$(echo "$addr" | cut -c$((i*2+1))-$((i*2+2)))
             addr_bytes="$addr_bytes 0x$byte"
