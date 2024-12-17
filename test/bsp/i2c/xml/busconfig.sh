@@ -18,18 +18,16 @@ echo "$actions" | while read -r action; do
 
         addr_bytes=""
         for ((i = 0; i < $addr_width; i++)); do addr_bytes+=" 0x${addr:$((i * 2)):2}"; done
-    fi
 
-    if [[ "$instr" == "writeXbytes" ]]; then
-        debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr"$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")'
-    elif [[ "$instr" == "read" ]]; then
-        debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr"$addr_bytes r"$((len - addr_width))"'
-    elif [[ "$instr" == "delay" ]]; then
+        if [[ "$instr" == "writeXbytes" ]]; then
+            debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr"$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")'
+        elif [[ "$instr" == "read" ]]; then
+            debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr"$addr_bytes r"$((len - addr_width))"'
+        fi
+    else
         delay_value=0
         for byte in $content; do delay_value=$(( (delay_value << 8) | (16#$byte) )); done
         delay_sec=$(bc <<< "scale=3; $delay_value / 1000")
         debug 'sleep $delay_sec'
-    else
-        echo "Unknown instruction: $instr"
     fi
 done
