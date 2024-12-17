@@ -13,7 +13,7 @@ OBJ = $(SRC:.c=.o)
 
 $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
-	$(MAKE) tar
+	@$(MAKE) tar
 
 tar:
 	tar -cvf - $(TARGET) busconfig.sh adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
