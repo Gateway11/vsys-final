@@ -26,9 +26,9 @@ echo "$actions" | while read -r action; do
 
     if [[ "$instr" == "writeXbytes" ]]; then
         content_with_prefix=$(echo "$content" | sed 's/\([^ ]*\)/0x\1/g')
-        debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr""$addr_bytes" "$content_with_prefix"'
+        debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr"$addr_bytes $content_with_prefix'
     elif [[ "$instr" == "read" ]]; then
-        debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr""$addr_bytes" r"$((len - addr_width))"'
+        debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr"$addr_bytes r"$((len - addr_width))"'
     elif [[ "$instr" == "delay" ]]; then
         delay_value=0
         for byte in $content; do delay_value=$(( (delay_value << 8) | (16#$byte) )); done
