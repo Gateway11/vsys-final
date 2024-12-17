@@ -65,6 +65,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
 
 #if 0
     if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
+        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, ret=%d\n", deviceAddr, writeBuffer[0], result);
         return -1;
     }
 #endif
@@ -100,6 +101,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
 
 #if 0
     if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
+        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, ret=%d\n", deviceAddr, writeBuffer[0], result);
         return -1;
     }
 #endif
