@@ -12,10 +12,10 @@
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
-int32_t deviceHandles[3];
+static int32_t deviceHandles[3];
 
 static uint8_t configBuffer[MAX_CONFIG_DATA];
-static size_t bufferOffset = 0;
+size_t bufferOffset = 0;
 
 void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
     char instr[20], protocol[10];
