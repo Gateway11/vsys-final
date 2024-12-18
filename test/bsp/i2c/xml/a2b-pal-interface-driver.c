@@ -27,6 +27,7 @@ and its licensors.
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
     int32_t result = 0;
+    uint16_t i = 0;
     struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
     struct i2c_msg msg[1];
@@ -41,7 +42,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     }
 
 #ifdef A2B_PRINT_CONSOLE
-    for (uint16_t i = 0; i < writeLength - 1 && deviceAddr != DSP_XXXX; i++) {
+    for (i = 0; i < writeLength - 1 && deviceAddr != DSP_XXXX; i++) {
         pr_info(I2C_DEV_PATH " write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
@@ -52,6 +53,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
     int32_t result = 0;
+    uint16_t i = 0;
     struct i2c_adapter *adap = (struct i2c_adapter*)handle;
 
     struct i2c_msg msg[2];
@@ -69,12 +71,10 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
         return -1;
     }
 
-#ifdef A2B_PRINT_CONSOLE
-    for (uint16_t i = 0; i < readLength && writeLength == 1; i++) {
+    for (i = 0; i < readLength && writeLength == 1; i++) {
         pr_info(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
     }
-#endif
 
     return 0;
 }
