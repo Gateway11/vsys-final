@@ -49,7 +49,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
     if (config->eOpCode == WRITE || config->eOpCode == DELAY) {
         if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
             printf("Warning: %s Exceeding maximum configuration data limit!\n", __func__);
-            exit(EXIT_FAILURE);
+            return;
         }
         // Parse multiple numbers
         char* token = strtok(strchr(action, '>') + 1 /* Find position after '>' */, " ");
@@ -196,7 +196,6 @@ int32_t setupNetwork() {
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
-                if (pOpUnit->eProtocol == SPI) break;
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
                 status = adi_a2b_I2C_Write(&handle, (uint16_t)pOpUnit->nDeviceAddr,
@@ -204,7 +203,6 @@ int32_t setupNetwork() {
                 break;
 
             case READ:
-                if (pOpUnit->eProtocol == SPI) break;
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
