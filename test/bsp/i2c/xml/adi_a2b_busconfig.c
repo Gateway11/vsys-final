@@ -68,7 +68,7 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* action
     const char* actionStart = strstr(xml, "<action");
     *actionCount = 0;
 
-    while (actionStart && (*actionCount)++ < MAX_ACTIONS) {
+    while (actionStart && *actionCount < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
@@ -77,6 +77,7 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* action
         action[actionLength] = '\0'; // Null-terminate
 
         parseAction(action, &configs[*actionCount], 104);
+        (*actionCount)++;
         actionStart = strstr(actionEnd, "<action");
     }
 }
