@@ -168,7 +168,7 @@ void processInterrupt() {
             printf("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
         } else {
             printf("No recognized interrupt source (Code: 0x%02X)\n", dataBuffer[0]);
-            return;
+            exit(EXIT_FAILURE);
         }
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
