@@ -16,7 +16,7 @@ $(TARGET): $(OBJ)
 	@$(MAKE) tar
 
 tar:
-	tar -cvf - $(TARGET) busconfig.sh adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
+	tar -cvf - $(TARGET) busconfig.sh run.sh adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
 	-@xclip -sel clip < output.txt
 	-@#base64 -d output.txt | tar -xJf -
 	-@#ctrl b/f
