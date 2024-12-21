@@ -18,7 +18,7 @@ $(TARGET): $(OBJ)
 tar:
 	tar -cvf - $(TARGET) busconfig.sh adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
 	-@xclip -sel clip < output.txt
-	@#base64 -d output.txt | tar -xJf -
+	-@#base64 -d output.txt | tar -xJf -
 
 copy:
 	@echo "Copying the content of $(FILE) to the clipboard..."
