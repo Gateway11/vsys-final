@@ -4,8 +4,8 @@ rm record.wav
 rm output_wav.txt
 
 if [ -n "$1" ]; then
-    amixer cset name="I2S7 Mux" ADMAIF1
-    aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
+    #amixer cset name="I2S7 Mux" ADMAIF1
+    #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
 
     amixer cset name="ADMAIF5 Mux" I2S7
 fi
