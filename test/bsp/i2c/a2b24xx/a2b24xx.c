@@ -71,6 +71,7 @@ static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {A2B24XX_CONTROL(1
 //     /* A2B reset */
 // 	return ret;
 // }
+
 #ifdef A2B_SETUP_ALSA
 /****************************************************************************/
 /*!
@@ -164,7 +165,6 @@ static int adi_a2b_I2CRead(struct device *dev, unsigned short devAddr, unsigned 
 	}
 	pr_err("\n");
 
-
 	return 0;
 }
 
@@ -228,6 +228,7 @@ static void adi_a2b_NetworkSetup(struct device *dev)
 
 }
 #endif
+
 /* Template functions */
 static int a2b24xx_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
 {
@@ -275,35 +276,37 @@ static int a2b24xx_startup(struct snd_pcm_substream *substream, struct snd_soc_d
 	/* Add custom functionality */
 	return 0;
 }
-static const struct snd_soc_dai_ops a2b24xx_dai_ops =
-		{
-		 .startup = a2b24xx_startup,
-		 .hw_params = a2b24xx_hw_params,
-		 .mute_stream = a2b24xx_mute,
-		 .set_fmt = a2b24xx_set_dai_fmt,
-		 .set_tdm_slot = a2b24xx_set_tdm_slot,
-		};
+
+static const struct snd_soc_dai_ops a2b24xx_dai_ops = {
+	.startup = a2b24xx_startup,
+	.hw_params = a2b24xx_hw_params,
+	.mute_stream = a2b24xx_mute,
+	.set_fmt = a2b24xx_set_dai_fmt,
+	.set_tdm_slot = a2b24xx_set_tdm_slot,
+};
 
 static struct snd_soc_dai_driver a2b24xx_dai =
 	{
 		.name = "a2b24xx-hifi",
 		.capture =
-		{
-		.stream_name = "Capture",
-		.channels_min = 1,
-		.channels_max = 32,
-		.rates = SNDRV_PCM_RATE_KNOT,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
-		.sig_bits = 24, },
+			{
+			 .stream_name = "Capture",
+			 .channels_min = 1,
+			 .channels_max = 32,
+			 .rates = SNDRV_PCM_RATE_KNOT,
+			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+			 .sig_bits = 24,
+			},
 		.playback =
 			{
 			 .stream_name = "Playback",
 			 .channels_min = 1,
 			 .channels_max = 32,
 			 .rates = SNDRV_PCM_RATE_KNOT,
-			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE, .sig_bits = 24,
+			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+			 .sig_bits = 24,
 			},
-			.ops = &a2b24xx_dai_ops,
+		.ops = &a2b24xx_dai_ops,
 	};
 
 /* Supported rates */
@@ -329,6 +332,7 @@ static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id, int s
 
 	return 0;
 }
+
 /* Codec probe */
 static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 {
@@ -349,8 +353,8 @@ static struct snd_soc_component_driver a2b24xx_codec_driver =
   .set_sysclk = a2b24xx_set_sysclk,
   .controls = a2b24xx_snd_controls,
   .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
-
 };
+
 /* driver probe */
 int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type type, void (*switch_mode)(struct device *dev))
 {
@@ -401,4 +405,3 @@ EXPORT_SYMBOL_GPL(a2b24xx_regmap_config);
 MODULE_DESCRIPTION("ASoC A2B24XX driver");
 MODULE_AUTHOR("ADI Automotive Software Team, Bangalore");
 MODULE_LICENSE("GPL");
-
