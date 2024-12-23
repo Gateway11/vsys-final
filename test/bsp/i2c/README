@@ -1,0 +1,16 @@
+drive/drive-linux/kernel/source/nvidia-oot/sound/soc/tegra-virt-alt
+1.change makefile
+2.copy
+
+3.change dts
+drive/drive-foundation/platform-config/hardware/nvidia/platform/t264/automotive/kernel-dts/p3960/common/tegra264-p3960-sound.dtsi
+                i2c@810c430000 {
+                        status = "okay";
+                        a2b24xx: a2b24xx@0x68 {
+                        	compatible = "adi,a2b24xx";
+                        	reg = <0x68>;
+                        	status = "okay";
+                	};
+	            };
+
+
