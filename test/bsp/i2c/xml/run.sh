@@ -12,4 +12,5 @@ else
     #arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 2 record.wav
     #tar -cvf - record.wav | xz -9 --extreme | base64
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 2 | xz -9 --extreme | base64
+    #base64 -d output_wav.txt | xz -d > record_$(date +%Y-%m-%d-%H-%M-%S).wav
 fi
