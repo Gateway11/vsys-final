@@ -48,7 +48,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
 
     if (config->eOpCode == WRITE || config->eOpCode == DELAY) {
         if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
-            printf("Warning: %s Exceeding maximum configuration data limit!\n", __func__);
+            printf("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
         // Parse multiple numbers
