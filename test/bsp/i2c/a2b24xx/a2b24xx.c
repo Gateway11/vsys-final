@@ -223,7 +223,6 @@ static void adi_a2b_NetworkSetup(struct device *dev)
 
 		}
 	}
-
 }
 #endif
 
@@ -264,7 +263,6 @@ static int a2b24xx_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	int ret = 0;
 
 	return ret;
-
 }
 
 static int a2b24xx_startup(struct snd_pcm_substream *substream, struct snd_soc_dai *dai)
@@ -308,8 +306,7 @@ static struct snd_soc_dai_driver a2b24xx_dai =
 	};
 
 /* Supported rates */
-static const unsigned int a2b24xx_rates[] =
- {1500, 2000,2400, 3000, 8000, 12000, 24000, 48000,  };
+static const unsigned int a2b24xx_rates[] = { 1500, 2000,2400, 3000, 8000, 12000, 24000, 48000, };
 
 /* Check system clock */
 // static bool a2b24xx_check_sysclk(unsigned int mclk, unsigned int base_freq)
@@ -318,6 +315,7 @@ static const unsigned int a2b24xx_rates[] =
 
 // 	return true;
 // }
+
 /* set system clock */
 static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id, int source, unsigned int freq, int dir)
 {
@@ -347,10 +345,10 @@ static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 
 static struct snd_soc_component_driver a2b24xx_codec_driver =
 {
-  .probe = a2b24xx_codec_probe,
-  .set_sysclk = a2b24xx_set_sysclk,
-  .controls = a2b24xx_snd_controls,
-  .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
+    .probe = a2b24xx_codec_probe,
+    .set_sysclk = a2b24xx_set_sysclk,
+    .controls = a2b24xx_snd_controls,
+    .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
 };
 
 /* driver probe */
@@ -392,11 +390,11 @@ static bool a2b24xx_register_volatile(struct device *dev, unsigned int reg)
 
 const struct regmap_config a2b24xx_regmap_config =
 {
- .max_register = 255,
- .volatile_reg = a2b24xx_register_volatile,
- .cache_type = REGCACHE_NONE,
- .reg_defaults = a2b24xx_reg_defaults,
- .num_reg_defaults = ARRAY_SIZE(a2b24xx_reg_defaults),
+    .max_register = 255,
+    .volatile_reg = a2b24xx_register_volatile,
+    .cache_type = REGCACHE_NONE,
+    .reg_defaults = a2b24xx_reg_defaults,
+    .num_reg_defaults = ARRAY_SIZE(a2b24xx_reg_defaults),
 };
 EXPORT_SYMBOL_GPL(a2b24xx_regmap_config);
 
