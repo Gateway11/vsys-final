@@ -130,27 +130,26 @@ static int adi_a2b_I2CWrite(struct device *dev, unsigned short devAddr, unsigned
 	return (i2c_master_send(client, bytes, count));
 }
 
-static int adi_a2b_I2CRead(struct device *dev, unsigned short devAddr, unsigned short count, char *bytes)
+static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer)
 {
 
 	int ret = -1;
 	struct i2c_client *client = to_i2c_client(dev);
 	client->addr = devAddr;
-	uint8_t readbuf[10] = {0};
 	unsigned short i = 0;
 
 	struct i2c_msg msg[] = {
 		[0] = {
 				.addr = client->addr,
 				.flags = 0,
-				.len = sizeof(uint8_t),
-				.buf = bytes,
+				.len = writeLength,
+				.buf = writeBuffer,
 				},
 		[1] = {
 				.addr = client->addr,
 				.flags = I2C_M_RD,
-				.len = count,
-				.buf = readbuf,
+				.len = readLength,
+				.buf = readBuffer,
 				},
 	};
 
@@ -159,9 +158,9 @@ static int adi_a2b_I2CRead(struct device *dev, unsigned short devAddr, unsigned 
 		pr_err("%s:i2c_transfer failed\n", __func__);
 		return ret;
 	}
-	pr_err("%s:i2c read dev_addr:0x%02x reg_addr:0x%02x reg_value:\n", __func__, devAddr, bytes[0]);
-	for (i = 1; i < count; i++){
-		pr_err("0x%02x ", readbuf[i]);
+    pr_err("%s:i2c read device(%#X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+	for (i = 0; i < count; i++){
+		pr_err("0x%02X ", readBuffer[i]);
 	}
 	pr_err("\n");
 
@@ -205,7 +204,7 @@ static void adi_a2b_NetworkSetup(struct device *dev)
 			case A2B24XX_READ:
 				(void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
 				adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-				adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nDataCount, aDataWriteReadBuf);
+                adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
 				/* Couple of milli seconds should be OK */
 				mdelay(2);
 				break;
