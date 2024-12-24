@@ -140,13 +140,13 @@ static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr, uint16_t writeL
 
 	struct i2c_msg msg[] = {
 		[0] = {
-				.addr = client->addr,
+				.addr = devAddr,
 				.flags = 0,
 				.len = writeLength,
 				.buf = writeBuffer,
 				},
 		[1] = {
-				.addr = client->addr,
+				.addr = devAddr,
 				.flags = I2C_M_RD,
 				.len = readLength,
 				.buf = readBuffer,
@@ -158,11 +158,10 @@ static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr, uint16_t writeL
 		pr_err("%s:i2c_transfer failed\n", __func__);
 		return ret;
 	}
-    pr_err("%s:i2c read device(%#X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+    pr_err("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
 	for (i = 0; i < count; i++){
-		pr_err("0x%02X ", readBuffer[i]);
+		pr_err("0x%02X\n", readBuffer[i]);
 	}
-	pr_err("\n");
 
 	return 0;
 }
