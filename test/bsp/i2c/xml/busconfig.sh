@@ -22,7 +22,7 @@ echo "$actions" | while read -r action; do
         if [[ "$instr" == "writeXbytes" ]]; then
             debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr"$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")'
         elif [[ "$instr" == "read" ]]; then
-            debug 'i2ctransfer -f -y $i2c_dev w"$addr_width"@"$i2caddr"$addr_bytes r"$((len - addr_width))"'
+            debug 'i2ctransfer -f -y $i2c_dev w$addr_width@"$i2caddr"$addr_bytes r"$((len - addr_width))"'
         fi
     else
         delay_value=0
