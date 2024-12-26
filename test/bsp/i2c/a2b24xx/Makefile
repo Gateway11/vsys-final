@@ -32,5 +32,5 @@ obj-m += snd-soc-tegra-virt-t210ref-pcm.o
 snd-soc-tegra210-virt-alt-adsp-objs := tegra210_adsp_virt_alt.o
 obj-m += snd-soc-tegra210-virt-alt-adsp.o
 
-#snd-soc-tegra210-virt-alt-a2b24xx-objs := a2b24xx/a2b24xx.o a2b24xx/a2b24xx-i2c.o
-#obj-m += snd-soc-tegra210-virt-alt-a2b24xx.o
+#snd-soc-codec-a2b24xx-objs := a2b24xx/a2b24xx.o a2b24xx/a2b24xx-i2c.o
+#obj-m += snd-soc-codec-a2b24xx.o
