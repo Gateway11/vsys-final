@@ -12,6 +12,6 @@ if [ -n "$1" ]; then
     amixer cset name="MVC1 Volume" 1000
     amixer cset name="ADMAIF5 Mux" MVC1
 else
-    arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 2 record.wav
+    arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     tar -cvf - record.wav | xz -9 --extreme | base64
 fi
