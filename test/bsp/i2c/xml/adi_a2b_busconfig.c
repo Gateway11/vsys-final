@@ -180,10 +180,10 @@ void processInterrupt() {
     }
 }
 
-int32_t setupNetwork() {
+void setupNetwork() {
     ADI_A2B_DISCOVERY_CONFIG* pOpUnit;
     uint32_t index, innerIndex;
-    int32_t status = 0, handle;
+    int32_t handle;
 
     static uint8_t dataBuffer[5192];
     static uint8_t dataWriteReadBuffer[4u];
@@ -198,8 +198,7 @@ int32_t setupNetwork() {
             case WRITE:
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
-                status = adi_a2b_I2C_Write(&handle, (uint16_t)pOpUnit->nDeviceAddr,
-                        (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
+                adi_a2b_I2C_Write(&handle, (uint16_t)pOpUnit->nDeviceAddr, (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
                 break;
 
             case READ:
@@ -209,7 +208,7 @@ int32_t setupNetwork() {
                     processInterrupt();
                     continue;
                 }
-                status = adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
+                adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
                 break;
 
@@ -224,14 +223,7 @@ int32_t setupNetwork() {
             default:
                 break;
         }
-
-        if (status != 0) {
-            //TODO
-            //break; // I2C read/write failed! No point in continuing!
-        }
     }
-
-    return status;
 }
 
 int main(int argc, char* argv[]) {
