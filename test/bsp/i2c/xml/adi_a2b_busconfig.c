@@ -226,7 +226,8 @@ int32_t setupNetwork() {
         }
 
         if (status != 0) {
-            break; // I2C read/write failed! No point in continuing!
+            //TODO
+            //break; // I2C read/write failed! No point in continuing!
         }
     }
 
