@@ -173,7 +173,7 @@ void processInterrupt() {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 printf("Interrupt Type: %s\n", intTypeString[i].message);
-                exit(EXIT_FAILURE);
+                return;
             }
         }
         printf("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
