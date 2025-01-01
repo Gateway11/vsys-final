@@ -15,11 +15,11 @@ if [ -n "$1" ]; then
     #amixer cset name="I2S7 Mux" "AMX1"
     #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
 
-    #amixer cset name="ASRC1 RX1 Mux" ADMAIF1
-    #amixer cset name="AMX1 RX2 Mux" "ASRC1 TX1" 
+    #amixer cset name="SFC1 Mux" ADMAIF1
+    #amixer cset name="AMX1 RX2 Mux" SFC1
     #amixer cset name="I2S7 Mux" AMX1
-    #amixer cset name="ASRC1 Ratio1 Source" SW
-    #amixer cset name="ASRC1 Ratio1" 715827882
+    #amixer cset name="SFC1 Input Sample Rate" 8000
+    #amixer cset name="SFC1 Output Sample Rate" 48000
     #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
 
     amixer cset name="I2S7 Mux" ADMAIF1
