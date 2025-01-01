@@ -4,13 +4,6 @@ if [ -n "$1" ]; then
     setterm -linewrap on
     resize
 
-    #amixer cset name="AMX1 RX1 Mux" "ADMAIF1"
-    #amixer cset name="AMX1 RX2 Mux" "ADMAIF2"
-    #amixer cset name="AMX1 RX3 Mux" "ADMAIF3"
-    #amixer cset name="AMX1 RX4 Mux" "ADMAIF4"
-    #amixer cset name="I2S7 Mux" "AMX1"
-    #aplay -D hw:0,1 /usr/share/sounds/alsa/Rear_Right.wav
-
     #amixer cset name="AMX1 RX2 Mux" "ADMAIF1"
     #amixer cset name="I2S7 Mux" "AMX1"
     #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
