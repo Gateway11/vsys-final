@@ -4,19 +4,19 @@ if [ -n "$1" ]; then
     setterm -linewrap on
     resize
 
-    #amixer cset name="AMX1 RX2 Mux" "ADMAIF1"
-    #amixer cset name="I2S7 Mux" "AMX1"
-    #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
+    amixer cset name="MVC1 Mux" ADMAIF1
+    amixer cset name="MVC1 Volume" 10
 
     #amixer cset name="SFC1 Mux" ADMAIF1
-    #amixer cset name="AMX1 RX2 Mux" SFC1
-    #amixer cset name="I2S7 Mux" AMX1
-    #amixer cset name="SFC1 Input Sample Rate" 8000
-    #amixer cset name="SFC1 Output Sample Rate" 48000
-    #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
+    amixer cset name="SFC1 Mux" MVC1
+    amixer cset name="AMX1 RX3 Mux" SFC1
+    amixer cset name="I2S7 Mux" AMX1
+    amixer cset name="SFC1 Input Sample Rate" 44100
+    amixer cset name="SFC1 Output Sample Rate" 48000
+    #aplay -D hw:0,0 48000_2ch_32bit.wav
 
-    amixer cset name="I2S7 Mux" ADMAIF1
-    aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
+    #amixer cset name="I2S7 Mux" ADMAIF1
+    #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
 
     amixer cset name="ADMAIF5 Mux" I2S7
     #amixer cset name="MVC1 Mux" I2S7
