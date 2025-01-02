@@ -19,9 +19,9 @@ if [ -n "$1" ]; then
     #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
 
     amixer cset name="ADMAIF5 Mux" I2S7
-    #amixer cset name="MVC1 Mux" I2S7
-    #amixer cset name="MVC1 Volume" 1000
-    #amixer cset name="ADMAIF5 Mux" MVC1
+    #amixer cset name="MVC2 Mux" I2S7
+    #amixer cset name="MVC2 Volume" 1000
+    #amixer cset name="ADMAIF5 Mux" MVC2
 else
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     tar -cvf - record.wav | xz -9 --extreme | base64
