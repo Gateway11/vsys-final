@@ -49,6 +49,7 @@ void adi_a2b_I2C_Close(int32_t handle) {
 }
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
+    int32_t result = 0;
     int32_t fd = *(int32_t *)handle;
 
     struct i2c_rdwr_ioctl_data msgRdwr;
@@ -63,8 +64,8 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     msg.buf   = writeBuffer;
 
 #if 0
-    if (ioctl(fd, I2C_RDWR, &msgRdwr) < 0) {
-        perror("Failed to write device " I2C_DEV_PATH);
+    if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
+        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", deviceAddr, writeBuffer[0], writeLength - 1, result);
         return -1;
     }
 #endif
@@ -80,6 +81,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
 }
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
+    int32_t result = 0;
     int32_t fd = *(int32_t *)handle;
 
     struct i2c_rdwr_ioctl_data msgRdwr;
@@ -98,8 +100,8 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     msg[1].buf = readBuffer;
 
 #if 0
-    if (ioctl(fd, I2C_RDWR, &msgRdwr) < 0) {
-        perror("Failed to  read device " I2C_DEV_PATH);
+    if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
+        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", deviceAddr, writeBuffer[0], readLength, result);
         return -1;
     }
 #endif
