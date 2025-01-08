@@ -34,35 +34,33 @@
 #endif
 #include "a2b24xx.h"
 
-struct a2b24xx
-{
-	struct regmap *regmap;
-	unsigned int sysclk;
-	enum a2b24xx_sysclk_src sysclk_src;
-	enum a2b24xx_type type;
+struct a2b24xx {
+    struct regmap *regmap;
+    unsigned int sysclk;
+    enum a2b24xx_sysclk_src sysclk_src;
+    enum a2b24xx_type type;
 
-	struct snd_pcm_hw_constraint_list constraints;
+    struct snd_pcm_hw_constraint_list constraints;
 
-	struct device *dev;
-	void (*switch_mode)(struct device *dev);
+    struct device *dev;
+    void (*switch_mode)(struct device *dev);
 
-	unsigned int max_master_fs;
-	bool master;
+    unsigned int max_master_fs;
+    bool master;
 };
 
-static const struct reg_default a2b24xx_reg_defaults[] =
-		{{0x00, 0x50} };
+static const struct reg_default a2b24xx_reg_defaults[] = {
+    { 0x00, 0x50 }
+};
 
-/* An example control -  no specific functionality */
+/* Example control - no specific functionality */
 static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
 #define A2B24XX_CONTROL(x) \
-	SOC_SINGLE_TLV("A2B" #x "Template", \
-		2, \
-		0, 255, 1, a2b24xx_control)
+    SOC_SINGLE_TLV("A2B" #x "Template", 2, 0, 255, 1, a2b24xx_control)
 
-/* example control */
-static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {A2B24XX_CONTROL(1), };
+/* Example control */
+static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
 
 // static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 // {
@@ -306,194 +304,173 @@ static char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
 /****************************************************************************/
 /*!
  @brief          This function calculates reg value based on width and adds
- it to the data array
+                 it to the data array
 
  @param [in]     pDstBuf               Pointer to destination array
  @param [in]     nAddrwidth            Data unpacking boundary(1 byte / 2 byte /4 byte )
- @param [in]     nAddr            	  Number of words to be copied
+ @param [in]     nAddr                 Number of words to be copied
 
- @return          Return code
- - 0: Success
- - 1: Failure
+ @return         Return code
+                 - 0: Success
+                 - 1: Failure
  */
 /********************************************************************************/
 static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[], unsigned int nAddrwidth, unsigned int nAddr)
 {
-	/* Store the read values in the place holder */
-	switch (nAddrwidth)
-	{ /* Byte */
-		case 1u:
-			pDstBuf[0u] = (unsigned char)nAddr;
-			break;
-			/* 16 bit word*/
-		case 2u:
+    /* Store the read values in the placeholder */
+    switch (nAddrwidth) {
+        /* Byte */
+        case 1u:
+            pDstBuf[0u] = (unsigned char)nAddr;
+            break;
 
-			pDstBuf[0u] = (unsigned char)(nAddr >> 8u);
-			pDstBuf[1u] = (unsigned char)(nAddr & 0xFFu);
+        /* 16 bit word */
+        case 2u:
+            pDstBuf[0u] = (unsigned char)(nAddr >> 8u);
+            pDstBuf[1u] = (unsigned char)(nAddr & 0xFFu);
+            break;
 
-			break;
-			/* 24 bit word */
-		case 3u:
-			pDstBuf[0u] = (unsigned char)((nAddr & 0xFF0000u) >> 16u);
-			pDstBuf[1u] = (unsigned char)((nAddr & 0xFF00u) >> 8u);
-			pDstBuf[2u] = (unsigned char)(nAddr & 0xFFu);
-			break;
+        /* 24 bit word */
+        case 3u:
+            pDstBuf[0u] = (unsigned char)((nAddr & 0xFF0000u) >> 16u);
+            pDstBuf[1u] = (unsigned char)((nAddr & 0xFF00u) >> 8u);
+            pDstBuf[2u] = (unsigned char)(nAddr & 0xFFu);
+            break;
 
-			/* 32 bit word */
-		case 4u:
-			pDstBuf[0u] = (unsigned char)(nAddr >> 24u);
-			pDstBuf[1u] = (unsigned char)((nAddr & 0xFF0000u) >> 16u);
-			pDstBuf[2u] = (unsigned char)((nAddr & 0xFF00u) >> 8u);
-			pDstBuf[3u] = (unsigned char)(nAddr & 0xFFu);
-			break;
+        /* 32 bit word */
+        case 4u:
+            pDstBuf[0u] = (unsigned char)(nAddr >> 24u);
+            pDstBuf[1u] = (unsigned char)((nAddr & 0xFF0000u) >> 16u);
+            pDstBuf[2u] = (unsigned char)((nAddr & 0xFF00u) >> 8u);
+            pDstBuf[3u] = (unsigned char)(nAddr & 0xFFu);
+            break;
 
-		default:
-			break;
-
-	}
+        default:
+            break;
+    }
 }
 
-static int adi_a2b_I2CWrite(struct device *dev, unsigned short devAddr, unsigned short count, char *bytes)
+static int adi_a2b_I2CWrite(struct device* dev, unsigned short devAddr, unsigned short count, char* bytes)
 {
-	struct i2c_client *client = to_i2c_client(dev);
-	client->addr = devAddr;
-	return (i2c_master_send(client, bytes, count));
+    struct i2c_client* client = to_i2c_client(dev);
+    client->addr = devAddr;
+    return i2c_master_send(client, bytes, count);
 }
 
-static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer)
+static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer)
 {
+    int ret = -1;
+    struct i2c_client* client = to_i2c_client(dev);
+    client->addr = devAddr;
+    unsigned short i = 0;
 
-	int ret = -1;
-	struct i2c_client *client = to_i2c_client(dev);
-	client->addr = devAddr;
-	unsigned short i = 0;
+    struct i2c_msg msg[] = {
+        [0] = {
+            .addr = devAddr,
+            .flags = 0,
+            .len = writeLength,
+            .buf = writeBuffer,
+        },
+        [1] = {
+            .addr = devAddr,
+            .flags = I2C_M_RD,
+            .len = readLength,
+            .buf = readBuffer,
+        },
+    };
 
-	struct i2c_msg msg[] = {
-		[0] = {
-				.addr = devAddr,
-				.flags = 0,
-				.len = writeLength,
-				.buf = writeBuffer,
-				},
-		[1] = {
-				.addr = devAddr,
-				.flags = I2C_M_RD,
-				.len = readLength,
-				.buf = readBuffer,
-				},
-	};
+    ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
+    if (ret < 0) {
+        pr_err("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
+        return ret;
+    }
 
-	ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-	if (ret < 0) {
-		pr_err("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
-		return ret;
-	}
-	pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
-	for (i = 0; i < readLength; i++){
-		pr_info("0x%02X\n", readBuffer[i]);
-	}
+    pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+    for (i = 0; i < readLength; i++) {
+        pr_info("0x%02X\n", readBuffer[i]);
+    }
 
-	return 0;
+    return 0;
 }
 
 /****************************************************************************/
 /*!
  @brief          This function does A2B network discovery
- and the peripheral configuration
- @return          None
-
+                 and the peripheral configuration
+ @return         None
  */
 /********************************************************************************/
-static void adi_a2b_NetworkSetup(struct device *dev)
+static void adi_a2b_NetworkSetup(struct device* dev)
 {
-	ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
-	unsigned int nIndex, nIndex1;
-	//unsigned int status;
-	/* Maximum number of writes */
-	static unsigned char aDataBuffer[6000];
-	static unsigned char aDataWriteReadBuf[4u];
-	unsigned int nDelayVal;
+    ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
+    unsigned int nIndex, nIndex1;
+    static unsigned char aDataBuffer[6000];
+    static unsigned char aDataWriteReadBuf[4u];
+    unsigned int nDelayVal;
 
-	/* Loop over all the configuration */
-	for (nIndex = 0; nIndex < actionCount; nIndex++)
-	{
-		pOPUnit = &pA2BConfig[nIndex];
-		/* Operation code*/
-		switch (pOPUnit->eOpCode)
-		{
-			/* Write */
-			case A2B24XX_WRITE:
-				adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-				(void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
-				/* PAL Call, replace with custom implementation  */
-				adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
-				break;
+    /* Loop over all the configuration */
+    for (nIndex = 0; nIndex < actionCount; nIndex++) {
+        pOPUnit = &pA2BConfig[nIndex];
+        /* Operation code */
+        switch (pOPUnit->eOpCode) {
+            /* Write */
+            case A2B24XX_WRITE:
+                adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+                (void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+                adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
+                break;
 
-				/* Read */
-			case A2B24XX_READ:
-				(void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
-				adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-				adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
-				/* Couple of milli seconds should be OK */
-				mdelay(2);
-				break;
+            /* Read */
+            case A2B24XX_READ:
+                (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
+                adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+                adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
+                mdelay(2); // Couple of milliseconds should be OK
+                break;
 
-				/* Delay */
-			case A2B24XX_DELAY:
-				nDelayVal = 0u;
-				for (nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++)
-				{
-					nDelayVal = pOPUnit->paConfigData[nIndex1] | nDelayVal << 8u;
-				}
-				mdelay(nDelayVal);
-				break;
+            /* Delay */
+            case A2B24XX_DELAY:
+                nDelayVal = 0u;
+                for (nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++) {
+                    nDelayVal = pOPUnit->paConfigData[nIndex1] | nDelayVal << 8u;
+                }
+                mdelay(nDelayVal);
+                break;
 
-			default:
-				break;
-
-		}
-	}
-
+            default:
+                break;
+        }
+    }
 }
 #endif
 
 // Function to handle device open
 static int a2b_ctl_open(struct inode *inode, struct file *file)
 {
-    //a2b24xx device = container_of(inode->i_cdev, struct a2b24xx, cdev);
-    //filp->private_data = device;
+    //a2b24xx dev = container_of(inode->i_cdev, struct a2b24xx, cdev);
+    //filp->private_data = dev->dev;
     pr_info("a2b_ctl device opened\n");
-    return 0;
-}
-
-// Function to handle device release
-static int a2b_ctl_release(struct inode *inode, struct file *file)
-{
-    pr_info("a2b_ctl device closed\n");
     return 0;
 }
 
 // Function to handle write operations
 static ssize_t a2b_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
+    //struct device *dev = (struct device *)file->private_data;
+
     size_t len = count < BUFFER_SIZE - 1 ? count : BUFFER_SIZE - 1;
 
-    // Copy data from user space to kernel space
     if (copy_from_user(command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    // Null-terminate the string
-    command_buffer[len] = '\0';
-
+    command_buffer[len] = '\0'; // Null-terminate the string
     pr_info("Received command: %s\n", command_buffer);
 
-    // If the command is "reinit", perform the corresponding operation
     if (strncmp(command_buffer, "reinit", 6) == 0) {
-        pr_info("Reinit command received\n");
 	    /* Setting up A2B network */
-	    adi_a2b_NetworkSetup(i2c_dev);
+		adi_a2b_NetworkSetup(i2c_dev);
     } else {
         pr_info("Unknown command: %s\n", command_buffer);
     }
@@ -505,158 +482,154 @@ static ssize_t a2b_ctl_write(struct file *file, const char __user *buf, size_t c
 static const struct file_operations a2b_ctl_fops = {
     .owner = THIS_MODULE,
     .open = a2b_ctl_open,
-    .release = a2b_ctl_release,
     .write = a2b_ctl_write,
 };
 
 /* Template functions */
-static int a2b24xx_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
+static int a2b24xx_hw_params(struct snd_pcm_substream *substream,
+                              struct snd_pcm_hw_params *params,
+                              struct snd_soc_dai *dai)
 {
 	//struct snd_soc_component *codec = dai->component;
 	//struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
 	//unsigned int rate = params_rate(params);
-	int ret;
-	ret = 0u;
+    int ret = 0;
 
-	/* Add custom functionality */
+    // Add custom functionality
 
-	return ret;
+    return ret;
 }
 
-
-static int a2b24xx_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask, unsigned int rx_mask, int slots, int width)
+static int a2b24xx_set_tdm_slot(struct snd_soc_dai *dai,
+                                 unsigned int tx_mask, unsigned int rx_mask,
+                                 int slots, int width)
 {
-	/* Add custom functionality */
+    // Add custom functionality
 
-	return 0;
+    return 0;
 }
 
 static int a2b24xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 {
-	//struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
+    // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
 
-	/* Add custom functionality */
+    // Add custom functionality
 
-	return 0;
+    return 0;
 }
 
 static int a2b24xx_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
-	//struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
-	int ret = 0;
+    int ret = 0;
 
-	return ret;
+    // Add custom functionality
 
+    return ret;
 }
 
 static int a2b24xx_startup(struct snd_pcm_substream *substream, struct snd_soc_dai *dai)
 {
-	//struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
+    // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
 
-	/* Add custom functionality */
-	return 0;
+    // Add custom functionality
+
+    return 0;
 }
-static const struct snd_soc_dai_ops a2b24xx_dai_ops =
-		{
-		 .startup = a2b24xx_startup,
-		 .hw_params = a2b24xx_hw_params,
-		 .mute_stream = a2b24xx_mute,
-		 .set_fmt = a2b24xx_set_dai_fmt,
-		 .set_tdm_slot = a2b24xx_set_tdm_slot,
-		};
 
-static struct snd_soc_dai_driver a2b24xx_dai =
-	{
-		.name = "a2b24xx-hifi",
-		.capture =
-		{
-		.stream_name = "Capture",
-		.channels_min = 1,
-		.channels_max = 32,
-		.rates = SNDRV_PCM_RATE_KNOT,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
-		.sig_bits = 24, },
-		.playback =
-			{
-			 .stream_name = "Playback",
-			 .channels_min = 1,
-			 .channels_max = 32,
-			 .rates = SNDRV_PCM_RATE_KNOT,
-			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE, .sig_bits = 24,
-			},
-			.ops = &a2b24xx_dai_ops,
-	};
+static const struct snd_soc_dai_ops a2b24xx_dai_ops = {
+    .startup = a2b24xx_startup,
+    .hw_params = a2b24xx_hw_params,
+    .mute_stream = a2b24xx_mute,
+    .set_fmt = a2b24xx_set_dai_fmt,
+    .set_tdm_slot = a2b24xx_set_tdm_slot,
+};
+
+static struct snd_soc_dai_driver a2b24xx_dai = {
+    .name = "a2b24xx-hifi",
+    .capture = {
+        .stream_name = "Capture",
+        .channels_min = 1,
+        .channels_max = 32,
+        .rates = SNDRV_PCM_RATE_KNOT,
+        .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+        .sig_bits = 24,
+    },
+    .playback = {
+        .stream_name = "Playback",
+        .channels_min = 1,
+        .channels_max = 32,
+        .rates = SNDRV_PCM_RATE_KNOT,
+        .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+        .sig_bits = 24,
+    },
+    .ops = &a2b24xx_dai_ops,
+};
 
 /* Supported rates */
-static const unsigned int a2b24xx_rates[] =
- {1500, 2000,2400, 3000, 8000, 12000, 24000, 48000,  };
+static const unsigned int a2b24xx_rates[] = {
+    1500, 2000, 2400, 3000, 8000, 12000, 24000, 48000,
+};
 
-/* Check system clock */
-// static bool a2b24xx_check_sysclk(unsigned int mclk, unsigned int base_freq)
-// {
-// 	unsigned int mcs;
-
-// 	return true;
-// }
-/* set system clock */
-static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id, int source, unsigned int freq, int dir)
+/* Set system clock */
+static int a2b24xx_set_sysclk(struct snd_soc_component *codec,
+                              int clk_id, int source, unsigned int freq, int dir)
 {
-	// struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
-	// unsigned int mask = 0;
-	// unsigned int clk_src;
-	// unsigned int ret = 0;
+    // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
+    // unsigned int mask = 0;
+    // unsigned int clk_src;
+    // unsigned int ret = 0;
 
-	/* No functionality */
+    // No functionality
 
-	return 0;
+    return 0;
 }
+
 /* Codec probe */
 static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 {
-	//struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
-	int ret = 0;
+    int ret = 0;
 
 #ifdef A2B_SETUP_ALSA
-	/* Setting up A2B network */
-	//adi_a2b_NetworkSetup(codec->dev);
+    // Setting up A2B network
+    // adi_a2b_NetworkSetup(codec->dev);
 #endif
 
-	return ret;
+    return ret;
 }
 
-static struct snd_soc_component_driver a2b24xx_codec_driver =
-{
-  .probe = a2b24xx_codec_probe,
-  .set_sysclk = a2b24xx_set_sysclk,
-  .controls = a2b24xx_snd_controls,
-  .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
-
+static struct snd_soc_component_driver a2b24xx_codec_driver = {
+    .probe = a2b24xx_codec_probe,
+    .set_sysclk = a2b24xx_set_sysclk,
+    .controls = a2b24xx_snd_controls,
+    .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
 };
-/* driver probe */
-int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type type, void (*switch_mode)(struct device *dev))
+  
+/* Driver probe */
+int a2b24xx_probe(struct device *dev, struct regmap *regmap,
+                  enum a2b24xx_type type, void (*switch_mode)(struct device *dev))
 {
-	struct a2b24xx *a2b24xx;
-	int ret;
+    struct a2b24xx *a2b24xx;
+    int ret;
     size_t size;
-    char * content;
+    char *content;
 
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+    if (IS_ERR(regmap))
+        return PTR_ERR(regmap);
 
-	a2b24xx = devm_kzalloc(dev, sizeof(*a2b24xx), GFP_KERNEL);
-	if (a2b24xx == NULL)
-		return -ENOMEM;
+    a2b24xx = devm_kzalloc(dev, sizeof(*a2b24xx), GFP_KERNEL);
+    if (a2b24xx == NULL)
+        return -ENOMEM;
 
-	a2b24xx->dev = dev;
-	a2b24xx->type = type;
-	a2b24xx->regmap = regmap;
-	a2b24xx->switch_mode = switch_mode;
-	a2b24xx->max_master_fs = 48000;
+    a2b24xx->dev = dev;
+    a2b24xx->type = type;
+    a2b24xx->regmap = regmap;
+    a2b24xx->switch_mode = switch_mode;
+    a2b24xx->max_master_fs = 48000;
 
-	a2b24xx->constraints.list = a2b24xx_rates;
-	a2b24xx->constraints.count = ARRAY_SIZE(a2b24xx_rates);
+    a2b24xx->constraints.list = a2b24xx_rates;
+    a2b24xx->constraints.count = ARRAY_SIZE(a2b24xx_rates);
 
-	dev_set_drvdata(dev, a2b24xx);
+    dev_set_drvdata(dev, a2b24xx);
     i2c_dev = dev;
 
     // Allocate a device number dynamically
@@ -701,6 +674,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type t
     content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
     if (content) {
         //pr_info("File content (%zu bytes):\n%s\n", size, content);
+		// Parse XML configuration
         parseXML(content, parseA2BConfig, &actionCount);
         pA2BConfig = parseA2BConfig;
         kfree(content);
@@ -736,11 +710,11 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type t
 #endif
 
 #ifdef A2B_SETUP_ALSA
-	/* Setting up A2B network */
-	adi_a2b_NetworkSetup(dev);
+    /* Setting up A2B network */
+    adi_a2b_NetworkSetup(dev);
 #endif
-	return snd_soc_register_component(dev, &a2b24xx_codec_driver, &a2b24xx_dai, 1);
 
+    return snd_soc_register_component(dev, &a2b24xx_codec_driver, &a2b24xx_dai, 1);
 }
 EXPORT_SYMBOL_GPL(a2b24xx_probe);
 
@@ -750,27 +724,27 @@ int a2b24xx_remove(struct device *dev)
     device_destroy(dev_class, dev_num);  // Destroy the device node
     class_destroy(dev_class);  // Destroy the device class
     unregister_chrdev_region(dev_num, 1);  // Free the device number
+
     pr_info("a2b_ctl driver exited\n");
+
     return 0;
 }
 EXPORT_SYMBOL_GPL(a2b24xx_remove);
 
 static bool a2b24xx_register_volatile(struct device *dev, unsigned int reg)
 {
-	return true;
+    return true;
 }
 
-const struct regmap_config a2b24xx_regmap_config =
-{
- .max_register = 255,
- .volatile_reg = a2b24xx_register_volatile,
- .cache_type = REGCACHE_NONE,
- .reg_defaults = a2b24xx_reg_defaults,
- .num_reg_defaults = ARRAY_SIZE(a2b24xx_reg_defaults),
+const struct regmap_config a2b24xx_regmap_config = {
+    .max_register = 255,
+    .volatile_reg = a2b24xx_register_volatile,
+    .cache_type = REGCACHE_NONE,
+    .reg_defaults = a2b24xx_reg_defaults,
+    .num_reg_defaults = ARRAY_SIZE(a2b24xx_reg_defaults),
 };
 EXPORT_SYMBOL_GPL(a2b24xx_regmap_config);
 
 MODULE_DESCRIPTION("ASoC A2B24XX driver");
 MODULE_AUTHOR("ADI Automotive Software Team, Bangalore");
 MODULE_LICENSE("GPL");
-
