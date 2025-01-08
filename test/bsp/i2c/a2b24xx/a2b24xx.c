@@ -34,6 +34,9 @@
 #endif
 #include "a2b24xx.h"
 
+// Buffer size for receiving commands
+#define BUFFER_SIZE 128
+
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;
@@ -47,6 +50,13 @@ struct a2b24xx {
 
     unsigned int max_master_fs;
     bool master;
+
+    dev_t dev_num;              // Device number
+    struct cdev cdev;           // cdev structure
+    struct class *dev_class;    // Device class
+    struct device *dev_device;  // Device structure
+
+    char command_buffer[BUFFER_SIZE];
 };
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
@@ -71,19 +81,6 @@ static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(
 //
 //   return ret;
 //}
-
-#define DEVICE_NAME "a2b_ctl"   // Device name
-#define CLASS_NAME "a2b24xx"    // Device class name
-
-static dev_t dev_num;              // Device number
-static struct cdev my_cdev;        // cdev structure
-static struct class *dev_class;    // Device class
-static struct device *dev_device;  // Device structure
-static struct device *a2b24xx_dev;
-
-// Buffer size for receiving commands
-#define BUFFER_SIZE 128
-static char commandBuffer[BUFFER_SIZE];
 
 #define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
@@ -449,8 +446,9 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 // Function to handle device open
 static int a2b24xx_ctl_open(struct inode *inode, struct file *file)
 {
-    //a2b24xx dev = container_of(inode->i_cdev, struct a2b24xx, cdev);
-    //filp->private_data = dev->dev;
+    struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
+    filp->private_data = a2b24xx;
+
     pr_info("a2b_ctl device opened\n");
     return 0;
 }
@@ -458,20 +456,20 @@ static int a2b24xx_ctl_open(struct inode *inode, struct file *file)
 // Function to handle write operations
 static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
-    //struct device *dev = (struct device *)file->private_data;
+    struct a2b24xx *a2b24xx = file->private_data;
     size_t len = count < BUFFER_SIZE - 1 ? count : BUFFER_SIZE - 1;
 
-    if (copy_from_user(commandBuffer, buf, len)) {
+    if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    commandBuffer[len] = '\0'; // Null-terminate the string
-    pr_info("Received data: %s\n", commandBuffer);
+    a2b24xx->command_buffer[len] = '\0'; // Null-terminate the string
+    pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
-    if (strncmp(commandBuffer, "reinit", 6) == 0) {
-	    /* Setting up A2B network */
-		adi_a2b_NetworkSetup(a2b24xx_dev);
+    if (strncmp(a2b24xx->command_buffer, "reinit", 6) == 0) {
+        /* Setting up A2B network */
+        adi_a2b_NetworkSetup(a2b24xx->dev);
     }
 
     return len;
@@ -632,43 +630,37 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     a2b24xx_dev = dev;
 
     // Allocate a device number dynamically
-    ret = alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
+    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, "a2b_ctl");
     if (ret < 0) {
         pr_err("Failed to allocate device number\n");
         return ret;
     }
 
     // Initialize the cdev structure
-    cdev_init(&my_cdev, &a2b24xx_ctl_fops);
-    ret = cdev_add(&my_cdev, dev_num, 1);
+    cdev_init(&a2b24xx->cdev, &a2b24xx_ctl_fops);
+    ret = cdev_add(&a2b24xx->cdev, a2b24xx->dev_num, 1);
     if (ret < 0) {
-        device_destroy(dev_class, dev_num);
-        class_destroy(dev_class);
-        unregister_chrdev_region(dev_num, 1);
+        unregister_chrdev_region(a2b24xx->dev_num, 1);
         pr_err("Failed to add cdev\n");
         return ret;
     }
 
     // Create the device class
-    dev_class = class_create(THIS_MODULE, CLASS_NAME);
-    if (IS_ERR(dev_class)) {
-        unregister_chrdev_region(dev_num, 1);
+    a2b24xx->dev_class = class_create(THIS_MODULE, CLASS_NAME);
+    if (IS_ERR(a2b24xx->dev_class)) {
+        cdev_del(&a2b24xx->cdev);
+        unregister_chrdev_region(a2b24xx->dev_num, 1);
         pr_err("Failed to create device class\n");
-        return PTR_ERR(dev_class);
+        return PTR_ERR(a2b24xx->dev_class);
     }
 
     // Create the device node
-    dev_device = device_create(dev_class, NULL, dev_num, NULL, DEVICE_NAME);
-    if (IS_ERR(dev_device)) {
-        class_destroy(dev_class);
-        unregister_chrdev_region(dev_num, 1);
-        pr_err("Failed to create device\n");
-        return PTR_ERR(dev_device);
-    }
+    a2b24xx->dev_device =
+        device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, "a2b24xx");
 
     // Set write permission only (write for owner, group, and others)
     chmod("/dev/a2b_ctl", S_IWUSR | S_IWGRP | S_IWOTH);
-    pr_info("Character device registered with major number %d\n", MAJOR(dev_number));
+    pr_info("Character device registered with major number %d\n", MAJOR(a2b24xx->dev_num));
 
     // TODO
     content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
@@ -722,10 +714,12 @@ EXPORT_SYMBOL_GPL(a2b24xx_probe);
 
 int a2b24xx_remove(struct device *dev)
 {
-    cdev_del(&my_cdev);  // Delete the cdev
-    device_destroy(dev_class, dev_num);  // Destroy the device node
-    class_destroy(dev_class);  // Destroy the device class
-    unregister_chrdev_region(dev_num, 1);  // Free the device number
+    struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
+
+    device_destroy(a2b24xx->dev_class, priv_data->dev_num);  // Destroy the device node
+    class_destroy(a2b24xx->dev_class);  // Destroy the device class
+    cdev_del(&a2b24xx->cdev);  // Delete the cdev
+    unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 
     pr_info("a2b24xx driver exited\n");
 
