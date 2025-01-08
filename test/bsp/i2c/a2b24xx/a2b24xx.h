@@ -23,6 +23,8 @@ enum a2b24xx_type {
 int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 	enum a2b24xx_type type, void (*switch_mode)(struct device *dev));
 
+int a2b24xx_remove(struct device *dev);
+
 extern const struct regmap_config a2b24xx_regmap_config;
 
 enum a2b24xx_clk_id {

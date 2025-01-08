@@ -14,6 +14,7 @@
 #include <sound/soc.h>
 #include "a2b24xx.h"
 
+
 static int a2b24xx_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id)
 {
@@ -29,6 +30,7 @@ static int a2b24xx_i2c_probe(struct i2c_client *client,
 
 static void a2b24xx_i2c_remove(struct i2c_client *client)
 {
+	a2b24xx_remove(&client->dev);
 	snd_soc_unregister_component(&client->dev);
 	//return 0;
 }

@@ -18,6 +18,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
 #include <linux/of_gpio.h>
+#include <linux/string.h>
 
 #include <sound/core.h>
 #include <sound/initval.h>
@@ -72,7 +73,236 @@ static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {A2B24XX_CONTROL(1
 // 	return ret;
 // }
 
+#define DEVICE_NAME "a2b_ctl"   // Device name
+#define CLASS_NAME "a2b"        // Device class name
+
+static dev_t dev_num;              // Device number
+static struct cdev my_cdev;        // cdev structure
+static struct class *dev_class;    // Device class
+static struct device *dev_device;  // Device structure
+static struct device *i2c_dev;
+
+// Buffer size for receiving commands
+#define BUFFER_SIZE 128
+static char command_buffer[BUFFER_SIZE];
+
+#define MAX_ACTIONS 256
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
+
+ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
+static size_t actionCount = 0;
+
+static uint8_t configBuffer[MAX_CONFIG_DATA];
+size_t bufferOffset = 0;
+
+static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
+    char instr[20], protocol[10], *dataStr, *token;
+    size_t index;
+
+    const char *pos;
+    char *endptr;
+    int parseCount = 0;  // Initialize the counter for parsed fields
+    char buffer[64];  // Temporary buffer to hold the extracted number string
+
+    config->nDeviceAddr = deviceAddr;
+    config->nDataCount = 0;
+
+    // Parse "instr" field
+    pos = strstr(action, "instr=\"");
+    if (pos) {
+        pos += strlen("instr=\"");  // Skip "instr=\""
+        endptr = strchr(pos, '\"');
+        if (endptr) {
+            size_t instrLen = endptr - pos;
+            strncpy(instr, pos, instrLen);
+            instr[instrLen] = '\0';  // Null-terminate the string
+            parseCount++;  // Increment count for parsed field
+        }
+    }
+
+    // Parse "addrWidth" field
+    pos = strstr(action, "addr_width=\"");
+    if (pos) {
+        pos += strlen("addr_width=\"");
+        endptr = strchr(pos, '\"');
+        if (endptr) {
+            // Copy the numeric part to the buffer and null-terminate
+            size_t len = endptr - pos;
+            strncpy(buffer, pos, len);
+            buffer[len] = '\0';
+
+            // Now, use kstrtouint to convert the number
+            if (kstrtou8(buffer, 10, &config->nAddrWidth) == 0) {
+                parseCount++;  // Increment count for parsed field
+            }
+        }
+    }
+
+    // Parse "len" field
+    pos = strstr(action, "len=\"");
+    if (pos) {
+        pos += strlen("len=\"");
+        endptr = strchr(pos, '\"');
+        if (endptr) {
+            // Copy the numeric part to the buffer and null-terminate
+            size_t len = endptr - pos;
+            strncpy(buffer, pos, len);
+            buffer[len] = '\0';
+
+            // Now, use kstrtouint to convert the number
+            if (kstrtou16(buffer, 10, &config->nDataCount) == 0) {
+                parseCount++;  // Increment count for parsed field
+            }
+        }
+    }
+
+    // Parse "addr" field
+    pos = strstr(action, "addr=\"");
+    if (pos) {
+        pos += strlen("addr=\"");
+        endptr = strchr(pos, '\"');
+        if (endptr) {
+            // Copy the numeric part to the buffer and null-terminate
+            size_t len = endptr - pos;
+            strncpy(buffer, pos, len);
+            buffer[len] = '\0';
+
+            // Now, use kstrtouint to convert the number
+            if (kstrtouint(buffer, 10, &config->nAddr) == 0) {
+                parseCount++;  // Increment count for parsed field
+            }
+        }
+    }
+
+    // Parse "i2cAddr" field
+    pos = strstr(action, "i2caddr=\"");
+    if (pos) {
+        pos += strlen("i2caddr=\"");
+        endptr = strchr(pos, '\"');
+        if (endptr) {
+            // Copy the numeric part to the buffer and null-terminate
+            size_t len = endptr - pos;
+            strncpy(buffer, pos, len);
+            buffer[len] = '\0';
+
+            // Now, use kstrtouint to convert the number
+            if (kstrtou8(buffer, 10, &config->nDeviceAddr) == 0) {
+                parseCount++;  // Increment count for parsed field
+            }
+        }
+    }
+
+    // Output total parsed field count
+    //pr_info("Total parsed fields: %d\n", parseCount);
+
+    if (parseCount  >= 5) {
+        if (strcmp(instr, "writeXbytes") == 0) {
+            config->eOpCode = A2B24XX_WRITE;
+        } else if (strcmp(instr, "read") == 0) {
+            config->eOpCode = A2B24XX_READ;
+        } else {
+            config->eOpCode = A2B24XX_INVALID;
+        }
+        config->eProtocol = (strcmp(protocol, "SPI") == 0) ? SPI : I2C;
+        config->nDataCount -= config->nAddrWidth;
+    } else if (strstr(action, "instr=\"delay\"") != NULL) {
+        config->eOpCode = A2B24XX_DELAY;
+        config->nDataCount = 1;
+    } else {
+        config->eOpCode = A2B24XX_INVALID;
+        return;
+    }
+
+    if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
+        if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
+            pr_warn("Warning: Exceeding maximum configuration data limit!\n");
+            return;
+        }
+        // Parse multiple numbers
+        dataStr = strchr(action, '>') + 1; /* Find position after '>' */
+        token = strsep(&dataStr, " ");
+        index = 0;
+        config->paConfigData = configBuffer + bufferOffset;
+        while (token != NULL && config->nDataCount) {
+            config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
+            token = strsep(&dataStr, " ");
+        }
+        bufferOffset += index;
+        config->nDataCount = index;
+    }
+}
+
+static void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* actionCount) {
+    const char* actionStart = strstr(xml, "<action");
+    static char action[6000];
+    *actionCount = 0;
+
+    while (actionStart && *actionCount < MAX_ACTIONS) {
+        const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
+        size_t actionLength = actionEnd - actionStart + 1;
+
+        strncpy(action, actionStart, actionLength);
+        action[actionLength] = '\0'; // Null-terminate
+
+        parseAction(action, &configs[*actionCount], 104);
+        (*actionCount)++;
+        actionStart = strstr(actionEnd, "<action");
+    }
+}
+
 #ifdef A2B_SETUP_ALSA
+static char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
+    struct file* file;
+    char* buffer = NULL;
+    loff_t pos = 0;
+    size_t fileSize = 0;
+    ssize_t readSize;
+
+    // Open the file (O_RDONLY indicates read-only)
+    file = filp_open(filename, O_RDONLY, 0);
+    if (IS_ERR(file)) {
+        pr_err("Failed to open file: %ld\n", PTR_ERR(file));
+        return NULL;
+    }
+
+    // Get the file size
+    fileSize = i_size_read(file->f_path.dentry->d_inode);
+    if (fileSize == 0) {
+        filp_close(file, NULL);
+        return NULL;
+    }
+
+    // Allocate buffer to hold the file content
+    buffer = kmalloc(fileSize + 1, GFP_KERNEL); // +1 for null terminator
+    if (!buffer) {
+        filp_close(file, NULL);
+        pr_err("Failed to allocate memory\n");
+        return NULL;
+    }
+
+    // Read the content of the file into the buffer
+    readSize = kernel_read(file, buffer, fileSize, &pos);
+    if (readSize < 0) {
+        kfree(buffer);
+        filp_close(file, NULL);
+        pr_err("Failed to read file\n");
+        return NULL;
+    }
+
+    // Null terminate the buffer
+    buffer[readSize] = '\0';
+
+    // Close the file
+    filp_close(file, NULL);
+
+    // Return the file size
+    if (outSize) {
+        *outSize = readSize;
+    }
+
+    return buffer;
+}
+
 /****************************************************************************/
 /*!
  @brief          This function calculates reg value based on width and adds
@@ -155,12 +385,12 @@ static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr, uint16_t writeL
 
 	ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
 	if (ret < 0) {
-		pr_err("%s:i2c_transfer failed\n", __func__);
+		pr_err("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
 		return ret;
 	}
-    pr_err("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
-	for (i = 0; i < count; i++){
-		pr_err("0x%02X\n", readBuffer[i]);
+	pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+	for (i = 0; i < readLength; i++){
+		pr_info("0x%02X\n", readBuffer[i]);
 	}
 
 	return 0;
@@ -185,9 +415,9 @@ static void adi_a2b_NetworkSetup(struct device *dev)
 	unsigned int nDelayVal;
 
 	/* Loop over all the configuration */
-	for (nIndex = 0; nIndex < CONFIG_LEN; nIndex++)
+	for (nIndex = 0; nIndex < actionCount; nIndex++)
 	{
-		pOPUnit = &gaA2BConfig[nIndex];
+		pOPUnit = &pA2BConfig[nIndex];
 		/* Operation code*/
 		switch (pOPUnit->eOpCode)
 		{
@@ -203,7 +433,7 @@ static void adi_a2b_NetworkSetup(struct device *dev)
 			case A2B24XX_READ:
 				(void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
 				adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
+				adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
 				/* Couple of milli seconds should be OK */
 				mdelay(2);
 				break;
@@ -223,8 +453,61 @@ static void adi_a2b_NetworkSetup(struct device *dev)
 
 		}
 	}
+
 }
 #endif
+
+// Function to handle device open
+static int a2b_ctl_open(struct inode *inode, struct file *file)
+{
+    //a2b24xx device = container_of(inode->i_cdev, struct a2b24xx, cdev);
+    //filp->private_data = device;
+    pr_info("a2b_ctl device opened\n");
+    return 0;
+}
+
+// Function to handle device release
+static int a2b_ctl_release(struct inode *inode, struct file *file)
+{
+    pr_info("a2b_ctl device closed\n");
+    return 0;
+}
+
+// Function to handle write operations
+static ssize_t a2b_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+    size_t len = count < BUFFER_SIZE - 1 ? count : BUFFER_SIZE - 1;
+
+    // Copy data from user space to kernel space
+    if (copy_from_user(command_buffer, buf, len)) {
+        pr_err("Failed to receive command from user\n");
+        return -EFAULT;
+    }
+
+    // Null-terminate the string
+    command_buffer[len] = '\0';
+
+    pr_info("Received command: %s\n", command_buffer);
+
+    // If the command is "reinit", perform the corresponding operation
+    if (strncmp(command_buffer, "reinit", 6) == 0) {
+        pr_info("Reinit command received\n");
+	    /* Setting up A2B network */
+	    adi_a2b_NetworkSetup(i2c_dev);
+    } else {
+        pr_info("Unknown command: %s\n", command_buffer);
+    }
+
+    return len;
+}
+
+// File operations structure
+static const struct file_operations a2b_ctl_fops = {
+    .owner = THIS_MODULE,
+    .open = a2b_ctl_open,
+    .release = a2b_ctl_release,
+    .write = a2b_ctl_write,
+};
 
 /* Template functions */
 static int a2b24xx_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
@@ -263,6 +546,7 @@ static int a2b24xx_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	int ret = 0;
 
 	return ret;
+
 }
 
 static int a2b24xx_startup(struct snd_pcm_substream *substream, struct snd_soc_dai *dai)
@@ -272,41 +556,40 @@ static int a2b24xx_startup(struct snd_pcm_substream *substream, struct snd_soc_d
 	/* Add custom functionality */
 	return 0;
 }
-
-static const struct snd_soc_dai_ops a2b24xx_dai_ops = {
-	.startup = a2b24xx_startup,
-	.hw_params = a2b24xx_hw_params,
-	.mute_stream = a2b24xx_mute,
-	.set_fmt = a2b24xx_set_dai_fmt,
-	.set_tdm_slot = a2b24xx_set_tdm_slot,
-};
+static const struct snd_soc_dai_ops a2b24xx_dai_ops =
+		{
+		 .startup = a2b24xx_startup,
+		 .hw_params = a2b24xx_hw_params,
+		 .mute_stream = a2b24xx_mute,
+		 .set_fmt = a2b24xx_set_dai_fmt,
+		 .set_tdm_slot = a2b24xx_set_tdm_slot,
+		};
 
 static struct snd_soc_dai_driver a2b24xx_dai =
 	{
 		.name = "a2b24xx-hifi",
 		.capture =
-			{
-			 .stream_name = "Capture",
-			 .channels_min = 1,
-			 .channels_max = 32,
-			 .rates = SNDRV_PCM_RATE_KNOT,
-			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
-			 .sig_bits = 24,
-			},
+		{
+		.stream_name = "Capture",
+		.channels_min = 1,
+		.channels_max = 32,
+		.rates = SNDRV_PCM_RATE_KNOT,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+		.sig_bits = 24, },
 		.playback =
 			{
 			 .stream_name = "Playback",
 			 .channels_min = 1,
 			 .channels_max = 32,
 			 .rates = SNDRV_PCM_RATE_KNOT,
-			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
-			 .sig_bits = 24,
+			 .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE, .sig_bits = 24,
 			},
-		.ops = &a2b24xx_dai_ops,
+			.ops = &a2b24xx_dai_ops,
 	};
 
 /* Supported rates */
-static const unsigned int a2b24xx_rates[] = { 1500, 2000,2400, 3000, 8000, 12000, 24000, 48000, };
+static const unsigned int a2b24xx_rates[] =
+ {1500, 2000,2400, 3000, 8000, 12000, 24000, 48000,  };
 
 /* Check system clock */
 // static bool a2b24xx_check_sysclk(unsigned int mclk, unsigned int base_freq)
@@ -315,7 +598,6 @@ static const unsigned int a2b24xx_rates[] = { 1500, 2000,2400, 3000, 8000, 12000
 
 // 	return true;
 // }
-
 /* set system clock */
 static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id, int source, unsigned int freq, int dir)
 {
@@ -328,7 +610,6 @@ static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id, int s
 
 	return 0;
 }
-
 /* Codec probe */
 static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 {
@@ -345,17 +626,19 @@ static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 
 static struct snd_soc_component_driver a2b24xx_codec_driver =
 {
-    .probe = a2b24xx_codec_probe,
-    .set_sysclk = a2b24xx_set_sysclk,
-    .controls = a2b24xx_snd_controls,
-    .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
-};
+  .probe = a2b24xx_codec_probe,
+  .set_sysclk = a2b24xx_set_sysclk,
+  .controls = a2b24xx_snd_controls,
+  .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
 
+};
 /* driver probe */
 int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type type, void (*switch_mode)(struct device *dev))
 {
 	struct a2b24xx *a2b24xx;
-	//int ret;
+	int ret;
+    size_t size;
+    char * content;
 
 	if (IS_ERR(regmap))
 		return PTR_ERR(regmap);
@@ -374,6 +657,84 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type t
 	a2b24xx->constraints.count = ARRAY_SIZE(a2b24xx_rates);
 
 	dev_set_drvdata(dev, a2b24xx);
+    i2c_dev = dev;
+
+    // Allocate a device number dynamically
+    ret = alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
+    if (ret < 0) {
+        pr_err("Failed to allocate device number\n");
+        return ret;
+    }
+
+    pr_info("Major number: %d, Minor number: %d\n", MAJOR(dev_num), MINOR(dev_num));
+
+    // Create the device class
+    dev_class = class_create(THIS_MODULE, CLASS_NAME);
+    if (IS_ERR(dev_class)) {
+        unregister_chrdev_region(dev_num, 1);
+        pr_err("Failed to create device class\n");
+        return PTR_ERR(dev_class);
+    }
+
+    // Create the device node
+    dev_device = device_create(dev_class, NULL, dev_num, NULL, DEVICE_NAME);
+    if (IS_ERR(dev_device)) {
+        class_destroy(dev_class);
+        unregister_chrdev_region(dev_num, 1);
+        pr_err("Failed to create device\n");
+        return PTR_ERR(dev_device);
+    }
+
+    // Initialize the cdev structure
+    cdev_init(&my_cdev, &a2b_ctl_fops);
+    ret = cdev_add(&my_cdev, dev_num, 1);
+    if (ret < 0) {
+        device_destroy(dev_class, dev_num);
+        class_destroy(dev_class);
+        unregister_chrdev_region(dev_num, 1);
+        pr_err("Failed to add cdev\n");
+        return ret;
+    }
+
+    pr_info("a2b_ctl driver initialized successfully\n");
+
+    content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
+    if (content) {
+        //pr_info("File content (%zu bytes):\n%s\n", size, content);
+        parseXML(content, parseA2BConfig, &actionCount);
+        pA2BConfig = parseA2BConfig;
+        kfree(content);
+    } else {
+        pA2BConfig = gaA2BConfig;
+        actionCount = CONFIG_LEN;
+    }
+    pr_info("Action count=%zu, bufferOffset=%zu\n", actionCount, bufferOffset);
+
+#if 0
+    // Print the results
+    for (int i = 0; i < actionCount; i++) {
+        switch (pA2BConfig[i].eOpCode) {
+            case A2B24XX_WRITE:
+                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
+                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
+                break;
+            case A2B24XX_READ:
+                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s\n",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
+                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
+                continue;
+            case A2B24XX_DELAY:
+                pr_info("Action %03d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
+                break;
+        }
+
+        for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
+            pr_info("0x%02X ", pA2BConfig[i].paConfigData[j]);
+        }
+    }
+#endif
+
 #ifdef A2B_SETUP_ALSA
 	/* Setting up A2B network */
 	adi_a2b_NetworkSetup(dev);
@@ -383,6 +744,17 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap, enum a2b24xx_type t
 }
 EXPORT_SYMBOL_GPL(a2b24xx_probe);
 
+int a2b24xx_remove(struct device *dev)
+{
+    cdev_del(&my_cdev);  // Delete the cdev
+    device_destroy(dev_class, dev_num);  // Destroy the device node
+    class_destroy(dev_class);  // Destroy the device class
+    unregister_chrdev_region(dev_num, 1);  // Free the device number
+    pr_info("a2b_ctl driver exited\n");
+    return 0;
+}
+EXPORT_SYMBOL_GPL(a2b24xx_remove);
+
 static bool a2b24xx_register_volatile(struct device *dev, unsigned int reg)
 {
 	return true;
@@ -390,14 +762,15 @@ static bool a2b24xx_register_volatile(struct device *dev, unsigned int reg)
 
 const struct regmap_config a2b24xx_regmap_config =
 {
-    .max_register = 255,
-    .volatile_reg = a2b24xx_register_volatile,
-    .cache_type = REGCACHE_NONE,
-    .reg_defaults = a2b24xx_reg_defaults,
-    .num_reg_defaults = ARRAY_SIZE(a2b24xx_reg_defaults),
+ .max_register = 255,
+ .volatile_reg = a2b24xx_register_volatile,
+ .cache_type = REGCACHE_NONE,
+ .reg_defaults = a2b24xx_reg_defaults,
+ .num_reg_defaults = ARRAY_SIZE(a2b24xx_reg_defaults),
 };
 EXPORT_SYMBOL_GPL(a2b24xx_regmap_config);
 
 MODULE_DESCRIPTION("ASoC A2B24XX driver");
 MODULE_AUTHOR("ADI Automotive Software Team, Bangalore");
 MODULE_LICENSE("GPL");
+
