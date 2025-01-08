@@ -232,7 +232,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
 
 static void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* actionCount) {
     const char* actionStart = strstr(xml, "<action");
-    static char action[6000];
+    char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the action buffer
     *actionCount = 0;
 
     while (actionStart && *actionCount < MAX_ACTIONS) {
@@ -246,6 +246,7 @@ static void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t*
         (*actionCount)++;
         actionStart = strstr(actionEnd, "<action");
     }
+    kfree(action);
 }
 
 #ifdef A2B_SETUP_ALSA
@@ -404,8 +405,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 {
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned int nIndex, nIndex1;
-    static unsigned char aDataBuffer[6000];
-    static unsigned char aDataWriteReadBuf[4u];
+    unsigned char aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
 
     /* Loop over all the configuration */
@@ -441,6 +442,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 break;
         }
     }
+    kfree(aDataBuffer);
 }
 #endif
 
@@ -668,6 +670,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     chmod("/dev/a2b_ctl", S_IWUSR | S_IWGRP | S_IWOTH);
     pr_info("Character device registered with major number %d\n", MAJOR(dev_number));
 
+    // TODO
     content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
     if (content) {
         pr_info("File content (%zu bytes)\n", size);
