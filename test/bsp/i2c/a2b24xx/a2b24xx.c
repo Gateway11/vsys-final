@@ -79,7 +79,7 @@ static dev_t dev_num;              // Device number
 static struct cdev my_cdev;        // cdev structure
 static struct class *dev_class;    // Device class
 static struct device *dev_device;  // Device structure
-static struct device *i2c_dev;
+static struct device *a2b24xx_dev;
 
 // Buffer size for receiving commands
 #define BUFFER_SIZE 128
@@ -100,7 +100,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
     const char *pos;
     char *endptr;
     int parseCount = 0;  // Initialize the counter for parsed fields
-    char buffer[64];  // Temporary buffer to hold the extracted number string
+    char buffer[10];  // Temporary buffer to hold the extracted number string
 
     config->nDeviceAddr = deviceAddr;
     config->nDataCount = 0;
@@ -445,7 +445,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 #endif
 
 // Function to handle device open
-static int a2b_ctl_open(struct inode *inode, struct file *file)
+static int a2b24xx_ctl_open(struct inode *inode, struct file *file)
 {
     //a2b24xx dev = container_of(inode->i_cdev, struct a2b24xx, cdev);
     //filp->private_data = dev->dev;
@@ -454,7 +454,7 @@ static int a2b_ctl_open(struct inode *inode, struct file *file)
 }
 
 // Function to handle write operations
-static ssize_t a2b_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
     //struct device *dev = (struct device *)file->private_data;
     size_t len = count < BUFFER_SIZE - 1 ? count : BUFFER_SIZE - 1;
@@ -469,17 +469,17 @@ static ssize_t a2b_ctl_write(struct file *file, const char __user *buf, size_t c
 
     if (strncmp(commandBuffer, "reinit", 6) == 0) {
 	    /* Setting up A2B network */
-		adi_a2b_NetworkSetup(i2c_dev);
+		adi_a2b_NetworkSetup(a2b24xx_dev);
     }
 
     return len;
 }
 
 // File operations structure
-static const struct file_operations a2b_ctl_fops = {
+static const struct file_operations a2b24xx_ctl_fops = {
     .owner = THIS_MODULE,
-    .open = a2b_ctl_open,
-    .write = a2b_ctl_write,
+    .open = a2b24xx_ctl_open,
+    .write = a2b24xx_ctl_write,
 };
 
 /* Template functions */
@@ -627,7 +627,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     a2b24xx->constraints.count = ARRAY_SIZE(a2b24xx_rates);
 
     dev_set_drvdata(dev, a2b24xx);
-    i2c_dev = dev;
+    a2b24xx_dev = dev;
 
     // Allocate a device number dynamically
     ret = alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
@@ -654,7 +654,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 
     // Initialize the cdev structure
-    cdev_init(&my_cdev, &a2b_ctl_fops);
+    cdev_init(&my_cdev, &a2b24xx_ctl_fops);
     ret = cdev_add(&my_cdev, dev_num, 1);
     if (ret < 0) {
         device_destroy(dev_class, dev_num);
