@@ -62,17 +62,18 @@ static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 /* Example control */
 static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
 
-// static int a2b24xx_reset(struct a2b24xx *a2b24xx)
-// {
-// 	int ret = 0;
-
-// 	regcache_cache_bypass(a2b24xx->regmap, true);
-//     /* A2B reset */
-// 	return ret;
-// }
+//static int a2b24xx_reset(struct a2b24xx *a2b24xx)
+//{
+//   int ret = 0;
+//
+//   regcache_cache_bypass(a2b24xx->regmap, true);
+//   /* A2B reset */
+//
+//   return ret;
+//}
 
 #define DEVICE_NAME "a2b_ctl"   // Device name
-#define CLASS_NAME "a2b"        // Device class name
+#define CLASS_NAME "a2b24xx"    // Device class name
 
 static dev_t dev_num;              // Device number
 static struct cdev my_cdev;        // cdev structure
@@ -82,7 +83,7 @@ static struct device *i2c_dev;
 
 // Buffer size for receiving commands
 #define BUFFER_SIZE 128
-static char command_buffer[BUFFER_SIZE];
+static char commandBuffer[BUFFER_SIZE];
 
 #define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
@@ -128,7 +129,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
             strncpy(buffer, pos, len);
             buffer[len] = '\0';
 
-            // Now, use kstrtouint to convert the number
+            // Now, use kstrtou8 to convert the number
             if (kstrtou8(buffer, 10, &config->nAddrWidth) == 0) {
                 parseCount++;  // Increment count for parsed field
             }
@@ -146,7 +147,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
             strncpy(buffer, pos, len);
             buffer[len] = '\0';
 
-            // Now, use kstrtouint to convert the number
+            // Now, use kstrtou16 to convert the number
             if (kstrtou16(buffer, 10, &config->nDataCount) == 0) {
                 parseCount++;  // Increment count for parsed field
             }
@@ -182,7 +183,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
             strncpy(buffer, pos, len);
             buffer[len] = '\0';
 
-            // Now, use kstrtouint to convert the number
+            // Now, use kstrtou8 to convert the number
             if (kstrtou8(buffer, 10, &config->nDeviceAddr) == 0) {
                 parseCount++;  // Increment count for parsed field
             }
@@ -192,7 +193,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
     // Output total parsed field count
     //pr_info("Total parsed fields: %d\n", parseCount);
 
-    if (parseCount  >= 5) {
+    if (parseCount >= 5) {
         if (strcmp(instr, "writeXbytes") == 0) {
             config->eOpCode = A2B24XX_WRITE;
         } else if (strcmp(instr, "read") == 0) {
@@ -456,22 +457,19 @@ static int a2b_ctl_open(struct inode *inode, struct file *file)
 static ssize_t a2b_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
     //struct device *dev = (struct device *)file->private_data;
-
     size_t len = count < BUFFER_SIZE - 1 ? count : BUFFER_SIZE - 1;
 
-    if (copy_from_user(command_buffer, buf, len)) {
+    if (copy_from_user(commandBuffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    command_buffer[len] = '\0'; // Null-terminate the string
-    pr_info("Received command: %s\n", command_buffer);
+    commandBuffer[len] = '\0'; // Null-terminate the string
+    pr_info("Received data: %s\n", commandBuffer);
 
-    if (strncmp(command_buffer, "reinit", 6) == 0) {
+    if (strncmp(commandBuffer, "reinit", 6) == 0) {
 	    /* Setting up A2B network */
 		adi_a2b_NetworkSetup(i2c_dev);
-    } else {
-        pr_info("Unknown command: %s\n", command_buffer);
     }
 
     return len;
@@ -638,8 +636,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         return ret;
     }
 
-    pr_info("Major number: %d, Minor number: %d\n", MAJOR(dev_num), MINOR(dev_num));
-
     // Create the device class
     dev_class = class_create(THIS_MODULE, CLASS_NAME);
     if (IS_ERR(dev_class)) {
@@ -668,11 +664,14 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         return ret;
     }
 
-    pr_info("a2b_ctl driver initialized successfully\n");
+    // Set write permission only (write for owner, group, and others)
+    chmod("/dev/a2b_ctl", S_IWUSR | S_IWGRP | S_IWOTH);
+    pr_info("Character device registered with major number %d\n", MAJOR(dev_number));
 
     content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
     if (content) {
-        //pr_info("File content (%zu bytes):\n%s\n", size, content);
+        pr_info("File content (%zu bytes)\n", size);
+
 		// Parse XML configuration
         parseXML(content, parseA2BConfig, &actionCount);
         pA2BConfig = parseA2BConfig;
@@ -681,14 +680,15 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         pA2BConfig = gaA2BConfig;
         actionCount = CONFIG_LEN;
     }
-    pr_info("Action count=%zu, bufferOffset=%zu\n", actionCount, bufferOffset);
+
+    pr_info("Action count: %zu, Buffer offset: %zu\n", actionCount, bufferOffset);
 
 #if 1
     // Print the results
     for (int i = 0; i < actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
-                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
+                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=\n",
                        i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 break;
@@ -698,12 +698,12 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 continue;
             case A2B24XX_DELAY:
-                pr_info("Action %03d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
+                pr_info("Action %03d: delay, nDataCount=%hu, sleep=\n", i, pA2BConfig[i].nDataCount);
                 break;
         }
 
         for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            pr_info("0x%02X ", pA2BConfig[i].paConfigData[j]);
+            pr_info("0x%02X\n", pA2BConfig[i].paConfigData[j]);
         }
     }
 #endif
@@ -724,7 +724,7 @@ int a2b24xx_remove(struct device *dev)
     class_destroy(dev_class);  // Destroy the device class
     unregister_chrdev_region(dev_num, 1);  // Free the device number
 
-    pr_info("a2b_ctl driver exited\n");
+    pr_info("a2b24xx driver exited\n");
 
     return 0;
 }
