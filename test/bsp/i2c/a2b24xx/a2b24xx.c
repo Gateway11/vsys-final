@@ -34,9 +34,6 @@
 #endif
 #include "a2b24xx.h"
 
-// Buffer size for receiving commands
-#define BUFFER_SIZE 128
-
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;
@@ -56,6 +53,7 @@ struct a2b24xx {
     struct class *dev_class;    // Device class
     struct device *dev_device;  // Device structure
 
+#define BUFFER_SIZE 128         // Buffer size for receiving commands
     char command_buffer[BUFFER_SIZE];
 };
 
