@@ -94,8 +94,7 @@ static uint8_t configBuffer[MAX_CONFIG_DATA];
 size_t bufferOffset = 0;
 
 static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
-    char instr[20], protocol[10], *dataStr, *token;
-    size_t index;
+    char instr[20], protocol[10];
 
     const char *pos;
     char *endptr;
@@ -217,9 +216,9 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
             return;
         }
         // Parse multiple numbers
-        dataStr = strchr(action, '>') + 1; /* Find position after '>' */
-        token = strsep(&dataStr, " ");
-        index = 0;
+        char *dataStr = strchr(action, '>') + 1; /* Find position after '>' */
+        char *token = strsep(&dataStr, " ");
+        size_t index = 0;
         config->paConfigData = configBuffer + bufferOffset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
@@ -684,7 +683,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
     pr_info("Action count=%zu, bufferOffset=%zu\n", actionCount, bufferOffset);
 
-#if 0
+#if 1
     // Print the results
     for (int i = 0; i < actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
