@@ -367,13 +367,13 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 
     struct i2c_msg msg[] = {
         [0] = {
-            .addr = devAddr,
+            .addr = client->addr,
             .flags = 0,
             .len = writeLength,
             .buf = writeBuffer,
         },
         [1] = {
-            .addr = devAddr,
+            .addr = client->addr,
             .flags = I2C_M_RD,
             .len = readLength,
             .buf = readBuffer,
