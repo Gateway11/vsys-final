@@ -638,6 +638,17 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         return ret;
     }
 
+    // Initialize the cdev structure
+    cdev_init(&my_cdev, &a2b24xx_ctl_fops);
+    ret = cdev_add(&my_cdev, dev_num, 1);
+    if (ret < 0) {
+        device_destroy(dev_class, dev_num);
+        class_destroy(dev_class);
+        unregister_chrdev_region(dev_num, 1);
+        pr_err("Failed to add cdev\n");
+        return ret;
+    }
+
     // Create the device class
     dev_class = class_create(THIS_MODULE, CLASS_NAME);
     if (IS_ERR(dev_class)) {
@@ -653,17 +664,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         unregister_chrdev_region(dev_num, 1);
         pr_err("Failed to create device\n");
         return PTR_ERR(dev_device);
-    }
-
-    // Initialize the cdev structure
-    cdev_init(&my_cdev, &a2b24xx_ctl_fops);
-    ret = cdev_add(&my_cdev, dev_num, 1);
-    if (ret < 0) {
-        device_destroy(dev_class, dev_num);
-        class_destroy(dev_class);
-        unregister_chrdev_region(dev_num, 1);
-        pr_err("Failed to add cdev\n");
-        return ret;
     }
 
     // Set write permission only (write for owner, group, and others)
