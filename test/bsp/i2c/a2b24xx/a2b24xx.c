@@ -188,7 +188,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
     }
 
     // Output total parsed field count
-    //pr_info("Total parsed fields: %d\n", parseCount);
+    // pr_info("Total parsed fields: %d\n", parseCount);
 
     if (parseCount >= 5) {
         if (strcmp(instr, "writeXbytes") == 0) {
