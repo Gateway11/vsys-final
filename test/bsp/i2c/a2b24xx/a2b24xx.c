@@ -54,7 +54,6 @@ struct a2b24xx {
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
     struct class *dev_class;    // Device class
-    struct device *dev_device;  // Device structure
 
 #define BUFFER_SIZE 128         // Buffer size for receiving commands
     char command_buffer[BUFFER_SIZE];
@@ -658,7 +657,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 
     // Create the device node
-    a2b24xx->dev_device = device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
+    device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
 
     pr_info("Major number: %d, Minor number: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 
