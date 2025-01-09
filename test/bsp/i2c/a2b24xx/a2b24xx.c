@@ -57,6 +57,12 @@ struct a2b24xx {
 
 #define BUFFER_SIZE 128         // Buffer size for receiving commands
     char command_buffer[BUFFER_SIZE];
+
+#define MAX_ACTIONS 256
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
+    ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
+    ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
+    size_t actionCount;
 };
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
@@ -81,12 +87,6 @@ static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(
 //
 //   return ret;
 //}
-
-#define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
-
-ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
-static size_t actionCount = 0;
 
 static uint8_t configBuffer[MAX_CONFIG_DATA];
 size_t bufferOffset = 0;
@@ -404,6 +404,8 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 /********************************************************************************/
 static void adi_a2b_NetworkSetup(struct device* dev)
 {
+    struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
+
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned int nIndex, nIndex1;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
@@ -411,8 +413,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned int nDelayVal;
 
     /* Loop over all the configuration */
-    for (nIndex = 0; nIndex < actionCount; nIndex++) {
-        pOPUnit = &pA2BConfig[nIndex];
+    for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
+        pOPUnit = &a2b24xx->pA2BConfig[nIndex];
         /* Operation code */
         switch (pOPUnit->eOpCode) {
             /* Write */
@@ -666,19 +668,20 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         pr_info("File content (%zu bytes)\n", size);
 
 		// Parse XML configuration
-        parseXML(content, parseA2BConfig, &actionCount);
-        pA2BConfig = parseA2BConfig;
+        parseXML(content, a2b24xx->parseA2BConfig, &a2b24xx->actionCount);
+        a2b24xx->pA2BConfig = a2b24xx->parseA2BConfig;
         kfree(content);
     } else {
-        pA2BConfig = gaA2BConfig;
-        actionCount = CONFIG_LEN;
+        a2b24xx->pA2BConfig = gaA2BConfig;
+        a2b24xx->actionCount = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", actionCount, bufferOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->actionCount, bufferOffset);
 
 #if 1
     // Print the results
-    for (int i = 0; i < actionCount; i++) {
+    for (int i = 0; i < a2b24xx->actionCount; i++) {
+        ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->pA2BConfig;
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
                 pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=\n",
