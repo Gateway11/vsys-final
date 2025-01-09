@@ -37,6 +37,10 @@
 #define DEVICE_NAME "a2b_ctl"   // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
 
+#define COMMAND_SIZE 128        // Buffer size for receiving commands
+#define MAX_ACTIONS  256
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
+
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;
@@ -54,12 +58,8 @@ struct a2b24xx {
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
     struct class *dev_class;    // Device class
+    char command_buffer[COMMAND_SIZE];
 
-#define BUFFER_SIZE 128         // Buffer size for receiving commands
-    char command_buffer[BUFFER_SIZE];
-
-#define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
     ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
     size_t actionCount;
@@ -463,7 +463,7 @@ static int a2b24xx_ctl_open(struct inode *inode, struct file *filp)
 static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
     struct a2b24xx *a2b24xx = file->private_data;
-    size_t len = count < BUFFER_SIZE - 1 ? count : BUFFER_SIZE - 1;
+    size_t len = count < COMMAND_SIZE - 1 ? count : COMMAND_SIZE - 1;
 
     if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
