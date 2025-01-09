@@ -63,6 +63,9 @@ struct a2b24xx {
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
     ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
     size_t actionCount;
+
+    uint8_t configBuffer[MAX_CONFIG_DATA];
+    size_t bufferOffset;
 };
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
@@ -88,10 +91,7 @@ static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(
 //   return ret;
 //}
 
-static uint8_t configBuffer[MAX_CONFIG_DATA];
-size_t bufferOffset = 0;
-
-static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
+static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
 
     const char *pos;
@@ -99,8 +99,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
     int parseCount = 0;  // Initialize the counter for parsed fields
     char buffer[10];  // Temporary buffer to hold the extracted number string
 
-    config->nDeviceAddr = deviceAddr;
-    config->nDataCount = 0;
+    size_t *bufferOffset = a2b24xx->bufferOffset;
 
     // Parse "instr" field
     pos = strstr(action, "instr=\"");
@@ -209,7 +208,7 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
     }
 
     if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
-        if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
+        if (*bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
             pr_warn("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
@@ -217,20 +216,23 @@ static void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, ui
         char *dataStr = strchr(action, '>') + 1; /* Find position after '>' */
         char *token = strsep(&dataStr, " ");
         size_t index = 0;
-        config->paConfigData = configBuffer + bufferOffset;
+        config->paConfigData = a2b24xx->configBuffer + *bufferOffset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strsep(&dataStr, " ");
         }
-        bufferOffset += index;
+        *bufferOffset += index;
         config->nDataCount = index;
     }
 }
 
-static void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* actionCount) {
-    const char* actionStart = strstr(xml, "<action");
+static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
+    const char *actionStart = strstr(xml, "<action");
     char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the action buffer
+    size_t *actionCount = &a2b24xx->actionCount;
+
     *actionCount = 0;
+    a2b24xx->bufferOffset = 0;
 
     while (actionStart && *actionCount < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
@@ -243,7 +245,7 @@ static void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t*
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(action, &configs[*actionCount], 104);
+        parseAction(a2b24xx, action, &a2b24xx->parseA2BConfig[*actionCount]);
         (*actionCount)++;
         actionStart = strstr(actionEnd, "<action");
     }
@@ -668,7 +670,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         pr_info("File content (%zu bytes)\n", size);
 
 		// Parse XML configuration
-        parseXML(content, a2b24xx->parseA2BConfig, &a2b24xx->actionCount);
+        parseXML(a2b24xx, content);
         a2b24xx->pA2BConfig = a2b24xx->parseA2BConfig;
         kfree(content);
     } else {
@@ -676,7 +678,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         a2b24xx->actionCount = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->actionCount, bufferOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->actionCount, a2b24xx->bufferOffset);
 
 #if 1
     // Print the results
@@ -722,6 +724,7 @@ int a2b24xx_remove(struct device *dev)
     cdev_del(&a2b24xx->cdev);  // Delete the cdev
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 
+    kfree(a2b24xx);
     pr_info("a2b24xx driver exited\n");
 
     return 0;
