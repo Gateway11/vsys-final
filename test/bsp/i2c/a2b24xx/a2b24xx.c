@@ -36,8 +36,8 @@
 
 #define DEVICE_NAME "a2b_ctl"   // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
-
 #define COMMAND_SIZE 128        // Buffer size for receiving commands
+
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
