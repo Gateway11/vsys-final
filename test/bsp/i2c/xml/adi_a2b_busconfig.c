@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
         pA2BConfig = gaA2BConfig;
         actionCount = CONFIG_LEN;
     }
-    printf("Action count=%zu, bufferOffset=%zu\n", actionCount, bufferOffset);
+    printf("Action count: %zu, Buffer used: %zu\n", actionCount, bufferOffset);
 
 #if 0
     // Print the results

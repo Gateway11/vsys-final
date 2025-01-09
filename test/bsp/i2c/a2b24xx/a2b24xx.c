@@ -34,6 +34,9 @@
 #endif
 #include "a2b24xx.h"
 
+#define DEVICE_NAME "a2b_ctl"   // Device name
+#define CLASS_NAME "a2b24xx"    // Device class name
+
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;
@@ -234,6 +237,10 @@ static void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t*
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
+        if (actionLength > 6000) {
+            pr_warn("Warning: Action length exceeds buffer size!\n");
+            return;
+        }
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
@@ -400,7 +407,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 {
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned int nIndex, nIndex1;
-    unsigned char aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
 
@@ -442,7 +449,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 #endif
 
 // Function to handle device open
-static int a2b24xx_ctl_open(struct inode *inode, struct file *file)
+static int a2b24xx_ctl_open(struct inode *inode, struct file *filp)
 {
     struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
     filp->private_data = a2b24xx;
@@ -606,7 +613,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     struct a2b24xx *a2b24xx;
     int ret;
     size_t size;
-    char *content;
 
     if (IS_ERR(regmap))
         return PTR_ERR(regmap);
@@ -625,10 +631,9 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     a2b24xx->constraints.count = ARRAY_SIZE(a2b24xx_rates);
 
     dev_set_drvdata(dev, a2b24xx);
-    a2b24xx_dev = dev;
 
     // Allocate a device number dynamically
-    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, "a2b_ctl");
+    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, DEVICE_NAME);
     if (ret < 0) {
         pr_err("Failed to allocate device number\n");
         return ret;
@@ -653,15 +658,11 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 
     // Create the device node
-    a2b24xx->dev_device =
-        device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, "a2b24xx");
+    a2b24xx->dev_device = device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
 
-    // Set write permission only (write for owner, group, and others)
-    chmod("/dev/a2b_ctl", S_IWUSR | S_IWGRP | S_IWOTH);
-    pr_info("Character device registered with major number %d\n", MAJOR(a2b24xx->dev_num));
+    pr_info("Major number: %d, Minor number: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 
-    // TODO
-    content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
+    char *content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
     if (content) {
         pr_info("File content (%zu bytes)\n", size);
 
@@ -674,7 +675,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         actionCount = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer offset: %zu\n", actionCount, bufferOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", actionCount, bufferOffset);
 
 #if 1
     // Print the results
@@ -714,7 +715,7 @@ int a2b24xx_remove(struct device *dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
 
-    device_destroy(a2b24xx->dev_class, priv_data->dev_num);  // Destroy the device node
+    device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
     class_destroy(a2b24xx->dev_class);  // Destroy the device class
     cdev_del(&a2b24xx->cdev);  // Delete the cdev
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
