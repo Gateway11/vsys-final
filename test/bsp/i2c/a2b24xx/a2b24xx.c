@@ -242,6 +242,7 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
             pr_warn("Warning: Action length exceeds buffer size!\n");
             return;
         }
+
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
@@ -662,7 +663,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     // Create the device node
     device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
-
     pr_info("Major number: %d, Minor number: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 
     char *content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
