@@ -99,7 +99,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     int parseCount = 0;  // Initialize the counter for parsed fields
     char buffer[10];  // Temporary buffer to hold the extracted number string
 
-    size_t *bufferOffset = a2b24xx->bufferOffset;
+    size_t *bufferOffset = &a2b24xx->bufferOffset;
 
     // Parse "instr" field
     pos = strstr(action, "instr=\"");
