@@ -458,7 +458,7 @@ static int a2b24xx_ctl_open(struct inode *inode, struct file *filp)
     struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
     filp->private_data = a2b24xx;
 
-    pr_info("a2b_ctl device opened\n");
+    pr_info("A2B24xx device opened\n");
     return 0;
 }
 
@@ -725,7 +725,7 @@ int a2b24xx_remove(struct device *dev)
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 
     kfree(a2b24xx);
-    pr_info("a2b24xx driver exited\n");
+    pr_info("A2B24xx driver exited\n");
 
     return 0;
 }
