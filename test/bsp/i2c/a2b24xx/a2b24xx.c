@@ -719,15 +719,12 @@ int a2b24xx_remove(struct device *dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
 
-    if (a2b24xx) {
-        device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
-        class_destroy(a2b24xx->dev_class);  // Destroy the device class
-        cdev_del(&a2b24xx->cdev);  // Delete the cdev
-        unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
+    device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
+    class_destroy(a2b24xx->dev_class);  // Destroy the device class
+    cdev_del(&a2b24xx->cdev);  // Delete the cdev
+    unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 
-        kfree(a2b24xx);
-    }
-
+    kfree(a2b24xx);
     pr_info("a2b24xx driver exited\n");
 
     return 0;
