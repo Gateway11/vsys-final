@@ -114,7 +114,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         }
     }
 
-    // Parse "addrWidth" field
+    // Parse "addr_width" field
     pos = strstr(action, "addr_width=\"");
     if (pos) {
         pos += strlen("addr_width=\"");
@@ -168,7 +168,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         }
     }
 
-    // Parse "i2cAddr" field
+    // Parse "i2caddr" field
     pos = strstr(action, "i2caddr=\"");
     if (pos) {
         pos += strlen("i2caddr=\"");
