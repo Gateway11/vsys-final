@@ -68,18 +68,11 @@ struct a2b24xx {
     size_t bufferOffset;
 };
 
+static void adi_a2b_NetworkSetup(struct device* dev);
+
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
 };
-
-/* Example control - no specific functionality */
-static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
-
-#define A2B24XX_CONTROL(x) \
-    SOC_SINGLE_TLV("A2B" #x "Template", 2, 0, 255, 1, a2b24xx_control)
-
-/* Example control */
-static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
 
 static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 {
@@ -91,6 +84,27 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 
     return ret;
 }
+
+static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+    struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+    struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(component);
+
+    dev_info(component->dev, "A2B reset triggered via SOC_SINGLE_BOOL_EXT\n");
+    a2b24xx_reset(a2b24xx);
+
+    return 1;
+}
+
+/* Example control - no specific functionality */
+static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
+
+#define A2B24XX_CONTROL(x) \
+    SOC_SINGLE_TLV("A2B" #x " Template", 2, 0, 255, 1, a2b24xx_control), \
+    SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
+
+/* Example control */
+static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
@@ -476,7 +490,7 @@ static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size
     a2b24xx->command_buffer[len] = '\0'; // Null-terminate the string
     pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
-    if (strncmp(a2b24xx->command_buffer, "reinit", 6) == 0) {
+    if (strncmp(a2b24xx->command_buffer, "reset", 5) == 0) {
         a2b24xx_reset(a2b24xx);
     }
 
