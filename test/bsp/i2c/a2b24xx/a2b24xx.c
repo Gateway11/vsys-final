@@ -32,11 +32,9 @@
 
 //#define A2B_SETUP_ALSA
 
-#ifndef A2B_SETUP_ALSA
 #define DEVICE_NAME "a2b_ctl"   // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
 #define COMMAND_SIZE 128        // Buffer size for receiving commands
-#endif
 
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
@@ -723,10 +721,12 @@ int a2b24xx_remove(struct device *dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
 
+#ifndef A2B_SETUP_ALSA
     device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
     class_destroy(a2b24xx->dev_class);  // Destroy the device class
     cdev_del(&a2b24xx->cdev);  // Delete the cdev
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
+#endif
 
     kfree(a2b24xx);
     pr_info("A2B24xx driver exited\n");
