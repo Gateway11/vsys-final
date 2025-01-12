@@ -74,6 +74,9 @@ static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
 };
 
+/* Example control - no specific functionality */
+static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
+
 static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 {
     int ret = 0;
@@ -95,9 +98,6 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 
     return 1;
 }
-
-/* Example control - no specific functionality */
-static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
 #define A2B24XX_CONTROL(x) \
     SOC_SINGLE_TLV("A2B" #x " Template", 2, 0, 255, 1, a2b24xx_control), \
