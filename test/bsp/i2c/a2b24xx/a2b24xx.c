@@ -27,16 +27,16 @@
 #include <sound/soc.h>
 #include <sound/tlv.h>
 
-#define A2B_SETUP_ALSA
-
-#ifdef A2B_SETUP_ALSA
 #include "adi_a2b_commandlist.h"
-#endif
 #include "a2b24xx.h"
 
+//#define A2B_SETUP_ALSA
+
+#ifndef A2B_SETUP_ALSA
 #define DEVICE_NAME "a2b_ctl"   // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
 #define COMMAND_SIZE 128        // Buffer size for receiving commands
+#endif
 
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
@@ -55,10 +55,12 @@ struct a2b24xx {
     unsigned int max_master_fs;
     bool master;
 
+#ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
     struct class *dev_class;    // Device class
     char command_buffer[COMMAND_SIZE];
+#endif
 
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
     ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
@@ -253,7 +255,6 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
     kfree(action);
 }
 
-#ifdef A2B_SETUP_ALSA
 static char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
     struct file* file;
     char* buffer = NULL;
@@ -450,8 +451,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     }
     kfree(aDataBuffer);
 }
-#endif
 
+#ifndef A2B_SETUP_ALSA
 // Function to handle device open
 static int a2b24xx_ctl_open(struct inode *inode, struct file *filp)
 {
@@ -490,6 +491,7 @@ static const struct file_operations a2b24xx_ctl_fops = {
     .open = a2b24xx_ctl_open,
     .write = a2b24xx_ctl_write,
 };
+#endif
 
 /* Template functions */
 static int a2b24xx_hw_params(struct snd_pcm_substream *substream,
@@ -597,7 +599,7 @@ static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 
 #ifdef A2B_SETUP_ALSA
     // Setting up A2B network
-    // adi_a2b_NetworkSetup(codec->dev);
+    adi_a2b_NetworkSetup(codec->dev);
 #endif
 
     return ret;
@@ -636,6 +638,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     dev_set_drvdata(dev, a2b24xx);
 
+#ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
     ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, DEVICE_NAME);
     if (ret < 0) {
@@ -664,6 +667,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     // Create the device node
     device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
     pr_info("Major number: %d, Minor number: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
+#endif
 
     char *content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
     if (content) {
@@ -706,7 +710,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
-#ifdef A2B_SETUP_ALSA
+#ifndef A2B_SETUP_ALSA
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(dev);
 #endif
