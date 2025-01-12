@@ -81,15 +81,16 @@ static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 /* Example control */
 static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
 
-//static int a2b24xx_reset(struct a2b24xx *a2b24xx)
-//{
-//   int ret = 0;
-//
-//   regcache_cache_bypass(a2b24xx->regmap, true);
-//   /* A2B reset */
-//
-//   return ret;
-//}
+static int a2b24xx_reset(struct a2b24xx *a2b24xx)
+{
+    int ret = 0;
+
+    regcache_cache_bypass(a2b24xx->regmap, true);
+    /* A2B reset */
+    adi_a2b_NetworkSetup(a2b24xx->dev);
+
+    return ret;
+}
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
@@ -476,8 +477,7 @@ static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size
     pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
     if (strncmp(a2b24xx->command_buffer, "reinit", 6) == 0) {
-        /* Setting up A2B network */
-        adi_a2b_NetworkSetup(a2b24xx->dev);
+        a2b24xx_reset(a2b24xx);
     }
 
     return len;
