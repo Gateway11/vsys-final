@@ -13,4 +13,7 @@ drive/drive-foundation/platform-config/hardware/nvidia/platform/t264/automotive/
                 	};
 	            };
 
+DAILINK_COMP_ARRAY(COMP_CODEC("a2b24xx.0", "a2b24xx-hifi")),
+DAILINK_COMP_ARRAY(COMP_CODEC(NULL, "a2b24xx-hifi")),
+
 
