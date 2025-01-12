@@ -607,7 +607,10 @@ static int a2b24xx_set_sysclk(struct snd_soc_component *codec,
 /* Codec probe */
 static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 {
+    struct a2b224xx *a2b24xx = snd_soc_component_get_drvdata(codec);
     int ret = 0;
+
+    dev_info(a2b24xx->dev, "Probed\n");
 
 #ifdef A2B_SETUP_ALSA
     // Setting up A2B network
