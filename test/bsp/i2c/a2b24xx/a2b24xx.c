@@ -253,7 +253,7 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
-        if (actionLength > 6000) {
+        if (actionLength >= 6000) {
             pr_warn("Warning: Action length exceeds buffer size!\n");
             return;
         }
