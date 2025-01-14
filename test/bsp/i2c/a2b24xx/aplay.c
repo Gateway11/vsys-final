@@ -324,8 +324,19 @@ static void version(void)
 	printf("%s: version " SND_UTIL_VERSION_STR " by Jaroslav Kysela <perex@perex.cz>\n", command);
 }
 
+void port_gpio_control(const char *path, const char *value) {
+    int fd = open(path, O_WRONLY);
+    if (fd < 0) {
+        perror("Failed to open file");
+        return;
+    }
+    write(fd, value, strlen(value));
+    close(fd);
+}
+
 static void signal_handler(int sig)
 {
+    port_gpio_control("/sys/class/gpio/PU.01/value", "0");
 	if (verbose==2)
 		putchar('\n');
 	if (!quiet_mode)
@@ -2379,16 +2390,6 @@ static int new_capture_file(char *name, char *namebuf, size_t namelen,
 	return filecount;
 }
 
-void port_gpio_control(const char *path, const char *value) {
-    int fd = open(path, O_WRONLY);
-    if (fd < 0) {
-        perror("Failed to open file");
-        return;
-    }
-    write(fd, value, strlen(value));
-    close(fd);
-}
-
 static void capture(char *orig_name)
 {
 	int tostdout=0;		/* boolean which describes output stream */
@@ -2398,8 +2399,8 @@ static void capture(char *orig_name)
 	off64_t count, rest;		/* number of bytes to capture */
     bool gpio_enabled = false;
 
-    port_gpio_control("/sys/class/gpio/export", "1899");
-    port_gpio_control("/sys/class/gpio/gpio1899/direction", "out");
+    port_gpio_control("/sys/class/gpio/export", "1864");
+    port_gpio_control("/sys/class/gpio/PU.01/direction", "out");
 
 	/* get number of bytes to capture */
 	count = calc_count();
@@ -2467,13 +2468,13 @@ static void capture(char *orig_name)
             for (int i = 0; i < c; i++) {
                 if (audiobuf[i] == 0) zero_data++;
             }
-            if (zero_data + 2 != c) {
+            if (zero_data != c) {
                 if (!gpio_enabled) {
                     gpio_enabled = true;
-                    port_gpio_control("/sys/class/gpio/gpio1899/value", "1");
+                    port_gpio_control("/sys/class/gpio/PU.01/value", "1");
+                    printf("##################################### %ld, %zu\n", c - zero_data, c);
                 }
-                printf("##################################### %d\n", c - zero_data);
-            } else printf("------------------------------------- %d, %zu\n", zero_data, c);
+            } //else printf("------------------------------------- %d, %zu\n", zero_data, c);
 			if (write(fd, audiobuf, c) != c) {
 				perror(name);
 				exit(EXIT_FAILURE);
@@ -2493,9 +2494,6 @@ static void capture(char *orig_name)
 		 * requested counts of data are recorded
 		 */
 	} while ((file_type == FORMAT_RAW && !timelimit) || count > 0);
-
-    port_gpio_control("/sys/class/gpio/gpio1899/value", "0");
-    port_gpio_control("/sys/class/gpio/unexport", "1899");
 }
 
 static void playbackv_go(int* fds, unsigned int channels, size_t loaded, off64_t count, int rtype, char **names)
