@@ -745,7 +745,6 @@ int a2b24xx_remove(struct device *dev)
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 #endif
 
-    kfree(a2b24xx);
     pr_info("A2B24xx driver exited\n");
 
     return 0;
