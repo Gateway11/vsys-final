@@ -702,7 +702,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
 #if 1
     // Print the results
-    ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->pA2BConfig;
+    const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->pA2BConfig;
     for (int i = 0; i < a2b24xx->actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
