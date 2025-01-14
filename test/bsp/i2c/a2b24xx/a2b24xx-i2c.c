@@ -14,7 +14,6 @@
 #include <sound/soc.h>
 #include "a2b24xx.h"
 
-
 static int a2b24xx_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id)
 {
@@ -22,7 +21,6 @@ static int a2b24xx_i2c_probe(struct i2c_client *client,
 	config = a2b24xx_regmap_config;
 	config.val_bits = 8;
 	config.reg_bits = 8;
-	pr_err("%s: dyb test 1.1\n", __func__);
 	return a2b24xx_probe(&client->dev,
 		devm_regmap_init_i2c(client, &config),
 		id->driver_data, NULL);

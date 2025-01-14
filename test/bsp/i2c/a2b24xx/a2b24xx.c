@@ -255,7 +255,7 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
 
         if (actionLength >= 6000) {
             pr_warn("Warning: Action length exceeds buffer size!\n");
-            return;
+            goto exit;
         }
 
         strncpy(action, actionStart, actionLength);
@@ -265,6 +265,8 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
         (*actionCount)++;
         actionStart = strstr(actionEnd, "<action");
     }
+
+exit:
     kfree(action);
 }
 
