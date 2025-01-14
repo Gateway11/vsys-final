@@ -401,7 +401,7 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 
     ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
     if (ret < 0) {
-        pr_err("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
+        pr_warn("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
         return ret;
     }
 
