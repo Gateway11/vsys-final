@@ -265,7 +265,6 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
         (*actionCount)++;
         actionStart = strstr(actionEnd, "<action");
     }
-
 exit:
     kfree(action);
 }
