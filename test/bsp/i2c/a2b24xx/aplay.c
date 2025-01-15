@@ -2390,6 +2390,7 @@ static int new_capture_file(char *name, char *namebuf, size_t namelen,
 	return filecount;
 }
 
+#include <stdbool.h>
 static void capture(char *orig_name)
 {
 	int tostdout=0;		/* boolean which describes output stream */
