@@ -1,0 +1,49 @@
+diff --git a/soc/tegra-virt-alt/tegra_pcm_virt_alt.c b/soc/tegra-virt-alt/tegra_pcm_virt_alt.c
+index b057e40..059c613 100644
+--- a/soc/tegra-virt-alt/tegra_pcm_virt_alt.c
++++ b/soc/tegra-virt-alt/tegra_pcm_virt_alt.c
+@@ -16,6 +16,8 @@
+ #include "tegra_pcm_alt.h"
+ #include "tegra_asoc_util_virt_alt.h"
+ 
++static bool gpio_enabled = false;
++
+ static const struct snd_pcm_hardware tegra_alt_pcm_hardware = {
+ 	.info			= SNDRV_PCM_INFO_MMAP |
+ 				  SNDRV_PCM_INFO_MMAP_VALID |
+@@ -89,6 +91,8 @@ static int tegra_alt_pcm_open(struct snd_soc_component *component,
+ 	return 0;
+ }
+ 
++#include <linux/gpio.h>
++#define GPIO_PIN 1864 //GP171(PU.01)
+ static int tegra_alt_pcm_close(struct snd_soc_component *component,
+ 					struct snd_pcm_substream *substream)
+ {
+@@ -97,6 +101,9 @@ static int tegra_alt_pcm_close(struct snd_soc_component *component,
+ 	if (rtd->dai_link->no_pcm)
+ 		return 0;
+ 
++    pr_info("dddddddddddddddddddddddddddddddd %s\n", __func__);
++    gpio_set_value(GPIO_PIN, 0);
++    gpio_enabled = false;
+ 	snd_dmaengine_pcm_close_release_chan(substream);
+ 
+ 	return 0;
+@@ -191,6 +198,16 @@ static snd_pcm_uframes_t tegra_alt_pcm_pointer
+ 	char *appl_ptr;
+ 
+ 	pos = snd_dmaengine_pcm_pointer(substream);
++#if 1
++    if (!gpio_enabled) {
++        pr_info("dddddddddddddddddddddddddddddddd %s\n", __func__);
++
++        gpio_request(GPIO_PIN, "GPIO_PIN");
++        gpio_direction_output(GPIO_PIN, 0);
++        gpio_set_value(GPIO_PIN, 1);
++        gpio_enabled = true;
++    }
++#endif
+ 
+ 	/* In DRAINING state pointer callback comes from dma completion, here
+ 	 * we want to make sure if if dma completion callback is late we should
