@@ -26,3 +26,9 @@ else
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     tar -cvf - record.wav | xz -9 --extreme | base64
 fi
+
+#i2ctransfer -f -y 16 w2@0x68 0x01 0x00 #/* NODEADR */
+#i2ctransfer -f -y 16 w2@0x68 0x11 0x00 #/* DATCTL */
+#i2ctransfer -f -y 16 w2@0x69 0x47 0x00 #/* PDMCTL */
+#i2ctransfer -f -y 16 w2@0x69 0x53 0x06
+i2ctransfer -f -y 16 w2@0x69 0x53 0x01
