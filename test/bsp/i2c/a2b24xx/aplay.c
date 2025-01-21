@@ -336,7 +336,8 @@ void port_gpio_control(const char *path, const char *value) {
 
 static void signal_handler(int sig)
 {
-    port_gpio_control("/sys/class/gpio/PU.01/value", "0");
+    //port_gpio_control("/sys/class/gpio/PU.01/value", "0");
+    port_gpio_control("/sys/class/gpio/gpio1828/value", "0");
 	if (verbose==2)
 		putchar('\n');
 	if (!quiet_mode)
@@ -2400,8 +2401,8 @@ static void capture(char *orig_name)
 	off64_t count, rest;		/* number of bytes to capture */
     bool gpio_enabled = false;
 
-    port_gpio_control("/sys/class/gpio/export", "1864");
-    port_gpio_control("/sys/class/gpio/PU.01/direction", "out");
+    //port_gpio_control("/sys/class/gpio/export", "1864");
+    //port_gpio_control("/sys/class/gpio/PU.01/direction", "out");
 
 	/* get number of bytes to capture */
 	count = calc_count();
@@ -2472,7 +2473,8 @@ static void capture(char *orig_name)
             if (zero_data != c) {
                 if (!gpio_enabled) {
                     gpio_enabled = true;
-                    port_gpio_control("/sys/class/gpio/PU.01/value", "1");
+                    //port_gpio_control("/sys/class/gpio/PU.01/value", "1");
+                    port_gpio_control("/sys/class/gpio/gpio1828/value", "1");
                     printf("##################################### %ld, %zu\n", c - zero_data, c);
                 }
             } //else printf("------------------------------------- %d, %zu\n", zero_data, c);
