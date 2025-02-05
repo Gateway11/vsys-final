@@ -30,12 +30,14 @@ int32_t adi_a2b_I2C_Open(uint16_t deviceAddr) {
         return -1;
     }
 
+#if 0
     /* Set the I2C slave device address */
     if (ioctl(handle, I2C_SLAVE, deviceAddr) < 0) {
         perror("Can't set I2C slave address");
         close(handle); // Close the file descriptor before returning
         return -1;
     }
+#endif
 
     /* Set timeout and retry count */
     ioctl(handle, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
