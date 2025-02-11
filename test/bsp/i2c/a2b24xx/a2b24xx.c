@@ -508,6 +508,14 @@ static const struct file_operations a2b24xx_ctl_fops = {
 };
 #endif
 
+static void a2b24xx_setup_work(struct work_struct *work)
+{
+    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
+
+    /* Setting up A2B network */
+    adi_a2b_NetworkSetup(a2b24xx->dev);
+}
+
 /* Template functions */
 static int a2b24xx_hw_params(struct snd_pcm_substream *substream,
                               struct snd_pcm_hw_params *params,
@@ -620,14 +628,6 @@ static int a2b24xx_codec_probe(struct snd_soc_component *codec)
 #endif
 
     return ret;
-}
-
-static void a2b24xx_setup_work(struct work_struct *work)
-{
-    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
-
-    /* Setting up A2B network */
-    adi_a2b_NetworkSetup(a2b24xx->dev);
 }
 
 static struct snd_soc_component_driver a2b24xx_codec_driver = {
@@ -757,7 +757,6 @@ int a2b24xx_remove(struct device *dev)
 
     cancel_work_sync(&a2b24xx->setup_work);
     pr_info("A2B24xx driver exited\n");
-
     return 0;
 }
 EXPORT_SYMBOL_GPL(a2b24xx_remove);
