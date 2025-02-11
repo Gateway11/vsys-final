@@ -53,6 +53,8 @@ struct a2b24xx {
     unsigned int max_master_fs;
     bool master;
 
+    struct work_struct setup_work;
+
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
@@ -506,6 +508,14 @@ static const struct file_operations a2b24xx_ctl_fops = {
 };
 #endif
 
+static void a2b24xx_setup_work(struct work_struct *work) {
+    pr_info("Work handler: Processing data from device\n");
+    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
+
+    /* Setting up A2B network */
+    adi_a2b_NetworkSetup(a2b24xx->dev);
+}
+
 /* Template functions */
 static int a2b24xx_hw_params(struct snd_pcm_substream *substream,
                               struct snd_pcm_hw_params *params,
@@ -614,8 +624,7 @@ static int a2b24xx_codec_probe(struct snd_soc_component *codec)
     dev_info(a2b24xx->dev, "Probed\n");
 
 #ifdef A2B_SETUP_ALSA
-    // Setting up A2B network
-    adi_a2b_NetworkSetup(codec->dev);
+    schedule_work(&a2b24xx->setup_work);
 #endif
 
     return ret;
@@ -627,7 +636,7 @@ static struct snd_soc_component_driver a2b24xx_codec_driver = {
     .controls = a2b24xx_snd_controls,
     .num_controls = ARRAY_SIZE(a2b24xx_snd_controls),
 };
-  
+
 /* Driver probe */
 int a2b24xx_probe(struct device *dev, struct regmap *regmap,
                   enum a2b24xx_type type, void (*switch_mode)(struct device *dev))
@@ -685,7 +694,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     pr_info("Major number: %d, Minor number: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
-    char *content = a2b_pal_File_Read("/home/nvidia/adi_a2b_commandlist.xml", &size);
+    char *content = a2b_pal_File_Read("/lib/firmware/adi_a2b_commandlist.xml", &size);
     if (content) {
         pr_info("File content (%zu bytes)\n", size);
 
@@ -726,9 +735,9 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
+    INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
 #ifndef A2B_SETUP_ALSA
-    /* Setting up A2B network */
-    adi_a2b_NetworkSetup(dev);
+    schedule_work(&a2b24xx->setup_work);
 #endif
 
     return snd_soc_register_component(dev, &a2b24xx_codec_driver, &a2b24xx_dai, 1);
@@ -745,6 +754,8 @@ int a2b24xx_remove(struct device *dev)
     cdev_del(&a2b24xx->cdev);  // Delete the cdev
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 #endif
+
+    cancel_work_sync(&a2b24xx->setup_work);
     pr_info("A2B24xx driver exited\n");
 
     return 0;
