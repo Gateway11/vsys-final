@@ -509,7 +509,6 @@ static const struct file_operations a2b24xx_ctl_fops = {
 #endif
 
 static void a2b24xx_setup_work(struct work_struct *work) {
-    pr_info("Work handler: Processing data from device\n");
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
 
     /* Setting up A2B network */
