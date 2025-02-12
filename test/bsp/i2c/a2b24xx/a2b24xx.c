@@ -867,6 +867,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
+    a2b24xx->fault_check_running = false;
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
     INIT_DELAYED_WORK(&a2b24xx->fault_check_work, a2b24xx_fault_check_work);
 #ifndef A2B_SETUP_ALSA
