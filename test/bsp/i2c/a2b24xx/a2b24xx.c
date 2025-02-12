@@ -59,6 +59,7 @@ struct a2b24xx {
 
     struct work_struct setup_work;
     struct delayed_work fault_check_work;
+    struct mutex node_mutex;
     bool fault_check_running;
 
 #ifndef A2B_SETUP_ALSA
@@ -409,7 +410,7 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 
     ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
     if (ret < 0) {
-        pr_err("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
+        pr_wern("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
         return ret;
     }
 
@@ -486,12 +487,14 @@ static void processInterrupt(struct a2b24xx *a2b24xx) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_warn("Interrupt Type: %s\n", intTypeString[i].message);
                 if (a2b24xx->fault_check_running) {
+                    mutex_lock(&a2b24xx->node_mutex);
                     if (!(dataBuffer[0] & A2B_BITM_INTSRC_INODE)) {
                         /* Setting up A2B network */
                         adi_a2b_NetworkSetup(a2b24xx->dev);
                     } else {
                         //TODO
                     }
+                    mutex_unlock(&a2b24xx->node_mutex); // Release lock
                 }
                 return;
             }
@@ -594,6 +597,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
 
     if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
         pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
+        mutex_lock(&a2b24xx->node_mutex);
         for (uint8_t i = 0; i < 4; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL2, 0x00});
@@ -614,6 +618,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             }
         }
+        mutex_unlock(&a2b24xx->node_mutex); // Release lock
     }
     return len;
 }
@@ -868,6 +873,8 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 #endif
 
     a2b24xx->fault_check_running = false;
+    mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
+
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
     INIT_DELAYED_WORK(&a2b24xx->fault_check_work, a2b24xx_fault_check_work);
 #ifndef A2B_SETUP_ALSA
