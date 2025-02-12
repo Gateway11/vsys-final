@@ -62,6 +62,10 @@ struct a2b24xx {
     struct mutex node_mutex;
     bool fault_check_running;
 
+    uint8_t cycles[16];
+    uint8_t slave_pos[16];
+    uint8_t max_node_number;
+
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
@@ -470,6 +474,18 @@ const IntTypeString_t intTypeString[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
 };
 
+#if 0
+static void processSingleNode(struct a2b24xx *a2b24xx, uint8_t node) {
+    while (true) {
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+
+        for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, 0x00});
+        }
+    }
+}
+#endif
+
 static void processInterrupt(struct a2b24xx *a2b24xx) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
@@ -493,6 +509,7 @@ static void processInterrupt(struct a2b24xx *a2b24xx) {
                         adi_a2b_NetworkSetup(a2b24xx->dev);
                     } else {
                         //TODO
+                        //processSingleNode(a2b24xx, dataBuffer[0] & A2B_BITM_INTSRC_INODE);
                     }
                     mutex_unlock(&a2b24xx->node_mutex); // Release lock
                 }
@@ -598,7 +615,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
     if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
         pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
         mutex_lock(&a2b24xx->node_mutex);
-        for (uint8_t i = 0; i < 4; i++) {
+        for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL2, 0x00});
             if (i == slave_id) {
@@ -634,9 +651,19 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 static void a2b24xx_setup_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
+    uint8_t node_number = 0;
 
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev);
+
+    a2b24xx->max_node_number = a2b24xx->pA2BConfig[actionCount - 3].paConfigData[0] + 1;
+    for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY) {
+            a2b24xx->cycles[node_number++] = a2b24xx->pA2BConfig[i].paConfigData[0];
+        }
+        //if (node_number == a2b24xx->max_node_number && a2b24xx->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
+        //}
+    }
 
     schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 }
