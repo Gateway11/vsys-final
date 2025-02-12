@@ -12,6 +12,8 @@
 
 #include <linux/regmap.h>
 
+#define A2B_MASTER_ADDR                 0x68
+#define A2B_SLAVE_ADDR                  0x69
 
 struct device;
 

@@ -29,15 +29,19 @@
 
 #include "adi_a2b_commandlist.h"
 #include "a2b24xx.h"
+#include "regdefs.h"
 
 //#define A2B_SETUP_ALSA
 
-#define DEVICE_NAME "a2b_ctl"   // Device name
+#define DEVICE_NAME "a2b_ctrl"   // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
 #define COMMAND_SIZE 128        // Buffer size for receiving commands
 
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
+
+/* Define how often to check (and clear) the fault status register (in ms) */
+#define A2B24XX_FAULT_CHECK_INTERVAL 2000
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -54,6 +58,8 @@ struct a2b24xx {
     bool master;
 
     struct work_struct setup_work;
+    struct delayed_work fault_check_work;
+    bool fault_check_running;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -415,6 +421,84 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
     return 0;
 }
 
+typedef struct {
+    uint8_t type;
+    const char *message;
+} IntTypeString_t;
+
+const IntTypeString_t intTypeString[] = {
+    {A2B_ENUM_INTTYPE_HDCNTERR             ,        "HDCNTERR "},
+    {A2B_ENUM_INTTYPE_DDERR                ,        "DDERR "},
+    {A2B_ENUM_INTTYPE_CRCERR               ,        "CRCERR "},
+    {A2B_ENUM_INTTYPE_DPERR                ,        "DPERR "},
+    {A2B_ENUM_INTTYPE_BECOVF               ,        "BECOVF "},
+    {A2B_ENUM_INTTYPE_SRFERR               ,        "SRFERR "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS_GND        ,        "PWRERR (Cable Shorted to GND) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS_VBAT       ,        "PWRERR (Cable Shorted to VBat) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS            ,        "PWRERR (Cable Shorted Together) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC         ,        "PWRERR (Cable Disconnected or Open Circuit) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CREV          ,        "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV     ,        "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse Connected (AD243x Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_FAULT         ,        "PWRERR (Indeterminate Fault) "},
+    //{A2B_ENUM_INTTYPE_IO0PND               ,        "IO0PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO1PND               ,        "IO1PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO2PND               ,        "IO2PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO3PND               ,        "IO3PND "},
+    //{A2B_ENUM_INTTYPE_IO4PND               ,        "IO4PND "},
+    //{A2B_ENUM_INTTYPE_IO5PND               ,        "IO5PND "},
+    //{A2B_ENUM_INTTYPE_IO6PND               ,        "IO6PND "},
+    //{A2B_ENUM_INTTYPE_IO7PND               ,        "IO7PND "},
+    //{A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only "},
+    {A2B_ENUM_INTTYPE_I2CERR               ,        "I2CERR - Master Only "},
+    {A2B_ENUM_INTTYPE_ICRCERR              ,        "ICRCERR - Master Only "},
+    {A2B_ENUM_INTTYPE_PWRERR_NLS_GND       ,        "PWRERR - Non-Localized Short to GND "},
+    {A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT      ,        "PWRERR - Non-Localized Short to VBat "},
+    {A2B_ENUM_INTTYPE_PWRERR_OTH           ,        "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
+    //{A2B_ENUM_INTTYPE_SPIDONE              ,        "SPI Done"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR   ,        "SPI Remote Register Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR   ,        "SPI Remote I2C Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR     ,        "SPI Data Tunnel Access Error"},
+    {A2B_ENUM_INTTYPE_SPI_BAD_CMD          ,        "SPI Bad Command"},
+    {A2B_ENUM_INTTYPE_SPI_FIFO_OVRFLW      ,        "SPI FIFO Overflow"},
+    {A2B_ENUM_INTTYPE_SPI_FIFO_UNDERFLW    ,        "SPI FIFO Underflow"},
+    {A2B_ENUM_INTTYPE_VMTR                 ,        "VMTR Interrupt"},
+    {A2B_ENUM_INTTYPE_IRPT_MSG_ERR         ,        "PWRERR - Interrupt Messaging Error "},
+    {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF       ,        "Startup Error - Return to Factory "},
+    {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR    ,        "Slave INTTYPE Read Error - Master Only "},
+    //{A2B_ENUM_INTTYPE_STANDBY_DONE         ,        "Standby Done - Master Only "},
+    //{A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
+};
+
+static void processInterrupt(struct a2b24xx *a2b24xx) {
+    uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
+
+    adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    if (dataBuffer[0]) {
+        adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
+            pr_info("Interrupt Source: Master - ");
+        } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
+            pr_info("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+        } else {
+            pr_info("No recognized interrupt source: %d - ", dataBuffer[0]);
+        }
+        for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
+            if (intTypeString[i].type == dataBuffer[1]) {
+                pr_warn("Interrupt Type: %s\n", intTypeString[i].message);
+                if (a2b24xx->fault_check_running) {
+                    if (!(dataBuffer[0] & A2B_BITM_INTSRC_INODE)) {
+                        /* Setting up A2B network */
+                        adi_a2b_NetworkSetup(a2b24xx->dev);
+                    } else {
+                        //TODO
+                    }
+                }
+                return;
+            }
+        }
+    }
+}
+
 /****************************************************************************/
 /*!
  @brief          This function does A2B network discovery
@@ -470,7 +554,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 
 #ifndef A2B_SETUP_ALSA
 // Function to handle device open
-static int a2b24xx_ctl_open(struct inode *inode, struct file *filp)
+static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp)
 {
     struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
     filp->private_data = a2b24xx;
@@ -480,10 +564,11 @@ static int a2b24xx_ctl_open(struct inode *inode, struct file *filp)
 }
 
 // Function to handle write operations
-static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
     struct a2b24xx *a2b24xx = file->private_data;
     size_t len = count < COMMAND_SIZE - 1 ? count : COMMAND_SIZE - 1;
+    int slave_id, mic_id = -1;
 
     if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
@@ -497,14 +582,37 @@ static ssize_t a2b24xx_ctl_write(struct file *file, const char __user *buf, size
         a2b24xx_reset(a2b24xx);
     }
 
+    if (sscanf(a2b24xx->command_buffer, "Slave%d MIC%d", &slave_id, &mic_id) >= 1) {
+        pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
+        for (uint8_t i = 0; i < 4; i++) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL2, 0x00});
+            if (i == slave_id) {
+                switch(mic_id) {
+                    case 0:
+                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x13});
+                        break;
+                    case 1:
+                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x1C});
+                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL2, 0x08});
+                        break;
+                    default:
+                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
+                        break;
+                }
+            } else {
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            }
+        }
+    }
     return len;
 }
 
 // File operations structure
-static const struct file_operations a2b24xx_ctl_fops = {
+static const struct file_operations a2b24xx_ctrl_fops = {
     .owner = THIS_MODULE,
-    .open = a2b24xx_ctl_open,
-    .write = a2b24xx_ctl_write,
+    .open = a2b24xx_ctrl_open,
+    .write = a2b24xx_ctrl_write,
 };
 #endif
 
@@ -514,6 +622,20 @@ static void a2b24xx_setup_work(struct work_struct *work)
 
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev);
+
+    schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+}
+
+static void a2b24xx_fault_check_work(struct work_struct *work)
+{
+    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
+    a2b24xx->fault_check_running = true;
+
+    pr_info("%s\n", __func__);
+    processInterrupt(a2b24xx);
+
+    /* Schedule the next fault check at the specified interval */
+    schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 }
 
 /* Template functions */
@@ -672,7 +794,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 
     // Initialize the cdev structure
-    cdev_init(&a2b24xx->cdev, &a2b24xx_ctl_fops);
+    cdev_init(&a2b24xx->cdev, &a2b24xx_ctrl_fops);
     ret = cdev_add(&a2b24xx->cdev, a2b24xx->dev_num, 1);
     if (ret < 0) {
         unregister_chrdev_region(a2b24xx->dev_num, 1);
@@ -709,7 +831,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->actionCount, a2b24xx->bufferOffset);
 
-#if 1
+#if 0
     // Print the results
     const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->pA2BConfig;
     for (int i = 0; i < a2b24xx->actionCount; i++) {
@@ -736,6 +858,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 #endif
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
+    INIT_DELAYED_WORK(&a2b24xx->fault_check_work, a2b24xx_fault_check_work);
 #ifndef A2B_SETUP_ALSA
     schedule_work(&a2b24xx->setup_work);
 #endif
@@ -756,6 +879,8 @@ int a2b24xx_remove(struct device *dev)
 #endif
 
     cancel_work_sync(&a2b24xx->setup_work);
+    cancel_delayed_work_sync(&a2b24xx->fault_check_work);
+
     pr_info("A2B24xx driver exited\n");
     return 0;
 }
