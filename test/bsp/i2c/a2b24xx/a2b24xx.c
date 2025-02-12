@@ -578,11 +578,21 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
     a2b24xx->command_buffer[len] = '\0'; // Null-terminate the string
     pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
-    if (strncmp(a2b24xx->command_buffer, "reset", 5) == 0) {
-        a2b24xx_reset(a2b24xx);
+    if (strncmp(a2b24xx->command_buffer, "RESET", 5) == 0) {
+        a2b24xx_reset(a2b24xx); // Perform reset operation
+        return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "Slave%d MIC%d", &slave_id, &mic_id) >= 1) {
+    if (strncmp(a2b24xx->command_buffer, "FAULT CHECK", 11) == 0) {
+        if (a2b24xx->fault_check_running) {
+            cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
+        } else {
+            schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+        }
+        return len;
+    }
+
+    if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
         pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
         for (uint8_t i = 0; i < 4; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
