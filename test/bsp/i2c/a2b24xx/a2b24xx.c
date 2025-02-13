@@ -765,7 +765,6 @@ static void a2b24xx_setup_work(struct work_struct *work)
             for (int32_t j = i; j > 0; j--) {
                 if (a2b24xx->pA2BConfig[j].nAddr == A2B_REG_NODEADR) {
                     a2b24xx->slave_pos[a2b24xx->pA2BConfig[j].paConfigData[0]] = i;
-                    if (!(a2b24xx->pA2BConfig[j].paConfigData[0])) break;
                     break;
                 }
             }
