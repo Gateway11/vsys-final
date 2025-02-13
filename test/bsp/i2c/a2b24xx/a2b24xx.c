@@ -62,12 +62,10 @@ struct a2b24xx {
     struct delayed_work fault_check_work;
     struct mutex node_mutex;
     bool fault_check_running;
-    bool discovery_done;
 
     uint8_t cycles[16];
     uint8_t slave_pos[16];
     uint8_t max_node_number;
-    int8_t first_fault_node;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -491,7 +489,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
 //Now, periodically try to rediscover the slave-1 partially
 //1. Write SWCTL=0x21 to all upsteam nodes other than the node from which we are discovering the next node( In above example Write Master node SWCTL=0x21)
-    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x20});
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
     for (uint8_t i = 0; i < (inode - 1); i++) {
         adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
@@ -543,20 +541,28 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 }
 
 static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
+//    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
+
     mutex_lock(&a2b24xx->node_mutex);
-    if (!inode) {
-        /* Setting up A2B network */
-        adi_a2b_NetworkSetup(a2b24xx->dev);
-    } else {
-        a2b24xx->first_fault_node = -1;
-        for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
-            if (!processSingleNode(a2b24xx, i)) {
-                a2b24xx->first_fault_node = i;
-                break;
+//    if (inode >= 1) {
+//        adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+//    } else {
+//        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
+//        adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+//    }
+//    if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
+        if (!inode) {
+            /* Setting up A2B network */
+            adi_a2b_NetworkSetup(a2b24xx->dev);
+        } else {
+            for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
+                if (!processSingleNode(a2b24xx, i)) {
+                    break;
+                }
+                mdelay(100);
             }
-            mdelay(100);
         }
-    }
+//    }
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
 
@@ -583,8 +589,14 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
                 return (dataBuffer[0] & A2B_BITM_INTSRC_INODE);
             }
         }
-    } else if (a2b24xx->discovery_done && a2b24xx->first_fault_node >= 0) {
-        processFaultNode(a2b24xx, a2b24xx->first_fault_node);
+    } else if (rediscovry) {
+        for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i);
+            adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+            if ((dataBuffer[0] & A2B_BITM_NODE_LAST) && ((i + 1) != a2b24xx->max_node_number)) {
+                processFaultNode(a2b24xx, i + 1);
+            }
+        }
     }
     return -1;
 }
@@ -606,8 +618,6 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
 
-    a2b24xx->discovery_done = false;
-
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
         pOPUnit = &a2b24xx->pA2BConfig[nIndex];
@@ -624,13 +634,10 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                if (pOPUnit->nAddr == A2B_REG_INTTYPE) {
-                    int8_t inode = processInterrupt(a2b24xx, false);
-                    if (a2b24xx->first_fault_node < 0 && inode >= 0) {
-                        a2b24xx->first_fault_node = inode;
-                    }
-                    continue;
-                }
+                //if (pOPUnit->nAddr == A2B_REG_INTTYPE) {
+                //    processInterrupt(a2b24xx, false);
+                //    continue;
+                //}
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
@@ -648,7 +655,6 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 break;
         }
     }
-    a2b24xx->discovery_done = true;
     kfree(aDataBuffer);
 }
 
@@ -993,7 +999,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
-    a2b24xx->first_fault_node = -1;
     a2b24xx->fault_check_running = false;
     mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
 
