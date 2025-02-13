@@ -41,7 +41,7 @@
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
 /* Define how often to check (and clear) the fault status register (in ms) */
-#define A2B24XX_FAULT_CHECK_INTERVAL 2000
+#define A2B24XX_FAULT_CHECK_INTERVAL 6000
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -416,11 +416,11 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 
     ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
     if (ret < 0) {
-        pr_warn("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
+        pr_err("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
         return ret;
     }
 
-    pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+    pr_warn("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
     for (i = 0; i < readLength; i++) {
         pr_info("0x%02X\n", readBuffer[i]);
     }
@@ -482,8 +482,8 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
-    pr_info("Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d\n",
-                inode, a2b24xx->master_fmt, a2b24xx->cycles[inode], a2b24xx->slave_pos[inode]);
+    pr_info("############ Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
+            inode, a2b24xx->master_fmt, a2b24xx->cycles[inode], a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
 
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
@@ -599,6 +599,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
             adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
             if ((dataBuffer[0] & A2B_BITM_NODE_LAST) && ((i + 1) != a2b24xx->max_node_number)) {
                 processFaultNode(a2b24xx, i + 1);
+                break;
             }
         }
     }
@@ -747,25 +748,27 @@ static void a2b24xx_setup_work(struct work_struct *work)
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
-    for (uint32_t i = (a2b24xx->actionCount - 1); i > 0; i--) {
+    for (int32_t i = (a2b24xx->actionCount - 1); i > 0; i--) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
             a2b24xx->master_fmt = a2b24xx->pA2BConfig[i].paConfigData[0];
+            break;
         }
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
             a2b24xx->max_node_number = a2b24xx->pA2BConfig[i].paConfigData[0] + 1;
-            break;
         }
     }
     for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY) {
             a2b24xx->cycles[node_number++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
-        if ((node_number == a2b24xx->max_node_number)
-                && (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SWCTL)
-                && (a2b24xx->pA2BConfig[i + 1].nAddr == A2B_REG_NODEADR)) {
-            a2b24xx->slave_pos[a2b24xx->pA2BConfig[i + 1].paConfigData[0]] = i;
-
-            if (!(a2b24xx->pA2BConfig[i].paConfigData[0])) break;
+        if (node_number == a2b24xx->max_node_number && a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS) {
+            for (int32_t j = i; j > 0; j--) {
+                if (a2b24xx->pA2BConfig[j].nAddr == A2B_REG_NODEADR) {
+                    a2b24xx->slave_pos[a2b24xx->pA2BConfig[j].paConfigData[0]] = i;
+                    if (!(a2b24xx->pA2BConfig[j].paConfigData[0])) break;
+                    break;
+                }
+            }
         }
     }
 
