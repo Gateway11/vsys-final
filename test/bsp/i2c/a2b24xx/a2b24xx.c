@@ -482,6 +482,9 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
+    pr_info("###### Process fault node%d, master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d\n",
+                inode, a2b24xx->master_fmt, a2b24xx->cycles[inode], a2b24xx->slave_pos[inode]);
+
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
     adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
@@ -592,7 +595,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
         pr_info("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
     } else if (rediscovry) {
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i);
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
             adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
             if ((dataBuffer[0] & A2B_BITM_NODE_LAST) && ((i + 1) != a2b24xx->max_node_number)) {
                 processFaultNode(a2b24xx, i + 1);
