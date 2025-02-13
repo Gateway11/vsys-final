@@ -482,7 +482,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
-    pr_info("###### Process fault node%d, master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d\n",
+    pr_info("Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d\n",
                 inode, a2b24xx->master_fmt, a2b24xx->cycles[inode], a2b24xx->slave_pos[inode]);
 
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
