@@ -474,15 +474,28 @@ const IntTypeString_t intTypeString[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
 };
 
-#if 0
-static void processSingleNode(struct a2b24xx *a2b24xx, uint8_t node) {
-    while (true) {
-        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+#if 1
+static void processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
+    struct device *dev = a2b24xx->dev;
+    ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
+    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    unsigned char aDataWriteReadBuf[4u];
 
-        for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, 0x00});
-        }
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->cycles[inode]});
+
+    mdelay(100);
+
+    for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
+        pOPUnit = &a2b24xx->pA2BConfig[i];
+
+        adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+        (void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+        adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
+
+        if (pOPUnit->nAddr == A2B_REG_INTMSK0) break;
     }
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, 0x22, 0x03, 0x81});
 }
 #endif
 
@@ -504,12 +517,14 @@ static void processInterrupt(struct a2b24xx *a2b24xx) {
                 pr_warn("Interrupt Type: %s\n", intTypeString[i].message);
                 if (a2b24xx->fault_check_running) {
                     mutex_lock(&a2b24xx->node_mutex);
-                    if (!(dataBuffer[0] & A2B_BITM_INTSRC_INODE)) {
+                    uint8_t inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
+                    if (!inode) {
                         /* Setting up A2B network */
                         adi_a2b_NetworkSetup(a2b24xx->dev);
                     } else {
-                        //TODO
-                        //processSingleNode(a2b24xx, dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+                        for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
+                            processSingleNode(a2b24xx, i);
+                        }
                     }
                     mutex_unlock(&a2b24xx->node_mutex); // Release lock
                 }
@@ -661,8 +676,12 @@ static void a2b24xx_setup_work(struct work_struct *work)
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY) {
             a2b24xx->cycles[node_number++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
-        //if (node_number == a2b24xx->max_node_number && a2b24xx->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
-        //}
+        if (node_number == a2b24xx->max_node_number
+                && a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SWCTL
+                && a2b24xx->pA2BConfig[++i].nAddr == A2B_REG_NODEADR) {
+            a2b24xx->slave_pos[a2b24xx->pA2BConfig[i].paConfigData[0]] = i;
+            if (!(a2b24xx->pA2BConfig[i].paConfigData[0])) return;
+        }
     }
 
     schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
