@@ -544,7 +544,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
 
     mutex_lock(&a2b24xx->node_mutex);
-//    if (inode >= 1) {
+//    if (!inode) {
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
 //    } else {
 //        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
