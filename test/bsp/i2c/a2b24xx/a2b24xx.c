@@ -420,7 +420,7 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
         return ret;
     }
 
-    pr_warn("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+    pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
     for (i = 0; i < readLength; i++) {
         pr_info("0x%02X\n", readBuffer[i]);
     }
@@ -482,8 +482,9 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
-    pr_info("############ Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
-            inode, a2b24xx->master_fmt, a2b24xx->cycles[inode], a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
+    pr_info("Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
+            inode, a2b24xx->master_fmt,
+            a2b24xx->cycles[inode], a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
 
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
@@ -578,7 +579,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
             pr_info("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
         } else {
-            pr_info("No recognized interrupt source: %d - ", dataBuffer[0]);
+            pr_warn("No recognized interrupt source: %d - ", dataBuffer[0]);
         }
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
@@ -702,7 +703,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
             cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
         } else {
             schedule_delayed_work(&a2b24xx->fault_check_work,
-                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+                        msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
         }
         return len;
     }
@@ -781,12 +782,12 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
     a2b24xx->fault_check_running = true;
 
-    pr_info("%s\n", __func__);
+    pr_info("################################# A2B FAULT CHECKING #################################\n",);
     processInterrupt(a2b24xx, true);
 
     /* Schedule the next fault check at the specified interval */
     schedule_delayed_work(&a2b24xx->fault_check_work,
-            msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+                msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 }
 
 /* Template functions */
