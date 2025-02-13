@@ -589,6 +589,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
                 return (dataBuffer[0] & A2B_BITM_INTSRC_INODE);
             }
         }
+        pr_info("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
     } else if (rediscovry) {
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i);
