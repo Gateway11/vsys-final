@@ -498,7 +498,6 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     }
 
 //2. Write SWCTL=0x01 in the next upsteam node of discovering node(SWCTL=0x01 in Slave0)
-    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
     adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
 
 //3. Write master node DISCVRY register with expected response cycle of slave node to be discovered to start the discovery process(DISCVRY = response cycle of the slave1)
