@@ -55,6 +55,7 @@ struct a2b24xx {
     void (*switch_mode)(struct device *dev);
 
     unsigned int max_master_fs;
+    uint8_t master_fmt;
     bool master;
 
     struct work_struct setup_work;
@@ -65,6 +66,7 @@ struct a2b24xx {
     uint8_t cycles[16];
     uint8_t slave_pos[16];
     uint8_t max_node_number;
+    int8_t fault_node_number;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -82,6 +84,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device* dev);
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
@@ -414,7 +417,7 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 
     ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
     if (ret < 0) {
-        pr_wern("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
+        pr_warn("%s:i2c_transfer failed, reg 0x%02X\n", __func__, writeBuffer[0]);
         return ret;
     }
 
@@ -475,17 +478,53 @@ const IntTypeString_t intTypeString[] = {
 };
 
 #if 1
-static void processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
+static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
+
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
-    unsigned char aDataWriteReadBuf[4u];
 
-    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
-    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->cycles[inode]});
-
+//1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
+    adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
     mdelay(100);
 
+//Now, periodically try to rediscover the slave-1 partially
+//1. Write SWCTL=0x21 to all upsteam nodes other than the node from which we are discovering the next node( In above example Write Master node SWCTL=0x21)
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x20});
+    for (uint8_t i = 0; i < inode; i++) {
+        adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+        adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
+    }
+
+//2. Write SWCTL=0x01 in the next upsteam node of discovering node(SWCTL=0x01 in Slave0)
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
+    adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
+
+//3. Write master node DISCVRY register with expected response cycle of slave node to be discovered to start the discovery process(DISCVRY = response cycle of the slave1)
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->cycles[inode]});
+
+//4. Wait for 35msec for slave node to discover. Can use IRQ interrupt to check if slave node discovery interrupt is received.
+    mdelay(35);
+//5. If rediscovery is unsuccessful  i.e. resulted in timeout or Open wire fault (INTTYPE: 0x0C) raised:
+//          O End the discovery
+//          O Open the Slave node0 switch
+//          O Clear interrupts, if any
+//          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
+    if (processInterrupt(a2b24xx, false) != -1) {
+        adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+        kfree(aDataBuffer);
+        return false;
+    }
+
+//6. If rediscovery is successful (got the slave node discovery interrupt (INTTYPE==0x18),
+//          O Update SWCTL=0x01 in all upsteam nodes
+//          O After slave register programming, configure master_fmt, DATCTL and NEWSTRCT on master node to start the audio communication.
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
+    for (uint8_t i = 0; i < inode; i++) {
+        adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+        adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
+    }
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
@@ -494,12 +533,35 @@ static void processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
         adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
 
         if (pOPUnit->nAddr == A2B_REG_INTMSK0) break;
+
+        //For codec
     }
-    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, 0x22, 0x03, 0x81});
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+
+    kfree(aDataBuffer);
+    return true;
 }
 #endif
 
-static void processInterrupt(struct a2b24xx *a2b24xx) {
+static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
+    mutex_lock(&a2b24xx->node_mutex);
+    if (!inode) {
+        /* Setting up A2B network */
+        adi_a2b_NetworkSetup(a2b24xx->dev);
+    } else {
+        a2b24xx->fault_node_number = -1;
+        for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
+            if (!processSingleNode(a2b24xx, i)) {
+                a2b24xx->fault_node_number = i;
+                break;
+            }
+            mdelay(100);
+        }
+    }
+    mutex_unlock(&a2b24xx->node_mutex); // Release lock
+}
+
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
     adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
@@ -515,23 +577,17 @@ static void processInterrupt(struct a2b24xx *a2b24xx) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_warn("Interrupt Type: %s\n", intTypeString[i].message);
-                if (a2b24xx->fault_check_running) {
-                    mutex_lock(&a2b24xx->node_mutex);
-                    uint8_t inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
-                    if (!inode) {
-                        /* Setting up A2B network */
-                        adi_a2b_NetworkSetup(a2b24xx->dev);
-                    } else {
-                        for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
-                            processSingleNode(a2b24xx, i);
-                        }
-                    }
-                    mutex_unlock(&a2b24xx->node_mutex); // Release lock
+
+                if (a2b24xx->fault_check_running && rediscovry) {
+                    processFaultNode(a2b24xx, dataBuffer[0] & A2B_BITM_INTSRC_INODE);
                 }
-                return;
+                return dataBuffer[0] & A2B_BITM_INTSRC_INODE;
             }
         }
+    } else if (a2b24xx->fault_check_running && a2b24xx->fault_node_number >= 0) {
+        processFaultNode(a2b24xx, a2b24xx->fault_node_number);
     }
+    return -1;
 }
 
 /****************************************************************************/
@@ -567,6 +623,13 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+                if (pOPUnit->nAddr == A2B_REG_INTTYPE) {
+                    int8_t inode = processInterrupt(a2b24xx, false);
+                    if (a2b24xx->fault_node_number < 0 && inode >= 0) {
+                        a2b24xx->fault_node_number = inode;
+                    }
+                    continue;
+                }
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
@@ -671,16 +734,25 @@ static void a2b24xx_setup_work(struct work_struct *work)
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
-    a2b24xx->max_node_number = a2b24xx->pA2BConfig[actionCount - 3].paConfigData[0] + 1;
+    for (uint32_t i = (a2b24xx->actionCount - 1); i > 0; i--) {
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
+            a2b24xx->master_fmt = a2b24xx->pA2BConfig[i].paConfigData[0];
+        }
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
+            a2b24xx->max_node_number = a2b24xx->pA2BConfig[i].paConfigData[0] + 1;
+            break;
+        }
+    }
     for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY) {
             a2b24xx->cycles[node_number++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
-        if (node_number == a2b24xx->max_node_number
-                && a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SWCTL
-                && a2b24xx->pA2BConfig[++i].nAddr == A2B_REG_NODEADR) {
-            a2b24xx->slave_pos[a2b24xx->pA2BConfig[i].paConfigData[0]] = i;
-            if (!(a2b24xx->pA2BConfig[i].paConfigData[0])) return;
+        if ((node_number == a2b24xx->max_node_number)
+                && (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SWCTL)
+                && (a2b24xx->pA2BConfig[i + 1].nAddr == A2B_REG_NODEADR)) {
+            a2b24xx->slave_pos[a2b24xx->pA2BConfig[i + 1].paConfigData[0]] = i;
+
+            if (!(a2b24xx->pA2BConfig[i].paConfigData[0])) break;
         }
     }
 
@@ -693,7 +765,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     a2b24xx->fault_check_running = true;
 
     pr_info("%s\n", __func__);
-    processInterrupt(a2b24xx);
+    processInterrupt(a2b24xx, true);
 
     /* Schedule the next fault check at the specified interval */
     schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
@@ -918,6 +990,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
+    a2b24xx->fault_node_number = -1;
     a2b24xx->fault_check_running = false;
     mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
 
