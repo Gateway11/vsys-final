@@ -545,8 +545,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
 static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
-
-    mutex_lock(&a2b24xx->node_mutex);
+//
 //    if (!inode) {
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
 //    } else {
@@ -566,7 +565,6 @@ static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
             }
         }
 //    }
-    mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
 
 static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
@@ -587,13 +585,16 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
                 pr_warn("Interrupt Type: %s\n", intTypeString[i].message);
 
                 if (a2b24xx->fault_check_running && rediscovry) {
+                    mutex_lock(&a2b24xx->node_mutex);
                     processFaultNode(a2b24xx, (dataBuffer[0] & A2B_BITM_INTSRC_INODE));
+                    mutex_unlock(&a2b24xx->node_mutex); // Release lock
                 }
                 return (dataBuffer[0] & A2B_BITM_INTSRC_INODE);
             }
         }
         pr_info("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
     } else if (rediscovry) {
+        mutex_lock(&a2b24xx->node_mutex);
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
             adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
@@ -602,6 +603,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
                 break;
             }
         }
+        mutex_unlock(&a2b24xx->node_mutex); // Release lock
     }
     return -1;
 }
@@ -699,7 +701,8 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
             a2b24xx->fault_check_running = false;
             cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
         } else {
-            schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+            schedule_delayed_work(&a2b24xx->fault_check_work,
+                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
         }
         return len;
     }
@@ -770,7 +773,6 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
-
     schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 }
 
@@ -783,7 +785,8 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     processInterrupt(a2b24xx, true);
 
     /* Schedule the next fault check at the specified interval */
-    schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+    schedule_delayed_work(&a2b24xx->fault_check_work,
+            msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 }
 
 /* Template functions */
