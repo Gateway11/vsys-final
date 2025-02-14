@@ -682,11 +682,12 @@ static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp)
 }
 
 // Function to handle write operations
-static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+static ssize_t a2b24xx_ctrl_write(struct file *file,
+                        const char __user *buf, size_t count, loff_t *ppos)
 {
     struct a2b24xx *a2b24xx = file->private_data;
     size_t len = count < COMMAND_SIZE - 1 ? count : COMMAND_SIZE - 1;
-    int slave_id, mic_id = -1;
+    int32_t slave_id, mic_id = -1;
 
     if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
