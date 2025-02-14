@@ -990,7 +990,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     for (int i = 0; i < a2b24xx->actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
-                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=\n",
+                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
                        i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 break;
@@ -1000,13 +1000,14 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 continue;
             case A2B24XX_DELAY:
-                pr_info("Action %03d: delay, nDataCount=%hu, sleep=\n", i, pA2BConfig[i].nDataCount);
+                pr_info("Action %03d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
                 break;
         }
 
         for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            pr_info("0x%02X\n", pA2BConfig[i].paConfigData[j]);
+            pr_cont("0x%02X ", pA2BConfig[i].paConfigData[j]);
         }
+        pr_cont("\n");
     }
 #endif
 
