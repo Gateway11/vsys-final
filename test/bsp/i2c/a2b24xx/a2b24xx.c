@@ -520,7 +520,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
 //6. If rediscovery is successful (got the slave node discovery interrupt (INTTYPE==0x18),
 //          O Update SWCTL=0x01 in all upsteam nodes
-//          O After slave register programming, configure master_fmt, DATCTL and NEWSTRCT on master node to start the audio communication.
+//          O After slave register programming, configure SLOTFMT, DATCTL and NEWSTRCT on master node to start the audio communication.
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
     for (uint8_t i = 0; i < inode; i++) {
         adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
