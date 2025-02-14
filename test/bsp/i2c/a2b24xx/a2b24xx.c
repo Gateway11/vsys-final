@@ -420,10 +420,11 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
         return ret;
     }
 
-    pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:\n", __func__, devAddr, writeBuffer[0], readLength);
+    pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:", __func__, devAddr, writeBuffer[0], readLength);
     for (i = 0; i < readLength; i++) {
-        pr_info("0x%02X\n", readBuffer[i]);
+        pr_cont("0x%02X ", readBuffer[i]);
     }
+    pr_cont("\n");
 
     return 0;
 }
@@ -581,9 +582,10 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
         } else {
             pr_warn("No recognized interrupt source: %d - ", dataBuffer[0]);
         }
+
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
-                pr_warn("Interrupt Type: %s\n", intTypeString[i].message);
+                pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
 
                 if (a2b24xx->fault_check_running && rediscovry) {
                     mutex_lock(&a2b24xx->node_mutex);
@@ -593,7 +595,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
                 return (dataBuffer[0] & A2B_BITM_INTSRC_INODE);
             }
         }
-        pr_info("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
+        pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
     } else if (rediscovry) {
         mutex_lock(&a2b24xx->node_mutex);
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
@@ -782,7 +784,6 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
     a2b24xx->fault_check_running = true;
 
-    pr_info("################################ A2B FAULT CHECKING ################################\n");
     processInterrupt(a2b24xx, true);
 
     /* Schedule the next fault check at the specified interval */
