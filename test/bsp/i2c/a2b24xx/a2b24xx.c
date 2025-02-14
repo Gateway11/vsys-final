@@ -529,6 +529,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
@@ -646,10 +647,6 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                //if (pOPUnit->nAddr == A2B_REG_INTTYPE) {
-                //    processInterrupt(a2b24xx, false);
-                //    continue;
-                //}
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
