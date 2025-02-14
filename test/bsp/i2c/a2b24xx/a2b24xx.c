@@ -480,12 +480,11 @@ const IntTypeString_t intTypeString[] = {
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
 
-    ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
-    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
-
-    pr_info("Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
+    pr_info("Processing node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
             a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
+
+    if (inode == 0 || inode >= a2b24xx->max_node_number) return false;
 
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
@@ -516,7 +515,6 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
     if (processInterrupt(a2b24xx, false) >= 0) {
         adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
-        kfree(aDataBuffer);
         return false;
     }
 
@@ -528,6 +526,9 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
         adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
     }
+
+    ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
+    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
@@ -541,7 +542,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     }
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
 
-    kfree(aDataBuffer);
+    kfree(aDataBuffer); // Free memory before returning
     return true;
 }
 
@@ -561,6 +562,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
         } else {
             for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
+                    //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
                     break;
                 }
                 mdelay(100);
@@ -572,9 +574,9 @@ static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
-        adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        //adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             pr_info("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
@@ -586,7 +588,6 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-
                 if (a2b24xx->fault_check_running && rediscovry) {
                     mutex_lock(&a2b24xx->node_mutex);
                     processFaultNode(a2b24xx, (dataBuffer[0] & A2B_BITM_INTSRC_INODE));
@@ -602,6 +603,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
             adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
             if ((dataBuffer[0] & A2B_BITM_NODE_LAST) && ((i + 1) != a2b24xx->max_node_number)) {
+                //pr_warn("Fault detected: Node %d is the last node\n", i);
                 processFaultNode(a2b24xx, i + 1);
                 break;
             }
