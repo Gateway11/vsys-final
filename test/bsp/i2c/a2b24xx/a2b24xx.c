@@ -483,8 +483,8 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
     pr_info("Processing fault for node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
-            inode, a2b24xx->master_fmt,
-            a2b24xx->cycles[inode], a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
+            inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
+            a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
 
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
@@ -782,7 +782,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
     a2b24xx->fault_check_running = true;
 
-    pr_info("################################# A2B FAULT CHECKING #################################\n",);
+    pr_info("################################ A2B FAULT CHECKING ################################\n");
     processInterrupt(a2b24xx, true);
 
     /* Schedule the next fault check at the specified interval */
