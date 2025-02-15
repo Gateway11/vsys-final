@@ -2403,6 +2403,7 @@ static void capture(char *orig_name)
 
     //port_gpio_control("/sys/class/gpio/export", "1864");
     //port_gpio_control("/sys/class/gpio/PU.01/direction", "out");
+    port_gpio_control("/sys/class/gpio/gpio1828/value", "0");
 
 	/* get number of bytes to capture */
 	count = calc_count();
