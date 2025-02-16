@@ -529,17 +529,28 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    unsigned int nDelayVal;
 
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
+        switch (pOPUnit->eOpCode) {
+            /* Write */
+            case A2B24XX_WRITE:
+                adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+                (void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+                adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
+                break;
 
-        adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-        (void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
-        adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
-
+            /* Delay */
+            case A2B24XX_DELAY:
+                nDelayVal = 0u;
+                for (uint8_t nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++) {
+                    nDelayVal = pOPUnit->paConfigData[nIndex1] | nDelayVal << 8u;
+                }
+                mdelay(nDelayVal);
+                break;
+        }
         if (pOPUnit->nAddr == A2B_REG_INTMSK0) break;
-
-        //For codec
     }
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
 
