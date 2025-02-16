@@ -61,7 +61,6 @@ struct a2b24xx {
     struct work_struct setup_work;
     struct delayed_work fault_check_work;
     struct mutex node_mutex;
-    bool fault_check_running;
 
     uint8_t cycles[16];
     uint8_t slave_pos[16];
@@ -97,9 +96,7 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
     int ret = 0;
 
     regcache_cache_bypass(a2b24xx->regmap, true);
-
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
-    a2b24xx->fault_check_running = false;
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
@@ -715,17 +712,6 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "FAULT CHECK", 11) == 0) {
-        if (a2b24xx->fault_check_running) {
-            a2b24xx->fault_check_running = false;
-            cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
-        } else {
-            schedule_delayed_work(&a2b24xx->fault_check_work,
-                        msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-        }
-        return len;
-    }
-
     if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
         pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
         mutex_lock(&a2b24xx->node_mutex);
@@ -796,7 +782,6 @@ static void a2b24xx_setup_work(struct work_struct *work)
 static void a2b24xx_fault_check_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
-    a2b24xx->fault_check_running = true;
 
     processInterrupt(a2b24xx, true);
 
@@ -1025,7 +1010,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
-    a2b24xx->fault_check_running = false;
     mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
