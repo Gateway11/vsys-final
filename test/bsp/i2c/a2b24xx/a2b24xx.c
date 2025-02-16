@@ -585,7 +585,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //    }
 }
 
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovr) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
     adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
@@ -602,7 +602,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-                if (rediscovry) {
+                if (rediscovr) {
                     mutex_lock(&a2b24xx->node_mutex);
                     processFaultNode(a2b24xx, (dataBuffer[0] & A2B_BITM_INTSRC_INODE));
                     mutex_unlock(&a2b24xx->node_mutex); // Release lock
@@ -611,7 +611,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
             }
         }
         pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
-    } else if (rediscovry) {
+    } else if (rediscovr) {
         mutex_lock(&a2b24xx->node_mutex);
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
