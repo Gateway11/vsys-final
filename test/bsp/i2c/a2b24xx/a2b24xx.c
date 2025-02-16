@@ -605,7 +605,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-                if (a2b24xx->fault_check_running && rediscovry) {
+                if (rediscovry) {
                     mutex_lock(&a2b24xx->node_mutex);
                     processFaultNode(a2b24xx, (dataBuffer[0] & A2B_BITM_INTSRC_INODE));
                     mutex_unlock(&a2b24xx->node_mutex); // Release lock
