@@ -534,14 +534,11 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
         switch (pOPUnit->eOpCode) {
-            /* Write */
             case A2B24XX_WRITE:
                 adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
                 (void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
                 adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
                 break;
-
-            /* Delay */
             case A2B24XX_DELAY:
                 nDelayVal = 0u;
                 for (uint8_t nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++) {
@@ -549,7 +546,6 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
                 }
                 mdelay(nDelayVal);
                 break;
-
             default:
                 break;
         }
