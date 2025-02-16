@@ -549,6 +549,9 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
                 }
                 mdelay(nDelayVal);
                 break;
+
+            default:
+                break;
         }
         if (pOPUnit->nAddr == A2B_REG_INTMSK0) break;
     }
