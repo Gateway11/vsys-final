@@ -82,7 +82,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device* dev);
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovry);
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovr);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
