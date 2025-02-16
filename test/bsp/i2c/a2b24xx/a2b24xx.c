@@ -95,8 +95,8 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 {
     int ret = 0;
 
-    regcache_cache_bypass(a2b24xx->regmap, true);
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
+    regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
