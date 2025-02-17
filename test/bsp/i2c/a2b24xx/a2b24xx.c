@@ -423,11 +423,13 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
         return ret;
     }
 
+#if 1
     pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:", __func__, devAddr, writeBuffer[0], readLength);
     for (i = 0; i < readLength; i++) {
         pr_cont("0x%02X ", readBuffer[i]);
     }
     pr_cont("\n");
+#endif
 
     return 0;
 }
