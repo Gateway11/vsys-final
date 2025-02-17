@@ -22,6 +22,10 @@ if [ -n "$1" ]; then
     #amixer cset name="MVC2 Mux" I2S7
     #amixer cset name="MVC2 Volume" 1000
     #amixer cset name="ADMAIF5 Mux" MVC2
+
+    #amixer cset name="ADX1 Mux" I2S7
+    #amixer cset name="ADMAIF5 Mux" "ADX1 TX1"
+    #amixer cset name="ADMAIF6 Mux" "ADX1 TX2"
 else
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     tar -cvf - record.wav | xz -9 --extreme | base64
