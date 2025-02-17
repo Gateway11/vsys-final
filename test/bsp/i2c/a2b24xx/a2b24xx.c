@@ -541,7 +541,8 @@ https://ez.analog.com/a2b/f/q-a/536836/a2b-hotpluggable-or-how-to-resync-the-bus
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
-        if (pOPUnit->nAddr == A2B_REG_NODEADR && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
+        if (pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR
+                && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
             break;
 
         switch (pOPUnit->eOpCode) {
