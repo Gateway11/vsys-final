@@ -714,6 +714,11 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
+    if (strncmp(a2b24xx->command_buffer, "FAULT CHECK", 11) == 0) {
+        cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
+        return len;
+    }
+
     if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
         pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
         mutex_lock(&a2b24xx->node_mutex);
