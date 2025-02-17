@@ -600,9 +600,9 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovr) {
     if (dataBuffer[0]) {
         //adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
-            pr_info("Interrupt Source: Master - ");
+            pr_warn("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
-            pr_info("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+            pr_warn("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
         } else {
             pr_warn("No recognized interrupt source: %d - ", dataBuffer[0]);
         }
@@ -695,7 +695,6 @@ static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp)
     struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
     filp->private_data = a2b24xx;
 
-    pr_info("A2B24xx device opened\n");
     return 0;
 }
 
