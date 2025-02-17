@@ -520,6 +520,7 @@ https://ez.analog.com/a2b/f/q-a/536836/a2b-hotpluggable-or-how-to-resync-the-bus
 //          O Clear interrupts, if any
 //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
     if (processInterrupt(a2b24xx, false) >= 0) {
+        //adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
         adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
         return false;
     }
