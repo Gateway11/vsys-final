@@ -536,8 +536,13 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned int nDelayVal;
 
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
+
+        if (pOPUnit->nAddr == A2B_REG_NODEADR && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
+            break;
+
         switch (pOPUnit->eOpCode) {
             case A2B24XX_WRITE:
                 adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
@@ -554,7 +559,6 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
             default:
                 break;
         }
-        if (pOPUnit->nAddr == A2B_REG_INTMSK0) break;
     }
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
 
