@@ -400,7 +400,6 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
     int ret = -1;
     struct i2c_client* client = to_i2c_client(dev);
     client->addr = devAddr;
-    unsigned short i = 0;
 
     struct i2c_msg msg[] = {
         [0] = {
@@ -425,7 +424,7 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
 
 #if 1
     pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:", __func__, devAddr, writeBuffer[0], readLength);
-    for (i = 0; i < readLength; i++) {
+    for (uint32_t i = 0; i < readLength; i++) {
         pr_cont("0x%02X ", readBuffer[i]);
     }
     pr_cont("\n");
