@@ -33,14 +33,14 @@
 
 //#define A2B_SETUP_ALSA
 
-#define DEVICE_NAME "a2b_ctrl"   // Device name
+#define DEVICE_NAME "a2b_ctrl"  // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
 #define COMMAND_SIZE 128        // Buffer size for receiving commands
 
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
-/* Define how often to check (and clear) the fault status register (in ms) */
+#define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS 
 #define A2B24XX_FAULT_CHECK_INTERVAL 6000
 
 struct a2b24xx {
@@ -578,7 +578,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     } else {
 //        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= 2) {
+//        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
 //            a2b24xx->SRFMISS = 0;
             for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
@@ -612,7 +612,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             }
         }
     //}
-    if (lastNode < 0 || !(inode != lastNode && a2b24xx->SRFMISS < 2)) {
+    if (lastNode < 0 || !(inode != lastNode && a2b24xx->SRFMISS < MAX_SRFMISS_FREQ)) {
         processFaultNode(a2b24xx, lastNode + 1);
         a2b24xx->SRFMISS = 0;
     }
@@ -640,7 +640,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
                 if (rediscover) {
-                    a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 2;
+                    a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : MAX_SRFMISS_FREQ;
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
