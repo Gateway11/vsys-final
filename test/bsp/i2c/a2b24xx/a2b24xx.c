@@ -574,7 +574,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //
 //    adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
 //    adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//    if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
+//    if (!(dataBuffer[0] & A2B_BITM_NODE_LAST)) {
         if (inode <= 0) {
             /* Setting up A2B network */
             adi_a2b_NetworkSetup(a2b24xx->dev);
@@ -590,6 +590,8 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //    }
 }
 
+//lastNode      2   -1  -1   0  1
+//   inode      1   -2  -1  -1  0
 static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
@@ -609,8 +611,8 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             }
         }
     //}
-    if (lastNode < 0 || !(inode == lastNode && a2b24xx->SRFMISS < 2)) {
-        processFaultNode(a2b24xx, inode == lastNode ? inode : lastNode + 1);
+    if (lastNode < 0 || !(inode != lastNode && a2b24xx->SRFMISS < 2)) {
+        processFaultNode(a2b24xx, lastNode);
         a2b24xx->SRFMISS = 0;
     }
 
