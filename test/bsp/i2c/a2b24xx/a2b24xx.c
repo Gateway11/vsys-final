@@ -62,6 +62,7 @@ struct a2b24xx {
     struct delayed_work fault_check_work;
     struct mutex node_mutex;
 
+    uint8_t SRFMISS;
     uint8_t cycles[16];
     uint8_t slave_pos[16];
     uint8_t max_node_number;
@@ -568,9 +569,30 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     return true;
 }
 
-static void checkFaultNode(struct a2b24xx *a2b24xx) {
+static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
+//    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
+//
+//    adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
+//    adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+//    if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
+        if (inode <= 0) {
+            /* Setting up A2B network */
+            adi_a2b_NetworkSetup(a2b24xx->dev);
+        } else {
+            for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
+                if (!processSingleNode(a2b24xx, i)) {
+                    //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
+                    break;
+                }
+                mdelay(100);
+            }
+        }
+//    }
+}
+
+static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
-    int8_t lastNode = -1;
+    int8_t lastNode = A2B_MASTER_NODE;
 
     mutex_lock(&a2b24xx->node_mutex);
 
@@ -587,17 +609,10 @@ static void checkFaultNode(struct a2b24xx *a2b24xx) {
             }
         }
     //}
-    if (lastNode < 0) {
-        /* Setting up A2B network */
-        adi_a2b_NetworkSetup(a2b24xx->dev);
-    } else if (lastNode != (a2b24xx->max_node_number - 1)) {
-        for (uint8_t i = (lastNode + 1); i < a2b24xx->max_node_number; i++) {
-            if (!processSingleNode(a2b24xx, i)) {
-                //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
-                break;
-            }
-            mdelay(100);
-        }
+    if (lastNode < 0 || !(inode == lastNode && a2b24xx->SRFMISS < 5)) {
+        //processFaultNode(a2b24xx, lastNode == inode ? inode : lastNode + 1);
+        processFaultNode(a2b24xx, lastNode + 1);
+        a2b24xx->SRFMISS = 0;
     }
 
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
@@ -605,6 +620,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx) {
 
 static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
+    int8_t inode = A2B_MASTER_NODE;
 
     adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
@@ -612,6 +628,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             pr_warn("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
+            inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
             pr_warn("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
         } else {
             pr_warn("No recognized interrupt source: %d - ", dataBuffer[0]);
@@ -621,7 +638,8 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
                 if (rediscover) {
-                    checkFaultNode(a2b24xx);
+                    if (dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS++;
+                    checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
             }
@@ -629,7 +647,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
         pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
     } else if (rediscover) {
-        checkFaultNode(a2b24xx);
+        checkFaultNode(a2b24xx, A2B_INVALID_NODE);
     }
     return -1;
 }
@@ -1021,6 +1039,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
+    a2b24xx->SRFMISS = 0;
     mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
