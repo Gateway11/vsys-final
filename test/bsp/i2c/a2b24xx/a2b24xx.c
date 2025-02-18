@@ -82,7 +82,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device* dev);
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovr);
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
@@ -518,7 +518,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //          O Open the Slave node0 switch
 //          O Clear interrupts, if any
 //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
-    if (processInterrupt(a2b24xx, false) >= 0) {
+    if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         //adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
         adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
         return false;
@@ -568,33 +568,41 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     return true;
 }
 
-static void processFaultNode(struct a2b24xx *a2b24xx, uint8_t inode) {
-//    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
-//
-//    if (!inode) {
-//        adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//    } else {
-//        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
-//        adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//    }
-//    if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
-        if (!inode) {
-            /* Setting up A2B network */
-            adi_a2b_NetworkSetup(a2b24xx->dev);
-        } else {
-            for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
-                if (!processSingleNode(a2b24xx, i)) {
-                    //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
-                    break;
-                }
-                mdelay(100);
+static void checkFaultNode(struct a2b24xx *a2b24xx) {
+    uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
+    int8_t lastNode = -1;
+
+    mutex_lock(&a2b24xx->node_mutex);
+
+    adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+    if (!(dataBuffer[0] & A2B_BITM_NODE_LAST)) {
+        for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+            adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+            if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
+                lastNode = i;
+                break;
             }
         }
-//    }
+    }
+    if (lastNode < 0) {
+        /* Setting up A2B network */
+        adi_a2b_NetworkSetup(a2b24xx->dev);
+    } else if (lastNode != (a2b24xx->max_node_number - 1)) {
+        for (uint8_t i = (lastNode + 1); i < a2b24xx->max_node_number; i++) {
+            if (!processSingleNode(a2b24xx, i)) {
+                //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
+                break;
+            }
+            mdelay(100);
+        }
+    }
+
+    mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
 
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovr) {
-    uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
+    uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
 
     adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
@@ -610,27 +618,16 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscovr) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-                if (rediscovr) {
-                    mutex_lock(&a2b24xx->node_mutex);
-                    processFaultNode(a2b24xx, (dataBuffer[0] & A2B_BITM_INTSRC_INODE));
-                    mutex_unlock(&a2b24xx->node_mutex); // Release lock
+                if (rediscover) {
+                    checkFaultNode(a2b24xx);
                 }
-                return (dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+                return dataBuffer[1];
             }
         }
         pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
-    } else if (rediscovr) {
-        mutex_lock(&a2b24xx->node_mutex);
-        for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-            adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-            if ((dataBuffer[0] & A2B_BITM_NODE_LAST) && ((i + 1) != a2b24xx->max_node_number)) {
-                //pr_warn("Fault detected: Node %d is the last node\n", i);
-                processFaultNode(a2b24xx, i + 1);
-                break;
-            }
-        }
-        mutex_unlock(&a2b24xx->node_mutex); // Release lock
+        return dataBuffer[1];
+    } else if (rediscover) {
+        checkFaultNode(a2b24xx);
     }
     return -1;
 }
