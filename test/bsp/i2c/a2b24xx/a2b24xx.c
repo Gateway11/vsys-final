@@ -578,7 +578,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     } else {
 //        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//        if (!(dataBuffer[0] & A2B_BITM_NODE_LAST)) {
+//        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= 2) {
             for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
                     //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
