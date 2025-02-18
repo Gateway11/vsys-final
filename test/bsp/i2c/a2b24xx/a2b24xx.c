@@ -640,7 +640,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
                 if (rediscover) {
-                    if (dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS++;
+                    a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 2;
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
