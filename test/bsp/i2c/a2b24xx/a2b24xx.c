@@ -612,7 +612,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         }
     //}
     if (lastNode < 0 || !(inode == lastNode && a2b24xx->SRFMISS < 5)) {
-        processFaultNode(a2b24xx, lastNode == inode ? inode : lastNode + 1);
+        processFaultNode(a2b24xx, inode == lastNode ? inode : lastNode + 1);
         a2b24xx->SRFMISS = 0;
     }
 
