@@ -590,8 +590,6 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //    }
 }
 
-//lastNODE      1   0   -1
-//   inode      1   0   -1
 static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
@@ -611,7 +609,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             }
         }
     //}
-    if (lastNode < 0 || !(inode == lastNode && a2b24xx->SRFMISS < 5)) {
+    if (lastNode < 0 || !(inode == lastNode && a2b24xx->SRFMISS < 2)) {
         processFaultNode(a2b24xx, inode == lastNode ? inode : lastNode + 1);
         a2b24xx->SRFMISS = 0;
     }
