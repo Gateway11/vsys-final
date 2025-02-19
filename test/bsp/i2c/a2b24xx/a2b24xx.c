@@ -579,7 +579,6 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
-//            a2b24xx->SRFMISS = 0;
             for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
                     //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
@@ -641,8 +640,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-                if (a2b24xx->SRFMISS && dataBuffer[1] != A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS = 0;
-                if (dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS++;
+                a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
                 if (rediscover) {
                     checkFaultNode(a2b24xx, inode);
                 }
