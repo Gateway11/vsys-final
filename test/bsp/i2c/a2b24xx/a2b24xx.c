@@ -617,7 +617,6 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     if (lastNode < (a2b24xx->max_node_number - 1)) {
         //pr_warn("Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode + 1);
-        a2b24xx->SRFMISS = 0;
     }
 
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
@@ -642,6 +641,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
+                if (a2b24xx->SRFMISS && dataBuffer[1] != A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS = 0;
                 if (dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS++;
                 if (rediscover) {
                     checkFaultNode(a2b24xx, inode);
