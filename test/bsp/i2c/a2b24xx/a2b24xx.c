@@ -616,6 +616,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     if (lastNode < (a2b24xx->max_node_number - 1)) {
 //        if (lastNode < 0 || inode == A2B_INVALID_NODE
 //                || !(inode != lastNode && a2b24xx->SRFMISS < MAX_SRFMISS_FREQ)) {
+            //pr_warn("Fault detected: Node %d is the last node\n", lastNode);
             processFaultNode(a2b24xx, lastNode + 1);
             a2b24xx->SRFMISS = 0;
 //        }
