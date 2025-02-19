@@ -610,10 +610,8 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             }
         }
 //    }
-    if (lastNode >= 0 inode != A2B_INVALID_NODE &&  inode != lastNode) {
-        pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
-    }
-//    if (inode >= 0 && inode != lastNode && a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
+//    if (inode >= 0 && inode != lastNode /*&& a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ*/) {
+//        pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
 //        lastNode--;
 //    }
     if (lastNode < (a2b24xx->max_node_number - 1)) {
