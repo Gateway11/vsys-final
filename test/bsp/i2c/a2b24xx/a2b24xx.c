@@ -596,23 +596,20 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 
     mutex_lock(&a2b24xx->node_mutex);
 
-//    adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//    if (!(dataBuffer[0] & A2B_BITM_NODE_LAST)) {
-        for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-            if (adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
-                break;
-            }
-            if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
-                lastNode = i;
-                break;
-            }
+    for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+        if (adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
+            break;
         }
-//    }
-//    if (inode >= 0 && inode != lastNode /*&& a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ*/) {
-//        pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
-//        lastNode--;
-//    }
+        if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
+            lastNode = i;
+            break;
+        }
+    }
+    if (inode >= 0 && inode != lastNode /*&& a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ*/) {
+        pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
+        lastNode--;
+    }
     if (lastNode < (a2b24xx->max_node_number - 1)) {
         //pr_warn("Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode + 1);
