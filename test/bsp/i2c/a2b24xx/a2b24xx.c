@@ -40,7 +40,7 @@
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
-#define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS 
+#define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS
 #define A2B24XX_FAULT_CHECK_INTERVAL 6000
 
 struct a2b24xx {
@@ -423,7 +423,7 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
         return ret;
     }
 
-#if 1
+#if 0
     pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:", __func__, devAddr, writeBuffer[0], readLength);
     for (uint32_t i = 0; i < readLength; i++) {
         pr_cont("0x%02X ", readBuffer[i]);
@@ -591,16 +591,14 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //    }
 }
 
-//lastNode      2   -1  -1   0  1
-//   inode      1   -2  -1  -1  0
 static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
 
     mutex_lock(&a2b24xx->node_mutex);
 
-    //adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-    //if (!(dataBuffer[0] & A2B_BITM_NODE_LAST)) {
+//    adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
+//    if (!(dataBuffer[0] & A2B_BITM_NODE_LAST)) {
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
             if (adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
@@ -611,11 +609,15 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                 break;
             }
         }
-    //}
-    if (lastNode < 0 || !(inode != lastNode && a2b24xx->SRFMISS < MAX_SRFMISS_FREQ)) {
+//    }
+    if (lastNode >= 0 inode != A2B_INVALID_NODE &&  inode != lastNode) {
+        pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
+    }
+//    if (lastNode < 0 || inode == A2B_INVALID_NODE
+//            || !(inode != lastNode && a2b24xx->SRFMISS < MAX_SRFMISS_FREQ)) {
         processFaultNode(a2b24xx, lastNode + 1);
         a2b24xx->SRFMISS = 0;
-    }
+//    }
 
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
@@ -640,7 +642,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
                 if (rediscover) {
-                    a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : MAX_SRFMISS_FREQ;
+                    if (dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR) a2b24xx->SRFMISS++;
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
