@@ -613,13 +613,13 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     if (lastNode >= 0 inode != A2B_INVALID_NODE &&  inode != lastNode) {
         pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
     }
+//    if (inode >= 0 && inode != lastNode && a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
+//        lastNode--;
+//    }
     if (lastNode < (a2b24xx->max_node_number - 1)) {
-//        if (lastNode < 0 || inode == A2B_INVALID_NODE
-//                || !(inode != lastNode && a2b24xx->SRFMISS < MAX_SRFMISS_FREQ)) {
-            //pr_warn("Fault detected: Node %d is the last node\n", lastNode);
-            processFaultNode(a2b24xx, lastNode + 1);
-            a2b24xx->SRFMISS = 0;
-//        }
+        //pr_warn("Fault detected: Node %d is the last node\n", lastNode);
+        processFaultNode(a2b24xx, lastNode + 1);
+        a2b24xx->SRFMISS = 0;
     }
 
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
