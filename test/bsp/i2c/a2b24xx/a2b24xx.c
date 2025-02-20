@@ -542,8 +542,16 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
-        if (pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR
+        // simple
+        if ((pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR
                 && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
+        // advanced
+                /*|| (pOPUnit->nAddr == A2B_REG_UPSLOTS && pOPUnit->nAddrWidth == 1)
+        // optimized
+                || (pOPUnit->nAddr == A2B_REG_DISCVRY && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR)
+        // modified
+                || (pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR
+                 && ((pOPUnit + 1)->nAddr == A2B_REG_SWCTL && (pOPUnit + 1)->nAddrWidth == 1)*/)
             break;
 
         switch (pOPUnit->eOpCode) {
