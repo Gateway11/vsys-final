@@ -64,7 +64,7 @@ struct a2b24xx {
 
     uint8_t SRFMISS;
     uint8_t cycles[16];
-    uint8_t slave_pos[16];
+    uint16_t slave_pos[16];
     uint8_t max_node_number;
 
 #ifndef A2B_SETUP_ALSA
