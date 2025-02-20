@@ -793,12 +793,15 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
     for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
-        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY) {
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY
+                && a2b24xx->pA2BConfig[i].nDeviceAddr == A2B_MASTER_ADDR) {
             a2b24xx->cycles[node_number++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
-        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS) {
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS
+                && a2b24xx->pA2BConfig[i].nDeviceAddr == A2B_SLAVE_ADDR) {
             for (int32_t j = i; j > 0; j--) {
-                if (a2b24xx->pA2BConfig[j].nAddr == A2B_REG_NODEADR) {
+                if (a2b24xx->pA2BConfig[j].nAddr == A2B_REG_NODEADR
+                        && a2b24xx->pA2BConfig[i].nDeviceAddr == A2B_MASTER_ADDR) {
                     a2b24xx->slave_pos[a2b24xx->pA2BConfig[j].paConfigData[0]] = i;
                     break;
                 }
