@@ -584,7 +584,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                     //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
                     break;
                 }
-                mdelay(100);
+                mdelay(10);
             }
         }
 //    }
