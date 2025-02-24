@@ -83,7 +83,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device* dev);
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover);
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
@@ -626,7 +626,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
 
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
+static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
@@ -646,7 +646,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
-                if (rediscover) {
+                if (deepCheck) {
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
@@ -654,7 +654,7 @@ static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover) {
         }
         pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
-    } else if (rediscover) {
+    } else if (deepCheck) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
     }
     return -1;
