@@ -17,7 +17,6 @@ $(TARGET): $(OBJ)
 	-@xclip -sel clip < output.txt
 	-@#base64 -d output.txt | tar -xJf -
 
-
 copy:
 	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt 2097152 ]; then \
 		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
