@@ -83,7 +83,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device* dev);
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck);
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
@@ -626,7 +626,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
 
-static int8_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
