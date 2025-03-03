@@ -1,6 +1,6 @@
 NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
 #CROSSBIN = $(NV_TOPDIR)/aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
-#CROSSBIN = ../aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
+#CROSSBIN = ~/thor/ciu98/aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 CC = $(CROSSBIN)gcc
 
 CFLAGS = -Ia2b-commandlist -Wall -fvisibility=hidden -Os -flto# -g
