@@ -158,7 +158,7 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
     fd = open(SPI_DEV_PATH, O_RDWR);
     if (fd < 0) {
         perror("Failed to open the SPI device " SPI_DEV_PATH);
-        return A2B_NULL;
+        //return A2B_NULL;
     }
 
     /*

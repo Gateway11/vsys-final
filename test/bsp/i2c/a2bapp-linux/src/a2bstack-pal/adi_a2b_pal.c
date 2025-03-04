@@ -265,8 +265,7 @@ a2b_Handle a2b_pal_I2cOpenFunc(a2b_I2cAddrFmt fmt,
 
     if (fd < 0) {
         perror("Unable to open I2C device " I2C_DEV_PATH);
-        //return A2B_NULL; //TODO
-        return -1;
+        //return A2B_NULL;
     }
 
     /* Set timeout and retry count */
