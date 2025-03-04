@@ -26,3 +26,4 @@ hellomake
 r2ssp/third_party/openmax_dl/dl/sp/src/test
 3rd-party/speexdsp-*
 *.swp
+test/bsp/i2c/a2bapp-linux/a2bapp-linux
