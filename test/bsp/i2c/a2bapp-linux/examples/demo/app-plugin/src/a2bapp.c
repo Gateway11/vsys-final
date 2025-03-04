@@ -604,7 +604,9 @@ static a2b_Int32 a2b_load(a2b_App_t *pApp_Info)
 		a2b_setSpiIntOnGpioStat(pApp_Info->ctx, nFlagVal);
 		if(nFlagVal == 0x1U)
 		{
+#ifdef ENABLE_INTERRUPT_PROCESS
 			(void)adi_a2b_EnablePinInterrupt(0u, (void*)&a2b_SpiEventCallbk, (uint32_t)pApp_Info, 1u);
+#endif
 		}
 	}
 #endif /* ENABLE_AD243x_SUPPORT */
