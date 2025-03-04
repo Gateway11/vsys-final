@@ -2196,7 +2196,7 @@ static void a2bapp_onI2CError(struct a2b_Msg *msg, a2b_Handle userData)
 
 	if(I2CError->nodeAddr == A2B_NODEADDR_MASTER)
 	{
-		A2B_APP_LOG("\n\Incorrect I2C address at main node\n\r");
+		A2B_APP_LOG("\n\rIncorrect I2C address at main node\n\r");
 	}
 	else
 	{

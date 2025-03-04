@@ -12,7 +12,8 @@ CFLAGS = $(addprefix -I, $(shell find a2bstack -name "inc")) \
          -Isrc \
          -Iexamples/demo/app-plugin/inc \
          -Wno-unused-variable \
-         -Wall -fvisibility=hidden -Os -flto# -g
+         -Wno-unused-function \
+         -Wall -fvisibility=hidden -Os #-flto# -g
 
 LDFLAGS = -Wl,-s
 
