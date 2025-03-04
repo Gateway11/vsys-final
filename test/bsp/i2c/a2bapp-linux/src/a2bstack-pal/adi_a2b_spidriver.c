@@ -152,27 +152,28 @@ uint32 adi_a2b_spiInit(A2B_ECB* ecb)
 a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
 {
     A2B_UNUSED( ecb );
-
-    static int32_t fd;
+    static int32_t fd[2];
 #if 0
-    fd = open(SPI_DEV_PATH, O_RDWR);
-    if (fd < 0) {
-        perror("Failed to open the SPI device " SPI_DEV_PATH);
-        //return A2B_NULL;
+    for (uint8_t i = 0; i < ARRAY_SIZE(fd); i++) {
+        fd[i] = open(SPI_DEV_PATH, O_RDWR);
+        if (fd[i] < 0) {
+            perror("Failed to open the SPI device " SPI_DEV_PATH);
+            //return A2B_NULL;
+        }
+
+        /*
+         * spi mode
+         */
+        ret = ioctl(fd[i], SPI_IOC_WR_MODE32, &mode);
+        if (ret == -1)
+            perror("can't set spi mode");
+
+        ret = ioctl(fd[i], SPI_IOC_RD_MODE32, &mode);
+        if (ret == -1)
+            perror("can't get spi mode");
     }
-
-    /*
-     * spi mode
-     */
-    ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
-    if (ret == -1)
-        perror("can't set spi mode");
-
-    ret = ioctl(fd, SPI_IOC_RD_MODE32, &mode);
-    if (ret == -1)
-        perror("can't get spi mode");
 #endif
-    return &fd;
+    return fd;
 }
 
 /*****************************************************************************/
@@ -265,6 +266,7 @@ uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a
 uint32 adi_a2b_spiClose(a2b_Handle hnd)
 {
     close(*(int32_t *)hnd);
+    close(*(((int32_t *)hnd) + 1));
     return 0;
 }
 
