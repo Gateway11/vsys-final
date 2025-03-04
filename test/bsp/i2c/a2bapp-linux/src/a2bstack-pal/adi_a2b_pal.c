@@ -297,10 +297,7 @@ A2B_PAL_L1_CODE
 a2b_HResult a2b_pal_I2cReadFunc(a2b_Handle hnd,
         a2b_UInt16 addr, a2b_UInt16 nRead, a2b_Byte* rBuf)
 {
-	a2b_HResult nReturnValue = NULL;
-    //nReturnValue = adi_a2b_TwiRead(hnd, addr, nRead, rBuf);
-
-    return nReturnValue;
+    return a2b_pal_I2cWriteReadFunc(hnd, addr, 1, rBuf, nRead - 1, rBuf + 1);
 }
 
 /*****************************************************************************/
