@@ -591,12 +591,13 @@ a2b_HResult a2b_pal_TimerInitFunc(A2B_ECB* ecb)
 A2B_PAL_L1_CODE
 a2b_UInt32 a2b_pal_TimerGetSysTimeFunc()
 {
-#if 0
+#if 1
     struct timeval tv;
     gettimeofday(&tv, NULL);  // Get the current time
 
-    long long milliseconds = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-    printf("Current time in milliseconds: %lld\n", milliseconds);
+    //long long milliseconds = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+    uint32_t milliseconds = tv.tv_usec / 1000;
+    //printf("Current time in milliseconds: %lld\n", milliseconds);
 
     return milliseconds;
 #else
