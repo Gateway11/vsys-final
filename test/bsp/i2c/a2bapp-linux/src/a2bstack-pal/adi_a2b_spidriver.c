@@ -198,6 +198,7 @@ uint32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_By
 	A2B_UNUSED( addr );
 
     transfer(*(int32_t *)hnd, NULL, rBuf, nRead);
+    //read(*(int32_t *)hnd, rBuf, nRead);
     return 0;
 }
 
@@ -223,6 +224,7 @@ uint32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, cons
 	A2B_UNUSED( addr );
 
     transfer(*(int32_t *)hnd, wBuf, NULL, nWrite);
+    //write(*(int32_t *)hnd, wBuf, nWrite);
     return 0;
 }
 
