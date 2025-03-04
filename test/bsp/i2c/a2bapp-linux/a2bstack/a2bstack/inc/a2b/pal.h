@@ -120,7 +120,7 @@ typedef a2b_HResult(A2B_CALL * a2b_SpiFullDuplexFunc)(a2b_Handle hnd, a2b_UInt16
 
 typedef a2b_HResult (A2B_CALL * a2b_TimerInitFunc)(A2B_ECB* ecb);
 /* Must return time in milliseconds */
-typedef a2b_UInt32 (A2B_CALL * a2b_TimerGetSysTimeFunc)(void);
+typedef a2b_UInt64 (A2B_CALL * a2b_TimerGetSysTimeFunc)(void);
 typedef a2b_HResult (A2B_CALL * a2b_TimerShutdownFunc)(A2B_ECB* ecb);
 
 /** \} -- a2bstack_pal_timer */

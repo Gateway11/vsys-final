@@ -292,7 +292,7 @@ a2b_tracePrintPrefix
 )
 {
 	void* args[4];
-	a2b_UInt32 curTime = 0;
+	a2b_UInt64 curTime = 0;
 
 	if ( A2B_NULL != ctx )
 	{

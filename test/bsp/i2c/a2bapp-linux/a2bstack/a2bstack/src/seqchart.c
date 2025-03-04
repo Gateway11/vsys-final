@@ -162,7 +162,7 @@ a2b_seqChartLogTime
     struct a2b_StackContext* ctx
     )
 {
-    a2b_UInt32 curTime;
+    a2b_UInt64 curTime;
     if ( A2B_NULL != ctx )
     {
         curTime = ctx->stk->pal.timerGetSysTime();

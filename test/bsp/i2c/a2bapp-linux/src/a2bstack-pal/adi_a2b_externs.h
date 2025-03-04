@@ -54,7 +54,7 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
 uint32_t a2b_pal_I2cShutdownFunc(A2B_ECB* ecb);
 a2b_HResult a2b_pal_I2cCloseFunc(a2b_Handle hnd);
 a2b_HResult a2b_pal_TimerInitFunc(A2B_ECB* ecb);
-a2b_UInt32 a2b_pal_TimerGetSysTimeFunc();
+a2b_UInt64 a2b_pal_TimerGetSysTimeFunc();
 a2b_HResult a2b_pal_TimerShutdownFunc(A2B_ECB* ecb);
 a2b_HResult a2b_pal_AudioInitFunc(A2B_ECB* ecb);
 a2b_Handle a2b_pal_AudioOpenFunc(void);

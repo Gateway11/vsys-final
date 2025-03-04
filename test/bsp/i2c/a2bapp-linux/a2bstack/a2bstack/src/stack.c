@@ -1187,7 +1187,7 @@ a2b_stackTick
 )
 {
 #ifdef A2B_FEATURE_TRACE
-	a2b_UInt32 curTime;
+	a2b_UInt64 curTime;
 #endif
 
 	if ( (A2B_NULL != ctx) && (A2B_DOMAIN_APP == ctx->domain) )

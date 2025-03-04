@@ -62,7 +62,7 @@ typedef struct a2b_Timer
     a2b_UInt32          repeat;
 
     /** The base epoch the timer started (units = msec) */
-    a2b_UInt32          lastTime;
+    a2b_UInt64          lastTime;
 
     /** Pointer to opaque data passed to timer callback */
     a2b_Handle          userData;

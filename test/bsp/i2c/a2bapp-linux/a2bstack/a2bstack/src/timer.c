@@ -924,7 +924,7 @@ a2b_ActiveDelay
 		a2b_UInt32 nTime
     )
 {
-	a2b_UInt32 nStartTime, nCurrTime;
+	a2b_UInt64 nStartTime, nCurrTime;
 
 	nCurrTime = ctx->stk->pal.timerGetSysTime();
 	nStartTime = nCurrTime;

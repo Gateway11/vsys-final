@@ -60,6 +60,7 @@ and its licensors.
 #include "adi_a2b_spidriver.h"
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
@@ -589,14 +590,14 @@ a2b_HResult a2b_pal_TimerInitFunc(A2B_ECB* ecb)
 */
 /*****************************************************************************/
 A2B_PAL_L1_CODE
-a2b_UInt32 a2b_pal_TimerGetSysTimeFunc()
+a2b_UInt64 a2b_pal_TimerGetSysTimeFunc()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);  // Get the current time
 
-    //long long milliseconds = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+    uint64_t milliseconds = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
     //uint32_t milliseconds = tv.tv_usec / 1000;
-    uint32_t milliseconds = clock();
+    //uint32_t milliseconds = clock();
     //printf("Current time in milliseconds: %lld\n", milliseconds);
 
     return milliseconds;
