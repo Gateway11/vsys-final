@@ -260,20 +260,20 @@ A2B_PAL_L3_CODE
 a2b_Handle a2b_pal_I2cOpenFunc(a2b_I2cAddrFmt fmt,
         a2b_I2cBusSpeed speed, A2B_ECB* ecb)
 {
-    static int32_t handle;
-    handle  = open(I2C_DEV_PATH, O_RDWR);
+    static int32_t fd;
+    fd = open(I2C_DEV_PATH, O_RDWR);
 
-    if (handle < 0) {
+    if (fd < 0) {
         perror("Unable to open I2C device " I2C_DEV_PATH);
-        //return NULL; //TODO
+        //return A2B_NULL; //TODO
         return -1;
     }
 
     /* Set timeout and retry count */
-    ioctl(handle, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
-    ioctl(handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
+    ioctl(fd, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
+    ioctl(fd, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
 
-    ecb->palEcb.i2chnd = &handle;
+    ecb->palEcb.i2chnd = &fd;
     return ecb->palEcb.i2chnd;
 }
 

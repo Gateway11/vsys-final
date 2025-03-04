@@ -39,44 +39,89 @@ and its licensors.
  */
  
 /*============= I N C L U D E S =============*/
-//#include <drivers/spi/adi_spi.h>
+#include <linux/spi/spidev.h>
 #include "adi_a2b_datatypes.h"
 #include "adi_a2b_framework.h"
 #include "adi_a2b_externs.h"
 #include "adi_a2b_spidriver.h"
-#include "error.h"
 
 /*============= D E F I N E S =============*/
-
-#define SPI_INTERRPUT_SID		(0x15u)
-
-#define SPI_BLOCKING_MODE		(0x01u)
-
+#define SPI_DEV_PATH                    "/dev/spidev7.0"
 
 /*============= D A T A =============*/
-
-/*! SPI driver handle */
-//static ADI_SPI_HANDLE hDevice = 0;
-
-/*! SPI operation state */
-static ADI_A2B_SPI_OPSTATE eOp;
-
-/*! SPI driver memory */
-//static uint8_t SPIDriverMemory[ADI_SPI_DMA_MEMORY_SIZE];
-
-#pragma section("L3_data")
-static a2b_UInt8 readBuf[512];
-#pragma section("L3_data")
-static a2b_UInt8 writeBuf[512];
+static uint32_t mode;
+static uint8_t bits = 8;
+static uint32_t speed = 500000;
+static uint16_t delay;
+static int verbose = 1;
 
 /*============= C O D E =============*/
-/*
-** Function Prototype section
-*/
 
-/*
-** Function Definition section
-*/
+static void hex_dump(const void *src, size_t length, size_t line_size,
+             char *prefix)
+{
+    int i = 0;
+    const unsigned char *address = src;
+    const unsigned char *line = address;
+    unsigned char c;
+
+    printf("%s | ", prefix);
+    while (length-- > 0) {
+        printf("%02X ", *address++);
+        if (!(++i % line_size) || (length == 0 && i % line_size)) {
+            if (length == 0) {
+                while (i++ % line_size)
+                    printf("__ ");
+            }
+            printf(" | ");  /* right close */
+            while (line < address) {
+                c = *line++;
+                printf("%c", (c < 33 || c == 255) ? 0x2E : c);
+            }
+            printf("\n");
+            if (length > 0)
+                printf("%s | ", prefix);
+        }
+    }
+}
+
+static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
+{
+    int ret;
+    struct spi_ioc_transfer tr = {
+        .tx_buf = (unsigned long)tx,
+        .rx_buf = (unsigned long)rx,
+        .len = len,
+        .delay_usecs = delay,
+        .speed_hz = speed,
+        .bits_per_word = bits,
+    };
+
+    if (mode & SPI_TX_QUAD)
+        tr.tx_nbits = 4;
+    else if (mode & SPI_TX_DUAL)
+        tr.tx_nbits = 2;
+    if (mode & SPI_RX_QUAD)
+        tr.rx_nbits = 4;
+    else if (mode & SPI_RX_DUAL)
+        tr.rx_nbits = 2;
+    if (!(mode & SPI_LOOP)) {
+        if (mode & (SPI_TX_QUAD | SPI_TX_DUAL))
+            tr.rx_buf = 0;
+        else if (mode & (SPI_RX_QUAD | SPI_RX_DUAL))
+            tr.tx_buf = 0;
+    }
+
+    ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+    if (ret < 1)
+        perror("can't send spi message");
+
+    if (verbose && tx)
+        hex_dump(tx, len, 32, "TX");
+
+    if (verbose && rx)
+        hex_dump(rx, len, 32, "RX");
+}
 
 uint32 adi_a2b_spiInit(A2B_ECB* ecb)
 {
@@ -106,52 +151,28 @@ uint32 adi_a2b_spiInit(A2B_ECB* ecb)
 #pragma section("L3_code")
 a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
 {
-	A2B_UNUSED( ecb );
+    A2B_UNUSED( ecb );
 
+    static int32_t fd;
 #if 0
-	/* Driver API eResult code */
-	ADI_SPI_RESULT eResult = ADI_SPI_FAILURE;
+    fd = open(SPI_DEV_PATH, O_RDWR);
+    if (fd < 0) {
+        perror("Failed to open the SPI device " SPI_DEV_PATH);
+        return A2B_NULL;
+    }
 
-	if (adi_spi_Open(0u, SPIDriverMemory, (uint32_t)ADI_SPI_DMA_MEMORY_SIZE, &hDevice) == ADI_SPI_SUCCESS)
-	{
-		/* device in master of the SPI interface */
-		eResult  = adi_spi_SetMaster(hDevice, true);
+    /*
+     * spi mode
+     */
+    ret = ioctl(fd, SPI_IOC_WR_MODE32, &mode);
+    if (ret == -1)
+        perror("can't set spi mode");
 
-		/* SPI data transfers are 16 bit */
-		eResult |= (uint32_t)adi_spi_SetWordSize(hDevice, ADI_SPI_TRANSFER_8BIT);
-
-		/* IF (Set SPI Transfer initiate to Tx failed) */
-		eResult |= (uint32_t)adi_spi_SetTransferInitiateMode (hDevice, ADI_SPI_TX_INITIATE_INTERRUPT) != ADI_SPI_SUCCESS;
-
-		/* SPI slave select in controlled by software not hardware */
-		eResult |= (uint32_t)adi_spi_SetHwSlaveSelect(hDevice, false);
-
-		/* SPI slave select is on SPI slave select 1 pin */
-		eResult |= (uint32_t)adi_spi_SetSlaveSelect(hDevice, ADI_SPI_SSEL_ENABLE1);
-
-		/* SPI clock is SCLK divided by 1000 + 1 */
-		eResult |= (uint32_t)adi_spi_SetClock(hDevice, 9u);
-
-		eResult |= (uint32_t)adi_spi_SetClockPolarity(hDevice, false);
-
-		/* interrupt mode, i.e no dma */
-		eResult |= (uint32_t)adi_spi_EnableDmaMode(hDevice, false);
-	}
-	else
-	{
-		eResult = ADI_SPI_FAILURE;
-	}
-
-	if(eResult != ADI_SPI_SUCCESS)
-	{
-		hDevice = 0;
-	}
-
-	eOp = ADI_A2B_SPI_NOP;
-
-	return ((a2b_Handle)hDevice);
+    ret = ioctl(fd, SPI_IOC_RD_MODE32, &mode);
+    if (ret == -1)
+        perror("can't get spi mode");
 #endif
-    return malloc(100); //TODO
+    return &fd;
 }
 
 /*****************************************************************************/
@@ -176,25 +197,7 @@ uint32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_By
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
 
-#if 0
-	ADI_SPI_RESULT 				eResult;	/* Driver API eResult code */
-	static ADI_SPI_TRANSCEIVER 	oSPIRead;	/* Transceiver configurations */
-
-	oSPIRead.pPrologue 			= NULL;
-	oSPIRead.PrologueBytes 		= 0;
-	oSPIRead.pTransmitter 		= NULL;
-	oSPIRead.TransmitterBytes 	= 0u;
-	oSPIRead.pReceiver 			= rBuf;
-	oSPIRead.ReceiverBytes 		= nRead;
-
-
-    /* submit the SPI transceiver's buffers */
-	eResult = adi_spi_SubmitBuffer(hDevice, &oSPIRead);
-
-	eOp = ADI_A2B_SPI_READ;
-
-#endif
-    //return (uint32)eResult;
+    transfer(*(int32_t *)hnd, NULL, rBuf, nRead);
     return 0;
 }
 
@@ -219,6 +222,7 @@ uint32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, cons
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
 
+    transfer(*(int32_t *)hnd, wBuf, NULL, nWrite);
     return 0;
 }
 
@@ -228,6 +232,7 @@ uint32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, 
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
 
+    transfer(*(int32_t *)hnd, wBuf, rBuf, nWrite > nRead ? nWrite : nRead);
     return 0;
 }
 
@@ -237,6 +242,7 @@ uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
 
+    transfer(*(int32_t *)hnd, wBuf, rBuf, nWrite > nRead ? nWrite : nRead);
     return 0;
 }
 /*****************************************************************************/
@@ -256,17 +262,7 @@ uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a
 #pragma section("L3_code")
 uint32 adi_a2b_spiClose(a2b_Handle hnd)
 {
-	A2B_UNUSED( hnd );
-
-    /* driver API eResult code */
-	//ADI_SPI_RESULT eResult;
-
-	/* close the SPI driver */
-	//eResult = adi_spi_Close(hDevice);
-
-	//eOp = ADI_A2B_SPI_NOP;
-                            
-    //return (uint32)eResult;
+    close(*(int32_t *)hnd);
     return 0;
 }
 
