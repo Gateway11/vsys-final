@@ -39,11 +39,15 @@ and its licensors.
  */
  
 /*============= I N C L U D E S =============*/
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <linux/spi/spidev.h>
+
 #include "adi_a2b_datatypes.h"
-#include "adi_a2b_framework.h"
 #include "adi_a2b_externs.h"
 #include "adi_a2b_spidriver.h"
+#include "a2b/error.h"
 
 /*============= D E F I N E S =============*/
 #define SPI_DEV_PATH                    "/dev/spidev7.0"
@@ -127,8 +131,7 @@ uint32 adi_a2b_spiInit(A2B_ECB* ecb)
 {
 	A2B_UNUSED( ecb );
 
-	//return A2B_RESULT_SUCCESS;
-    return 0;
+	return A2B_RESULT_SUCCESS;
 }
 
 /*****************************************************************************/
@@ -153,8 +156,9 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
 {
     A2B_UNUSED( ecb );
     static int32_t fd[2];
+    int32_t ret;
 #if 0
-    for (uint8_t i = 0; i < ARRAY_SIZE(fd); i++) {
+    for (uint8_t i = 0; i < A2B_ARRAY_SIZE(fd); i++) {
         fd[i] = open(SPI_DEV_PATH, O_RDWR);
         if (fd[i] < 0) {
             perror("Failed to open the SPI device " SPI_DEV_PATH);
@@ -173,6 +177,7 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
             perror("can't get spi mode");
     }
 #endif
+    //return A2B_RESULT_SUCCESS;
     return fd;
 }
 
@@ -200,7 +205,7 @@ uint32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_By
 
     transfer(*(int32_t *)hnd, NULL, rBuf, nRead);
     //read(*(int32_t *)hnd, rBuf, nRead);
-    return 0;
+    return A2B_RESULT_SUCCESS;
 }
 
 /*****************************************************************************/
@@ -226,7 +231,7 @@ uint32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, cons
 
     transfer(*(int32_t *)hnd, wBuf, NULL, nWrite);
     //write(*(int32_t *)hnd, wBuf, nWrite);
-    return 0;
+    return A2B_RESULT_SUCCESS;
 }
 
 #pragma section("L1_code")
@@ -236,7 +241,7 @@ uint32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, 
 	A2B_UNUSED( addr );
 
     transfer(*(int32_t *)hnd, wBuf, rBuf, nWrite > nRead ? nWrite : nRead);
-    return 0;
+    return A2B_RESULT_SUCCESS;
 }
 
 #pragma section("L1_code")
@@ -246,7 +251,7 @@ uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a
 	A2B_UNUSED( addr );
 
     transfer(*(int32_t *)hnd, wBuf, rBuf, nWrite > nRead ? nWrite : nRead);
-    return 0;
+    return A2B_RESULT_SUCCESS;
 }
 /*****************************************************************************/
 /*!
@@ -267,7 +272,7 @@ uint32 adi_a2b_spiClose(a2b_Handle hnd)
 {
     close(*(int32_t *)hnd);
     close(*(((int32_t *)hnd) + 1));
-    return 0;
+    return A2B_RESULT_SUCCESS;
 }
 
 
