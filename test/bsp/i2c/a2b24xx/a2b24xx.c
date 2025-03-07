@@ -41,7 +41,7 @@
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
 #define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS
-#define A2B24XX_FAULT_CHECK_INTERVAL 6000
+#define A2B24XX_FAULT_CHECK_INTERVAL 5000
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -222,6 +222,13 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
 
     // Output total parsed field count
     // pr_info("Total parsed fields: %d\n", parseCount);
+
+    // TODO
+    // Do not set this register, as it will cause many BECOVF interrupts during hot-plug operations
+    if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
+        config->eOpCode = A2B24XX_INVALID;
+        return;//continue;
+    }
 
     if (parseCount >= 5) {
         if (strcmp(instr, "writeXbytes") == 0) {
@@ -542,17 +549,14 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     for (uint32_t i = a2b24xx->slave_pos[inode]; i < a2b24xx->actionCount; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
-        // simple
+        // Simple Advanced Optimized Modified
         if ((pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR
-                && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
-        // advanced
-                /*|| (pOPUnit->nAddr == A2B_REG_UPSLOTS && pOPUnit->nAddrWidth == 1)
-        // optimized
+                 && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
                 || (pOPUnit->nAddr == A2B_REG_DISCVRY && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR)
-        // modified
-                || (pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_MASTER_ADDR
-                 && ((pOPUnit + 1)->nAddr == A2B_REG_SWCTL && (pOPUnit + 1)->nAddrWidth == 1)*/)
+                || (pOPUnit->nAddr == A2B_REG_SWCTL && pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
+
+        pr_info("iiiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
 
         switch (pOPUnit->eOpCode) {
             case A2B24XX_WRITE:
@@ -589,10 +593,12 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
             for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
-                    //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
+                    pr_warn("Node %d processing failed. Stopping further discovery\n", i);
                     break;
                 }
                 mdelay(10);
+                uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
+                adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
             }
         }
 //    }
@@ -607,14 +613,16 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
         adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         if (adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
+            // If discovery is not completed during system boot, the A2B_NODE.LAST bit for the last node will not be set
+            lastNode = i - 1;
             break;
         }
         if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
-            lastNode = i;
+            lastNode = i; // Set lastNode when the A2B_NODE.LAST bit is found
             break;
         }
     }
-    if (inode >= 0 && inode != lastNode /*&& a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ*/) {
+    if (inode >= 0 && inode < lastNode /*&& a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ*/) {
         pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
         lastNode--;
     }
@@ -749,30 +757,42 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
-        pr_err("Received data: Slave(%d), MIC(%d)\n", slave_id, mic_id);
+    if (strncmp(a2b24xx->command_buffer, "RX0 ENABLE", 10) == 0) {
         mutex_lock(&a2b24xx->node_mutex);
         for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-            if (slave_id < 0 || slave_id >= a2b24xx->max_node_number) {
-                adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
-            } if (slave_id == i) {
-                switch(mic_id) {
-                    case 0:
-                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
-                        break;
-                    case 1:
-                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x14});
-                        break;
-                    default:
-                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
-                        break;
-                }
-            } else {
-                adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
-            }
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x11});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
         }
         mutex_unlock(&a2b24xx->node_mutex); // Release lock
+        return len;
+    }
+
+    if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
+        if (slave_id < a2b24xx->max_node_number) {
+            mutex_lock(&a2b24xx->node_mutex);
+            for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+                if (slave_id < 0) {
+                    adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
+                } else if (slave_id == i) {
+                    switch(mic_id) {
+                        case 0:
+                            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
+                            break;
+                        case 1:
+                            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x14});
+                            break;
+                        default:
+                            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
+                            break;
+                    }
+                } else {
+                    adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+                }
+            }
+            mutex_unlock(&a2b24xx->node_mutex); // Release lock
+        }
     }
     return len;
 }
