@@ -41,6 +41,7 @@
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
 #define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS
+#define MAX_RETRIES 2           // Maximum
 #define A2B24XX_FAULT_CHECK_INTERVAL 5000
 
 struct a2b24xx {
@@ -491,6 +492,7 @@ const IntTypeString_t intTypeString[] = {
 
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
+    //uint8_t retryCount = 0;
 
     pr_info("Processing node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
@@ -526,11 +528,24 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //          O Open the Slave node0 switch
 //          O Clear interrupts, if any
 //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
+#if 0
+retry:
+    if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
+        if (retryCount++ < MAX_RETRIES) {
+            mdelay(25);
+            goto retry:
+        }
+        //adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
+        adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+        return false;
+    }
+#else
     if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         //adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
         adi_a2b_I2CWrite(dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
         return false;
     }
+#endif
 
 //6. If rediscovery is successful (got the slave node discovery interrupt (INTTYPE==0x18),
 //          O Update SWCTL=0x01 in all upsteam nodes
