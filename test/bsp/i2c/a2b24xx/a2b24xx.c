@@ -228,7 +228,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     // Do not set this register, as it will cause many BECOVF interrupts during hot-plug operations
     if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
         config->eOpCode = A2B24XX_INVALID;
-        return;//continue;
+        return;
     }
 
     if (parseCount >= 5) {
