@@ -41,7 +41,7 @@
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
 #define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS
-#define MAX_RETRIES 2           // Maximum
+#define MAX_RETRIES 2           // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL 5000
 
 struct a2b24xx {
@@ -84,7 +84,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device* dev);
-static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck);
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {
     { 0x00, 0x50 }
@@ -528,7 +528,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 //          O Open the Slave node0 switch
 //          O Clear interrupts, if any
 //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
-retry:
+//retry:
     if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         if (++retryCount < MAX_RETRIES) {
             //mdelay(25);
@@ -563,7 +563,7 @@ retry:
                 || (pOPUnit->nAddr == A2B_REG_SWCTL && pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
 
-        pr_info("iiiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
+        pr_info("iiooooooooiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
 
         switch (pOPUnit->eOpCode) {
             case A2B24XX_WRITE:
@@ -634,7 +634,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         lastNode--;
     }
     if (lastNode < (a2b24xx->max_node_number - 1)) {
-        //pr_warn("Fault detected: Node %d is the last node\n", lastNode);
+        pr_warn("Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode + 1);
     }
 
@@ -743,9 +743,11 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
                         const char __user *buf, size_t count, loff_t *ppos)
 {
     struct a2b24xx *a2b24xx = file->private_data;
-    size_t len = count < COMMAND_SIZE - 1 ? count : COMMAND_SIZE - 1;
-    int32_t slave_id, mic_id = -1;
+    int32_t node_addr, mic = -1;
+    uint8_t params[4] = {0};
+    uint8_t config[] = {0x11, 0x91};
 
+    size_t len = min(count, sizeof(a2b24xx->command_buffer ) - 1);
     if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
@@ -764,26 +766,28 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "RX0 ENABLE", 10) == 0) {
-        mutex_lock(&a2b24xx->node_mutex);
-        for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x11});
+    if (sscanf(a2b24xx->command_buffer, "RX SLAVE%hhd %hhd", &params[0], &params[1]) == 2) {
+        pr_info("RX SLAVE(%d) (%#02x)\n", params[0], config[params[1]]);
+        if (params[0] < a2b24xx->max_node_number && params[1] < sizeof(config)) {
+            mutex_lock(&a2b24xx->node_mutex);
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            mutex_unlock(&a2b24xx->node_mutex); // Release lock
         }
-        mutex_unlock(&a2b24xx->node_mutex); // Release lock
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "SLAVE%d MIC%d", &slave_id, &mic_id) >= 1) {
-        if (slave_id < a2b24xx->max_node_number) {
+    if (sscanf(a2b24xx->command_buffer, "PDM SLAVE%d MIC%d", &node_addr, &mic) >= 1) {
+        pr_info("PCM SLAVE(%d) MIC(%d)\n", node_addr, mic);
+        if (node_addr < a2b24xx->max_node_number) {
             mutex_lock(&a2b24xx->node_mutex);
             for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-                if (slave_id < 0) {
+                if (node_addr < 0) {
                     adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
-                } else if (slave_id == i) {
-                    switch(mic_id) {
+                } else if (node_addr == i) {
+                    switch(mic) {
                         case 0:
                             adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
                             break;
