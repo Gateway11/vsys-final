@@ -817,10 +817,10 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
        "  FAULT CHECK               - Cancel fault check operation\n"
        "    Example: echo \"FAULT CHECK\" > /dev/a2b_ctrl\n"
        "\n"
-       "  RX SLAVE<X> <P>           - Configure Slave node <X> with parameter <P> (0 or 1)\n"
+       "  RX SLAVE<X> <P>           - Configure RX PIN of Slave node <X> with parameter <P> (0 or 1)\n"
        "    Example: echo \"RX SLAVE3 1\" > /dev/a2b_ctrl\n"
        "\n"
-       "  PDM SLAVE<X> MIC<ID>      - Configure PDM Slave node <X> and microphone ID <ID> (0 or 1)\n"
+       "  PDM SLAVE<X> MIC<ID>      - Enable microphone <ID> (0 or 1) for PDM of Slave node <X>\n"
        "    Example: echo \"PDM SLAVE2 MIC1\" > /dev/a2b_ctrl\n");
 
     return len;
