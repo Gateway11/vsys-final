@@ -804,6 +804,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             }
             mutex_unlock(&a2b24xx->node_mutex); // Release lock
         }
+        return len;
     }
 
     pr_info("Usage:\n"
