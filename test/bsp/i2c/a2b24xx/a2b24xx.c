@@ -604,7 +604,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                     break;
                 }
                 mdelay(10);
-                processInterrupt(a2b24xx, false); // Clear the DDERR interrupt, if any
+                processInterrupt(a2b24xx, false); // Clear the DDERR interrupt
             }
         }
 //    }
