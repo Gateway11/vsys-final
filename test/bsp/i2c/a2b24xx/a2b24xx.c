@@ -44,6 +44,31 @@
 #define MAX_RETRIES 2           // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL 5000
 
+/*
+ * Recommendation for BECCTL, for normal operation
+ *
+ * Do not enable reporting of individual bit errors (CRCERR, DPERR, DDERR, HDCNTERR, ICRCERR).
+ * - The A2B transceiver automatically takes action on these errors (like repeating last known sample,
+ *   ignoring erroneous interrupt, and retrying).
+ * - Even if individual bit error reporting is enabled, the Host DSP may not need to do any corrective action.
+ *
+ * Instead, count the bit errors in the Bit Error Counter (BECNT) and take the required action if excessive bit errors.
+ * For example, in most systems, counting CRC errors in the BECNT register could be sufficient.
+ * - Mask all Bit Failure Interrupts, except for Bit Error Count Overflow.
+ *
+ * -------------------------------------------------------------------------------------
+ * |            | Master | Slave  | Comment                                            |
+ * -------------------------------------------------------------------------------------
+ * | INTMSKO    | 0x70   | 0x70   | Interrupt enabled for SRFERR, BECOVF, and PWRERR   |
+ * -------------------------------------------------------------------------------------
+ * | INTMSK2    | 0x0B   |  --    | Interrupt enabled for SLVIRQ, I2CERR, and DSCDONE  |
+ * -------------------------------------------------------------------------------------
+ * | BECCTL     | 0xE4   | 0xE4   | Configuration example: Threshold 256, ENCRC        |
+ * -------------------------------------------------------------------------------------
+ * Same settings should be used for all nodes
+ */
+//#define ENABLE_BECCTL
+
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;
@@ -224,12 +249,12 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     // Output total parsed field count
     // pr_info("Total parsed fields: %d\n", parseCount);
 
-    // TODO
-    // Do not set this register, as it will cause many BECOVF interrupts during hot-plug operations
+#ifndef ENABLE_BECCTL
     if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
         config->eOpCode = A2B24XX_INVALID;
         return;
     }
+#endif
 
     if (parseCount >= 5) {
         if (strcmp(instr, "writeXbytes") == 0) {
@@ -500,6 +525,11 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
     if (inode == 0 || inode >= a2b24xx->max_node_number) return false;
 
+#ifdef ENABLE_BECCTL
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, 0x80});
+    adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_BECNT, 0x00});
+#endif
+
 //https://ez.analog.com/a2b/f/q-a/536836/a2b-hotpluggable-or-how-to-resync-the-bus
 //1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
@@ -604,7 +634,8 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                     break;
                 }
                 mdelay(10);
-                processInterrupt(a2b24xx, false); // Clear the DDERR interrupt
+                uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
+                adi_a2b_I2CRead(a2b24xx->dev, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
             }
         }
 //    }
@@ -764,7 +795,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     }
 
     if (sscanf(a2b24xx->command_buffer, "RX SLAVE%hhd %hhd", &params[0], &params[1]) == 2) {
-        pr_info("RX SLAVE(%d) (%#02x)\n", params[0], config[params[1]]);
+        pr_info("RX SLAVE(%d) (%d)\n", params[0], params[1]);
         if (params[0] < a2b24xx->max_node_number && params[1] < sizeof(config)) {
             mutex_lock(&a2b24xx->node_mutex);
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
