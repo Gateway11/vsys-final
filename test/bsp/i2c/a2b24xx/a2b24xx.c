@@ -807,7 +807,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     }
 
     if (sscanf(a2b24xx->command_buffer, "PDM SLAVE%d MIC%d", &node_addr, &mic) >= 1) {
-        pr_info("PCM SLAVE(%d) MIC(%d)\n", node_addr, mic);
+        pr_info("PDM SLAVE(%d) MIC(%d)\n", node_addr, mic);
         if (node_addr < a2b24xx->max_node_number) {
             mutex_lock(&a2b24xx->node_mutex);
             for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
