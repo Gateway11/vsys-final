@@ -519,11 +519,11 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
     uint8_t retryCount = 0;
 
+    if (inode == 0 || inode >= a2b24xx->max_node_number) return false;
+
     pr_info("Processing node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
             a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
-
-    if (inode == 0 || inode >= a2b24xx->max_node_number) return false;
 
 #ifdef ENABLE_BECCTL
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, 0x80});
