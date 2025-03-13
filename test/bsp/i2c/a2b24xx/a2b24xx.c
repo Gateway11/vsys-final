@@ -249,14 +249,13 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     // Output total parsed field count
     // pr_info("Total parsed fields: %d\n", parseCount);
 
-#ifndef ENABLE_BECCTL
-    if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
-        config->eOpCode = A2B24XX_INVALID;
-        return;
-    }
-#endif
-
     if (parseCount >= 5) {
+#ifndef ENABLE_BECCTL
+        if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
+            config->eOpCode = A2B24XX_INVALID;
+            return;
+        }
+#endif
         if (strcmp(instr, "writeXbytes") == 0) {
             config->eOpCode = A2B24XX_WRITE;
         } else if (strcmp(instr, "read") == 0) {
