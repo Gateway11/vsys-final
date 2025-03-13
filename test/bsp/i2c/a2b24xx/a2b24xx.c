@@ -67,7 +67,7 @@
  * -------------------------------------------------------------------------------------
  * Same settings should be used for all nodes
  */
-//#define ENABLE_BECCTL
+//#define ENABLE_BECCTL_CONF
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -250,7 +250,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     // pr_info("Total parsed fields: %d\n", parseCount);
 
     if (parseCount >= 5) {
-#ifndef ENABLE_BECCTL
+#ifndef ENABLE_BECCTL_CONF
         if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
             config->eOpCode = A2B24XX_INVALID;
             return;
@@ -524,7 +524,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
             a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
 
-#ifdef ENABLE_BECCTL
+#ifdef ENABLE_BECCTL_CONF
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, 0x80});
     adi_a2b_I2CWrite(dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_BECNT, 0x00});
 #endif
