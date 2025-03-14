@@ -29,6 +29,7 @@ copy:
 		    tar -cvf - $$part | xz -9 --extreme | base64 | xclip -sel clip; \
 		    read -n1 -r -p "Press any key to continue..."; \
 		done \
+		rm part_*; \
 	fi
 
 %.o: %.c
