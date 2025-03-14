@@ -27,19 +27,16 @@ if [ -n "$1" ]; then
     #amixer cset name="ADMAIF5 Mux" "ADX1 TX1"
     #amixer cset name="ADMAIF6 Mux" "ADX1 TX2"
 else
-    arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
-    #tar -cvf - record.wav | xz -9 --extreme | base64 -w 0
+    #arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
+    tar -cvf - adi_a2b_busconfig | xz -9 --extreme | base64 > output.txt
 
-    PART_SIZE=$((800 * 1024))
-    if [ $(tar -cf - record.wav | xz -9 --extreme | base64 -w 0 | wc -c) -lt "$PART_SIZE" ]; then
-        tar -cvf - record.wav | xz -9 --extreme | base64 -w 0
-    else
-        tar -cvf - record.wav | xz -9 --extreme | base64 -w 0 > output.txt
-        split -b "$PART_SIZE" output.txt part_ && echo "Total parts created: $(ls part_* | wc -l | tr -d ' ')"
-        for part in part_*; do
-            cat "$part"
-            read -n1 -r -p "Press any key to continue..."
+    split -b $((1 * 1024)) output.txt part_ && echo "Total parts created: $(ls part_* | wc -l | tr -d ' ')"
+    for part in part_*; do
+        while :; do
+            read -s -n1 -r -p "Press any key except Enter to continue..." key
+            printf "\rASCII: %d \n" "'$key" && [[ "$key" != $'\n' && -n $key ]] && break
         done
-        rm -f part_* output.txt && echo "All parts processed and deleted."
-    fi
+        cat "$part" && echo
+    done
+    rm -f part_* output.txt && echo "All parts processed and deleted."
 fi
