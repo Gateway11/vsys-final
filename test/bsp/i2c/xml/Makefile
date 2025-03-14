@@ -23,13 +23,12 @@ copy:
 	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt $(PART_SIZE) ]; then \
 		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
 	else \
-		split -b $(PART_SIZE) $(FILE) part_; \
-		echo "Total parts created: $$(ls part_* | wc -l | tr -d " ")"; \
+		split -b $(PART_SIZE) $(FILE) part_ && echo "Total parts created: $$(ls part_* | wc -l | tr -d " ")"; \
 		for part in part_*; do \
 		    tar -cvf - $$part | xz -9 --extreme | base64 | xclip -sel clip; \
 		    read -n1 -r -p "Press any key to continue..."; \
-		done \
-		rm part_*; \
+		done; \
+		rm -f part_* && echo "All parts processed and deleted."; \
 	fi
 
 %.o: %.c
