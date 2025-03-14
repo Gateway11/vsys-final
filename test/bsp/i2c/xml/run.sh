@@ -34,7 +34,7 @@ else
     for part in part_*; do
         count=$((count + 1)) && cat "$part" && printf "\n($count / $(ls part_* | wc -l | tr -d ' '))"
         read -s -n1 -r -p " Press any key except Enter to continue..."
-        for ((i = 0; i < 30; i++)); do echo; done
+        for ((i = 0; i < 100; i++)); do echo; done
     done
     rm -f part_* output.txt && echo "All parts processed and deleted."
 fi
