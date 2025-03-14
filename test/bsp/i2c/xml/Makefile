@@ -20,16 +20,12 @@ $(TARGET): $(OBJ)
 	-@#cat part_* > output.tar.gz
 
 copy:
-	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt $(PART_SIZE) ]; then \
-		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
-	else \
-		split -b $(PART_SIZE) $(FILE) part_ && echo "Total parts created: $$(ls part_* | wc -l | tr -d " ")"; \
-		for part in part_*; do \
-		    tar -cvf - $$part | xz -9 --extreme | base64 | xclip -sel clip; \
-		    read -n1 -r -p "Press any key to continue..."; \
-		done; \
-		rm -f part_* && echo "All parts processed and deleted."; \
-	fi
+	@tar -cvf - $(FILE) | xz -9 --extreme | base64 > output.txt
+	@split -b $(PART_SIZE) output.txt part_ && echo "Total parts created: $$(ls part_* | wc -l | tr -d ' ')"
+	@for part in part_*; do \
+		cat $$part | xclip -sel clip; read -n1 -r -p "Press any key to continue..."; \
+	done
+	@rm -f part_* output.txt && echo "All parts processed and deleted."
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
