@@ -19,10 +19,12 @@ $(TARGET): $(OBJ)
 	-@#cat part_* > output.tar.gz
 
 copy:
+	-@#614400
 	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt 1572864 ]; then \
 		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
 	else \
-		split -b 600k $(FILE) "part_"
+		echo "File size is greater than or equal to 1.5M";
+		split -b 600k $(FILE) "part_" \
 		tar -cvf - part_aa | xz -9 --extreme | base64 | xclip -sel clip; \
 	fi
 
