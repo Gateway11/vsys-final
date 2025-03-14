@@ -2,7 +2,6 @@ NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
 #CROSSBIN = $(NV_TOPDIR)/aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 #CROSSBIN = ../aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 CC = $(CROSSBIN)gcc
-PART_SIZE = $(shell expr 800 \* 1024)
 
 CFLAGS = -Ia2b-commandlist -Wall -fvisibility=hidden -Os -flto# -g
 LDFLAGS = -Wl,-s
@@ -21,7 +20,7 @@ $(TARGET): $(OBJ)
 
 copy:
 	@tar -cvf - $(FILE) | xz -9 --extreme | base64 > output.txt
-	@split -b $(PART_SIZE) output.txt part_ && echo "Total parts created: $$(ls part_* | wc -l | tr -d ' ')"
+	@split -b $(shell expr 800 \* 1024) output.txt part_ && echo "Total parts created: $$(ls part_* | wc -l | tr -d ' ')"
 	@for part in part_*; do \
 		cat $$part | xclip -sel clip; read -n1 -r -p "Press any key to continue..."; \
 	done
