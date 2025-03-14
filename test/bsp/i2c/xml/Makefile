@@ -23,9 +23,12 @@ copy:
 	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt $(PART_SIZE) ]; then \
 		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
 	else \
-		echo "File size is greater than or equal to $(PART_SIZE)"; \
 		split -b $(PART_SIZE) $(FILE) part_; \
-		tar -cvf - part_aa | xz -9 --extreme | base64 | xclip -sel clip; \
+		echo "Total parts created: $$(ls part_* | wc -l | tr -d " ")"; \
+		for part in part_*; do \
+		    tar -cvf - $$part | xz -9 --extreme | base64 | xclip -sel clip; \
+		    read -n1 -r -p "Press any key to continue..."; \
+		done \
 	fi
 
 %.o: %.c
