@@ -2,6 +2,7 @@ NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
 #CROSSBIN = $(NV_TOPDIR)/aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 #CROSSBIN = ../aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 CC = $(CROSSBIN)gcc
+PART_SIZE = $(shell expr 700 \* 1024)
 
 CFLAGS = -Ia2b-commandlist -Wall -fvisibility=hidden -Os -flto# -g
 LDFLAGS = -Wl,-s
@@ -19,12 +20,11 @@ $(TARGET): $(OBJ)
 	-@#cat part_* > output.tar.gz
 
 copy:
-	-@#614400
-	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt 1572864 ]; then \
+	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt $(PART_SIZE) ]; then \
 		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
 	else \
-		echo "File size is greater than or equal to 1.5M";
-		split -b 600k $(FILE) "part_" \
+		echo "File size is greater than or equal to $(PART_SIZE)"; \
+		split -b $(PART_SIZE) $(FILE) part_; \
 		tar -cvf - part_aa | xz -9 --extreme | base64 | xclip -sel clip; \
 	fi
 
