@@ -16,12 +16,14 @@ $(TARGET): $(OBJ)
 	tar -cvf - $(TARGET) busconfig.sh run.sh adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
 	-@xclip -sel clip < output.txt
 	-@#base64 -d output.txt | tar -xJf -
+	-@#cat part_* > output.tar.gz
 
 copy:
-	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt 2097152 ]; then \
+	@if [ $(shell tar -cf - $(FILE) | xz -9 --extreme | base64 | wc -c) -lt 1572864 ]; then \
 		tar -cvf - $(FILE) | xz -9 --extreme | base64 | xclip -sel clip; \
 	else \
-		echo "File size is greater than or equal to 2MB or file does not exist"; \
+		split -b 600k $(FILE) "part_"
+		tar -cvf - part_aa | xz -9 --extreme | base64 | xclip -sel clip; \
 	fi
 
 %.o: %.c
