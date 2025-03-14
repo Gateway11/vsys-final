@@ -27,7 +27,7 @@ if [ -n "$1" ]; then
     #amixer cset name="ADMAIF5 Mux" "ADX1 TX1"
     #amixer cset name="ADMAIF6 Mux" "ADX1 TX2"
 else
-    #arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
+    arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     tar -cvf - adi_a2b_busconfig | xz -9 --extreme | base64 > output.txt
 
     split -b $((1 * 1024)) output.txt part_ && echo "Total parts created: $(ls part_* | wc -l | tr -d ' ')"
