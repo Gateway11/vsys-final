@@ -32,11 +32,9 @@ else
     tar -cf - record.wav | xz -9 --extreme | base64 -w 0 | split -b $((800 * 1024)) - part_
 
     for part in part_*; do
-        count=$((count + 1)) && cat "$part" && printf "\n($count / $(ls part_* | wc -l | tr -d ' '))\n"
-        while :; do
-            read -s -n1 -r -p "Press any key except Enter to continue..." key
-            printf "\rASCII: %d \n" "'$key" && [[ "$key" != $'\n' && -n $key ]] && break
-        done
+        count=$((count + 1)) && cat "$part" && printf "\n($count / $(ls part_* | wc -l | tr -d ' '))"
+        read -s -n1 -r -p " Press any key except Enter to continue..."
+        for ((i = 0; i < 30; i++)); do echo; done
     done
     rm -f part_* output.txt && echo "All parts processed and deleted."
 fi
