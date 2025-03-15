@@ -184,9 +184,7 @@ void processInterrupt() {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeInfo); i++) {
             if (intTypeInfo[i].type == dataBuffer[1]) {
                 printf("Interrupt Type: %s\n", intTypeInfo[i].message);
-                if (intTypeInfo[i].handle) {
-                    intTypeInfo[i].handle(dataBuffer[1], NULL);
-                }
+                if (intTypeInfo[i].handle) intTypeInfo[i].handle(dataBuffer[1], NULL);
                 return;
             }
             printf("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
