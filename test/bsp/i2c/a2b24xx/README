@@ -16,4 +16,194 @@ drive/drive-foundation/platform-config/hardware/nvidia/platform/t264/automotive/
 DAILINK_COMP_ARRAY(COMP_CODEC("a2b24xx.0", "a2b24xx-hifi")),
 DAILINK_COMP_ARRAY(COMP_CODEC(NULL, "a2b24xx-hifi")),
 
+/* Command handler structure definition */
+struct a2b_command {
+    const char *prefix;       /* Command prefix identifier */
+    int min_args;             /* Minimum required arguments */
+    int (*handler)(struct a2b24xx *, int, uint8_t *); /* Handler function */
+    const char *fmt;          /* Parameter format string for sscanf */
+    const char *description;  /* Help text for the command */
+};
 
+/* Command handler declarations */
+static int handle_reset(struct a2b24xx *a2b, int argc, uint8_t *argv);
+static int handle_fault_check(struct a2b24xx *a2b, int argc, uint8_t *argv);
+static int handle_rx_slave(struct a2b24xx *a2b, int argc, uint8_t *argv);
+static int handle_pdm_slave(struct a2b24xx *a2b, int argc, uint8_t *argv);
+
+/* Command dispatch table */
+static const struct a2b_command cmd_table[] = {
+    {
+        .prefix = "RESET",
+        .min_args = 0,
+        .handler = handle_reset,
+        .description = "Reset controller"
+    },
+    {
+        .prefix = "FAULT CHECK",
+        .min_args = 0,
+        .handler = handle_fault_check,
+        .description = "Cancel fault check"
+    },
+    {
+        .prefix = "RX SLAVE",
+        .min_args = 2,
+        .fmt = "RX SLAVE%hhd %hhd",
+        .handler = handle_rx_slave,
+        .description = "Configure RX slave"
+    },
+    {
+        .prefix = "PDM SLAVE",
+        .min_args = 1,
+        .fmt = "PDM SLAVE%d MIC%d",
+        .handler = handle_pdm_slave,
+        .description = "Configure PDM slave"
+    }
+};
+
+/* Enhanced write operation for control interface */
+static ssize_t a2b24xx_ctrl_write(struct file *file,
+                        const char __user *buf, size_t count, loff_t *ppos)
+{
+    struct a2b24xx *a2b = file->private_data;
+    uint8_t params[MAX_CMD_ARGS] = {0};
+    int matched = 0, argc = 0;
+    size_t len;
+
+    /* Safely copy user data to kernel buffer */
+    len = min(count, sizeof(a2b->command_buffer) - 1);
+    if (copy_from_user(a2b->command_buffer, buf, len))
+        return -EFAULT;
+
+    /* Null-terminate and log the command */
+    a2b->command_buffer[len] = '\0';
+    pr_debug("Received command: %s\n", a2b->command_buffer);
+
+    /* Iterate through command dispatch table */
+    for (int i = 0; i < ARRAY_SIZE(cmd_table); i++) {
+        const struct a2b_command *cmd = &cmd_table[i];
+        const size_t prefix_len = strlen(cmd->prefix);
+
+        /* Match command prefix */
+        if (strncmp(a2b->command_buffer, cmd->prefix, prefix_len) != 0)
+            continue;
+
+        /* Parameter parsing */
+        if (cmd->fmt) {
+            argc = sscanf(a2b->command_buffer + prefix_len + 1, 
+                         cmd->fmt, &params[0], &params[1], 
+                         &params[2], &params[3]);
+        }
+
+        /* Argument count validation */
+        if (argc < cmd->min_args) {
+            pr_warn("Invalid arguments for %s (required: %d, received: %d)\n",
+                   cmd->prefix, cmd->min_args, argc);
+            return -EINVAL;
+        }
+
+        /* Execute handler with error checking */
+        if (cmd->handler(a2b, argc, params) < 0)
+            return -EIO;
+
+        matched = 1;
+        break; /* Stop after first match */
+    }
+
+    return matched ? len : -EINVAL;
+}
+
+/* Command handler implementations */
+static int handle_reset(struct a2b24xx *a2b, int argc, uint8_t *argv)
+{
+    a2b24xx_reset(a2b);
+    pr_info("Controller reset initiated\n");
+    return 0;
+}
+
+static int handle_fault_check(struct a2b24xx *a2b, int argc, uint8_t *argv)
+{
+    cancel_delayed_work_sync(&a2b->fault_check_work);
+    pr_info("Fault check procedure canceled\n");
+    return 0;
+}
+
+static int handle_rx_slave(struct a2b24xx *a2b, int argc, uint8_t *argv)
+{
+    pr_info("Configuring RX Slave%d with parameter %d\n", argv[0], argv[1]);
+    return a2b->ops->config_rx_slave(argv[0], argv[1]);
+}
+
+static int handle_pdm_slave(struct a2b24xx *a2b, int argc, uint8_t *argv)
+{
+    int mic = (argc >= 2) ? argv[1] : -1;
+    pr_debug("PDM configuration for slave %d, mic: %d\n", argv[0], mic);
+    return a2b->ops->config_pdm_slave(argv[0], mic);
+}
+
+
+
+
+
+
+
+
+/* Interrupt category flags (bitmask) */
+typedef enum {
+    INT_FLAG_ERROR     = 0x01,  /* Critical error requiring handling */
+    INT_FLAG_IGNORABLE = 0x02,  /* Non-critical interrupt that can be ignored */
+    INT_FLAG_REPORT    = 0x04   /* Requires external reporting/notification */
+} IntCategory;
+
+/* Interrupt descriptor structure */
+typedef struct {
+    uint8_t type;               /* Interrupt type identifier */
+    uint8_t flags;              /* Category flags (bitmask of IntCategory) */
+    const char *message;        /* Human-readable description */
+    void (*report_cb)(uint8_t int_type, void *context); /* Reporting callback */
+} IntTypeInfo_t;
+
+/* Example report handlers */
+static void report_power_error(uint8_t int_type, void *context) {
+    struct a2b24xx *dev = (struct a2b24xx *)context;
+    pr_err("Power error %02X: %s\n", int_type, dev->last_error);
+    notify_system_monitor(int_type);
+}
+
+static void report_spi_error(uint8_t int_type, void *context) {
+    log_to_audit_system("SPI fault", int_type);
+}
+
+/* Interrupt configuration table */
+const IntTypeInfo_t intTypeInfo[] = {
+    /* Format: {TYPE, FLAGS, DESCRIPTION, CALLBACK} */
+    {A2B_ENUM_INTTYPE_HDCNTERR,
+     INT_FLAG_ERROR | INT_FLAG_REPORT,
+     "Header count error",
+     report_power_error},
+
+    {A2B_ENUM_INTTYPE_PWRERR_CS_GND,
+     INT_FLAG_ERROR | INT_FLAG_REPORT,
+     "PWRERR (Cable Shorted to GND)",
+     report_power_error},
+
+    {A2B_ENUM_INTTYPE_DDERR,
+     INT_FLAG_ERROR,
+     "Data decoding error",
+     NULL},
+
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR,
+     INT_FLAG_REPORT,
+     "SPI remote register error",
+     report_spi_error},
+
+    {A2B_ENUM_INTTYPE_IO0PND,
+     INT_FLAG_IGNORABLE,
+     "IO0 pending (Slave)",
+     NULL},
+
+    {A2B_ENUM_INTTYPE_I2CERR,
+     INT_FLAG_ERROR | INT_FLAG_REPORT,
+     "I2C communication error",
+     report_spi_error}
+};
