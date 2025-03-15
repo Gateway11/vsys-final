@@ -109,64 +109,96 @@ void concatAddrData(uint8_t destBuffer[], uint32_t addrWidth, uint32_t addr) {
 }
 
 /* Example handler implementations */
-static void log_power_error(uint8_t int_type, void* context) {
+static void handlePowerError(uint8_t intType, void* context) {
     // Cast context to specific type if needed
-    printf("Power error %d occurred: %s\n", int_type, (const char*)context);
+    printf("Power error %d occurred: %s\n", intType, (const char*)context);
 }
 
-static void default_handler(uint8_t int_type, void* context) {
-    printf("Unhandled interrupt %d\n", int_type);
+static void defaultHandler(uint8_t intType, void* context) {
+    printf("Default handler: interrupt %d\n", intType);
 }
 
 /* Interrupt type descriptor structure */
 typedef struct {
     uint8_t type;              // Interrupt type identifier
-    void (*handle)(uint8_t int_type, void* context);  // Generic handler callback
-    const char* message;       // Human-readable description
+    void (*handle)(uint8_t intType, void* context);  // Generic handler callback
+    const char* description;       // Description information
 } IntTypeInfo_t;
 
 const IntTypeInfo_t intTypeInfo[] = {
-    {A2B_ENUM_INTTYPE_HDCNTERR           , log_power_error, "HDCNTERR "},
-    {A2B_ENUM_INTTYPE_DDERR              , default_handler, "DDERR "},
-    {A2B_ENUM_INTTYPE_CRCERR             , NULL,            "CRCERR "},
-    {A2B_ENUM_INTTYPE_DPERR              , NULL,            "DPERR "},
-    {A2B_ENUM_INTTYPE_BECOVF             , NULL,            "BECOVF "},
-    {A2B_ENUM_INTTYPE_SRFERR             , NULL,            "SRFERR "},
-    {A2B_ENUM_INTTYPE_PWRERR_CS_GND      , NULL,            "PWRERR (Cable Shorted to GND) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CS_VBAT     , NULL,            "PWRERR (Cable Shorted to VBat) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CS          , NULL,            "PWRERR (Cable Shorted Together) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CDISC       , NULL,            "PWRERR (Cable Disconnected or Open Circuit) (AD240x/10/2x Slaves Only) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CREV        , NULL,            "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV   , NULL,            "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse Connected (AD243x Only) "},
-    {A2B_ENUM_INTTYPE_PWRERR_FAULT       , NULL,            "PWRERR (Indeterminate Fault) "},
-    //{A2B_ENUM_INTTYPE_IO0PND             , NULL,            "IO0PND - Slave Only "},
-    //{A2B_ENUM_INTTYPE_IO1PND             , NULL,            "IO1PND - Slave Only "},
-    //{A2B_ENUM_INTTYPE_IO2PND             , NULL,            "IO2PND - Slave Only "},
-    //{A2B_ENUM_INTTYPE_IO3PND             , NULL,            "IO3PND "},
-    //{A2B_ENUM_INTTYPE_IO4PND             , NULL,            "IO4PND "},
-    //{A2B_ENUM_INTTYPE_IO5PND             , NULL,            "IO5PND "},
-    //{A2B_ENUM_INTTYPE_IO6PND             , NULL,            "IO6PND "},
-    //{A2B_ENUM_INTTYPE_IO7PND             , NULL,            "IO7PND "},
-    //{A2B_ENUM_INTTYPE_DSCDONE            , NULL,            "DSCDONE - Master Only "},
-    {A2B_ENUM_INTTYPE_I2CERR             , default_handler, "I2CERR - Master Only "},
-    {A2B_ENUM_INTTYPE_ICRCERR            , NULL,            "ICRCERR - Master Only "},
-    {A2B_ENUM_INTTYPE_PWRERR_NLS_GND     , NULL,            "PWRERR - Non-Localized Short to GND "},
-    {A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT    , NULL,            "PWRERR - Non-Localized Short to VBat "},
-    {A2B_ENUM_INTTYPE_PWRERR_OTH         , NULL,            "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
-    //{A2B_ENUM_INTTYPE_SPIDONE            , NULL,            "SPI Done"},
-    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR , NULL,            "SPI Remote Register Access Error - Master Only"},
-    {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR , NULL,            "SPI Remote I2C Access Error - Master Only"},
-    {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR   , NULL,            "SPI Data Tunnel Access Error"},
-    {A2B_ENUM_INTTYPE_SPI_BAD_CMD        , NULL,            "SPI Bad Command"},
-    {A2B_ENUM_INTTYPE_SPI_FIFO_OVRFLW    , NULL,            "SPI FIFO Overflow"},
-    {A2B_ENUM_INTTYPE_SPI_FIFO_UNDERFLW  , NULL,            "SPI FIFO Underflow"},
-    {A2B_ENUM_INTTYPE_VMTR               , NULL,            "VMTR Interrupt"},
-    {A2B_ENUM_INTTYPE_IRPT_MSG_ERR       , NULL,            "PWRERR - Interrupt Messaging Error "},
-    {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF     , NULL,            "Startup Error - Return to Factory "},
-    {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR  , NULL,            "Slave INTTYPE Read Error - Master Only "},
-    //{A2B_ENUM_INTTYPE_STANDBY_DONE       , NULL,            "Standby Done - Master Only "},
-    //{A2B_ENUM_INTTYPE_MSTR_RUNNING       , NULL,            "MSTR_RUNNING - Master Only "},
+    {A2B_ENUM_INTTYPE_HDCNTERR           , handlePowerError,   "HDCNTERR "},
+    {A2B_ENUM_INTTYPE_DDERR              , defaultHandler,     "DDERR "},
+    {A2B_ENUM_INTTYPE_CRCERR             , NULL,               "CRCERR "},
+    {A2B_ENUM_INTTYPE_DPERR              , NULL,               "DPERR "},
+    {A2B_ENUM_INTTYPE_BECOVF             , NULL,               "BECOVF "},
+    {A2B_ENUM_INTTYPE_SRFERR             , NULL,               "SRFERR "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS_GND      , NULL,               "PWRERR (Cable Shorted to GND) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS_VBAT     , NULL,               "PWRERR (Cable Shorted to VBat) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CS          , NULL,               "PWRERR (Cable Shorted Together) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC       , NULL,               "PWRERR (Cable Disconnected or Open Circuit) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CREV        , NULL,               "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV   , NULL,               "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse Connected (AD243x Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_FAULT       , NULL,               "PWRERR (Indeterminate Fault) "},
+    //{A2B_ENUM_INTTYPE_IO0PND             , NULL,               "IO0PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO1PND             , NULL,               "IO1PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO2PND             , NULL,               "IO2PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO3PND             , NULL,               "IO3PND "},
+    //{A2B_ENUM_INTTYPE_IO4PND             , NULL,               "IO4PND "},
+    //{A2B_ENUM_INTTYPE_IO5PND             , NULL,               "IO5PND "},
+    //{A2B_ENUM_INTTYPE_IO6PND             , NULL,               "IO6PND "},
+    //{A2B_ENUM_INTTYPE_IO7PND             , NULL,               "IO7PND "},
+    //{A2B_ENUM_INTTYPE_DSCDONE            , NULL,               "DSCDONE - Master Only "},
+    {A2B_ENUM_INTTYPE_I2CERR             , defaultHandler,     "I2CERR - Master Only "},
+    {A2B_ENUM_INTTYPE_ICRCERR            , NULL,               "ICRCERR - Master Only "},
+    {A2B_ENUM_INTTYPE_PWRERR_NLS_GND     , NULL,               "PWRERR - Non-Localized Short to GND "},
+    {A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT    , NULL,               "PWRERR - Non-Localized Short to VBat "},
+    {A2B_ENUM_INTTYPE_PWRERR_OTH         , NULL,               "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
+    //{A2B_ENUM_INTTYPE_SPIDONE            , NULL,               "SPI Done"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR , NULL,               "SPI Remote Register Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR , NULL,               "SPI Remote I2C Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR   , NULL,               "SPI Data Tunnel Access Error"},
+    {A2B_ENUM_INTTYPE_SPI_BAD_CMD        , NULL,               "SPI Bad Command"},
+    {A2B_ENUM_INTTYPE_SPI_FIFO_OVRFLW    , NULL,               "SPI FIFO Overflow"},
+    {A2B_ENUM_INTTYPE_SPI_FIFO_UNDERFLW  , NULL,               "SPI FIFO Underflow"},
+    {A2B_ENUM_INTTYPE_VMTR               , NULL,               "VMTR Interrupt"},
+    {A2B_ENUM_INTTYPE_IRPT_MSG_ERR       , NULL,               "PWRERR - Interrupt Messaging Error "},
+    {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF     , NULL,               "Startup Error - Return to Factory "},
+    {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR  , NULL,               "Slave INTTYPE Read Error - Master Only "},
+    //{A2B_ENUM_INTTYPE_STANDBY_DONE       , NULL,               "Standby Done - Master Only "},
+    //{A2B_ENUM_INTTYPE_MSTR_RUNNING       , NULL,               "MSTR_RUNNING - Master Only "},
 };
+
+#if 0
+/* Interrupt category flags (bitmask) */
+typedef enum {
+    INT_FLAG_ERROR     = 0x01,  // Critical errors requiring immediate attention
+    INT_FLAG_IGNORABLE = 0x02,  // Non-critical interrupts that can be safely ignored
+    INT_FLAG_REPORT    = 0x04   // Events requiring external reporting/logging
+} IntCategory;
+
+/* Interrupt descriptor structure */
+typedef struct {
+    uint8_t type;               // Interrupt type identifier
+    uint8_t flags;              // Category flags (bitmask of IntCategory)
+    void (*handle)(uint8_t intType, void* context);  // Generic handler callback
+    const char* description;       // Description information
+} IntTypeInfo_t;
+
+const IntTypeInfo_t intTypeInfo[] = {
+    {
+        .type = A2B_ENUM_INTTYPE_HDCNTERR,
+        .flags = INT_FLAG_ERROR | INT_FLAG_REPORT,
+        .handler = handlePowerError,
+        .description = "HDCNTERR"
+    },
+    {
+        .type = A2B_ENUM_INTTYPE_DDERR,
+        .flags = INT_FLAG_ERROR | INT_FLAG_REPORT,
+        .handler = defaultHandler,
+        .description = "DDERR"
+    },
+}
+#endif
 
 void processInterrupt() {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
@@ -183,7 +215,7 @@ void processInterrupt() {
         }
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeInfo); i++) {
             if (intTypeInfo[i].type == dataBuffer[1]) {
-                printf("Interrupt Type: %s\n", intTypeInfo[i].message);
+                printf("Interrupt Type: %s\n", intTypeInfo[i].description);
                 if (intTypeInfo[i].handle)
                     intTypeInfo[i].handle(dataBuffer[1], NULL);
                 return;
