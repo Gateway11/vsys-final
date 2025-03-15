@@ -220,8 +220,8 @@ void processInterrupt() {
                     intTypeInfo[i].handle(dataBuffer[1], NULL);
                 return;
             }
-            printf("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         }
+        printf("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
     }
 }
 
