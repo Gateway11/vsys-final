@@ -28,7 +28,6 @@ if [ -n "$1" ]; then
     #amixer cset name="ADMAIF6 Mux" "ADX1 TX2"
 else
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
-    #tar -cf - record.wav | xz -9 --extreme | base64 -w 0 > output.txt && split -b $((800 * 1024)) output.txt part_
     tar -cf - record.wav | xz -9 --extreme | base64 -w 0 | split -b $((800 * 1024)) - part_
 
     for part in part_*; do
