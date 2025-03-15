@@ -109,12 +109,12 @@ void concatAddrData(uint8_t destBuffer[], uint32_t addrWidth, uint32_t addr) {
 }
 
 /* Example handler implementations */
-static void logPowerError(uint8_t intType, void* context) {
+void logPowerError(uint8_t intType, void* context) {
     // Cast context to specific type if needed
     printf("Power error %d occurred: %s\n", intType, (const char*)context);
 }
 
-static void defaultHandler(uint8_t intType, void* context) {
+void defaultHandler(uint8_t intType, void* context) {
     printf("Default handler: interrupt %d\n", intType);
 }
 
