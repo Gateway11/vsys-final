@@ -795,6 +795,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
 
     if (sscanf(a2b24xx->command_buffer, "RX SLAVE%hhd %hhd", &params[0], &params[1]) == 2) {
         pr_info("RX SLAVE(%d) (%d)\n", params[0], params[1]);
+
         if (params[0] < a2b24xx->max_node_number && params[1] < sizeof(config)) {
             mutex_lock(&a2b24xx->node_mutex);
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
@@ -807,6 +808,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
 
     if (sscanf(a2b24xx->command_buffer, "PDM SLAVE%d MIC%d", &node_addr, &mic) >= 1) {
         pr_info("PDM SLAVE(%d) MIC(%d)\n", node_addr, mic);
+
         if (node_addr < a2b24xx->max_node_number) {
             mutex_lock(&a2b24xx->node_mutex);
             for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
