@@ -29,6 +29,9 @@ if [ -n "$1" ]; then
 else
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     tar -cf - record.wav | xz -9 --extreme | base64 -w 0 | split -b $((800 * 1024)) - part_
+    #minicom -D /dev/ttyUSB2 -C /tmp/minicom.log
+    #script -c "minicom -D /dev/ttyUSB2" /tmp/minicom.log
+    #minicom -D /dev/ttyUSB0 | tee minicom_output.log
 
     for part in part_*; do
         cat "$part" && printf "\n($((++count)) / $(ls part_* | wc -l | tr -d ' ')) "

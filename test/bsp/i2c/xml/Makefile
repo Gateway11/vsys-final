@@ -16,6 +16,7 @@ $(TARGET): $(OBJ)
 	@tar -cf - $(TARGET) busconfig.sh run.sh adi_a2b_commandlist.xml | xz -9 --extreme | base64 > output.txt
 	-@xclip -sel clip < output.txt
 	-@#base64 -d output.txt | tar -xJf -
+	-@#base64 -d /tmp/minicom.log | tar -xJf - && sudo truncate -s 0 /tmp/minicom.log
 	-@#cat part_* > output.tar.gz
 
 copy:
