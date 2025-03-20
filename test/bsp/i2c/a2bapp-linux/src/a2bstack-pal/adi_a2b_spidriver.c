@@ -177,7 +177,6 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
             perror("can't get spi mode");
     }
 #endif
-    //return A2B_RESULT_SUCCESS;
     return fd;
 }
 
