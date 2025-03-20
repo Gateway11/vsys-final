@@ -87,6 +87,7 @@ void* thread_loop(void *arg) {
     snprintf(str, sizeof(str), "/sys/class/gpio/gpio%d/value", args->nGPIONum);
     int32_t fd = open(str, O_RDONLY);
     if (fd < 0) {
+        free(args);
         perror("Failed to open file");
         return NULL;
     }
