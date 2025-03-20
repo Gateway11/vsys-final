@@ -96,7 +96,6 @@ void* thread_loop(void *arg) {
     pfd.fd = fd;
     pfd.events = POLLPRI;
 
-    snprintf(str, sizeof(str), "%d", args->bFallingEdgeTrig);
     while (1) {
         lseek(fd, 0, SEEK_SET);
         read(fd, &value, 1);
@@ -107,7 +106,7 @@ void* thread_loop(void *arg) {
         lseek(fd, 0, SEEK_SET);
         read(fd, &value, 1);
     
-        if (value == str[0]) {
+        if (value == (args->bFallingEdgeTrig ? '0' : '1')) {
             adi_a2b_PinInterruptHandler(args->nGPIONum, args->nGPIONum, args->pUserCallBack);
         }
     }
