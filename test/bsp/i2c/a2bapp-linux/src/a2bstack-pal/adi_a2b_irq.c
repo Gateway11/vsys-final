@@ -110,9 +110,6 @@ void* thread_loop(void *arg) {
             adi_a2b_PinInterruptHandler(args->nGPIONum, args->nGPIONum, args->pUserCallBack);
         }
     }
-    
-    close(fd);
-    free(args);
     return NULL;
 }
 
