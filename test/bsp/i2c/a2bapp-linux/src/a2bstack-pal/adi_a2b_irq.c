@@ -78,13 +78,13 @@ void* thread_loop(void *arg) {
     snprintf(str, sizeof(str), "%d", args->nGPIONum);
     port_gpio_control("/sys/class/gpio/export", str);
 
-    snprintf(str, sizeof(str), "/sys/class/gpio/%d/direction", args->nGPIONum);
+    snprintf(str, sizeof(str), "/sys/class/gpio/gpio%d/direction", args->nGPIONum);
     port_gpio_control(str, "in");
 
-    snprintf(str, sizeof(str), "/sys/class/gpio/%d/edge", args->nGPIONum);
+    snprintf(str, sizeof(str), "/sys/class/gpio/gpio%d/edge", args->nGPIONum);
     port_gpio_control(str, args->bFallingEdgeTrig ? "falling" : "rising");
 
-    snprintf(str, sizeof(str), "/sys/class/gpio/%d/value", args->nGPIONum);
+    snprintf(str, sizeof(str), "/sys/class/gpio/gpio%d/value", args->nGPIONum);
     int32_t fd = open(str, O_RDONLY);
     if (fd < 0) {
         perror("Failed to open file");
