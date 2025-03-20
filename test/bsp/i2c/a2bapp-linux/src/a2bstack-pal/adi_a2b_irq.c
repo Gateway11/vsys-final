@@ -36,14 +36,13 @@ and its licensors.
 
 /*============= I N C L U D E S =============*/
 
-#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <poll.h>
-
-#include "adi_a2b_datatypes.h"
-#include "adi_a2b_graphdata.h"
-#include "adi_a2b_framework.h"
+#include <fcntl.h>
+#include <pthread.h>
 #include "adi_a2b_externs.h"
-#include "adi_a2b_twidriver.h"
 
 /*============= D E F I N E S =============*/
 typedef struct {
@@ -89,7 +88,7 @@ void* thread_loop(void *arg) {
     int32_t fd = open(str, O_RDONLY);
     if (fd < 0) {
         perror("Failed to open file");
-        return 1;
+        return NULL;
     }
 
     struct pollfd pfd;
@@ -108,7 +107,7 @@ void* thread_loop(void *arg) {
         read(fd, &value, 1);
     
         if (value == str[0]) {
-            adi_a2b_PinInterruptHandler(nGPIONum, nGPIONum, args->pUserCallBack);
+            adi_a2b_PinInterruptHandler(args->nGPIONum, args->nGPIONum, args->pUserCallBack);
         }
     }
     
@@ -140,7 +139,7 @@ a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt8 nGPIONum , void* pUserCallBack, 
 {
     ThreadArgs* args = (ThreadArgs*)malloc(sizeof(ThreadArgs));
     args->nGPIONum = nGPIONum;
-    args->pUserCallBack = pUserCallBack
+    args->pUserCallBack = pUserCallBack;
     args->bFallingEdgeTrig = bFallingEdgeTrig;
 
     param = CallBackParam;
