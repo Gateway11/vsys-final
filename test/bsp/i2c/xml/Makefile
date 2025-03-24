@@ -21,7 +21,7 @@ $(TARGET): $(OBJ)
 	-@#cat part_* > output.tar.gz
 
 copy:
-	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 900 \* 1024) - part_
+	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 1000 \* 1024) - part_
 	@for part in part_*; do \
 		cat $$part | xclip -sel clip; read -n1 -r -p "($$((++count)) / $$(ls part_* | wc -l | tr -d ' ')) Press any key to continue..."; \
 	done
