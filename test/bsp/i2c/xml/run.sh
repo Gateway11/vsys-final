@@ -35,7 +35,7 @@ else
     #minicom -D /dev/ttyUSB0 | tee output.txt
 
     for part in part_*; do
-        cat "$part" && printf "\n($((++count)) / $(ls part_* | wc -l | tr -d ' ')) "
+        cat "$part" && printf "\n($((++count)) / $(ls part_* | wc -l | tr -d ' '))"
         read -n1 -r -p "Press any key to continue..." && for ((i = 0; i < 100; i++)); do echo; done
     done
     rm -f part_* output.txt && echo "All parts processed and deleted."
