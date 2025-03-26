@@ -813,6 +813,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             mutex_lock(&a2b24xx->node_mutex);
             for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
                 if (node_addr < 0) {
                     adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
                 } else if (node_addr == i) {
