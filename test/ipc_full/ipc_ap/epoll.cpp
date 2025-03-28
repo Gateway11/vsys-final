@@ -106,9 +106,11 @@ int main() {
                 int sockfd = events[i].data.fd;
                 // Perform the read operation in the current thread
                 char buffer[1024];
-                ssize_t n = read(sockfd, buffer, sizeof(buffer));
+                ssize_t n = read(sockfd, buffer, sizeof(buffer) - 1);
                 if (n > 0) {
                     // Process the data that has been read
+                    buffer[n] = '\0';
+                    std::cout << buffer << std::endl;
                 } else if (n == 0) {
                     std::cout << "Client disconnected\n";
                     close(sockfd);
