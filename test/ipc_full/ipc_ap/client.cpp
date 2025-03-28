@@ -93,7 +93,7 @@ int32_t ipc_client_socket_unix() {
     memset(&addr, 0, sizeof(struct sockaddr_un));
 #define SOCKET_PATH "/data/unix_socket"
     addr.sun_family = AF_UNIX;
-    strncpy(servaddr.sun_path, SOCKET_PATH, sizeof(servaddr.sun_path) - 1);
+    strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
 
     while(1) {
         ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
