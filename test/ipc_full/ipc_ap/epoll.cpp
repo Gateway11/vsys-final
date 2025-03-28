@@ -111,6 +111,8 @@ int main() {
                     // Process the data that has been read
                 } else if (n == 0) {
                     std::cout << "Client disconnected\n";
+                    close(sockfd);
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sockfd, NULL);
                 } else {
                     perror("read");
                 }
