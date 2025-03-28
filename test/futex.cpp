@@ -17,6 +17,22 @@
 
 volatile int futex_var = 0; // 共享的 futex 锁变量
 
+typedef struct {
+    int count;        // 当前等待的线程数
+    int target;       // 目标线程数
+    futex_t futex;    // Futex 变量
+} custom_barrier;
+
+void barrier_wait(custom_barrier *b) {
+    int old = __atomic_add_fetch(&b->count, 1, __ATOMIC_SEQ_CST);
+    if (old == b->target) {
+        b->count = 0;
+        futex_wake(&b->futex, INT_MAX); // 唤醒所有线程
+    } else {
+        futex_wait(&b->futex, old);     // 挂起等待
+    }
+}
+
 void* thread_func(void *arg) {
     // Try to acquire the lock
     while (__sync_lock_test_and_set(&futex_var, 1)) {
