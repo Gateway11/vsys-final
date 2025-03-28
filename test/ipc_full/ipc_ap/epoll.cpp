@@ -110,8 +110,10 @@ int main() {
                 if (n > 0) {
                     // Process the data that has been read
                     buffer[n] = '\0';
-                    std::cout << buffer << std::endl;
-                } else if (n == 0) {
+                    std::cout << buffer << "Enter message to send to server: ";
+                    fgets(buffer, sizeof(buffer), stdin);
+                    write(sockfd, buffer, sizeof(buffer));
+                } else if (n == 0 || errno == ECONNRESET) {
                     std::cout << "Client disconnected\n";
                     close(sockfd);
                     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sockfd, NULL);
