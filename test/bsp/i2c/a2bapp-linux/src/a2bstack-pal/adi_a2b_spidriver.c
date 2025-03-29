@@ -41,6 +41,7 @@ and its licensors.
 /*============= I N C L U D E S =============*/
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <unistd.h>
 //#include <linux/spi/spidev.h>
 
