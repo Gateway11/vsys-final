@@ -74,32 +74,34 @@ static const unsigned char a[] = {
 
 #define PP_DIV(...) VA_ARGS_FUNC(div,__VA_ARGS__)
 
-int32_t array[] = {1, 3, 2, 100};
 #if 0
+int32_t array[] = {1, 3, 2, 100};
 #define VA_ARGS_OFPACT(prefix, return_type, ...)                        \
     return_type VA_ARGS_FUNC(prefix, __VA_ARGS__) {                     \
         for (uint32_t __i = 0; __i < VA_ARG_NUM(__VA_ARGS__); __i++) {  \
             printf("%f\n", (float)x / array[__i]);                      \
         }                                                               \
     }
+
+VA_ARGS_OFPACT(div, void, int32_t x)
+VA_ARGS_OFPACT(div, void, int32_t x, int32_t y)
+VA_ARGS_OFPACT(div, void, int32_t x, int32_t y, int32_t z)
+
 #else
 #include <stdarg.h>
-void div2(int32_t arg, ...) {
+void div2(int first, ...) {
     va_list args;
-    va_start(args, arg);
-    int sum = arg;
-    while (arg != 0) {
-        sum += va_arg(args, int);
+    va_start(args, first);
+    int sum = first, value;
+
+    while ((value = va_arg(args, int)) != 0) {  // 终止符 0
+        sum += value;
     }
+
     va_end(args);
     printf("%d\n", sum);
 }
-
 #endif
-
-//VA_ARGS_OFPACT(div, void, int32_t)
-//VA_ARGS_OFPACT(div, void, int32_t x, int32_t y)
-//VA_ARGS_OFPACT(div, void, int32_t x, int32_t y, int32_t z)
 
 #define __STR(x) #x
 #define _STR(x) __STR(x)
@@ -177,13 +179,18 @@ int main() {
 
 
 #if 0
-#define lambda_(return_type, function_body) ({ return_type fn function_body fn; })
+//#define lambda_(return_type, function_body) ({ return_type fn function_body fn; })
+#define lambda_(return_type, function_body) ({ ^ function_body; })
  
     lambda_ (int, (int x, int y) { return x + y; })(1, 2); 
 
-#define lambda3(return_type, function_body, ...) \
+//#define lambda3(return_type, function_body, ...) \
     ({ return_type fn (__typeof__(VA_ARG0(__VA_ARGS__)) x) function_body fn; })(__VA_ARGS__)
 
+#define lambda3(return_type, function_body, ...) \
+    ({ ^(__typeof__(VA_ARG0(__VA_ARGS__)) x) function_body; })(__VA_ARGS__)
+
+    printf("lambda\n");
     lambda3 (int, { return x; }, 1); 
 #endif
 
@@ -233,7 +240,7 @@ int main() {
     
     printf("%lu, %d, %d\n", sizeof(cat), kitty.legs, kitty.lives);
 
-    printf("%d, %d\n", __LINE__, ^(__typeof__(a) x, int y) { return x + y; }(a, b));
+    printf("lambda：%d, %d\n", __LINE__, ^(__typeof__(a) x, int y) { return x + y; }(a, b));
 
     printf("----------------------------------------------\n");
 
@@ -251,15 +258,15 @@ int main() {
 
     func((int[]){1, 1, 1, 1, 0}); //匿名数组
 
-    printf("%s, %lu\n", VA_ARG0("sdfasdfasdi-------------", 88), sizeof((int[]){1, 2, 3, 0}));
+    printf("匿名数组：%s, %lu\n", VA_ARG0("sdfasdfasdi-------------", 88), sizeof((int[]){1, 2, 3, 0}));
 
-    printf("%d\n", VA_ARG_NUM(a, b, c));
-    printf("%d\n", VA_ARG_NUM());
+    printf("获取__VA_ARGS__参数个数：%d\n", VA_ARG_NUM(a, b, c));
+    printf("获取__VA_ARGS__参数个数：%d\n", VA_ARG_NUM());
     //VA_ARGS_FUNC(div, 3, 2);
-    //PP_DIV(3, 2);
+    PP_DIV(3, 2);
 
 #define LEN   3
-    printf("%s, %s\n", __STR(LEN), _STR(LEN));
+    printf("使用宏定义数字转STR: %s, %s\n", __STR(LEN), _STR(LEN));
 
     int32_t arr[] = {1,2,3,4}, e = 3;
     foreach(e in arr) { // 编译不通过 >_<
