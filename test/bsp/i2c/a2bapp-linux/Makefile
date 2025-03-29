@@ -1,5 +1,3 @@
-NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
-#CROSSBIN = $(NV_TOPDIR)/aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 #CROSSBIN = ../../aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 CC = $(CROSSBIN)gcc
 
@@ -19,7 +17,7 @@ LDFLAGS = -Wl,-s -lpthread
 
 TARGET = a2bapp-linux
 
-SRC = $(shell find a2bstack -name "*.c") $(shell find src -name "*.c") examples/demo/app-plugin/src/a2bapp.c #adi_a2b_busconfig.c
+SRC = $(shell find a2bstack src examples/demo/app-plugin -name "*.c")
 OBJ = $(SRC:.c=.o)
 
 $(TARGET): $(OBJ)
