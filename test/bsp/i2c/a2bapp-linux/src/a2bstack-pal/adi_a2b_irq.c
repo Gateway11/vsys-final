@@ -71,7 +71,7 @@ void port_gpio_control(const char *path, const char *value) {
     close(fd);
 }
 
-void* thread_loop(void *arg) {
+static void* thread_loop(void *arg) {
     ThreadArgs* args = (ThreadArgs*)arg;
     char str[64], value;
 

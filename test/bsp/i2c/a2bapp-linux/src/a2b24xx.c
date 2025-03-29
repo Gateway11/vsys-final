@@ -10,7 +10,7 @@
 
 // echo "Hello, UDP" | nc -u 127.0.0.1 1234
 // echo "Hello, TCP" | nc 127.0.0.1 1234
-void* thread_loop(void *arg) {
+static void* thread_loop(void *arg) {
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(struct sockaddr_in));
     addr.sin_family = AF_INET;

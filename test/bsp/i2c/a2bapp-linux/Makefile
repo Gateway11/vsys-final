@@ -4,7 +4,6 @@ CC = $(CROSSBIN)gcc
 CFLAGS = $(addprefix -I, $(shell find a2bstack -name "inc")) \
          -Ia2bstack/a2bstack/src \
          -Ia2bstack/a2bplugin-master/src \
-         -Ia2bstack/a2bplugin-slave/src \
          -Isrc/a2bstack-pal/platform \
          -Isrc/a2bstack-pal \
          -Isrc \
