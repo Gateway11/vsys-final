@@ -336,9 +336,9 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
     msg.addr  = addr;
     msg.flags = 0;
     msg.len   = nWrite;
-    msg.buf   = wBuf;
+    msg.buf   = (a2b_Byte*)wBuf;
 
-#if 0
+#if 1
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", addr, wBuf[0], nWrite - 1, nReturnValue);
         return -1;
@@ -390,13 +390,13 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
     msg[0].addr = addr;
     msg[0].flags = 0;
     msg[0].len = nWrite;
-    msg[0].buf = wBuf;
+    msg[0].buf = (a2b_Byte*)wBuf;
     msg[1].addr = addr;
     msg[1].flags = I2C_M_RD;
     msg[1].len = nRead;
     msg[1].buf = rBuf;
 
-#if 0
+#if 1
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", addr, wBuf[0], nRead, nReturnValue);
         return -1;

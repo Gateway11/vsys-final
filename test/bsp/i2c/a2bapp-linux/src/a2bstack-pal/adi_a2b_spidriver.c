@@ -43,7 +43,7 @@ and its licensors.
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-//#include <linux/spi/spidev.h>
+#include <linux/spi/spidev.h>
 
 #include "adi_a2b_externs.h"
 #include "adi_a2b_spidriver.h"
@@ -91,7 +91,7 @@ static void hex_dump(const void *src, size_t length, size_t line_size,
 
 static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 {
-#if 0
+#if 1
     int ret;
     struct spi_ioc_transfer tr = {
         .tx_buf = (unsigned long)tx,
@@ -159,7 +159,7 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
     A2B_UNUSED( ecb );
     static int32_t fd[2];
     int32_t ret;
-#if 0
+#if 1
     for (uint8_t i = 0; i < A2B_ARRAY_SIZE(fd); i++) {
         fd[i] = open(SPI_DEV_PATH, O_RDWR);
         if (fd[i] < 0) {
