@@ -17,7 +17,7 @@ void* thread_loop(void *arg) {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(1234);
 
-    for (int sock = socket(AF_INET, SOCK_DGRAM, 0), _m = 1; _m; _m--, sock >= 0 && close(sock)) {
+    for (int sock = socket(AF_INET, SOCK_DGRAM, 0); sock >= 0 && (close(sock), 0);) {
         char buf[128] = {0};
         int32_t ret;
 
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
     a2b_setup(&gApp_Info);
 
     pthread_t thread;
-    pthread_create(&thread, NULL, thread_loop, NULL);
+    pthread_create(&thread, NULL, thread_loop, &gApp_Info);
     pthread_detach(thread);
 
     while(1) {
