@@ -51,10 +51,9 @@ static int32_t __rprintf_ipc_write(const char* data, uint32_t size) {
 }
 #endif
 
-#define rprintf(format, ...) ({                                                 \
-  char __str[MAX_DATA];                                                         \
-  int32_t __ret = snprintf(__str, sizeof(__str), format, ##__VA_ARGS__);        \
-  __ret = __rprintf_ipc_write(__str, __ret);                                    \
+#define rprintf(format, ...) ({                                                      \
+  char __str[MAX_DATA];                                                              \
+  __rprintf_ipc_write(__str, snprintf(__str, sizeof(__str), format, ##__VA_ARGS__)); \
 })
 
 #endif /* __RPRINTF_H__ */
