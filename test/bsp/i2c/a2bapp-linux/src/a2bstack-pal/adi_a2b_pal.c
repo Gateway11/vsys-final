@@ -46,7 +46,6 @@ and its licensors.
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "adi_a2b_datatypes.h"
 #include "adi_a2b_framework.h"
 #include "adi_a2b_externs.h"
 #include "a2bplugin-slave/adi_a2b_periconfig.h"

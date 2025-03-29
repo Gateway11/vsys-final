@@ -44,7 +44,6 @@ and its licensors.
 #include "a2b/stack.h"
 #include "a2b/i2c.h"
 #include "a2b/error.h"
-#include "adi_a2b_datatypes.h"
 #include "a2b/timer.h"
 #include "a2b/util.h"
 #include "a2b/trace.h"

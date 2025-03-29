@@ -42,9 +42,8 @@ and its licensors.
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <linux/spi/spidev.h>
+//#include <linux/spi/spidev.h>
 
-#include "adi_a2b_datatypes.h"
 #include "adi_a2b_externs.h"
 #include "adi_a2b_spidriver.h"
 #include "a2b/error.h"
@@ -91,6 +90,7 @@ static void hex_dump(const void *src, size_t length, size_t line_size,
 
 static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 {
+#if 0
     int ret;
     struct spi_ioc_transfer tr = {
         .tx_buf = (unsigned long)tx,
@@ -125,9 +125,10 @@ static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
 
     if (verbose && rx)
         hex_dump(rx, len, 32, "RX");
+#endif
 }
 
-uint32 adi_a2b_spiInit(A2B_ECB* ecb)
+a2b_UInt32 adi_a2b_spiInit(A2B_ECB* ecb)
 {
 	A2B_UNUSED( ecb );
 
@@ -197,7 +198,7 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
 */   
 /*****************************************************************************/
 #pragma section("L1_code")
-uint32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_Byte* rBuf)
+a2b_UInt32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_Byte* rBuf)
 {
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
@@ -223,7 +224,7 @@ uint32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_By
 */   
 /*****************************************************************************/
 #pragma section("L1_code")
-uint32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf)
+a2b_UInt32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf)
 {
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
@@ -234,7 +235,7 @@ uint32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, cons
 }
 
 #pragma section("L1_code")
-uint32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf)
+a2b_UInt32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf)
 {
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
@@ -244,7 +245,7 @@ uint32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, 
 }
 
 #pragma section("L1_code")
-uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf)
+a2b_UInt32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf)
 {
 	A2B_UNUSED( hnd );
 	A2B_UNUSED( addr );
@@ -267,7 +268,7 @@ uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a
 */   
 /*****************************************************************************/
 #pragma section("L3_code")
-uint32 adi_a2b_spiClose(a2b_Handle hnd)
+a2b_UInt32 adi_a2b_spiClose(a2b_Handle hnd)
 {
     close(*(int32_t *)hnd);
     close(*(((int32_t *)hnd) + 1));

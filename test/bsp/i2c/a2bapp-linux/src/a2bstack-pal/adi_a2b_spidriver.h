@@ -35,14 +35,14 @@ typedef enum
 
 /*============= P R O T O T Y P E =============*/
 
-uint32 adi_a2b_spiInit(A2B_ECB* ecb);
+a2b_UInt32 adi_a2b_spiInit(A2B_ECB* ecb);
 a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb);
-uint32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_Byte* rBuf);
-uint32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf);
-uint32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf);
-uint32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf);
-uint32 adi_a2b_spiClose(a2b_Handle hnd);
-uint32 adi_a2b_spiInterruptDisable(uint8 nValue);
+a2b_UInt32 adi_a2b_spiRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nRead, a2b_Byte* rBuf);
+a2b_UInt32 adi_a2b_spiWrite(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf);
+a2b_UInt32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf);
+a2b_UInt32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, const a2b_Byte* wBuf, a2b_UInt16 nRead, a2b_Byte* rBuf);
+a2b_UInt32 adi_a2b_spiClose(a2b_Handle hnd);
+a2b_UInt32 adi_a2b_spiInterruptDisable(a2b_UInt8 nValue);
 
 /*============= D A T A =============*/
 
