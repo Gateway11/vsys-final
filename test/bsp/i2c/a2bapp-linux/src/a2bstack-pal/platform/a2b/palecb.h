@@ -42,7 +42,6 @@
 #else	/* defined(__ADSP214xx__) */
 #include "adi_a2b_busconfig.h"
 #include "bdd_pb2.pb.h"
-#include "adi_a2b_framework.h"
 #endif	/* defined(__ADSP214xx__) */
 #ifdef __ADSPBF7xx__
 #include "a2b/msgtypes.h"
@@ -65,9 +64,9 @@ typedef struct a2b_PalEcb
      */
 	a2b_Handle                       i2chnd;
 	a2b_Handle                       fp;
-	ADI_A2B_TIMER_HANDLER            oTWITimer;
-	ADI_A2B_TWI_CONFIG               oTWIConfig;
-	ADI_A2B_TIMER_HANDLER            oTimerHandler;
+	//ADI_A2B_TIMER_HANDLER            oTWITimer;
+	//ADI_A2B_TWI_CONFIG               oTWIConfig;
+	//ADI_A2B_TIMER_HANDLER            oTimerHandler;
 	uint64_t                         nCurrTime;
 	a2b_Int32						 nChainIndex;
 #if defined(A2B_FEATURE_SEQ_CHART) || defined(A2B_FEATURE_TRACE)

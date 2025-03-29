@@ -46,7 +46,6 @@ and its licensors.
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "adi_a2b_framework.h"
 #include "adi_a2b_externs.h"
 #include "a2bplugin-slave/adi_a2b_periconfig.h"
 #include "a2b/stack.h"
@@ -69,6 +68,13 @@ and its licensors.
 #define I2C_DEV_PATH                    "/dev/i2c-16"
 #define I2C_TIMEOUT_DEFAULT             700             /*!< timeout: 700ms*/
 #define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
+
+/** Define the default (7-bit) A2B master node I2C address */
+#define A2B_CONF_DEFAULT_MASTER_NODE_I2C_ADDR   (0x68)
+
+#define A2B_PAL_L1_CODE   //__attribute__ ((section ("L1_code")))
+#define A2B_PAL_L3_CODE   //__attribute__ ((section ("L3_code")))
+#define A2B_PAL_L3_DATA   //__attribute__ ((section ("L3_data")))
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
@@ -98,7 +104,6 @@ static a2b_UInt8 aDataBuffer[ADI_A2B_MAX_PERI_CONFIG_UNIT_SIZE];
 /*
 ** Function Prototype section
 */
-static void adi_a2b_TimerCallback(ADI_A2B_TIMER_HANDLER_PTR pTimerHandle);
 static a2b_UInt32 adi_a2b_AudioHostConfig(a2b_PalEcb*  palEcb, ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig);
 
 /*
@@ -237,7 +242,6 @@ A2B_PAL_L3_CODE
 a2b_UInt32 a2b_pal_I2cInit(A2B_ECB* ecb)
 {
     a2b_UInt32 nReturnValue = (a2b_UInt32)0;
-    ecb->palEcb.oTWIConfig.nTWIDeviceNo = A2B_TWI_NO;
     return nReturnValue;
 }
 
@@ -596,22 +600,6 @@ a2b_UInt64 a2b_pal_TimerGetSysTimeFunc()
     //printf("Current time in milliseconds: %lld\n", milliseconds);
 
     return milliseconds;
-}
-
-/****************************************************************************/
-/*!
-    @brief          A2B timer(timer1)call back function. It
-                    is called from timer driver ISR.
-
-    @param [in]     pTimerHandle    Pointer to Timer configuration structure
-
-    @return         none
-*/
-/********************************************************************************/
-A2B_PAL_L1_CODE
-static void adi_a2b_TimerCallback(ADI_A2B_TIMER_HANDLER_PTR pTimerHandle)
-{
-
 }
 
 /*****************************************************************************/
