@@ -16,7 +16,6 @@
 
 static int32_t serverfd = -1;
 static struct sockaddr_in servaddr;
-
 static int32_t __rprintf_ipc_write(const char* data, uint32_t size) {
   if (serverfd < 0 && __sync_bool_compare_and_swap(&serverfd, -1, 0)) {
     memset(&servaddr, 0, sizeof(servaddr));
@@ -36,7 +35,6 @@ static int32_t __rprintf_ipc_write(const char* data, uint32_t size) {
 
 static struct rpmsg_channe *rprintf_chan = NULL;
 static int32_t max_payload = -1;
-
 static int32_t __rprintf_ipc_write(const char* data, uint32_t size) {
   if (max_payload < 0 && __sync_bool_compare_and_swap(&max_payload, -1, 0)) {
     rprintf_chan = rpmsg_channel_create(
