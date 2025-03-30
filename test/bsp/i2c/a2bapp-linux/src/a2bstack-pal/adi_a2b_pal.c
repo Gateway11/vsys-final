@@ -381,6 +381,8 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
     a2b_Int32 nReturnValue = A2B_RESULT_SUCCESS;
     int32_t fd = *(int32_t *)hnd;
 
+    memset(rBuf, 0, nRead);
+
     struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg[2];
 
@@ -395,7 +397,6 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
     msg[1].flags = I2C_M_RD;
     msg[1].len = nRead;
     msg[1].buf = rBuf;
-
 
 #if 1
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
