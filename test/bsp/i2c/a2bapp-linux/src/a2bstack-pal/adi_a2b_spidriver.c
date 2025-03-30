@@ -159,11 +159,11 @@ a2b_Handle adi_a2b_spiOpen(A2B_ECB* ecb)
     A2B_UNUSED( ecb );
     static int32_t fd[2];
     int32_t ret;
-#if 1
+#if 0
     for (uint8_t i = 0; i < A2B_ARRAY_SIZE(fd); i++) {
         fd[i] = open(SPI_DEV_PATH, O_RDWR);
         if (fd[i] < 0) {
-            perror("Failed to open the SPI device " SPI_DEV_PATH);
+            perror("Failed to open SPI device " SPI_DEV_PATH);
             //return A2B_NULL;
         }
 

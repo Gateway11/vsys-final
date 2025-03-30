@@ -42,6 +42,8 @@ and its licensors.
 #include <poll.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <string.h>
+#include <errno.h>
 #include "adi_a2b_externs.h"
 
 /*============= D E F I N E S =============*/
@@ -64,7 +66,7 @@ a2b_UInt32 param;
 void port_gpio_control(const char *path, const char *value) {
     int32_t fd = open(path, O_WRONLY);
     if (fd < 0) {
-        perror("Failed to open file");
+        printf("Failed to open file %s: %s\n", path, strerror(errno));
         return;
     }
     write(fd, value, strlen(value));
@@ -88,7 +90,7 @@ static void* thread_loop(void *arg) {
     int32_t fd = open(str, O_RDONLY);
     if (fd < 0) {
         free(args);
-        perror("Failed to open file");
+        printf("Failed to open file %s: %s\n", str, strerror(errno));
         return NULL;
     }
 
