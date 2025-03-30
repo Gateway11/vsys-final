@@ -386,7 +386,7 @@ a2b_intrQueryIrq
 )
 {
 	a2b_UInt16          idx;
-	a2b_UInt8           intSrc;
+	a2b_UInt8           intSrc = 0;
 	a2b_UInt8           intType;
 	a2b_UInt8           regOffset;
 	a2b_HResult         ret = A2B_RESULT_SUCCESS;
