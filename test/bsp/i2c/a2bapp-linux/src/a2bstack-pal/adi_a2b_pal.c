@@ -263,7 +263,7 @@ A2B_PAL_L3_CODE
 a2b_Handle a2b_pal_I2cOpenFunc(a2b_I2cAddrFmt fmt,
         a2b_I2cBusSpeed speed, A2B_ECB* ecb)
 {
-    static int32_t fd;
+    static int32_t fd = -1;
     fd = open(I2C_DEV_PATH, O_RDWR);
 
     if (fd < 0) {
@@ -324,7 +324,7 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
         a2b_UInt16 addr, a2b_UInt16 nWrite,
         const a2b_Byte* wBuf)
 {
-	a2b_HResult nReturnValue = A2B_RESULT_SUCCESS;
+    a2b_Int32 nReturnValue = A2B_RESULT_SUCCESS;
     int32_t fd = *(int32_t *)hnd;
 
     struct i2c_rdwr_ioctl_data msgRdwr;
@@ -341,7 +341,7 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
 #if 1
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", addr, wBuf[0], nWrite - 1, nReturnValue);
-        return -1;
+        return 1;
     }
 #endif
 
@@ -378,7 +378,7 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
         const a2b_Byte* wBuf, a2b_UInt16 nRead,
         a2b_Byte* rBuf)
 {
-	a2b_HResult nReturnValue = A2B_RESULT_SUCCESS;
+    a2b_Int32 nReturnValue = A2B_RESULT_SUCCESS;
     int32_t fd = *(int32_t *)hnd;
 
     struct i2c_rdwr_ioctl_data msgRdwr;
@@ -396,10 +396,11 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
     msg[1].len = nRead;
     msg[1].buf = rBuf;
 
+
 #if 1
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", addr, wBuf[0], nRead, nReturnValue);
-        return -1;
+        return 1;
     }
 #endif
 
