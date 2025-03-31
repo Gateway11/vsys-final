@@ -343,7 +343,7 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
         return 1;
     }
 
-#ifdef A2B_PRINT_CONSOLE
+#if 1
     for (uint16_t i = 0; i < (nWrite - 1); i++) {
         printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                addr, wBuf[0] + i, wBuf[0] + i, wBuf[i + 1], PRINTF_BYTE_TO_BINARY_INT8(wBuf[i + 1]), nWrite - 1);
@@ -403,7 +403,7 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
         return 1;
     }
 
-#ifdef A2B_PRINT_CONSOLE
+#if 1
     for (uint16_t i = 0; i < nRead && nWrite == 1; i++) {
         printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                addr, wBuf[0] + i, wBuf[0] + i, rBuf[i], PRINTF_BYTE_TO_BINARY_INT8(rBuf[i]), nRead);

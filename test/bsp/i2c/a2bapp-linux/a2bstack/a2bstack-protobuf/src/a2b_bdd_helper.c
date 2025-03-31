@@ -4100,7 +4100,7 @@ a2b_HResult a2b_get_nChainsFrmE2promFileIO(A2B_ECB* ecb, a2b_UInt8* pNumChains)
 
 	/* Read Level 0  */
 	A2B_PUT_UINT16_BE(A2B_EEPROM_ADDR_OFFSET, wBuf, 0u);
-	status = a2b_getData(ecb, 2u, wBuf, A2B_LVL0_EEPROM_BYTES, &nReadBuf);
+	status = a2b_getData(ecb, 2u, wBuf, A2B_LVL0_EEPROM_BYTES, nReadBuf);
 	pNumChains[0] = nReadBuf[A2B_LVL0_NUM_CHIAN];
 
 	return status;

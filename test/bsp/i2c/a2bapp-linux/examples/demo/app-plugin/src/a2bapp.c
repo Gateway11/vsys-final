@@ -1186,7 +1186,7 @@ a2b_UInt32 a2b_multimasterSetup(a2b_App_t *pApp_Info)
 	a2b_init(&pApp_Info[nIndex]);
 	/* BCF file Open */
 	a2b_pal_FileOpen(&pApp_Info->ecb, A2B_CONF_BINARY_BCF_FILE_URL);
-	nResult = a2b_get_nChainsFrmE2promFileIO(&pApp_Info->ecb, &nNumChains);
+	nResult = a2b_get_nChainsFrmE2promFileIO(&pApp_Info->ecb, nNumChains);
 	pApp_Info[nIndex].nNumChains = nNumChains[0];
 	a2b_stop(&pApp_Info[nIndex]);
 
