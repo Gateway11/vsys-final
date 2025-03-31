@@ -72,9 +72,9 @@ and its licensors.
 /** Define the default (7-bit) A2B master node I2C address */
 #define A2B_CONF_DEFAULT_MASTER_NODE_I2C_ADDR   (0x68)
 
-#define A2B_PAL_L1_CODE   //__attribute__ ((section ("L1_code")))
-#define A2B_PAL_L3_CODE   //__attribute__ ((section ("L3_code")))
-#define A2B_PAL_L3_DATA   //__attribute__ ((section ("L3_data")))
+#define A2B_PAL_L1_CODE   __attribute__ ((section ("L1_code")))
+#define A2B_PAL_L3_CODE   __attribute__ ((section ("L3_code")))
+#define A2B_PAL_L3_DATA   __attribute__ ((section ("L3_data")))
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \

@@ -11,8 +11,8 @@ CFLAGS = $(addprefix -I, $(shell find a2bstack -name "inc")) \
          -Wno-unused-variable \
          -Wno-unused-function \
          -Wno-unused-result \
-         -Wno-unknown-pragmas \
          -Wno-unused-but-set-variable \
+         -Wno-unknown-pragmas \
          -Wall -fvisibility=hidden -Os #-flto# -g
 
 LDFLAGS = -Wl,-s -lpthread
