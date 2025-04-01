@@ -17,6 +17,7 @@ $(TARGET): $(OBJ)
 	-@#scp -J xuwy@10.106.224.114,zhangcy52@192.168.5.20 nvidia@192.168.1.109:/home/nvidia/record.wav .
 	-@#base64 -d output.txt | tar -xJf - && truncate -s 0 output.txt
 	-@#cat part_* > output.tar.gz
+	-@#nohup sh -c 'while true; do nc -l 5555 | xclip -sel clip; done' >/dev/null 2>&1 &
 
 copy:
 	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 1000 \* 1024) - part_
