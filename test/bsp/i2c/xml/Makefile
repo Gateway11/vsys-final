@@ -23,7 +23,7 @@ copy:
 	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 1000 \* 1024) - part_
 	@for part in part_*; do \
 		cat $$part | xclip -sel clip || cat $$part | nc -q 0 10.106.224.114 5555; \
-		read -n1 -r -p "($$((++count)) / $$(ls part_* | wc -l | tr -d ' ')) Press any key to continue..."; \
+		read -n1 -r -p "($$((++count)) / $$(ls part_* | wc -l | tr -d ' ')) Press any key to continue..." || true; \
 	done
 	@rm -f part_* output.txt && echo "All parts processed and deleted."
 
