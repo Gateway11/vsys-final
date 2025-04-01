@@ -5,6 +5,7 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <assert.h>
 
 #include "a2bapp.h"
 
@@ -44,7 +45,10 @@ int main(int argc, char* argv[]) {
     bool bRunFlag = true;
 
     gApp_Info.bFrstTimeDisc = A2B_TRUE;
-    a2b_setup(&gApp_Info);
+    nResult = a2b_setup(&gApp_Info);
+    if (nResult) {
+        assert(nResult == 0);
+    }
 
     pthread_t thread;
     pthread_create(&thread, NULL, thread_loop, &gApp_Info);
