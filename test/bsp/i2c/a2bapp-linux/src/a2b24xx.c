@@ -18,7 +18,7 @@ static void* thread_loop(void *arg) {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(1234);
 
-    for (int sock = socket(AF_INET, SOCK_DGRAM, 0); sock >= 0 && (close(sock), 0);) {
+    for (int sock = socket(AF_INET, SOCK_DGRAM, 0);; sock >= 0 && (close(sock), 0)) {
         char buf[128] = {0};
         int32_t ret;
 
