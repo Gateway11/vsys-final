@@ -1,5 +1,3 @@
-NV_TOPDIR=/home/$(USER)/thor/new/sdk_7_0_0_1/ciu98
-#CROSSBIN = $(NV_TOPDIR)/aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 #CROSSBIN = ../aarch64--glibc--stable-2022.03-1/bin/aarch64-buildroot-linux-gnu-
 CC = $(CROSSBIN)gcc
 SHELL = /bin/bash
@@ -23,7 +21,8 @@ $(TARGET): $(OBJ)
 copy:
 	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 1000 \* 1024) - part_
 	@for part in part_*; do \
-		cat $$part | xclip -sel clip; read -n1 -r -p "($$((++count)) / $$(ls part_* | wc -l | tr -d ' ')) Press any key to continue..."; \
+		cat $$part | xclip -sel clip || cat $$part | nc -q 0 10.106.224.114 5555; \
+		read -n1 -r -p "($$((++count)) / $$(ls part_* | wc -l | tr -d ' ')) Press any key to continue..."; \
 	done
 	@rm -f part_* output.txt && echo "All parts processed and deleted."
 
