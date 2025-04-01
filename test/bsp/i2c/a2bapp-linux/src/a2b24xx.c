@@ -35,8 +35,9 @@ static void* thread_loop(void *arg) {
     return NULL;
 }
 
+a2b_App_t gApp_Info;
+
 int main(int argc, char* argv[]) {
-    a2b_App_t gApp_Info;
     memset(&gApp_Info, 0, sizeof(gApp_Info));
 
     uint32_t nResult = 0;
