@@ -1390,7 +1390,7 @@ a2b_periphSpiCfgProcessing
                           &nodeAddr,
                           &numExec);
 
-        periphNode->addr = (a2b_UInt32)plugin->periph.rpSPIBuf[nodeAddr][numExec];
+        periphNode->addr = (uintptr_t)plugin->periph.rpSPIBuf[nodeAddr][numExec]; //TODO
         rpBuf = (a2b_UInt8*)&plugin->periph.rBuf;
 
         /* Read the config block header bytes */

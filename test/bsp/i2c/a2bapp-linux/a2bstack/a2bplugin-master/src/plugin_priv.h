@@ -75,7 +75,7 @@ typedef struct a2b_PeripheralNode
     /** Current cfg block [0..n-1] */
     a2b_UInt8                   cfgIdx;
     /** Last read EEPROM Address*/
-    a2b_UInt16                  addr;
+    uintptr_t                   addr; // TODO
     /** Timer used for peripheral delays */
     struct a2b_Timer*           timer;
     /** This is needed for timers, etc. */
