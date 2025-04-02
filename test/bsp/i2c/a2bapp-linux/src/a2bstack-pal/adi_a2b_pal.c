@@ -72,7 +72,7 @@ and its licensors.
 
 /** Define the default (7-bit) A2B master node I2C address */
 #define A2B_CONF_DEFAULT_MASTER_NODE_I2C_ADDR   (0x68)
-#define A2B_INVALID_FD                                      (-1)
+#define A2B_INVALID_FD                          (-1)
 
 #define A2B_PAL_L1_CODE   __attribute__ ((section ("L1_code")))
 #define A2B_PAL_L3_CODE   __attribute__ ((section ("L3_code")))
