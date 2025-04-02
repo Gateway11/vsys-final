@@ -21,15 +21,13 @@ and its licensors.
 /* DEFAULT TRACE LEVEL */
 #define A2B_CONF_DEFAULT_TRACE_LVL		(A2B_TRC_DOM_ALL | A2B_TRC_LVL_DEBUG | A2B_TRC_LVL_INFO | A2B_TRC_LVL_DEFAULT)
 /* DEFAULT TRACE FILE */
-#define A2B_CONF_DEFAULT_TRACE_CHAN_URL     "..//a2b_trace.txt"
+#define A2B_CONF_DEFAULT_TRACE_CHAN_URL     "a2b_trace.txt"
 
 /* DEFAULT SEQUENCE CHART FILE */
-#define A2B_CONF_DEFAULT_SEQCHART_CHAN_URL     "..//SequenceFile.txt"
+#define A2B_CONF_DEFAULT_SEQCHART_CHAN_URL     "SequenceFile.txt"
 
 /* BCF as binary FILE */
-//#define A2B_CONF_BINARY_BCF_FILE_URL     "..//adi_a2b_system_autoconfig.dat"
 #define A2B_CONF_BINARY_BCF_FILE_URL     "adi_a2b_system_autoconfig.dat"
-// #define A2B_CONF_BINARY_BCF_FILE_URL     "..//adi_a2b_bcf.dat"
 
 /* Flag indicates whether the memory for stack to be defined statically or dynamically */
 /* #define A2B_APP_STATIC_MEMORY_FOR_STACK */

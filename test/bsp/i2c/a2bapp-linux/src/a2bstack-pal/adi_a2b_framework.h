@@ -219,7 +219,7 @@ typedef enum
 typedef struct pal_LogConfig
 {
     a2b_Bool inUse;
-    a2b_Int32 fd;
+    a2b_UInt64 fd;
     A2B_LOGGING_MODE elogmode;
 } A2B_LOG_INFO;
 

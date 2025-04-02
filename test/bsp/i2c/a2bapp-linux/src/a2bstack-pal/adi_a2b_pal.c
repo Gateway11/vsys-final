@@ -1113,7 +1113,7 @@ A2B_PAL_L3_CODE
 a2b_Handle a2b_pal_logOpen(const a2b_Char* url)
 {
 	a2b_UInt8 i = 0u;
-	a2b_HResult nHandle = 0U;
+	a2b_Handle nHandle = 0U;
 
 	if ( A2B_NULL != url )
 	{
@@ -1121,8 +1121,8 @@ a2b_Handle a2b_pal_logOpen(const a2b_Char* url)
 		{
 			if(!pPalEcb->oLogConfig[i].inUse)
 			{
-				pPalEcb->oLogConfig[i].fd = (a2b_UInt32)fopen(url, "w");
-				nHandle = (a2b_HResult)&pPalEcb->oLogConfig[i];
+				pPalEcb->oLogConfig[i].fd = (a2b_UInt64)fopen(url, "w");
+				nHandle = (a2b_Handle)&pPalEcb->oLogConfig[i];
 				pPalEcb->oLogConfig[i].inUse = true;
 				break;
 			}
@@ -1163,7 +1163,7 @@ a2b_HResult a2b_pal_logClose(a2b_Handle  hnd)
 	{
 		pLogInfo = (A2B_LOG_INFO *)hnd;
 
-		fclose(pLogInfo->fd);
+		fclose((FILE *)pLogInfo->fd);
 		pLogInfo->fd = A2B_INVALID_FD;
 		pLogInfo->inUse = false;
 		nResult = A2B_RESULT_SUCCESS;
@@ -1206,10 +1206,10 @@ a2b_HResult a2b_pal_logWrite(
 	{
 		pLogInfo = (A2B_LOG_INFO *)hnd;
 		msg_len = a2b_strlen(msg) * sizeof(a2b_Char);
-		fwrite(msg, 1, msg_len, pLogInfo->fd);
-		fwrite(newline, 1, 1, pLogInfo->fd);
+		fwrite(msg, 1, msg_len, (FILE *)pLogInfo->fd);
+		fwrite(newline, 1, 1, (FILE *)pLogInfo->fd);
 		nResult = A2B_RESULT_SUCCESS;
-		(void)fflush(pLogInfo->fd);
+		(void)fflush((FILE *)pLogInfo->fd);
 	}
 	return nResult;
 }
