@@ -5442,7 +5442,7 @@ static a2b_Bool a2b_dscvryCustomAuthFrmGpio(a2b_Plugin* plugin, a2b_NodeSignatur
 
 	/* GPIO Input Enable*/
 	wBuf[0] = A2B_REG_GPIOIEN;
-	wBuf[1] = ~(A2B_REG_GPIOIEN_RESET);
+	wBuf[1] = ~(A2B_REG_GPIOIEN_RESET) & 0xFF;
 	status = a2b_regWrite(plugin->ctx, dscNodeAddr, 2u, wBuf);
 	wBuf[0u] = A2B_REG_GPIOIN;
 
