@@ -33,6 +33,7 @@
 
 #include "a2b/macros.h"
 #include "a2b/ctypes.h"
+#include "a2bapp_defs.h"
 
 #if defined(__ADSP214xx__)
 #include "adi_a2b_twi_internal.h"

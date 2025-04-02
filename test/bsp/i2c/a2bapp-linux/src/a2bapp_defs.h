@@ -51,4 +51,6 @@ and its licensors.
 
 /* #define A2BAPP_ENABLE_RTMBOOT */
 
+#define A2B_TOTAL_LOG_CH                   (A2B_CONF_MAX_NUM_MASTER_NODES * A2B_CONF_LOG_NUM_CHANNELS)
+
 #endif /* __A2BAPP_DEFS_H__ */
