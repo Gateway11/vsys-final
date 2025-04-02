@@ -18,8 +18,6 @@ and its licensors.
 /*============= D E F I N E S =============*/
 /* Add your custom header content here */
 
-#define A2B_TOTAL_LOG_CH                (A2B_CONF_MAX_NUM_MASTER_NODES * A2B_CONF_LOG_NUM_CHANNELS)
-
 /* DEFAULT TRACE LEVEL */
 #define A2B_CONF_DEFAULT_TRACE_LVL		(A2B_TRC_DOM_ALL | A2B_TRC_LVL_DEBUG | A2B_TRC_LVL_INFO | A2B_TRC_LVL_DEFAULT)
 /* DEFAULT TRACE FILE */

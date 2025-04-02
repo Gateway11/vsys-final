@@ -46,8 +46,8 @@ and its licensors.
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "adi_a2b_framework.h"
 #include "adi_a2b_externs.h"
-#include "a2bapp_defs.h"
 #include "a2bplugin-slave/adi_a2b_periconfig.h"
 #include "a2b/stack.h"
 #include "a2b/util.h"
@@ -69,14 +69,6 @@ and its licensors.
 #define I2C_DEV_PATH                    "/dev/i2c-16"
 #define I2C_TIMEOUT_DEFAULT             700             /*!< timeout: 700ms*/
 #define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
-
-/** Define the default (7-bit) A2B master node I2C address */
-#define A2B_CONF_DEFAULT_MASTER_NODE_I2C_ADDR   (0x68)
-#define A2B_INVALID_FD                          (-1)
-
-#define A2B_PAL_L1_CODE   __attribute__ ((section ("L1_code")))
-#define A2B_PAL_L3_CODE   __attribute__ ((section ("L3_code")))
-#define A2B_PAL_L3_DATA   __attribute__ ((section ("L3_data")))
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
