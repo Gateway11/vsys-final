@@ -20,12 +20,12 @@ $(TARGET): $(OBJ)
 	-@#nohup sh -c 'while true; do nc -l 5555 | xclip -sel clip; done' >/dev/null 2>&1 &
 
 copy:
-	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 1000 \* 1024) - /tmp/part_
-	@for part in /tmp/part_*; do \
+	@tar -cf - $(FILE) | xz -9 --extreme | base64 | split -b $(shell expr 1000 \* 1024) - part_
+	@for part in part_*; do \
 		cat $$part | xclip -sel clip || cat $$part | nc -q 0 10.106.224.114 5555; \
-		read -t 15 -n1 -r -p "($$((++count)) / $$(ls /tmp/part_* | wc -l | tr -d ' ')) Press any key to continue..." || true; \
+		read -t 15 -n1 -r -p "($$((++count)) / $$(ls part_* | wc -l | tr -d ' ')) Press any key to continue..." || true; \
 	done
-	@rm -f /tmp/part_* output.txt && echo "All parts processed and deleted."
+	@rm -f part_* output.txt && echo "All parts processed and deleted."
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
