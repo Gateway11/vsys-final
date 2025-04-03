@@ -1521,13 +1521,13 @@ static void a2bapp_onInterrupt(struct a2b_Msg* msg, a2b_Handle userData)
 		{
 			if (interrupt)
 			{
-				A2B_APP_LOG("\n\rINTERRUPT: intrType=%u nodeAddr=%d", interrupt->intrType, interrupt->nodeAddr);
+				A2B_APP_LOG("\n\rINTERRUPT: intrType=%u nodeAddr=%d\n\r", interrupt->intrType, interrupt->nodeAddr);
 
 				/* Add your code to handle interrupt */
 			}
 			else
 			{
-				A2B_APP_LOG("\n\rINTERRUPT: failed to retrieve payload");
+				A2B_APP_LOG("\n\rINTERRUPT: failed to retrieve payload\n\r");
 			}
 		}
 	}

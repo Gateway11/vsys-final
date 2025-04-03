@@ -85,7 +85,6 @@ and its licensors.
       PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
 #define PRINTF_BYTE_TO_BINARY_INT16(i) \
       PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
-#define A2B_PRINT_DEFINED
 
 /*============= D A T A =============*/
 
