@@ -19,19 +19,17 @@ static void* thread_loop(void *arg) {
     addr.sin_port = htons(1234);
 
     for (int sock = socket(AF_INET, SOCK_DGRAM, 0); sock > 0; close(sock), sock = -1) {
-        char buf[128] = {0};
-        int32_t ret;
+        if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+            char buf[128] = {0};
+            int32_t ret;
 
-        if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-            perror("bind");
-            return NULL;
+            while (strncmp(buf, "exit", 4)) {
+                memset(buf, 0, sizeof(buf));
+                ret = recvfrom(sock, buf, sizeof(buf), 0, NULL, 0);
+                printf("%s\n", buf);
+            }
         }
-
-        while (strncmp(buf, "exit", 4)) {
-            memset(buf, 0, sizeof(buf));
-            ret = recvfrom(sock, buf, sizeof(buf), 0, NULL, 0);
-            printf("%s\n", buf);
-        }
+        perror("bind");
     }
     return NULL;
 }
