@@ -17,7 +17,7 @@
 
  /*======================= I N C L U D E S =========================*/
 
- /*#define A2B_DUMP_BDD*/
+#define A2B_DUMP_BDD
 
 #ifdef A2B_DUMP_BDD
 #include "stddef.h"
@@ -259,6 +259,7 @@ a2b_bddDump
 	default: printf(">    cfgErrPolicy:  UNKNOWN (%d)\n", bdd->policy.cfgErrPolicy); break;
 	}
 
+#if 0
 	printf("Streams: (cnt: %d)\n", bdd->streams_count);
 	for (idx = 0; idx < bdd->streams_count; idx++)
 	{
@@ -269,6 +270,7 @@ a2b_bddDump
 		REQ32(">    numChans:            ", bdd->streams[idx].numChans);
 
 	} /* streams */
+#endif
 
 	printf("Nodes: (cnt: %d)\n", bdd->nodes_count);
 	for (idx = 0; idx < bdd->nodes_count; idx++)
