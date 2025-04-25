@@ -703,7 +703,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "RX SLAVE%hhd %hhd", &params[0], &params[1]) == 2) {
+    if (sscanf(a2b24xx->command_buffer, "RX SLAVE%hhu %hhu", &params[0], &params[1]) == 2) {
         pr_info("RX SLAVE(%d) (%d)\n", params[0], params[1]);
 
         if (params[0] < a2b24xx->max_node_number && params[1] < sizeof(config)) {
