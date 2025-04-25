@@ -153,117 +153,26 @@ static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
-
-    const char *pos;
-    char *endptr;
-    int parseCount = 0;  // Initialize the counter for parsed fields
-    char buffer[10];  // Temporary buffer to hold the extracted number string
-
     size_t *bufferOffset = &a2b24xx->bufferOffset;
 
-    // Parse "instr" field
-    pos = strstr(action, "instr=\"");
-    if (pos) {
-        pos += strlen("instr=\"");  // Skip "instr=\""
-        endptr = strchr(pos, '\"');
-        if (endptr) {
-            size_t instrLen = endptr - pos;
-            strncpy(instr, pos, instrLen);
-            instr[instrLen] = '\0';  // Null-terminate the string
-            parseCount++;  // Increment count for parsed field
-        }
-    }
-
-    // Parse "addr_width" field
-    pos = strstr(action, "addr_width=\"");
-    if (pos) {
-        pos += strlen("addr_width=\"");
-        endptr = strchr(pos, '\"');
-        if (endptr) {
-            // Copy the numeric part to the buffer and null-terminate
-            size_t len = endptr - pos;
-            strncpy(buffer, pos, len);
-            buffer[len] = '\0';
-
-            // Now, use kstrtou8 to convert the number
-            if (kstrtou8(buffer, 10, &config->nAddrWidth) == 0) {
-                parseCount++;  // Increment count for parsed field
-            }
-        }
-    }
-
-    // Parse "len" field
-    pos = strstr(action, "len=\"");
-    if (pos) {
-        pos += strlen("len=\"");
-        endptr = strchr(pos, '\"');
-        if (endptr) {
-            // Copy the numeric part to the buffer and null-terminate
-            size_t len = endptr - pos;
-            strncpy(buffer, pos, len);
-            buffer[len] = '\0';
-
-            // Now, use kstrtou16 to convert the number
-            if (kstrtou16(buffer, 10, &config->nDataCount) == 0) {
-                parseCount++;  // Increment count for parsed field
-            }
-        }
-    }
-
-    // Parse "addr" field
-    pos = strstr(action, "addr=\"");
-    if (pos) {
-        pos += strlen("addr=\"");
-        endptr = strchr(pos, '\"');
-        if (endptr) {
-            // Copy the numeric part to the buffer and null-terminate
-            size_t len = endptr - pos;
-            strncpy(buffer, pos, len);
-            buffer[len] = '\0';
-
-            // Now, use kstrtouint to convert the number
-            if (kstrtouint(buffer, 10, &config->nAddr) == 0) {
-                parseCount++;  // Increment count for parsed field
-            }
-        }
-    }
-
-    // Parse "i2caddr" field
-    pos = strstr(action, "i2caddr=\"");
-    if (pos) {
-        pos += strlen("i2caddr=\"");
-        endptr = strchr(pos, '\"');
-        if (endptr) {
-            // Copy the numeric part to the buffer and null-terminate
-            size_t len = endptr - pos;
-            strncpy(buffer, pos, len);
-            buffer[len] = '\0';
-
-            // Now, use kstrtou8 to convert the number
-            if (kstrtou8(buffer, 10, &config->nDeviceAddr) == 0) {
-                parseCount++;  // Increment count for parsed field
-            }
-        }
-    }
-
-    // Output total parsed field count
-    // pr_info("Total parsed fields: %d\n", parseCount);
-
-    if (parseCount >= 5) {
+    if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
+                 =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
+                instr, &config->nSpiCmd, &config->nSpiCmdWidth,
+                &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) == 9) {
 #ifndef ENABLE_BECCTL_CONF
         if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
             config->eOpCode = A2B24XX_INVALID;
             return;
         }
 #endif
-        if (strcmp(instr, "writeXbytes") == 0) {
+        if (strstr(instr, "writeXbytes")) {
             config->eOpCode = A2B24XX_WRITE;
-        } else if (strcmp(instr, "read") == 0) {
+        } else if (strstr(instr, "read")) {
             config->eOpCode = A2B24XX_READ;
         } else {
             config->eOpCode = A2B24XX_INVALID;
         }
-        config->eProtocol = (strcmp(protocol, "SPI") == 0) ? SPI : I2C;
+        config->eProtocol = strstr(protocol, "SPI") ? SPI : I2C;
         config->nDataCount -= config->nAddrWidth;
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = A2B24XX_DELAY;
