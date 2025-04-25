@@ -159,6 +159,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
                 instr, &config->nSpiCmd, &config->nSpiCmdWidth,
                 &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) == 9) {
+
 #ifndef ENABLE_BECCTL_CONF
         if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
             config->eOpCode = A2B24XX_INVALID;
