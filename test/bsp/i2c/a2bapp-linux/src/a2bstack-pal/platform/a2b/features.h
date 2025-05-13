@@ -66,7 +66,7 @@
 /**
  * This option controls whether sequence charts are supported or not.
  */
- /* #define A2B_FEATURE_SEQ_CHART */ //TODO
+//#define A2B_FEATURE_SEQ_CHART //TODO
 
  /**This option controls whether the stack supports the Content Protection 
  * register configurations
@@ -77,7 +77,7 @@
 /**
  * This options controls whether trace is support or not.
  */
-/* #define A2B_FEATURE_TRACE */ //TODO
+//#define A2B_FEATURE_TRACE //TODO
 
 /**
  * This option controls whether the internal fixed pool based memory
@@ -189,7 +189,6 @@
   * This option controls whether partial discovery attempt of dropped nodes during 
   * post discovery operation
   *  */
-/* #define A2B_FEATURE_PARTIAL_DISC */
 //#define A2B_FEATURE_PARTIAL_DISC //TODO
 
 /**
