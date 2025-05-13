@@ -19,10 +19,10 @@ echo "$actions" | while read -r action; do
         addr_bytes=""
         for ((i = 0; i < $addr_width; i++)); do addr_bytes+=" 0x${addr:$((i * 2)):2}"; done
 
-        if [[ "$instr" == "writeXbytes" ]]; then
-            debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr"$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")'
-        elif [[ "$instr" == "read" ]]; then
+        if [[ "$instr" == "read" ]]; then
             debug 'i2ctransfer -f -y $i2c_dev w$addr_width@"$i2caddr"$addr_bytes r"$((len - addr_width))"'
+        else
+            debug 'i2ctransfer -f -y $i2c_dev w$len@"$i2caddr"$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")'
         fi
     else
         delay_value=0
