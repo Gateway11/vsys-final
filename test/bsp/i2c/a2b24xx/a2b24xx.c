@@ -703,12 +703,17 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "Loopback", 8) == 0) {
+    if (sscanf(a2b24xx->command_buffer, "Loopback Slave%d", &node_addr) == 1) {
         cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
 
-        //adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_PINCFG, 0x01});
-        //adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_BITM_TXACTL_TXASLEW, 0x82});
-        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+        if (node_addr < a2b24xx->max_node_number) {
+            if (node_addr == -1) {
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+            } else {
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, node_addr});
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_SLAVE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+            }
+        }
         return len;
     }
 
