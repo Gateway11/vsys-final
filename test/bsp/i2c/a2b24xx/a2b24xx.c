@@ -703,6 +703,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
+    // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     if (sscanf(a2b24xx->command_buffer, "Loopback Slave%d", &node_addr) == 1) {
         cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
 
@@ -760,22 +761,6 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         }
         return len;
     }
-
-    pr_info("Usage:\n"
-       "  echo \"COMMAND\" > /dev/a2b_ctrl\n"
-       "\n"
-       "Commands:\n"
-       "  RESET                     - Perform reset operation\n"
-       "    Example: echo \"RESET\" > /dev/a2b_ctrl\n"
-       "\n"
-       "  FAULT CHECK               - Cancel fault check operation\n"
-       "    Example: echo \"FAULT CHECK\" > /dev/a2b_ctrl\n"
-       "\n"
-       "  RX SLAVE<X> <P>           - Configure RX PIN of Slave node <X> with parameter <P> (0 or 1)\n"
-       "    Example: echo \"RX SLAVE3 1\" > /dev/a2b_ctrl\n"
-       "\n"
-       "  PDM SLAVE<X> MIC<ID>      - Enable microphone <ID> (0 or 1) for PDM of Slave node <X>\n"
-       "    Example: echo \"PDM SLAVE2 MIC1\" > /dev/a2b_ctrl\n");
 
     return len;
 }
