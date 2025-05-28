@@ -693,17 +693,26 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     a2b24xx->command_buffer[len] = '\0'; // Null-terminate the string
     pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
-    if (strncmp(a2b24xx->command_buffer, "RESET", 5) == 0) {
+    if (strncmp(a2b24xx->command_buffer, "Reset", 5) == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "FAULT CHECK", 11) == 0) {
+    if (strncmp(a2b24xx->command_buffer, "Fault Check", 11) == 0) {
         cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "RX SLAVE%hhu %hhu", &params[0], &params[1]) == 2) {
+    if (strncmp(a2b24xx->command_buffer, "Loopback", 8) == 0) {
+        cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
+
+        //adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_PINCFG, 0x01});
+        //adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_BITM_TXACTL_TXASLEW, 0x82});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+        return len;
+    }
+
+    if (sscanf(a2b24xx->command_buffer, "RX Slave%hhu %hhu", &params[0], &params[1]) == 2) {
         pr_info("RX SLAVE(%d) (%d)\n", params[0], params[1]);
 
         if (params[0] < a2b24xx->max_node_number && params[1] < sizeof(config)) {
@@ -716,7 +725,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "PDM SLAVE%d MIC%d", &node_addr, &mic) >= 1) {
+    if (sscanf(a2b24xx->command_buffer, "PDM Slave%d MIC%d", &node_addr, &mic) >= 1) {
         pr_info("PDM SLAVE(%d) MIC(%d)\n", node_addr, mic);
 
         if (node_addr < a2b24xx->max_node_number) {
