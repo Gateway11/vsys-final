@@ -68,7 +68,6 @@ Java_com_example_audiodemo_MainActivity_stopPlayback(JNIEnv* env, jobject thiz) 
     }
 }
 
-
 int main() {
     Java_com_example_audiodemo_MainActivity_startPlayback(NULL, 0);
 }
