@@ -48,7 +48,7 @@ and its licensors.
 
 /*============= D E F I N E S =============*/
 typedef struct {
-    uint8_t nGPIONum;
+    uint16_t nGPIONum;
     void* pUserCallBack;
     uint8_t bFallingEdgeTrig;
 } ThreadArgs;
@@ -59,9 +59,9 @@ typedef struct {
 /*
 ** Function Prototype section
 */
-static void adi_a2b_PinInterruptHandler(uint8_t ePinInt, a2b_UInt32 nPins,  void *pCBParam);
-typedef void (*pfAppCb)(a2b_UInt32 param);
-a2b_UInt32 param;
+static void adi_a2b_PinInterruptHandler(uint16_t ePinInt, a2b_UInt32 nPins,  void *pCBParam);
+typedef void (*pfAppCb)(a2b_UInt64 param);
+a2b_UInt64 param;
 
 void port_gpio_control(const char *path, const char *value) {
     int32_t fd = open(path, O_WRONLY);
@@ -134,7 +134,7 @@ static void* thread_loop(void *arg) {
 */    
 /*****************************************************************************/
 #pragma section("L1_code")
-a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt8 nGPIONum , void* pUserCallBack, a2b_UInt32 CallBackParam, a2b_UInt8 bFallingEdgeTrig)
+a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt16 nGPIONum , void* pUserCallBack, a2b_UInt64 CallBackParam, a2b_UInt8 bFallingEdgeTrig)
 {
     ThreadArgs* args = (ThreadArgs*)malloc(sizeof(ThreadArgs));
     args->nGPIONum = nGPIONum;
@@ -168,7 +168,7 @@ a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt8 nGPIONum , void* pUserCallBack, 
 */
 /*****************************************************************************/
 #pragma section("L1_code")
-static void adi_a2b_PinInterruptHandler(uint8_t ePinInt, a2b_UInt32 nPins,  void *pCBParam)
+static void adi_a2b_PinInterruptHandler(uint16_t ePinInt, a2b_UInt32 nPins,  void *pCBParam)
 {
 	if( pCBParam != A2B_NULL)
 	{

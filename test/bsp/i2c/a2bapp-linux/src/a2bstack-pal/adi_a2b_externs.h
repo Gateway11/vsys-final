@@ -99,7 +99,7 @@ a2b_HResult a2b_pal_memMgrShutdown(A2B_ECB*    ecb);
 a2b_HResult a2b_EepromWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite,
         const a2b_Byte* wBuf, a2b_UInt16 nRead,
         a2b_Byte* rBuf);
-a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt8 nGPIONum, void* pUserCallBack, a2b_UInt32 CallBackParam, a2b_UInt8 bFallingEdgeTrig);
+a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt16 nGPIONum, void* pUserCallBack, a2b_UInt64 CallBackParam, a2b_UInt8 bFallingEdgeTrig);
 
 /*============= D A T A =============*/
 
