@@ -59,7 +59,7 @@ typedef struct {
 /*
 ** Function Prototype section
 */
-static void adi_a2b_PinInterruptHandler(uint16_t ePinInt, a2b_UInt32 nPins,  void *pCBParam);
+static void adi_a2b_PinInterruptHandler(a2b_UInt16 ePinInt, a2b_UInt32 nPins,  void *pCBParam);
 typedef void (*pfAppCb)(a2b_UInt64 param);
 a2b_UInt64 param;
 
@@ -168,7 +168,7 @@ a2b_UInt32 adi_a2b_EnablePinInterrupt(a2b_UInt16 nGPIONum , void* pUserCallBack,
 */
 /*****************************************************************************/
 #pragma section("L1_code")
-static void adi_a2b_PinInterruptHandler(uint16_t ePinInt, a2b_UInt32 nPins,  void *pCBParam)
+static void adi_a2b_PinInterruptHandler(a2b_UInt16 ePinInt, a2b_UInt32 nPins,  void *pCBParam)
 {
 	if( pCBParam != A2B_NULL)
 	{

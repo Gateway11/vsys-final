@@ -270,7 +270,7 @@ static a2b_Int32 a2b_init(a2b_App_t *pApp_Info)
 		A2B_APP_DBG_LOG("PAL Init done \n\r");
 
 #ifdef ENABLE_INTERRUPT_PROCESS
-		(void)adi_a2b_EnablePinInterrupt(4, (void*)&a2b_IntrptCallbk, (uint64_t)pApp_Info, 0u);
+		(void)adi_a2b_EnablePinInterrupt(4, (void*)&a2b_IntrptCallbk, (a2b_UInt64)pApp_Info, 0u);
 #endif
 	}
 
@@ -605,7 +605,7 @@ static a2b_Int32 a2b_load(a2b_App_t *pApp_Info)
 		if(nFlagVal == 0x1U)
 		{
 #ifdef ENABLE_INTERRUPT_PROCESS
-			(void)adi_a2b_EnablePinInterrupt(0u, (void*)&a2b_SpiEventCallbk, (uint64_t)pApp_Info, 1u);
+			(void)adi_a2b_EnablePinInterrupt(0u, (void*)&a2b_SpiEventCallbk, (a2b_UInt64)pApp_Info, 1u);
 #endif
 		}
 	}
