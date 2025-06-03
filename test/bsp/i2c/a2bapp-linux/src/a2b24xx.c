@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     uint32_t nResult = 0;
     bool bRunFlag = true;
 
-    gApp_Info.bDebug = A2B_TRUE;
+    //gApp_Info.bDebug = A2B_TRUE;
     gApp_Info.bFrstTimeDisc = A2B_TRUE;
     nResult = a2b_setup(&gApp_Info);
     if (nResult) {
