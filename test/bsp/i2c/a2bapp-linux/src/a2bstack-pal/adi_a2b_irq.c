@@ -99,11 +99,9 @@ static void* thread_loop(void *arg) {
     pfd.events = POLLPRI;
 
     while (1) {
-        lseek(fd, 0, SEEK_SET);
-        read(fd, &value, 1);
-    
         printf("Waiting for GPIO event...\n");
         poll(&pfd, 1, -1);
+        //poll(&pfd, 1, value == (args->bFallingEdgeTrig ? '0' : '1') ? 10 : -1);
     
         lseek(fd, 0, SEEK_SET);
         read(fd, &value, 1);
