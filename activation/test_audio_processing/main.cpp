@@ -52,11 +52,8 @@ void test_audio_processing(){
     proc_sem = sem_open(__STR(proc_sem), O_CREAT|O_EXCL, 0644, 0);
     sync_sem = sem_open(__STR(sync_sem), O_CREAT|O_EXCL, 0644, 0);
 #else
-    sem_t __proc_sem, __sync_sem;
-    sem_init(&__proc_sem, 0, 0);
-    sem_init(&__sync_sem, 0, 0);
-    proc_sem = &__proc_sem;
-    sync_sem = &__sync_sem;
+    sem_init(proc_sem, 0, 0);
+    sem_init(sync_sem, 0, 0);
 #endif
     
     std::vector<std::thread> threads;
