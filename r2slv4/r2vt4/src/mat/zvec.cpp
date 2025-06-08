@@ -466,7 +466,7 @@ namespace __r2vt4__ {
       
     }
     
-#elif defined( __aarch64__) && __ANDROID_API__ <= 26
+#elif defined( __aarch64__)
     
     for (int m = 0 ; m < M ; m ++) {
       
@@ -485,7 +485,7 @@ namespace __r2vt4__ {
        //"vldmia r0, { q12 }\n\t"
        "ld1 { v12.4s }, [x0]\n\t"
        
-       "LOOPAX1:\n\t"
+       ".LLOOPAX1%=:\n\t"
        
        //"vldmia r2!, { q0 }		\n\t"	// q1 = v
        "ld1 { v0.4s }, [x2], #16	\n\t"	// q1 = v
@@ -506,7 +506,7 @@ namespace __r2vt4__ {
        "fmla v12.4s, v11.4s, v0.s[3]\n\t"
        
        "SUBS x3,x3,#1        \n\t"
-       "BNE LOOPAX1       \n\t"
+       "BNE .LLOOPAX1%=      \n\t"
        
        // output = result registers
        //"vstmia r0, { q12 }"
