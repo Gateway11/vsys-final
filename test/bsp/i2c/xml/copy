@@ -1,0 +1,16 @@
+第一步：找到 Slave0 结尾位置
+第二步：将 5Node 添加到这个位置
+
+
+第三步：开始访问 Slave0 PERI Master i2ctransfer -f -y 16 w2@0x69 0x00 0x68
+                                    i2ctransfer -f -y 16 w2@0x68 0x01 0x20
+第四步：开始设置 Slave0 PERI Master(需要将 I2C 地址全部改成0x69)
+
+第五步：开始访问 Slave0 PERI Slave  i2ctransfer -f -y 16 w2@0x68 0x01 0x00
+                                    i2ctransfer -f -y 16 w2@0x69 0x00 0x69
+                                    i2ctransfer -f -y 16 w2@0x68 0x01 0x20
+第六步：开始设置 Slave0 PERI Slave
+
+
+
+重复三四五六步
