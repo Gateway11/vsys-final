@@ -8,7 +8,7 @@
 #include "regdefs.h"
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
+#define MAX_CONFIG_DATA (DSP_DEVICE_ADDR ? MAX_ACTIONS << 6 : MAX_ACTIONS)
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
