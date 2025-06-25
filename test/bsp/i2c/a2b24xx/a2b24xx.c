@@ -19,6 +19,8 @@
 #include <linux/slab.h>
 #include <linux/of_gpio.h>
 #include <linux/string.h>
+//#include <linux/of_irq.h>
+//#include <linux/interrupt.h>
 
 #include <sound/core.h>
 #include <sound/initval.h>
@@ -30,6 +32,10 @@
 #include "adi_a2b_commandlist.h"
 #include "a2b24xx.h"
 #include "regdefs.h"
+
+#ifdef CONFIG_TEGRA_EPL
+#include <linux/tegra-epl.h>
+#endif
 
 //#define A2B_SETUP_ALSA
 
@@ -43,6 +49,12 @@
 #define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS
 #define MAX_RETRIES 2           // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL 5000
+
+/**
+ * @brief EPL reporter ID for A2B24XX.
+ * This ID is used when reporting errors to FSI via EPL.
+ */
+#define A2B24XX_EPL_REPORTER_ID 0x8103
 
 /*
  * Recommendation for BECCTL, for normal operation
@@ -92,6 +104,7 @@ struct a2b24xx {
     uint8_t cycles[16];
     uint16_t slave_pos[16];
     uint8_t max_node_number;
+    uint16 error_code;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -554,7 +567,6 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
 
-    mutex_lock(&a2b24xx->node_mutex);
     for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
         adi_a2b_I2CWrite(a2b24xx->dev, A2B_MASTER_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         if (adi_a2b_I2CRead(a2b24xx->dev, A2B_SLAVE_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
@@ -575,7 +587,24 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         pr_warn("Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode + 1);
     }
-    mutex_unlock(&a2b24xx->node_mutex); // Release lock
+}
+
+static void a2b24xx_epl_report_error(uint32_t error_code)
+{
+#ifdef CONFIG_TEGRA_EPL
+    struct epl_error_report_frame error_report;
+    u64 time;
+
+    asm volatile("mrs %0, cntvct_el0" : "=r" (time));
+
+    error_report.error_code = error_code;
+    error_report.error_attribute = 0x0;
+    error_report.reporter_id = A2B24XX_EPL_REPORTER_ID;
+    error_report.timestamp = (u32) time;
+
+    epl_report_error(error_report);
+#endif
+    return;
 }
 
 static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
@@ -597,6 +626,11 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
+
+                if (a2b24xx->error_code != *(uint16_t *)dataBuffer) {
+                    a2b24xx_epl_report_error(a2b24xx->error_code = *(uint16_t *)dataBuffer);
+                }
+
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
                 if (deepCheck) {
                     checkFaultNode(a2b24xx, inode);
@@ -773,9 +807,22 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 };
 #endif
 
+static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
+{
+    struct a2b24xx *a2b24xx = dev_id;
+
+    pr_info("%s: interrupt handled. %d", __func__, irq);
+    if (mutex_trylock(&a2b24xx->node_mutex)) {
+        processInterrupt(a2b24xx, false);
+        mutex_unlock(&a2b24xx->node_mutex);
+    }
+    return IRQ_HANDLED;
+}
+
 static void a2b24xx_setup_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
     uint8_t node_number = 0;
 
     /* Setting up A2B network */
@@ -805,6 +852,11 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
+
+    int status = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_FALLING, __func__, a2b24xx);
+    if (status)
+        pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, status);
+
     schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 }
 
@@ -812,7 +864,9 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
 
+    mutex_lock(&a2b24xx->node_mutex);
     processInterrupt(a2b24xx, true);
+    mutex_unlock(&a2b24xx->node_mutex); // Release lock
 
     /* Schedule the next fault check at the specified interval */
     schedule_delayed_work(&a2b24xx->fault_check_work,
@@ -1055,6 +1109,7 @@ EXPORT_SYMBOL_GPL(a2b24xx_probe);
 int a2b24xx_remove(struct device *dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
 #ifndef A2B_SETUP_ALSA
     device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
@@ -1063,6 +1118,7 @@ int a2b24xx_remove(struct device *dev)
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 #endif
 
+    free_irq(client->irq, client);
     cancel_work_sync(&a2b24xx->setup_work);
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 
