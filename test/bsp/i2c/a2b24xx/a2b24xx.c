@@ -133,17 +133,19 @@ static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
 static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 {
-    int ret = 0;
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
+    disable_irq(client->irq);
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
+    enable_irq(client->irq);
     schedule_delayed_work(&a2b24xx->fault_check_work,
                     msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-    return ret;
+    return 0;
 }
 
 static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
@@ -163,6 +165,24 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 
 /* Example control */
 static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
+
+static void a2b24xx_epl_report_error(uint32_t error_code)
+{
+#ifdef CONFIG_TEGRA_EPL
+    struct epl_error_report_frame error_report;
+    u64 time;
+
+    asm volatile("mrs %0, cntvct_el0" : "=r" (time));
+
+    error_report.error_code = error_code;
+    error_report.error_attribute = 0x0;
+    error_report.reporter_id = A2B24XX_EPL_REPORTER_ID;
+    error_report.timestamp = (u32) time;
+
+    epl_report_error(error_report);
+#endif
+    return;
+}
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
@@ -587,24 +607,6 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         pr_warn("Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode + 1);
     }
-}
-
-static void a2b24xx_epl_report_error(uint32_t error_code)
-{
-#ifdef CONFIG_TEGRA_EPL
-    struct epl_error_report_frame error_report;
-    u64 time;
-
-    asm volatile("mrs %0, cntvct_el0" : "=r" (time));
-
-    error_report.error_code = error_code;
-    error_report.error_attribute = 0x0;
-    error_report.reporter_id = A2B24XX_EPL_REPORTER_ID;
-    error_report.timestamp = (u32) time;
-
-    epl_report_error(error_report);
-#endif
-    return;
 }
 
 static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
