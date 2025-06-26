@@ -37,9 +37,8 @@
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="5" addr="2" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_VENDOR       " />
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="11" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_LDNSLOTS     ">80</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="12" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_LUPSLOTS     ">20</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="63" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2CCFG       ">01</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">17</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SCFG       ">11</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">F7</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SCFG       ">91</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="150" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_AD242X0_MBOX1CTL  ">02</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="3" addr="27" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_INTMSK0      ">00 00</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" ParamName="REG_A2B0_NODEADR">00</action>
@@ -50,9 +49,11 @@
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_CONTROL      " />
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="2" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_VENDOR       " />
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="94" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_AD243X0_BSDSTAT    " />
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_CONTROL      ">84</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_CONTROL      ">04</action>
     <action instr="delay" CellName="AD242xSubNode_0" ParamName="REG_A2B0_CONTROL      ">19</action>
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_CONTROL      " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD243xMain_0" ParamName="REG_A2B0_I2SGCFG      ">80</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD243xMain_0" ParamName="REG_A2B0_CONTROL      ">80</action>
     <action instr="delay" CellName="AD242xSubNode_0">19</action>
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" />
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="2" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_VENDOR       " />
@@ -64,7 +65,7 @@
     <action instr="delay" CellName="AD242xSubNode_0">01</action>
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" />
     <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="165" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_AD243X0_SWSTAT2    " />
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">1F</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">FF</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_SWCTL        ">01</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="19" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_DISCVRY      ">73</action>
     <action instr="delay" CellName="AD242xSubNode_0" ParamName="REG_A2B0_DISCVRY      ">64</action>
@@ -153,8 +154,8 @@
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="12" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_LUPSLOTS     ">02</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="63" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2CCFG       ">01</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">10</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SCFG       ">91</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="71" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_PDMCTL       ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SCFG       ">01</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="71" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_PDMCTL       ">15</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="150" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_AD242X0_MBOX1CTL  ">02</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="3" addr="27" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_INTMSK0      ">00 00</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" ParamName="REG_A2B0_NODEADR">00</action>
@@ -213,8 +214,8 @@
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" ParamName="REG_A2B0_NODEADR">20</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_SWCTL        ">01</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="14" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_UPSLOTS      ">08</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">1F</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SCFG       ">11</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SGCFG      ">FF</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_I2SCFG       ">91</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="27" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_INTMSK0      ">77 78 0F</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_NODEADR      ">00</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="REG_A2B0_NODEADR      ">80</action>
