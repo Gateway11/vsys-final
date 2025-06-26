@@ -104,7 +104,7 @@ struct a2b24xx {
     uint8_t cycles[16];
     uint16_t slave_pos[16];
     uint8_t max_node_number;
-    uint16 error_code;
+    uint16_t error_code;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -1074,17 +1074,17 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     for (int i = 0; i < a2b24xx->actionCount; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
-                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
+                pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
                        i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 break;
             case A2B24XX_READ:
-                pr_info("Action %03d: nDeviceAddr=0x%02X, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s\n",
+                pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s\n",
                        i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
                        pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
                 continue;
             case A2B24XX_DELAY:
-                pr_info("Action %03d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
+                pr_info("Action %02d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
                 break;
         }
 
