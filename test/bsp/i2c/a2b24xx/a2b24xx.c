@@ -19,8 +19,9 @@
 #include <linux/slab.h>
 #include <linux/of_gpio.h>
 #include <linux/string.h>
-//#include <linux/of_irq.h>
-//#include <linux/interrupt.h>
+#ifdef CONFIG_TEGRA_EPL
+#include <linux/tegra-epl.h>
+#endif
 
 #include <sound/core.h>
 #include <sound/initval.h>
@@ -32,10 +33,6 @@
 #include "adi_a2b_commandlist.h"
 #include "a2b24xx.h"
 #include "regdefs.h"
-
-#ifdef CONFIG_TEGRA_EPL
-#include <linux/tegra-epl.h>
-#endif
 
 //#define A2B_SETUP_ALSA
 
@@ -55,6 +52,7 @@
  * This ID is used when reporting errors to FSI via EPL.
  */
 #define A2B24XX_EPL_REPORTER_ID 0x8103
+#define FAULT_OCCURRED 0xFFF
 
 /*
  * Recommendation for BECCTL, for normal operation
@@ -104,7 +102,6 @@ struct a2b24xx {
     uint8_t cycles[16];
     uint16_t slave_pos[16];
     uint8_t max_node_number;
-    uint16_t error_code;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -628,16 +625,13 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-
-                if (a2b24xx->error_code != *(uint16_t *)dataBuffer) {
-                    a2b24xx_epl_report_error(a2b24xx->error_code = *(uint16_t *)dataBuffer);
-                }
+                a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
 
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
                 if (deepCheck) {
                     checkFaultNode(a2b24xx, inode);
                 }
-                return dataBuffer[1];
+                return FAULT_OCCURRED;
             }
         }
         pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
@@ -664,7 +658,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
-    int32_t  errorCode = -1;
+    bool faultOccurred = false;
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
@@ -682,9 +676,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
-                    if (errorCode < 0)
-                        errorCode = processInterrupt(a2b24xx, false);
+                if (pOpUnit->nAddr == A2B_REG_INTTYPE && !faultOccurred) {
+                    faultOccurred = processInterrupt(a2b24xx, false) == FAULT_OCCURRED;
                     continue;
                 }
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
