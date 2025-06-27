@@ -52,7 +52,8 @@
  * This ID is used when reporting errors to FSI via EPL.
  */
 #define A2B24XX_EPL_REPORTER_ID 0x8103
-#define FAULT_OCCURRED 0xFFF
+#define FAULT_OCCURRED   0xFFF    // Fault detected and reported
+#define NO_INTERRUPT     0xFFE    // No interrupt present
 
 /*
  * Recommendation for BECCTL, for normal operation
@@ -639,7 +640,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
     } else if (deepCheck) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
     }
-    return -1;
+    return NO_INTERRUPT;
 }
 
 /****************************************************************************/
@@ -677,7 +678,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE && !faultOccurred) {
-                    faultOccurred = processInterrupt(a2b24xx, false) == FAULT_OCCURRED;
+                    faultOccurred = (processInterrupt(a2b24xx, false) == FAULT_OCCURRED);
                     continue;
                 }
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
