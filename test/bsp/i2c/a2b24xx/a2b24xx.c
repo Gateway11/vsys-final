@@ -664,6 +664,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
+    int32_t  errorCode = -1;
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
@@ -681,6 +682,11 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+                if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
+                    if (errorCode < 0)
+                        errorCode = processInterrupt(a2b24xx, false);
+                    continue;
+                }
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
