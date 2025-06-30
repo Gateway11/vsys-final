@@ -48,7 +48,7 @@
 #define A2B24XX_FAULT_CHECK_INTERVAL 5000
 
 /**
- * @brief EPL reporter ID for A2B24XX.
+ * @brief EPL reporter ID for A2B.
  * This ID is used when reporting errors to FSI via EPL.
  */
 #define A2B24XX_EPL_REPORTER_ID 0x8103
@@ -677,7 +677,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                if (pOpUnit->nAddr == A2B_REG_INTTYPE && !faultOccurred) {
+                if (pOPUnit->nAddr == A2B_REG_INTTYPE && !faultOccurred) {
                     faultOccurred = (processInterrupt(a2b24xx, false) == FAULT_OCCURRED);
                     continue;
                 }
