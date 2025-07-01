@@ -52,8 +52,6 @@
  * This ID is used when reporting errors to FSI via EPL.
  */
 #define A2B24XX_EPL_REPORTER_ID 0x8103
-#define FAULT_OCCURRED   0xFFF    // Fault detected and reported
-#define NO_INTERRUPT     0xFFE    // No interrupt present
 
 /*
  * Recommendation for BECCTL, for normal operation
@@ -103,6 +101,7 @@ struct a2b24xx {
     uint8_t cycles[16];
     uint16_t slave_pos[16];
     uint8_t max_node_number;
+    bool fault_occurred;
 
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;              // Device number
@@ -133,16 +132,20 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 {
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
-    disable_irq(client->irq);
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
+    if (!a2b24xx->fault_occurred) disable_irq(client->irq);
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
-    enable_irq(client->irq);
-    schedule_delayed_work(&a2b24xx->fault_check_work,
+    if (a2b24xx->fault_occurred) {
+        /* Schedule the next fault check at the specified interval */
+        schedule_delayed_work(&a2b24xx->fault_check_work,
                     msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+    } else {
+        enable_irq(client->irq);
+    }
     return 0;
 }
 
@@ -459,7 +462,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
     uint8_t retryCount = 0;
 
-    if (inode == 0 || inode >= a2b24xx->max_node_number) return false;
+    if (inode == 0 || inode > a2b24xx->max_node_number) return false;
 
     pr_info("Processing node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
@@ -568,15 +571,16 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
-            for (uint8_t i = inode; i < a2b24xx->max_node_number; i++) {
-                if (!processSingleNode(a2b24xx, i)) {
+            for (uint8_t i = inode; i <= a2b24xx->max_node_number; i++) {
+                if (!processSingleNode(a2b24xx, i + 1)) {
                     pr_warn("Node %d processing failed. Stopping further discovery\n", i);
-                    break;
+                    return;
                 }
                 mdelay(10);
                 uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
                 adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
             }
+            a2b24xx->fault_occurred = false;
         }
 //    }
 }
@@ -585,7 +589,8 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
 
-    for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
+    mutex_lock(&a2b24xx->node_mutex);
+    for (uint8_t i = 0; i <= a2b24xx->max_node_number; i++) {
         adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         if (adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
             // If discovery is not completed during system boot, the A2B_NODE.LAST bit for the last node will not be set
@@ -601,10 +606,11 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
         lastNode--;
     }
-    if (lastNode < (a2b24xx->max_node_number - 1)) {
+    if (lastNode < a2b24xx->max_node_number) {
         pr_warn("Fault detected: Node %d is the last node\n", lastNode);
-        processFaultNode(a2b24xx, lastNode + 1);
+        processFaultNode(a2b24xx, lastNode);
     }
+    mutex_unlock(&a2b24xx->node_mutex); // Release lock
 }
 
 static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
@@ -626,13 +632,14 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
+                a2b24xx->fault_occurred = true;
                 a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
 
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
                 if (deepCheck) {
                     checkFaultNode(a2b24xx, inode);
                 }
-                return FAULT_OCCURRED;
+                return dataBuffer[1];
             }
         }
         pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
@@ -640,7 +647,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
     } else if (deepCheck) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
     }
-    return NO_INTERRUPT;
+    return -1;
 }
 
 /****************************************************************************/
@@ -659,7 +666,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
-    bool faultOccurred = false;
+
+    a2b24xx->fault_occurred = false;
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
@@ -677,8 +685,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                if (pOPUnit->nAddr == A2B_REG_INTTYPE && !faultOccurred) {
-                    faultOccurred = (processInterrupt(a2b24xx, false) == FAULT_OCCURRED);
+                if (pOPUnit->nAddr == A2B_REG_INTTYPE && !a2b24xx->fault_occurred) {
+                    processInterrupt(a2b24xx, false);
                     continue;
                 }
                 adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
@@ -743,7 +751,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     if (sscanf(a2b24xx->command_buffer, "Loopback Slave%d", &node_addr) == 1) {
         cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
 
-        if (node_addr < a2b24xx->max_node_number) {
+        if (node_addr <= a2b24xx->max_node_number) {
             if (node_addr == -1) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
             } else {
@@ -757,7 +765,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     if (sscanf(a2b24xx->command_buffer, "RX Slave%hhu %hhu", &params[0], &params[1]) == 2) {
         pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
 
-        if (params[0] < a2b24xx->max_node_number && params[1] < sizeof(config)) {
+        if (params[0] <= a2b24xx->max_node_number && params[1] < sizeof(config)) {
             mutex_lock(&a2b24xx->node_mutex);
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
@@ -770,9 +778,9 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     if (sscanf(a2b24xx->command_buffer, "PDM Slave%d MIC%d", &node_addr, &mic) >= 1) {
         pr_info("PDM Slave(%d) MIC(%d)\n", node_addr, mic);
 
-        if (node_addr < a2b24xx->max_node_number) {
+        if (node_addr <= a2b24xx->max_node_number) {
             mutex_lock(&a2b24xx->node_mutex);
-            for (uint8_t i = 0; i < a2b24xx->max_node_number; i++) {
+            for (uint8_t i = 0; i <= a2b24xx->max_node_number; i++) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
                 if (node_addr < 0) {
@@ -812,10 +820,13 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     pr_info("%s: interrupt handled. %d", __func__, irq);
+    disable_irq_nosync(client->irq);
+
     if (mutex_trylock(&a2b24xx->node_mutex)) {
-        processInterrupt(a2b24xx, false);
+        schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
         mutex_unlock(&a2b24xx->node_mutex);
     }
     return IRQ_HANDLED;
@@ -836,7 +847,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
             break;
         }
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
-            a2b24xx->max_node_number = a2b24xx->pA2BConfig[i].paConfigData[0] + 1;
+            a2b24xx->max_node_number = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
     }
     for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
@@ -855,24 +866,31 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
 
-    int status = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_FALLING, __func__, a2b24xx);
-    if (status)
-        pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, status);
+    int ret = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_FALLING, __func__, a2b24xx);
+    if (ret) {
+        pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, ret);
+    }
 
-    schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+    if (a2b24xx->fault_occurred) {
+        disable_irq(client->irq);
+        schedule_delayed_work(&a2b24xx->fault_check_work,
+                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+    }
 }
 
 static void a2b24xx_fault_check_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
-    mutex_lock(&a2b24xx->node_mutex);
     processInterrupt(a2b24xx, true);
-    mutex_unlock(&a2b24xx->node_mutex); // Release lock
-
-    /* Schedule the next fault check at the specified interval */
-    schedule_delayed_work(&a2b24xx->fault_check_work,
-                msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+    if (a2b24xx->fault_occurred) {
+        /* Schedule the next fault check at the specified interval */
+        schedule_delayed_work(&a2b24xx->fault_check_work,
+                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+    } else {
+        enable_irq(client->irq);
+    }
 }
 
 /* Template functions */
