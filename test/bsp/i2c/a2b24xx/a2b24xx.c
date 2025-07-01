@@ -564,7 +564,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
 
-    if (inode <= 0) {
+    if (inode < 0) {
         /* Setting up A2B network */
         adi_a2b_NetworkSetup(a2b24xx->dev);
     } else {
