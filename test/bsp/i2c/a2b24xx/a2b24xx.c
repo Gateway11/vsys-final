@@ -757,8 +757,10 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             if (node_addr == -1) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
             } else {
+                mutex_lock(&a2b24xx->node_mutex);
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, node_addr});
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+                mutex_unlock(&a2b24xx->node_mutex); // Release lock
             }
         }
         return len;
@@ -822,10 +824,10 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
+    //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     pr_info("%s: interrupt handled. %d\n", __func__, irq);
-    disable_irq_nosync(client->irq);
+    disable_irq_nosync(irq);
 
     if (mutex_trylock(&a2b24xx->node_mutex)) {
         schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
