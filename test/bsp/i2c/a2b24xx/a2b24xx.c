@@ -77,7 +77,6 @@
  * Same settings should be used for all nodes
  */
 //#define ENABLE_BECCTL_CONF
-#define ENABLE_INTERRUPT_PROCESS
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -134,25 +133,19 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
-#ifdef ENABLE_INTERRUPT_PROCESS
     if (!a2b24xx->fault_occurred) disable_irq(client->irq);
-#endif
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
-#ifdef ENABLE_INTERRUPT_PROCESS
     if (a2b24xx->fault_occurred) {
-#endif
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                     msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-#ifdef ENABLE_INTERRUPT_PROCESS
     } else {
         enable_irq(client->irq);
     }
-#endif
     return 0;
 }
 
@@ -824,13 +817,12 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 };
 #endif
 
-#ifdef ENABLE_INTERRUPT_PROCESS
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
-    pr_info("%s: interrupt handled. %d", __func__, irq);
+    pr_info("%s: interrupt handled. %d\n", __func__, irq);
     disable_irq_nosync(client->irq);
 
     if (mutex_trylock(&a2b24xx->node_mutex)) {
@@ -839,7 +831,6 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     }
     return IRQ_HANDLED;
 }
-#endif
 
 static void a2b24xx_setup_work(struct work_struct *work)
 {
@@ -875,7 +866,6 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
 
-#ifdef ENABLE_INTERRUPT_PROCESS
     int ret = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_FALLING, __func__, a2b24xx);
     if (ret) {
         pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, ret);
@@ -883,12 +873,9 @@ static void a2b24xx_setup_work(struct work_struct *work)
 
     if (a2b24xx->fault_occurred) {
         disable_irq(client->irq);
-#endif
         schedule_delayed_work(&a2b24xx->fault_check_work,
                     msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-#ifdef ENABLE_INTERRUPT_PROCESS
     }
-#endif
 }
 
 static void a2b24xx_fault_check_work(struct work_struct *work)
@@ -897,17 +884,13 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     processInterrupt(a2b24xx, true);
-#ifdef ENABLE_INTERRUPT_PROCESS
     if (a2b24xx->fault_occurred) {
-#endif
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                     msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-#ifdef ENABLE_INTERRUPT_PROCESS
     } else {
         enable_irq(client->irq);
     }
-#endif
 }
 
 /* Template functions */
@@ -1155,9 +1138,7 @@ int a2b24xx_remove(struct device *dev)
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 #endif
 
-#ifdef ENABLE_INTERRUPT_PROCESS
     free_irq(client->irq, client);
-#endif
     cancel_work_sync(&a2b24xx->setup_work);
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 
