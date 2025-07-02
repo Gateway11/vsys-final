@@ -14,10 +14,10 @@
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/of_gpio.h>
 #include <linux/regmap.h>
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
-#include <linux/of_gpio.h>
 #include <linux/string.h>
 #ifdef CONFIG_TEGRA_EPL
 #include <linux/tegra-epl.h>
@@ -34,7 +34,7 @@
 #include "a2b24xx.h"
 #include "regdefs.h"
 
-//#define A2B_SETUP_ALSA
+// #define A2B_SETUP_ALSA
 
 #define DEVICE_NAME "a2b_ctrl"  // Device name
 #define CLASS_NAME "a2b24xx"    // Device class name
@@ -56,27 +56,30 @@
 /*
  * Recommendation for BECCTL, for normal operation
  *
- * Do not enable reporting of individual bit errors (CRCERR, DPERR, DDERR, HDCNTERR, ICRCERR).
- * - The A2B transceiver automatically takes action on these errors (like repeating last known sample,
- *   ignoring erroneous interrupt, and retrying).
- * - Even if individual bit error reporting is enabled, the Host DSP may not need to do any corrective action.
+ * Do not enable reporting of individual bit errors (CRCERR, DPERR, DDERR,
+ * HDCNTERR, ICRCERR).
+ * - The A2B transceiver automatically takes action on these errors (like
+ * repeating last known sample, ignoring erroneous interrupt, and retrying).
+ * - Even if individual bit error reporting is enabled, the Host DSP may not
+ * need to do any corrective action.
  *
- * Instead, count the bit errors in the Bit Error Counter (BECNT) and take the required action if excessive bit errors.
- * For example, in most systems, counting CRC errors in the BECNT register could be sufficient.
+ * Instead, count the bit errors in the Bit Error Counter (BECNT) and take the
+ * required action if excessive bit errors. For example, in most systems,
+ * counting CRC errors in the BECNT register could be sufficient.
  * - Mask all Bit Failure Interrupts, except for Bit Error Count Overflow.
  *
- * -------------------------------------------------------------------------------------
- * |            | Master | Slave  | Comment                                            |
- * -------------------------------------------------------------------------------------
- * | INTMSKO    | 0x70   | 0x70   | Interrupt enabled for SRFERR, BECOVF, and PWRERR   |
- * -------------------------------------------------------------------------------------
- * | INTMSK2    | 0x0B   |  --    | Interrupt enabled for SLVIRQ, I2CERR, and DSCDONE  |
- * -------------------------------------------------------------------------------------
- * | BECCTL     | 0xE4   | 0xE4   | Configuration example: Threshold 256, ENCRC        |
- * -------------------------------------------------------------------------------------
+ * ---------------------------------------------------------------------------------
+ * |         | Master | Slave  | Comment                                           |
+ * ---------------------------------------------------------------------------------
+ * | INTMSKO | 0x70   | 0x70   | Interrupt enabled for SRFERR, BECOVF, and PWRERR  |
+ * ---------------------------------------------------------------------------------
+ * | INTMSK2 | 0x0B   |  --    | Interrupt enabled for SLVIRQ, I2CERR, and DSCDONE |
+ * ---------------------------------------------------------------------------------
+ * | BECCTL  | 0xE4   | 0xE4   | Configuration example: Threshold 256, ENCRC       |
+ * ---------------------------------------------------------------------------------
  * Same settings should be used for all nodes
  */
-//#define ENABLE_BECCTL_CONF
+// #define ENABLE_BECCTL_CONF
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -118,12 +121,10 @@ struct a2b24xx {
     size_t bufferOffset;
 };
 
-static void adi_a2b_NetworkSetup(struct device* dev);
+static void adi_a2b_NetworkSetup(struct device *dev);
 static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover);
 
-static const struct reg_default a2b24xx_reg_defaults[] = {
-    { 0x00, 0x50 }
-};
+static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
 
 /* Example control - no specific functionality */
 static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
@@ -142,15 +143,15 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
     if (a2b24xx->fault_occurred) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
-                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+                              msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
     } else {
         enable_irq(client->irq);
     }
     return 0;
 }
 
-static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
+static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol,
+                             struct snd_ctl_elem_value *ucontrol) {
     struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
     struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(component);
 
@@ -160,12 +161,13 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
     return 1;
 }
 
-#define A2B24XX_CONTROL(x) \
-    SOC_SINGLE_TLV("A2B" #x " Template", 2, 0, 255, 1, a2b24xx_control), \
-    SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
+#define A2B24XX_CONTROL(x)                                                     \
+    SOC_SINGLE_TLV("A2B" #x " Template", 2, 0, 255, 1, a2b24xx_control),       \
+        SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
 
 /* Example control */
-static const struct snd_kcontrol_new a2b24xx_snd_controls[] = { A2B24XX_CONTROL(1) };
+static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {
+    A2B24XX_CONTROL(1)};
 
 static void a2b24xx_epl_report_error(uint32_t error_code)
 {
@@ -874,7 +876,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
     if (a2b24xx->fault_occurred) {
         disable_irq(client->irq);
         schedule_delayed_work(&a2b24xx->fault_check_work,
-                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+                              msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
     }
 }
 
@@ -887,7 +889,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     if (a2b24xx->fault_occurred) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
-                    msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+                              msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
     } else {
         enable_irq(client->irq);
     }
