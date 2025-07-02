@@ -866,7 +866,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
 
-    int ret = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_FALLING, __func__, a2b24xx);
+    int ret = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_RISING, __func__, a2b24xx);
     if (ret) {
         pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, ret);
     }
