@@ -72,6 +72,7 @@ void port_gpio_control(const char *path, const char *value) {
     write(fd, value, strlen(value));
     close(fd);
 }
+//#include "a2bapp.h"
 
 static void* thread_loop(void *arg) {
     ThreadArgs* args = (ThreadArgs*)arg;
@@ -102,6 +103,7 @@ static void* thread_loop(void *arg) {
         //printf("Waiting for GPIO event...\n");
         //poll(&pfd, 1, -1);
         poll(&pfd, 1, value == (args->bFallingEdgeTrig ? '0' : '1') ? 10 : -1);
+        //poll(&pfd, 1, ((a2b_App_t *)param)->discoveryDone ? -1 : 10);
     
         lseek(fd, 0, SEEK_SET);
         read(fd, &value, 1);
