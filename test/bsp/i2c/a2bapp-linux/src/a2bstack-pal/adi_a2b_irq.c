@@ -102,7 +102,7 @@ static void* thread_loop(void *arg) {
     while (1) {
         //printf("Waiting for GPIO event...\n");
         //poll(&pfd, 1, -1);
-        poll(&pfd, 1, value == (args->bFallingEdgeTrig ? '0' : '1') ? 10 : -1);
+        poll(&pfd, 1, value == '1' ? 10 : -1);
         //poll(&pfd, 1, ((a2b_App_t *)param)->discoveryDone ? -1 : 10);
     
         lseek(fd, 0, SEEK_SET);
