@@ -8,11 +8,11 @@
 #include "regdefs.h"
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (DSP_DEVICE_ADDR ? MAX_ACTIONS << 6 : MAX_ACTIONS)
+#define MAX_CONFIG_DATA MAX_ACTIONS << 6 : MAX_ACTIONS
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
-static int32_t deviceHandles[3];
+static int32_t deviceHandle;
 
 static uint8_t configBuffer[MAX_CONFIG_DATA];
 size_t bufferOffset = 0;
@@ -203,9 +203,9 @@ const IntTypeInfo_t intTypeInfo[] = {
 void processInterrupt() {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(deviceHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(deviceHandles, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
-        adi_a2b_I2C_WriteRead(deviceHandles, A2B_MASTER_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        adi_a2b_I2C_WriteRead(deviceHandles, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             printf("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
@@ -228,7 +228,6 @@ void processInterrupt() {
 void setupNetwork() {
     ADI_A2B_DISCOVERY_CONFIG* pOpUnit;
     uint32_t index, innerIndex;
-    int32_t handle;
 
     static uint8_t dataBuffer[5192];
     static uint8_t dataWriteReadBuffer[4u];
@@ -236,14 +235,12 @@ void setupNetwork() {
 
     for (index = 0; index < actionCount; index++) {
         pOpUnit = &pA2BConfig[index];
-        handle = pOpUnit->nDeviceAddr == A2B_MASTER_ADDR ? deviceHandles[0] :
-            (pOpUnit->nDeviceAddr == A2B_SLAVE_ADDR ? deviceHandles[1] : deviceHandles[2]);
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
-                adi_a2b_I2C_Write(&handle, (uint16_t)pOpUnit->nDeviceAddr, (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
+                adi_a2b_I2C_Write(&deviceHandle, (uint16_t)pOpUnit->nDeviceAddr, (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
                 break;
 
             case READ:
@@ -253,7 +250,7 @@ void setupNetwork() {
                     processInterrupt();
                     continue;
                 }
-                adi_a2b_I2C_WriteRead(&handle, (uint16_t)pOpUnit->nDeviceAddr,
+                adi_a2b_I2C_WriteRead(&deviceHandle, (uint16_t)pOpUnit->nDeviceAddr,
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
                 break;
 
@@ -316,20 +313,12 @@ int main(int argc, char* argv[]) {
 #endif
 
     /* PAL call, open I2C driver */
-    deviceHandles[0] = adi_a2b_I2C_Open(A2B_MASTER_ADDR);
-    deviceHandles[1] = adi_a2b_I2C_Open(A2B_SLAVE_ADDR);
-#if DSP_DEVICE_ADDR
-    deviceHandles[2] = adi_a2b_I2C_Open(DSP_DEVICE_ADDR);
-#endif
+    deviceHandle = adi_a2b_I2C_Open(A2B_BASE_ADDR);
     
     /* Configure A2B system */
     setupNetwork();
 
-    adi_a2b_I2C_Close(deviceHandles[0]);
-    adi_a2b_I2C_Close(deviceHandles[1]);
-#if DSP_DEVICE_ADDR
-    adi_a2b_I2C_Close(deviceHandles[2]);
-#endif
+    adi_a2b_I2C_Close(deviceHandle);
 
     return 0;
 }
