@@ -8,7 +8,7 @@
 #include "regdefs.h"
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA MAX_ACTIONS << 6 : MAX_ACTIONS
+#define MAX_CONFIG_DATA MAX_ACTIONS << 6
 
 ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
 static size_t actionCount = 0;
@@ -203,9 +203,9 @@ const IntTypeInfo_t intTypeInfo[] = {
 void processInterrupt() {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(deviceHandles, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
-        adi_a2b_I2C_WriteRead(deviceHandles, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             printf("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {

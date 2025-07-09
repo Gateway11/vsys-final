@@ -15,8 +15,8 @@ and its licensors.
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <linux/i2c.h>
-#include <linux/i2c-dev.h>
+//#include <linux/i2c.h>
+//#include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 
 #include "a2b-pal-interface.h"
@@ -45,6 +45,7 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     int32_t result = 0;
     int32_t fd = *(int32_t *)handle;
 
+#if 0
     struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg;
 
@@ -56,7 +57,6 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     msg.len   = writeLength;
     msg.buf   = writeBuffer;
 
-#if 0
     if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", deviceAddr, writeBuffer[0], writeLength - 1, result);
         return -1;
@@ -77,6 +77,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     int32_t result = 0;
     int32_t fd = *(int32_t *)handle;
 
+#if 0
     struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg[2];
 
@@ -92,7 +93,6 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     msg[1].len = readLength;
     msg[1].buf = readBuffer;
 
-#if 0
     if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", deviceAddr, writeBuffer[0], readLength, result);
         return -1;
