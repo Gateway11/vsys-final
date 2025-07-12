@@ -827,12 +827,10 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     pr_info("%s: interrupt handled. %d\n", __func__, irq);
-    disable_irq_nosync(irq);
 
-    if (mutex_trylock(&a2b24xx->node_mutex)) {
-        schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
-        mutex_unlock(&a2b24xx->node_mutex);
-    }
+    disable_irq_nosync(irq);
+    schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
+
     return IRQ_HANDLED;
 }
 
