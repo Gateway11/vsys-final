@@ -1,5 +1,4 @@
 #include "EncryptServer.h"
-#include <iostream>
 
 binder_status_t IEncryptor_Class_onTransact(AIBinder* binder, transaction_code_t code,
                                             const AParcel* in, AParcel* out){
@@ -11,7 +10,7 @@ binder_status_t IEncryptor_Class_onTransact(AIBinder* binder, transaction_code_t
  
     std::shared_ptr<IEncryptor> cipher = std::static_pointer_cast<IEncryptor>(ndk::ICInterface::asInterface(binder));
     if(cipher != nullptr){
-        std::cout << "Hello world!!!" << std::endl;
+        LOGI( "Hello world!!!");
     }
  
     switch (code) {
