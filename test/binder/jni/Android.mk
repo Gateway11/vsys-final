@@ -12,3 +12,9 @@ LOCAL_MODULE := myclient
 LOCAL_SRC_FILES := EncryptClenit.cpp
 LOCAL_LDLIBS := -lbinder_ndk -llog
 include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := mycmaera
+LOCAL_SRC_FILES := camera_engine.cpp
+LOCAL_LDLIBS := -lcamera2ndk -lmediandk -llog
+include $(BUILD_SHARED_LIBRARY)
