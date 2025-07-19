@@ -9,7 +9,7 @@
                   android:label="NDK Camera2 Demo"
                   android:configChanges="orientation|keyboardHidden"
                   android:hardwareAccelerated="true">
-            <meta-data android:name="android.app.lib_name" android:value="" />
+            <meta-data android:name="android.app.lib_name" android:value="nativeapp" />
         </activity>
     </application>
 </manifest>
