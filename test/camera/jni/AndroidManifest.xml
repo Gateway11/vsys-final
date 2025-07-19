@@ -1,0 +1,15 @@
+<manifest package="com.example.ndkcamera2"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" />
+
+    <application android:label="NDK Camera2 Demo">
+        <activity android:name="android.app.NativeActivity"
+                  android:label="NDK Camera2 Demo"
+                  android:configChanges="orientation|keyboardHidden"
+                  android:hardwareAccelerated="true">
+            <meta-data android:name="android.app.lib_name" android:value="" />
+        </activity>
+    </application>
+</manifest>
