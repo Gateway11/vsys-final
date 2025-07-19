@@ -126,7 +126,8 @@ void startCamera(ANativeWindow* previewSurface) {
     int32_t width = 1280;
     int32_t height = 720;
     int32_t maxImages = 2;
-    if (AImageReader_new(width, height, AIMAGE_FORMAT_YUV_420_888, maxImages, &ctx->imageReader) != AMEDIA_OK) {
+    if (AImageReader_new(width, height,
+                AIMAGE_FORMAT_YUV_420_888, maxImages, &ctx->imageReader) != AMEDIA_OK) {
         LOGE("Failed to create ImageReader");
         return;
     }
