@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+if [ $# -ne 3 ]; then
+    echo "用法: $0 [PLLCTL] [TXACTL] [TXBCTL]"
+    echo "示例: $0 0x88 0x83 0x83"
+    exit 1
+fi
+
+set -x
 i2ctransfer -f -y 16 w2@0x68 0x01 0x00
 
 i2ctransfer -f -y 16 w2@0x68 0x40 $1
