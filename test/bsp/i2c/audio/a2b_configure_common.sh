@@ -328,7 +328,7 @@ initialize_ir_config() {
     i2cget -y $i2c_bus $bus_addr 0x02 b       # Read slave vendor ID
     i2cset -y $i2c_bus $bus_addr 0x0b 0x80    # Configure downstream slots
     i2cset -y $i2c_bus $bus_addr 0x42 0x11    # I2S configuration
-    i2cset -y $i2c_bus $bus_addr 0x43 0x05    # I2S rate setting
+    i2cset -y $i2c_bus $bus_addr 0x43 0x05    # I2S rate setting (SFFx2)
     i2cset -y $i2c_bus $bus_addr 0x65 0x0F    # Downstream mask
     i2cset -y $i2c_bus $bus_addr 0xb2 0x03    # SPI clock divider
     i2cset -y $i2c_bus $bus_addr 0x1b 0x00 0x00 i  # Interrupt mask
@@ -410,7 +410,7 @@ initialize_rr_config() {
     i2cget -y $i2c_bus $bus_addr 0x02 b    # REG_A2B0_VENDOR
     i2cset -y $i2c_bus $bus_addr 0x0B 0x80 # REG_A2B0_LDNSLOTS
     i2cset -y $i2c_bus $bus_addr 0x42 0x11 # REG_A2B0_I2SCFG
-    i2cset -y $i2c_bus $bus_addr 0x43 0x81 # REG_A2B0_I2SRATE
+    i2cset -y $i2c_bus $bus_addr 0x43 0x81 # REG_A2B0_I2SRATE (SFF/2 = 24kHz)
     i2cset -y $i2c_bus $bus_addr 0x65 0x01 # REG_AD242X0_DNMASK0
     i2cset -y $i2c_bus $bus_addr 0xB2 0x03 # REG_AD243X0_SPICKDIV
     i2cset -y $i2c_bus $bus_addr 0x1B 0x00 # REG_A2B0_INTMSK0
