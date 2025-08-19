@@ -460,6 +460,32 @@ const IntTypeString_t intTypeString[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
 };
 
+/*
+/dev/i2c-16 write device(0x68) reg=0x1C 028, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x1D 029, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1D 029, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x12 018, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16  read device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x10 (0001 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x68) reg=0x13 019, val=0x72 (0111 0010), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x12 018, val=0x82 (1000 0010), cnt=1
+
+Partial Discovery attempted and no new node found!
+*/
+
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
     uint8_t retryCount = 0;
