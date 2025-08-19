@@ -535,8 +535,8 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
             //mdelay(25);
             //goto retry:
         }
-        //adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
         adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
         return false;
     }
 
@@ -604,10 +604,13 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                     pr_warn("Node %d processing failed. Stopping further discovery\n", i);
                     return;
                 }
-                mdelay(10);
+                mdelay(1);
                 uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
                 adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
             }
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
+
             a2b24xx->fault_occurred = false;
         }
 //    }
