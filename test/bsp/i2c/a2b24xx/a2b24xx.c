@@ -608,6 +608,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                 uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
                 adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
             }
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, a2b24xx->max_node_number});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
 
