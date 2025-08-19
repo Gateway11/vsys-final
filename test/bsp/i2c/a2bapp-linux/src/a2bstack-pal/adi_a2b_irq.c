@@ -73,11 +73,11 @@ void port_gpio_control(const char *path, const char *value) {
     close(fd);
 }
 //#include "a2bapp.h"
-
 static void* thread_loop(void *arg) {
     ThreadArgs* args = (ThreadArgs*)arg;
     char str[64], value;
 
+#if 0
     snprintf(str, sizeof(str), "%d", args->nGPIONum);
     port_gpio_control("/sys/class/gpio/export", str);
 
@@ -89,6 +89,14 @@ static void* thread_loop(void *arg) {
 
     snprintf(str, sizeof(str), "/sys/class/gpio/gpio%d/value", args->nGPIONum);
     int32_t fd = open(str, O_RDONLY);
+#else
+    snprintf(str, sizeof(str), "%d", 1944);
+    port_gpio_control("/sys/class/gpio/export", str);
+    port_gpio_control("/sys/class/gpio/PM.00/direction", "in");
+    port_gpio_control("/sys/class/gpio/PM.00/edge", args->bFallingEdgeTrig ? "falling" : "rising");
+
+    int32_t fd = open("/sys/class/gpio/PM.00/value", O_RDONLY);
+#endif
     if (fd < 0) {
         free(args);
         printf("Failed to open file %s: %s\n", str, strerror(errno));
