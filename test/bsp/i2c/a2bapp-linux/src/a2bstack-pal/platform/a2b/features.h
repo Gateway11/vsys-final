@@ -189,7 +189,7 @@
   * This option controls whether partial discovery attempt of dropped nodes during 
   * post discovery operation
   *  */
-//#define A2B_FEATURE_PARTIAL_DISC //TODO
+#define A2B_FEATURE_PARTIAL_DISC //TODO
 
 /**
   * This option controls whether self discovery feature for AD243x
