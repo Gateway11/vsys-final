@@ -77,7 +77,7 @@ static void* thread_loop(void *arg) {
     ThreadArgs* args = (ThreadArgs*)arg;
     char str[64], value;
 
-#if 0
+#if 1
     snprintf(str, sizeof(str), "%d", args->nGPIONum);
     port_gpio_control("/sys/class/gpio/export", str);
 
