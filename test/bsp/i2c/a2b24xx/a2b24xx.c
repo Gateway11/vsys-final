@@ -484,6 +484,65 @@ const IntTypeString_t intTypeString[] = {
 /dev/i2c-16 write device(0x68) reg=0x12 018, val=0x82 (1000 0010), cnt=1
 
 Partial Discovery attempted and no new node found!
+
+########################################################################
+
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x12 018, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16  read device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x10 (0001 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x68) reg=0x13 019, val=0x72 (0111 0010), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x17 023, val=0x18 (0001 1000), cnt=1
+
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x21 (0010 0001), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x69) reg=0x02 002, val=0xAD (1010 1101), cnt=4
+/dev/i2c-16  read device(0x69) reg=0x03 003, val=0x28 (0010 1000), cnt=4
+/dev/i2c-16  read device(0x69) reg=0x04 004, val=0x02 (0000 0010), cnt=4
+/dev/i2c-16  read device(0x69) reg=0x05 005, val=0x01 (0000 0001), cnt=4
+
+/dev/i2c-16 write device(0x69) reg=0x0B 011, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x0C 012, val=0x02 (0000 0010), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x3F 063, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x41 065, val=0x10 (0001 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x42 066, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x47 071, val=0x15 (0001 0101), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x96 150, val=0x02 (0000 0010), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1E 030, val=0xEF (1110 1111), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x40 064, val=0x00 (0000 0000), cnt=1
+
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x10 016, val=0x22 (0010 0010), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x11 017, val=0x03 (0000 0011), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x12 018, val=0x81 (1000 0001), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x12 018, val=0x82 (1000 0010), cnt=1
+Discovery succeeded with 2 nodes discovered
+/dev/i2c-16 write device(0x68) reg=0x1B 027, val=0x77 (0111 0111), cnt=3
+/dev/i2c-16 write device(0x68) reg=0x1C 028, val=0x78 (0111 1000), cnt=3
+/dev/i2c-16 write device(0x68) reg=0x1D 029, val=0x0F (0000 1111), cnt=3
+/dev/i2c-16 write device(0x68) reg=0x1E 030, val=0xEF (1110 1111), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x10 (0001 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1E 030, val=0xEF (1110 1111), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x17 023, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x17 023, val=0x04 (0000 0100), cnt=1
 */
 
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
