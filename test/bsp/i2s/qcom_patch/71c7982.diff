@@ -1,0 +1,94 @@
+From 71c79820094e33c0e331fbd92c5e342950c8a941 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Mon, 15 Sep 2025 11:31:49 +0800
+Subject: [PATCH] [RSE-9]:[feature] audio 4ch MIC bring up[1/1]
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:
+1.Modify configuration file
+2. Modify the device tree
+
+Change-Id: Ideb245fe7414dbe23c794809836c01caa17e5adf
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/arpal-lx/+/15805
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+index 6c40672..c470e9f 100644
+--- a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+@@ -295,44 +295,44 @@
+         <ctl name="TX SMIC MUX0" value="SWR_MIC5" />
+         <ctl name="DEC0_BCS Switch" value="1" />
+         <ctl name="TX_AIF1_CAP Mixer DEC0" value="1" />
+-        <ctl name="ADC2 MUX" value="CH2_AMIC3" />
++        <ctl name="ADC2 MUX" value="CH2_AMIC2" />
+         <ctl name="ADC2 ChMap" value="SWRM_TX2_CH2" />
+         <ctl name="MBHC ChMap" value="SWRM_TX1_CH3" />
+         <ctl name="TX1 MODE" value="ADC_LP" />
+         <ctl name="BCS Channel" value="CH2" />
+         <ctl name="ADC2_MIXER Switch" value="1" />
+-        <ctl name="AMIC3_MIXER Switch" value="1" />
++        <ctl name="AMIC2_MIXER Switch" value="1" />
+     </path>
+ 
+ 
+     <path name="amic3">
++        <ctl name="TX DEC3 MUX" value="SWR_MIC" />
++        <ctl name="TX SMIC MUX3" value="SWR_MIC6" />
++        <ctl name="TX_AIF1_CAP Mixer DEC3" value="1" />
++        <ctl name="ADC2 ChMap" value="SWRM_TX2_CH3" />
++        <ctl name="ADC2 MUX" value="CH2_AMIC3" />
++        <ctl name="TX1 MODE" value="ADC_LP" />
++        <ctl name="ADC2_BCS Disable" value="1" />
++        <ctl name="ADC2_MIXER Switch" value="1" />
++        <ctl name="AMIC3_MIXER Switch" value="1" />
++    </path>
++
++    <path name="amic4">
+         <ctl name="TX DEC1 MUX" value="SWR_MIC" />
+-        <ctl name="TX SMIC MUX1" value="SWR_MIC6" />
+-        <ctl name="TX_AIF1_CAP Mixer DEC2" value="1" />
+-        <ctl name="ADC3 ChMap" value="SWRM_TX2_CH3" />
++        <ctl name="TX SMIC MUX1" value="SWR_MIC7" />
++        <ctl name="TX_AIF1_CAP Mixer DEC1" value="1" />
+         <ctl name="ADC3 MUX" value="CH3_AMIC4" />
+-        <ctl name="TX2 MODE" value="ADC_LP" />
+-        <ctl name="ADC3_BCS Disable" value="1" />
++        <ctl name="TX3 MODE" value="ADC_LP" />
++        <ctl name="ADC3 ChMap" value="SWRM_TX2_CH4" />
+         <ctl name="ADC3_MIXER Switch" value="1" />
+         <ctl name="AMIC4_MIXER Switch" value="1" />
+     </path>
+ 
+-    <path name="amic4">
+-        <ctl name="TX DEC5 MUX" value="SWR_MIC" />
+-        <ctl name="TX SMIC MUX5" value="SWR_MIC8" />
+-        <ctl name="TX_AIF1_CAP Mixer DEC5" value="1" />
+-        <ctl name="ADC4 MUX" value="CH4_AMIC5" />
+-        <ctl name="TX3 MODE" value="ADC_LP" />
+-        <ctl name="ADC4 ChMap" value="SWRM_TX3_CH1" />
+-        <ctl name="ADC4_MIXER Switch" value="1" />
+-        <ctl name="AMIC5_MIXER Switch" value="1" />
+-    </path>
+-
+     <path name="amic5">
+-        <ctl name="TX DEC3 MUX" value="SWR_MIC" />
+-        <ctl name="TX SMIC MUX3" value="SWR_MIC9" />
+-        <ctl name="TX_AIF1_CAP Mixer DEC3" value="1" />
+-        <ctl name="ADC4 ChMap" value="SWRM_TX3_CH2" />
++        <ctl name="TX DEC5 MUX" value="SWR_MIC" />
++        <ctl name="TX SMIC MUX3" value="SWR_MIC8" />
++        <ctl name="TX_AIF1_CAP Mixer DEC5" value="1" />
++        <ctl name="ADC4 ChMap" value="SWRM_TX3_CH1" />
+         <ctl name="ADC4 MUX" value="CH4_AMIC5" />
+         <ctl name="TX3 MODE" value="ADC_LP" />
+         <ctl name="ADC4_MIXER Switch" value="1" />

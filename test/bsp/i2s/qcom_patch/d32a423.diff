@@ -1,0 +1,58 @@
+From d32a423cb8e901caf23d2c163a3df8a130d59abf Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Tue, 09 Sep 2025 16:25:09 +0800
+Subject: [PATCH] [RSE-31]:[feature] add audio PA status info [1/2]
+
+[scope of influence]: audio
+
+[feature]:audio factory test
+
+[RootCause]:audio factory test
+
+[Solution]:import the driver and compile files
+
+Change-Id: I6f73cc49e3611b6f2e7236fcdb2edf27f9a9086f
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/kernel/qcom/+/15438
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+(cherry picked from commit cb501d8b5b6c0651815f6313f7ac4d923aa38511)
+Reviewed-on: https://vcsc.lenovo.com:8080/c/kernel/qcom/+/15410
+---
+
+diff --git a/drivers/misc/hqsysfs/hqsysfs.c b/drivers/misc/hqsysfs/hqsysfs.c
+index 71b4e32..48feeda 100644
+--- a/drivers/misc/hqsysfs/hqsysfs.c
++++ b/drivers/misc/hqsysfs/hqsysfs.c
+@@ -60,6 +60,8 @@
+ static HW_INFO(HWID_NFC, nfc);
+ static HW_INFO(HWID_FP, fingerprint);
+ static HW_INFO(HWID_PCBA, pcba_config);
++static HW_INFO(HWID_SMARTPA, smartpa);
++static HW_INFO(HWID_AUDIO_CODEC, audio_codec);
+ 
+ static struct attribute *huaqin_attrs[] = {
+ 	&hw_info_ver.attr,
+@@ -87,6 +89,8 @@
+ 	&hw_info_nfc.attr,
+ 	&hw_info_fingerprint.attr,
+ 	&hw_info_pcba_config.attr,
++        &hw_info_smartpa.attr,
++        &hw_info_audio_codec.attr,
+ 	NULL
+ };
+ 
+diff --git a/include/linux/hqsysfs.h b/include/linux/hqsysfs.h
+index 9856841..c632c17 100644
+--- a/include/linux/hqsysfs.h
++++ b/include/linux/hqsysfs.h
+@@ -73,6 +73,8 @@
+ 	HWID_PEDOMETER,
+ 	HWID_HUMIDITY,
+ 	HWID_PCBA = 0x80,
++        HWID_SMARTPA,
++        HWID_AUDIO_CODEC,
+ 	HWID_BATERY = 0xA0,
+ 	HWID_FUEL_GAUGE_IC,
+ 	HWID_NFC = 0xC0,

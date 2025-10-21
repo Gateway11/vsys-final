@@ -1,0 +1,45 @@
+From 2a30c10b2725d42920edcd682e38faa98afe01c3 Mon Sep 17 00:00:00 2001
+From: loukeshuang <louks1@lenovo.com>
+Date: Tue, 02 Sep 2025 10:33:47 +0800
+Subject: [PATCH] [RSE-15] lapis_V SPI-2 driver[1/2] [scope of influence] dts
+
+Change-Id: I2f3126897a8b81869ccc784e664ef0ea9a3efd0c
+Reviewed-on: https://vcsc.lenovo.com:8080/c/kernel/devicetree/+/14933
+Tested-by: Keshuang Lou <louks1@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/qcom/lapis-qrd-overlay.dts b/qcom/lapis-qrd-overlay.dts
+index 16530a8..2a3e38b 100644
+--- a/qcom/lapis-qrd-overlay.dts
++++ b/qcom/lapis-qrd-overlay.dts
+@@ -3,7 +3,7 @@
+ 
+ #include "pineapple-qrd.dtsi"
+ #include "lapis-qrd-display.dtsi"
+-#include "lapis-touch-nt36532.dtsi"
++//#include "lapis-touch-nt36532.dtsi"
+ #include "lapis-thermal-ntc.dtsi"
+ #include "lapis-qrd-keyboard.dtsi"
+ #include "lapis-hqhall.dtsi"
+diff --git a/qcom/pineapple-qrd.dtsi b/qcom/pineapple-qrd.dtsi
+index 931dbb5..c2b7769 100644
+--- a/qcom/pineapple-qrd.dtsi
++++ b/qcom/pineapple-qrd.dtsi
+@@ -545,3 +545,16 @@
+ 	};
+ };
+ /***************************awinic end******************************/
++&qupv3_se4_spi {
++    status = "ok";
++    spi_mcu@0 {
++        compatible = "qcom,spi-mcu";
++        reg = <0>;
++        spi-max-frequency = <5000000>;
++        interrupt-parent = <&tlmm>;
++        interrupts = <68 IRQ_TYPE_EDGE_FALLING>;
++        //spi-cpha;
++        status = "ok";
++    };
++};
++

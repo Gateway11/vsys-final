@@ -1,0 +1,151 @@
+From 460dd02a77a9f92824d63a27ca7e98d87100d181 Mon Sep 17 00:00:00 2001
+From: xiebo <boxie1@lenovo.com>
+Date: Tue, 26 Aug 2025 23:41:54 +0800
+Subject: [PATCH] [RSE-9]:[feature] audio 4ch MIC bring up[1/2]
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:
+1.Modify configuration file
+2. Modify the device tree
+
+Change-Id: I0b345f29c6dceef766ae1c87b8654b6b5f2282df
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/arpal-lx/+/14689
+Tested-by: xie bo <boxie1@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+index 0f1bae9..9a99ca6 100644
+--- a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+@@ -295,37 +295,37 @@
+         <ctl name="TX SMIC MUX0" value="SWR_MIC5" />
+         <ctl name="DEC0_BCS Switch" value="1" />
+         <ctl name="TX_AIF1_CAP Mixer DEC0" value="1" />
+-        <ctl name="ADC2 MUX" value="CH2_AMIC2" />
++        <ctl name="ADC2 MUX" value="CH2_AMIC3" />
+         <ctl name="ADC2 ChMap" value="SWRM_TX2_CH2" />
+         <ctl name="MBHC ChMap" value="SWRM_TX1_CH3" />
+         <ctl name="TX1 MODE" value="ADC_LP" />
+         <ctl name="BCS Channel" value="CH2" />
+         <ctl name="ADC2_MIXER Switch" value="1" />
+-        <ctl name="AMIC2_MIXER Switch" value="1" />
++        <ctl name="AMIC3_MIXER Switch" value="1" />
+     </path>
+ 
+ 
+     <path name="amic3">
+-        <ctl name="TX DEC2 MUX" value="SWR_MIC" />
+-        <ctl name="TX SMIC MUX2" value="SWR_MIC5" />
++        <ctl name="TX DEC1 MUX" value="SWR_MIC" />
++        <ctl name="TX SMIC MUX1" value="SWR_MIC6" />
+         <ctl name="TX_AIF1_CAP Mixer DEC2" value="1" />
+-        <ctl name="ADC2 ChMap" value="SWRM_TX2_CH2" />
+-        <ctl name="ADC2 MUX" value="CH2_AMIC3" />
+-        <ctl name="TX1 MODE" value="ADC_LP" />
+-        <ctl name="ADC2_BCS Disable" value="1" />
+-        <ctl name="ADC2_MIXER Switch" value="1" />
+-        <ctl name="AMIC3_MIXER Switch" value="1" />
++        <ctl name="ADC3 ChMap" value="SWRM_TX2_CH3" />
++        <ctl name="ADC3 MUX" value="CH3_AMIC4" />
++        <ctl name="TX2 MODE" value="ADC_LP" />
++        <ctl name="ADC3_BCS Disable" value="1" />
++        <ctl name="ADC3_MIXER Switch" value="1" />
++        <ctl name="AMIC4_MIXER Switch" value="1" />
+     </path>
+ 
+     <path name="amic4">
+         <ctl name="TX DEC5 MUX" value="SWR_MIC" />
+         <ctl name="TX SMIC MUX5" value="SWR_MIC8" />
+         <ctl name="TX_AIF1_CAP Mixer DEC5" value="1" />
+-        <ctl name="ADC3 MUX" value="CH3_AMIC4" />
+-        <ctl name="TX2 MODE" value="ADC_LP" />
+-        <ctl name="ADC3 ChMap" value="SWRM_TX3_CH1" />
+-        <ctl name="ADC3_MIXER Switch" value="1" />
+-        <ctl name="AMIC4_MIXER Switch" value="1" />
++        <ctl name="ADC4 MUX" value="CH4_AMIC5" />
++        <ctl name="TX3 MODE" value="ADC_LP" />
++        <ctl name="ADC4 ChMap" value="SWRM_TX3_CH1" />
++        <ctl name="ADC4_MIXER Switch" value="1" />
++        <ctl name="AMIC5_MIXER Switch" value="1" />
+     </path>
+ 
+     <path name="amic5">
+@@ -621,6 +621,8 @@
+ 
+     <path name="speaker-mic">
+         <path name="amic1" />
++        <path name="amic2" />
++        <path name="amic3" />
+         <!--ctl name="TX_DEC2 Volume" value="102" /-->
+         <path name="amic4" />
+         <!--ctl name="TX DEC5 Volume" value="102" /-->
+@@ -628,6 +630,8 @@
+ 
+     <path name="speaker-mic-liquid">
+         <path name="amic1" />
++        <path name="amic2" />
++        <path name="amic3" />
+         <path name="amic4" />
+     </path>
+ 
+@@ -717,12 +721,18 @@
+ 
+     <path name="handset-mic">
+         <path name="amic1" />
++        <path name="amic2" />
++        <path name="amic3" />
+         <path name="amic4" />
+     </path>
+ 
+     <path name="handset-mic-unprocessed">
+         <path name="amic1" />
+         <ctl name="TX_DEC2 Volume" value="102" />
++        <path name="amic2" />
++        <ctl name="TX_DEC0 Volume" value="102" />
++        <path name="amic3" />
++        <ctl name="TX_DEC1 Volume" value="102" />
+         <path name="amic4" />
+         <ctl name="TX DEC5 Volume" value="102" />
+     </path>
+@@ -1282,6 +1292,8 @@
+         <ctl name="TX_DEC2 Volume" value="98" />
+         <ctl name="TX_DEC3 Volume" value="88" />-->
+         <path name="amic1" />
++        <path name="amic2" />
++        <path name="amic3" />
+         <path name="amic4" />
+     </path>
+ 
+diff --git a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+index 5578a05..43f311b 100644
+--- a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+@@ -136,8 +136,8 @@
+         <in-device>
+             <id>PAL_DEVICE_IN_HANDSET_MIC</id>
+             <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-3</back_end_name>
+-            <max_channels>2</max_channels>
+-            <channels>2</channels>
++            <max_channels>4</max_channels>
++            <channels>4</channels>
+             <samplerate>48000</samplerate>
+             <snd_device_name>handset-mic</snd_device_name>
+             <ec_enable>0</ec_enable>
+@@ -269,9 +269,9 @@
+         <in-device>
+             <id>PAL_DEVICE_IN_SPEAKER_MIC</id>
+             <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-3</back_end_name>
+-            <max_channels>2</max_channels>
++            <max_channels>4</max_channels>
+             <samplerate>48000</samplerate>
+-            <channels>2</channels>
++            <channels>4</channels>
+             <ec_enable>0</ec_enable>
+             <snd_device_name>speaker-mic</snd_device_name>
+             <usecase>

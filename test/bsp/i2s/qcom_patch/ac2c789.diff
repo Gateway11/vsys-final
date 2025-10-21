@@ -1,0 +1,65 @@
+From ac2c789514ce5480268e510f7a4813964a078bc1 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Tue, 09 Sep 2025 16:45:17 +0800
+Subject: [PATCH] [RSE-31]:[feature] add audio PA status info [2/2]
+
+[scope of influence]: audio
+
+[feature]:audio factory test
+
+[RootCause]:audio factory test
+
+[Solution]:import the driver and compile files
+
+Change-Id: I042d279f2076da98411bfdc8d91f49e993851c44
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/audio-kernel-ar/+/15441
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+(cherry picked from commit 833c4ee781de77a5ddca884c9cfec8f939828646)
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/audio-kernel-ar/+/15411
+---
+
+diff --git a/asoc/codecs/aw882xx/aw882xx.c b/asoc/codecs/aw882xx/aw882xx.c
+index 917dee7..9b708f3 100644
+--- a/asoc/codecs/aw882xx/aw882xx.c
++++ b/asoc/codecs/aw882xx/aw882xx.c
+@@ -30,6 +30,7 @@
+ #include <sound/control.h>
+ #include <linux/uaccess.h>
+ #include <linux/vmalloc.h>
++#include <linux/hqsysfs.h>
+ 
+ #include "aw882xx.h"
+ #include "aw882xx_log.h"
+@@ -1958,7 +1959,7 @@
+ 		aw_dev_err(aw882xx->dev, "failed to register aw882xx: %d", ret);
+ 		return -EINVAL;
+ 	}
+-
++        hq_regiser_hw_info(HWID_SMARTPA,"AW88461");
+ 	if (aw882xx->rename_flag == AW_RENAME_ENABLE) {
+ 		dev_set_name(aw882xx->dev, "%d-00%x",
+ 			aw882xx->i2c->adapter->nr, aw882xx->i2c->addr);
+diff --git a/asoc/codecs/wcd939x/wcd939x.c b/asoc/codecs/wcd939x/wcd939x.c
+index 94aa638..ac0c672 100644
+--- a/asoc/codecs/wcd939x/wcd939x.c
++++ b/asoc/codecs/wcd939x/wcd939x.c
+@@ -12,6 +12,7 @@
+ #include <linux/kernel.h>
+ #include <linux/component.h>
+ #include <linux/stringify.h>
++#include <linux/hqsysfs.h>
+ #include <linux/regulator/consumer.h>
+ #include <sound/soc.h>
+ #include <sound/tlv.h>
+@@ -5326,7 +5327,7 @@
+ 		goto err_irq;
+ 	}
+ 	wcd939x->dev_up = true;
+-
++        hq_regiser_hw_info(HWID_AUDIO_CODEC,"WCD939x");
+ 	return ret;
+ err_irq:
+ 	wcd_irq_exit(&wcd939x->irq_info, wcd939x->virq);

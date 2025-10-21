@@ -1,0 +1,65 @@
+From 10839331e183f0b55b9a6a04f2c2e5b61bda35bc Mon Sep 17 00:00:00 2001
+From: xiebo <boxie1@lenovo.com>
+Date: Tue, 26 Aug 2025 23:48:14 +0800
+Subject: [PATCH] [RSE-9]:[feature] audio 4ch MIC bring up[2/2]
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:
+1.Modify configuration file
+2. Modify the device tree
+
+Change-Id: Ic409c6e540bbab72fe875b84e9372d633d2be63d
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom-proprietary/audio-devicetree/+/14690
+Tested-by: xie bo <boxie1@lenovo.com>
+Reviewed-by: JiangJiang Zhou <zhoujj21@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/lapis-audio-qrd.dtsi b/lapis-audio-qrd.dtsi
+index 73f1e2b..2eea1ac 100644
+--- a/lapis-audio-qrd.dtsi
++++ b/lapis-audio-qrd.dtsi
+@@ -74,9 +74,9 @@
+ 		"AMIC2", "Analog Mic2",
+ 		"AMIC2", "MIC BIAS2",
+ 		"AMIC3", "Analog Mic3",
+-		"AMIC3", "MIC BIAS3",
++		"AMIC3", "MIC BIAS2",
+ 		"AMIC4", "Analog Mic4",
+-		"AMIC4", "MIC BIAS4",
++		"AMIC4", "MIC BIAS3",
+ 		"AMIC5", "Analog Mic5",
+ 		"AMIC5", "MIC BIAS4",
+ 		"VA AMIC1", "Analog Mic1",
+@@ -84,7 +84,7 @@
+ 		"VA AMIC2", "Analog Mic2",
+ 		"VA AMIC2", "VA MIC BIAS2",
+ 		"VA AMIC3", "Analog Mic3",
+-		"VA AMIC3", "VA MIC BIAS3",
++		"VA AMIC3", "VA MIC BIAS2",
+ 		"VA AMIC4", "Analog Mic4",
+ 		"VA AMIC4", "VA MIC BIAS3",
+ 		"VA AMIC5", "Analog Mic5",
+diff --git a/pineapple-audio-overlay.dtsi b/pineapple-audio-overlay.dtsi
+index 23408d9..dbc62bb 100644
+--- a/pineapple-audio-overlay.dtsi
++++ b/pineapple-audio-overlay.dtsi
+@@ -386,10 +386,10 @@
+ 
+ 		qcom,cdc-vdd-px-rem-supported = <1>;
+ 
+-		qcom,cdc-micbias1-mv = <1800>;
++		qcom,cdc-micbias1-mv = <2000>;
+ 		qcom,cdc-micbias2-mv = <2700>;
+-		qcom,cdc-micbias3-mv = <1800>;
+-		qcom,cdc-micbias4-mv = <1800>;
++		qcom,cdc-micbias3-mv = <2000>;
++		qcom,cdc-micbias4-mv = <2000>;
+ 
+ 		qcom,cdc-static-supplies = "cdc-vdd-rx",
+ 					   "cdc-vdd-tx",

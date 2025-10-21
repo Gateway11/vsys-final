@@ -1,0 +1,155 @@
+From 7b465b1253d682ddf8761c6d4cc5088a4036a198 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Tue, 02 Sep 2025 14:05:24 +0800
+Subject: [PATCH] [RSE-46]:[fix]audio factory test[1/2]
+
+[scope of influence]: 无
+
+[fix]:fix no apdp
+
+[RootCause]:update build.sh
+
+[Solution]:remove sed
+
+Change-Id: If3c64a3d510fe6b88a8e95e8f55ffa9a6d64d9e8
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/arpal-lx/+/14971
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+index 9a99ca6..6c40672 100644
+--- a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+@@ -386,6 +386,8 @@
+         <ctl name="aw_dev_3_switch" value="Disable" />
+         <ctl name="aw_dev_4_switch" value="Enable" />
+         <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
+     </path>
+     <path name="right-speaker">
+         <ctl name="aw_dev_0_switch" value="Enable" />
+@@ -394,6 +396,8 @@
+         <ctl name="aw_dev_3_switch" value="Disable" />
+         <ctl name="aw_dev_4_switch" value="Disable" />
+         <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
+     </path>
+     <path name="left-up-speaker">
+         <ctl name="aw_dev_0_switch" value="Disable" />
+@@ -402,6 +406,8 @@
+         <ctl name="aw_dev_3_switch" value="Disable" />
+         <ctl name="aw_dev_4_switch" value="Disable" />
+         <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
+     </path>
+     <path name="left-down-speaker">
+         <ctl name="aw_dev_0_switch" value="Disable" />
+@@ -410,6 +416,8 @@
+         <ctl name="aw_dev_3_switch" value="Disable" />
+         <ctl name="aw_dev_4_switch" value="Disable" />
+         <ctl name="aw_dev_5_switch" value="Enable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
+     </path>
+     <path name="right-up-speaker">
+         <ctl name="aw_dev_0_switch" value="Disable" />
+@@ -418,6 +426,8 @@
+         <ctl name="aw_dev_3_switch" value="Enable" />
+         <ctl name="aw_dev_4_switch" value="Disable" />
+         <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
+     </path>
+     <path name="right-down-speaker">
+         <ctl name="aw_dev_0_switch" value="Disable" />
+@@ -426,6 +436,28 @@
+         <ctl name="aw_dev_3_switch" value="Disable" />
+         <ctl name="aw_dev_4_switch" value="Disable" />
+         <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
++    </path>
++        <path name="left-middle-speaker">
++        <ctl name="aw_dev_0_switch" value="Disable" />
++        <ctl name="aw_dev_1_switch" value="Disable" />
++        <ctl name="aw_dev_2_switch" value="Disable" />
++        <ctl name="aw_dev_3_switch" value="Disable" />
++        <ctl name="aw_dev_4_switch" value="Disable" />
++        <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Enable" />
++        <ctl name="aw_dev_7_switch" value="Disable" />
++    </path>
++        <path name="right-middle-speaker">
++        <ctl name="aw_dev_0_switch" value="Disable" />
++        <ctl name="aw_dev_1_switch" value="Disable" />
++        <ctl name="aw_dev_2_switch" value="Disable" />
++        <ctl name="aw_dev_3_switch" value="Disable" />
++        <ctl name="aw_dev_4_switch" value="Disable" />
++        <ctl name="aw_dev_5_switch" value="Disable" />
++        <ctl name="aw_dev_6_switch" value="Disable" />
++        <ctl name="aw_dev_7_switch" value="Enable" />
+     </path>
+ 
+     <path name="speaker">
+diff --git a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+index 43f311b..31251be 100644
+--- a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+@@ -777,6 +777,12 @@
+                 <custom-config key="right-down-speaker">
+                     <snd_device_name>right-down-speaker</snd_device_name>
+                 </custom-config>
++                <custom-config key="left-middle-speaker">
++                    <snd_device_name>left-middle-speaker</snd_device_name>
++                </custom-config>
++                <custom-config key="right-middle-speaker">
++                    <snd_device_name>right-middle-speaker</snd_device_name>
++                </custom-config>
+             </usecase>
+             <usecase>
+                 <name>PAL_STREAM_LOW_LATENCY</name>
+@@ -798,6 +804,12 @@
+                 <custom-config key="right-down-speaker">
+                     <snd_device_name>right-down-speaker</snd_device_name>
+                 </custom-config>
++                <custom-config key="left-middle-speaker">
++                    <snd_device_name>left-middle-speaker</snd_device_name>
++                </custom-config>
++                <custom-config key="right-middle-speaker">
++                    <snd_device_name>right-middle-speaker</snd_device_name>
++                </custom-config>
+             </usecase>
+             <usecase>
+                 <name>PAL_STREAM_COMPRESSED</name>
+@@ -819,6 +831,12 @@
+                 <custom-config key="right-down-speaker">
+                     <snd_device_name>right-down-speaker</snd_device_name>
+                 </custom-config>
++                <custom-config key="left-middle-speaker">
++                    <snd_device_name>left-middle-speaker</snd_device_name>
++                </custom-config>
++                <custom-config key="right-middle-speaker">
++                    <snd_device_name>right-middle-speaker</snd_device_name>
++                </custom-config>
+             </usecase>
+             <usecase>
+                 <name>PAL_STREAM_PCM_OFFLOAD</name>
+@@ -840,6 +858,12 @@
+                 <custom-config key="right-down-speaker">
+                     <snd_device_name>right-down-speaker</snd_device_name>
+                 </custom-config>
++                <custom-config key="left-middle-speaker">
++                    <snd_device_name>left-middle-speaker</snd_device_name>
++                </custom-config>
++                <custom-config key="right-middle-speaker">
++                    <snd_device_name>right-middle-speaker</snd_device_name>
++                </custom-config>
+             </usecase>
+             <usecase>
+                 <name>PAL_STREAM_VOICE_CALL</name>

@@ -1,0 +1,185 @@
+From 7743e49a2ed316dfb05cc526f761253fe0f52114 Mon Sep 17 00:00:00 2001
+From: loukeshuang <louks1@lenovo.com>
+Date: Tue, 02 Sep 2025 10:41:47 +0800
+Subject: [PATCH] [RSE-15] Lapis_V SPI-2 driver [2/2] [scope of influence] kernel/driver
+
+Change-Id: Ib466523438e6c8f691ba92ec2d09ce939e5c15e3
+Reviewed-on: https://vcsc.lenovo.com:8080/c/kernel/qcom/+/14964
+Tested-by: Keshuang Lou <louks1@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/arch/arm64/configs/vendor/lapis_GKI.config b/arch/arm64/configs/vendor/lapis_GKI.config
+index 8d771f2..9be37fa 100644
+--- a/arch/arm64/configs/vendor/lapis_GKI.config
++++ b/arch/arm64/configs/vendor/lapis_GKI.config
+@@ -306,6 +306,7 @@
+ CONFIG_SM_VIDEOCC_PINEAPPLE=m
+ CONFIG_SND_USB_AUDIO_QMI=m
+ CONFIG_SPI_MSM_GENI=m
++CONFIG_SPI_SPIDEV=m
+ CONFIG_SPMI_MSM_PMIC_ARB=m
+ CONFIG_SPMI_MSM_PMIC_ARB_DEBUG=m
+ CONFIG_SPS=m
+diff --git a/drivers/spi/spidev.c b/drivers/spi/spidev.c
+index 1ca806b..1c1db3e 100644
+--- a/drivers/spi/spidev.c
++++ b/drivers/spi/spidev.c
+@@ -25,6 +25,10 @@
+ #include <linux/spi/spidev.h>
+ 
+ #include <linux/uaccess.h>
++#include <linux/of_irq.h>
++#include <linux/poll.h>
++#include <linux/interrupt.h>
++
+ 
+ 
+ /*
+@@ -73,6 +77,9 @@
+ 	struct list_head	device_entry;
+ 
+ 	/* TX/RX buffers are NULL unless this device is open (users > 0) */
++	wait_queue_head_t   peer_wait;
++	bool            rx_triggered;
++
+ 	struct mutex		buf_lock;
+ 	unsigned		users;
+ 	u8			*tx_buffer;
+@@ -140,6 +147,15 @@
+ 	return spidev_sync(spidev, &m);
+ }
+ 
++static inline void check_and_enable_irq(struct spidev_data *spidev) {
++    dev_info(&spidev->spi->dev, "%s", __func__);
++    dev_err(&spidev->spi->dev, "Debug spi ............. :%s\n", __func__);
++    if (spidev->rx_triggered) {
++        spidev->rx_triggered = false;
++        enable_irq(spidev->spi->irq);
++    }
++}
++
+ /*-------------------------------------------------------------------------*/
+ 
+ /* Read-only message with current device setup */
+@@ -166,6 +182,7 @@
+ 		else
+ 			status = status - missing;
+ 	}
++	check_and_enable_irq(spidev);
+ 	mutex_unlock(&spidev->buf_lock);
+ 
+ 	return status;
+@@ -503,6 +520,7 @@
+ 		/* translate to spi_message, execute */
+ 		retval = spidev_message(spidev, ioc, n_ioc);
+ 		kfree(ioc);
++		check_and_enable_irq(spidev);
+ 		break;
+ 	}
+ 
+@@ -617,6 +635,7 @@
+ 	spidev->users++;
+ 	filp->private_data = spidev;
+ 	stream_open(inode, filp);
++	check_and_enable_irq(spidev);
+ 
+ 	mutex_unlock(&device_list_lock);
+ 	return 0;
+@@ -666,6 +685,33 @@
+ 
+ 	return 0;
+ }
++static unsigned int spidev_poll(struct file *filp, poll_table *wait)
++{
++    struct spidev_data	*spidev;
++    unsigned int mask = 0;
++
++    spidev = filp->private_data;
++    poll_wait(filp, &spidev->peer_wait, wait);
++
++    if (spidev->rx_triggered)
++        mask |= (POLLIN | POLLRDNORM);
++
++    return mask;
++}
++
++static irqreturn_t spidev_rx_isr(int irq, void *dev_id)
++{
++    struct spi_device *spi = dev_id;
++    struct spidev_data	*spidev = spi_get_drvdata(spi);
++
++    disable_irq_nosync(irq);
++    dev_err(&spi->dev, "%s: interrupt handled.%d", __func__, irq);
++
++    spidev->rx_triggered = true;
++    wake_up_all(&spidev->peer_wait);
++    return IRQ_HANDLED;
++}
++
+ 
+ static const struct file_operations spidev_fops = {
+ 	.owner =	THIS_MODULE,
+@@ -680,6 +726,7 @@
+ 	.open =		spidev_open,
+ 	.release =	spidev_release,
+ 	.llseek =	no_llseek,
++	.poll   =	spidev_poll,
+ };
+ 
+ /*-------------------------------------------------------------------------*/
+@@ -692,6 +739,7 @@
+ static struct class *spidev_class;
+ 
+ static const struct spi_device_id spidev_spi_ids[] = {
++	{ .name = "spi-mcu" },
+ 	{ .name = "dh2228fv" },
+ 	{ .name = "ltc2488" },
+ 	{ .name = "sx1301" },
+@@ -718,6 +766,7 @@
+ }
+ 
+ static const struct of_device_id spidev_dt_ids[] = {
++	{ .compatible = "qcom,spi-mcu", .data = &spidev_of_check },
+ 	{ .compatible = "rohm,dh2228fv", .data = &spidev_of_check },
+ 	{ .compatible = "lineartechnology,ltc2488", .data = &spidev_of_check },
+ 	{ .compatible = "semtech,sx1301", .data = &spidev_of_check },
+@@ -780,6 +829,17 @@
+ 
+ 	INIT_LIST_HEAD(&spidev->device_entry);
+ 
++	status = request_irq(spi->irq, spidev_rx_isr, IRQF_TRIGGER_FALLING, __func__, spi);
++	if (status)
++    		dev_err(&spi->dev, "Failed to request IRQ: %d, ret:%d\n", spi->irq, status);
++
++	init_waitqueue_head(&spidev->peer_wait);
++
++	spidev->rx_triggered = false;
++    	
++	dev_err(&spi->dev, "Debug spi ............. :%s\n", __func__);
++
++
+ 	/* If we can allocate a minor number, hook up this device.
+ 	 * Reusing minors is fine so long as udev or mdev is working.
+ 	 */
+@@ -817,6 +877,8 @@
+ {
+ 	struct spidev_data	*spidev = spi_get_drvdata(spi);
+ 
++	free_irq(spi->irq, spi);
++
+ 	/* prevent new opens */
+ 	mutex_lock(&device_list_lock);
+ 	/* make sure ops on existing fds can abort cleanly */
+diff --git a/lapis.bzl b/lapis.bzl
+index 98d9d12..2ba3c8a 100644
+--- a/lapis.bzl
++++ b/lapis.bzl
+@@ -217,6 +217,7 @@
+         "drivers/soc/qcom/tmecom/tmecom-intf.ko",
+         "drivers/soc/qcom/wcd_usbss_i2c.ko",
+         "drivers/spi/spi-msm-geni.ko",
++        "drivers/spi/spidev.ko",
+         "drivers/spmi/spmi-pmic-arb.ko",
+         "drivers/spmi/spmi-pmic-arb-debug.ko",
+         "drivers/thermal/qcom/bcl_pmic5.ko",

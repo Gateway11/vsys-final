@@ -1,0 +1,51 @@
+From db7603e4be23a832990b23ed8f9534323ca933b8 Mon Sep 17 00:00:00 2001
+From: xiebo <boxie1@lenovo.com>
+Date: Fri, 29 Aug 2025 21:25:52 +0800
+Subject: [PATCH] [RSE-9]:[feature]修改MIC2和MIC4的供电
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:
+Modify the device tree
+
+Change-Id: Ic9606fb31136619ee38aec882139197e86c25eb2
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom-proprietary/audio-devicetree/+/14884
+Tested-by: xie bo <boxie1@lenovo.com>
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/lapis-audio-qrd.dtsi b/lapis-audio-qrd.dtsi
+index 2eea1ac..6cd13f9 100644
+--- a/lapis-audio-qrd.dtsi
++++ b/lapis-audio-qrd.dtsi
+@@ -74,21 +74,21 @@
+ 		"AMIC2", "Analog Mic2",
+ 		"AMIC2", "MIC BIAS2",
+ 		"AMIC3", "Analog Mic3",
+-		"AMIC3", "MIC BIAS2",
++		"AMIC3", "MIC BIAS4",
+ 		"AMIC4", "Analog Mic4",
+ 		"AMIC4", "MIC BIAS3",
+ 		"AMIC5", "Analog Mic5",
+-		"AMIC5", "MIC BIAS4",
++		"AMIC5", "MIC BIAS1",
+ 		"VA AMIC1", "Analog Mic1",
+ 		"VA AMIC1", "VA MIC BIAS1",
+ 		"VA AMIC2", "Analog Mic2",
+ 		"VA AMIC2", "VA MIC BIAS2",
+ 		"VA AMIC3", "Analog Mic3",
+-		"VA AMIC3", "VA MIC BIAS2",
++		"VA AMIC3", "VA MIC BIAS4",
+ 		"VA AMIC4", "Analog Mic4",
+ 		"VA AMIC4", "VA MIC BIAS3",
+ 		"VA AMIC5", "Analog Mic5",
+-		"VA AMIC5", "VA MIC BIAS4",
++		"VA AMIC5", "VA MIC BIAS1",
+ 		"IN1_HPHL", "HPHL_OUT",
+ 		"IN2_HPHR", "HPHR_OUT",
+ 		"IN3_EAR", "AUX_OUT",

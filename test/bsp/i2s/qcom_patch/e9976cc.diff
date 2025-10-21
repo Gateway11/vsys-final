@@ -1,0 +1,47 @@
+From e9976cc4d096f062324fed880d735c61039503c3 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Fri, 22 Aug 2025 17:57:40 +0800
+Subject: [PATCH] [RSE-7]:[feature] audio PA bring up [1/2]
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:import the driver and compile files
+Change-Id: I8f39cf7f81de2a78524a14f20949a22bb0e84a14
+
+Change-Id: I6b3dc1631b1bf0c6fced93f7243f43a62b6c2b0b
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/audio-kernel-ar/+/14468
+Tested-by: YuTing Xia
+Reviewed-by: JiangJiang Zhou <zhoujj21@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/asoc/msm_dailink.h b/asoc/msm_dailink.h
+index 596c322..372bc68 100644
+--- a/asoc/msm_dailink.h
++++ b/asoc/msm_dailink.h
+@@ -350,7 +350,9 @@
+ 		COMP_CODEC("aw882xx_smartpa_2",  "aw882xx-aif-2"),
+ 		COMP_CODEC("aw882xx_smartpa_3",  "aw882xx-aif-3"),
+ 		COMP_CODEC("aw882xx_smartpa_4",  "aw882xx-aif-4"),
+-		COMP_CODEC("aw882xx_smartpa_5",  "aw882xx-aif-5")
++		COMP_CODEC("aw882xx_smartpa_5",  "aw882xx-aif-5"),
++		COMP_CODEC("aw882xx_smartpa_6",  "aw882xx-aif-6"),
++		COMP_CODEC("aw882xx_smartpa_7",  "aw882xx-aif-7")
+ #else
+ 		COMP_CODEC("aw882xx_smartpa_0",  "aw882xx-aif-0"),
+ 		COMP_CODEC("aw882xx_smartpa_1",  "aw882xx-aif-1")
+@@ -367,7 +369,9 @@
+ 		COMP_CODEC("aw882xx_smartpa_2",  "aw882xx-aif-2"),
+ 		COMP_CODEC("aw882xx_smartpa_3",  "aw882xx-aif-3"),
+ 		COMP_CODEC("aw882xx_smartpa_4",  "aw882xx-aif-4"),
+-		COMP_CODEC("aw882xx_smartpa_5",  "aw882xx-aif-5")
++		COMP_CODEC("aw882xx_smartpa_5",  "aw882xx-aif-5"),
++		COMP_CODEC("aw882xx_smartpa_6",  "aw882xx-aif-6"),
++		COMP_CODEC("aw882xx_smartpa_7",  "aw882xx-aif-7")
+ #else
+ 		COMP_CODEC("aw882xx_smartpa_0",  "aw882xx-aif-0"),
+ 		COMP_CODEC("aw882xx_smartpa_1",  "aw882xx-aif-1")

@@ -1,0 +1,134 @@
+From 1a34a5e33569fe21c96c7fd7d7207fcf1baa1b95 Mon Sep 17 00:00:00 2001
+From: xiebo <boxie1@lenovo.com>
+Date: Tue, 02 Sep 2025 20:54:06 +0800
+Subject: [PATCH] [RSE-66]:[fix]audio MIC factory test[2/2]
+
+[scope of influence]: 无
+
+[fix]:fix no apdp
+
+[RootCause]:update build.sh
+
+[Solution]:remove sed
+
+Change-Id: Id1f815f89c9cd4a8a04169039490f2f898141f9c
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/hardware/qcom/audio-ar/+/15061
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/hal/AudioDevice.cpp b/hal/AudioDevice.cpp
+index 1e64312..d008ef3 100644
+--- a/hal/AudioDevice.cpp
++++ b/hal/AudioDevice.cpp
+@@ -1593,6 +1593,10 @@
+             fac_test_mic = FAC_TEST_ONE;
+         } else if(strcmp(value, SECONDARY_MIC_PATH) == 0) {
+             fac_test_mic = FAC_TEST_TWO;
++        } else if(strcmp(value, THIRD_MIC_PATH) == 0) {
++            fac_test_mic = FAC_TEST_THREE;
++        } else if(strcmp(value, FOURTH_MIC_PATH) == 0) {
++            fac_test_mic = FAC_TEST_FOUR;
+         } else if(strcmp(value, MIC_PATH_NONE) == 0) {
+             fac_test_mic = FAC_TEST_NONE;
+         } else {
+@@ -1633,7 +1637,11 @@
+             cqa_select_mic = FAC_TEST_ONE;
+         } else if(strcmp(value, SELECT_MIC_SUB) == 0){
+             cqa_select_mic = FAC_TEST_TWO;
+-        } else if(strcmp(value, SELECT_MIC_NONE) == 0){
++        } else if(strcmp(value, SELECT_MIC_THIRD) == 0) {
++            cqa_select_mic = FAC_TEST_THREE;
++        } else if(strcmp(value, SELECT_MIC_FORUTH) == 0) {
++            cqa_select_mic = FAC_TEST_FOUR;
++        } else if(strcmp(value, SELECT_MIC_NONE) == 0) {
+             cqa_select_mic = FAC_TEST_NONE;
+         } else {
+             AHAL_DBG("CQA mic test no match");
+diff --git a/hal/AudioStream.cpp b/hal/AudioStream.cpp
+index 5e62ea1..0b9ba14 100644
+--- a/hal/AudioStream.cpp
++++ b/hal/AudioStream.cpp
+@@ -5235,6 +5235,14 @@
+                 strlcpy(mPalInDevice->custom_config.custom_key, "secondary-mic",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+                 break;
++            case FAC_TEST_THREE:
++                strlcpy(mPalInDevice->custom_config.custom_key, "third-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
++            case FAC_TEST_FOUR:
++                strlcpy(mPalInDevice->custom_config.custom_key, "fourth-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
+             default:
+                 strlcpy(mPalInDevice->custom_config.custom_key, "",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+@@ -5254,6 +5262,14 @@
+                 strlcpy(mPalInDevice->custom_config.custom_key, "secondary-mic",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+                 break;
++            case FAC_TEST_THREE:
++                strlcpy(mPalInDevice->custom_config.custom_key, "third-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
++            case FAC_TEST_FOUR:
++                strlcpy(mPalInDevice->custom_config.custom_key, "fourth-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
+             default:
+                 strlcpy(mPalInDevice->custom_config.custom_key, "",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+@@ -5617,6 +5633,14 @@
+                 strlcpy(mPalInDevice->custom_config.custom_key, "secondary-mic",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+                 break;
++            case FAC_TEST_THREE:
++                strlcpy(mPalInDevice->custom_config.custom_key, "third-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
++            case FAC_TEST_FOUR:
++                strlcpy(mPalInDevice->custom_config.custom_key, "fourth-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
+             default:
+                 strlcpy(mPalInDevice->custom_config.custom_key, "",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+@@ -5636,6 +5660,14 @@
+                 strlcpy(mPalInDevice->custom_config.custom_key, "secondary-mic",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+                 break;
++            case FAC_TEST_THREE:
++                strlcpy(mPalInDevice->custom_config.custom_key, "third-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
++            case FAC_TEST_FOUR:
++                strlcpy(mPalInDevice->custom_config.custom_key, "fourth-mic",
++                    sizeof(mPalInDevice->custom_config.custom_key));
++                break;
+             default:
+                 strlcpy(mPalInDevice->custom_config.custom_key, "",
+                     sizeof(mPalInDevice->custom_config.custom_key));
+diff --git a/hal/inc/AudioDevice.h b/hal/inc/AudioDevice.h
+index 4b14407..d678827 100644
+--- a/hal/inc/AudioDevice.h
++++ b/hal/inc/AudioDevice.h
+@@ -65,7 +65,7 @@
+ #define PRIMARY_MIC_PATH		"primary"
+ #define SECONDARY_MIC_PATH		"secondary"
+ #define THIRD_MIC_PATH		        "third"
+-#define FORTH_MIC_PATH		        "forth"
++#define FOURTH_MIC_PATH		        "fourth"
+ #define MIC_PATH_NONE			"none"
+ 
+ #define SPEAKER_KEY			"speaker-path"
+@@ -84,6 +84,8 @@
+ #define SELECT_MIC		"mic_select"
+ #define SELECT_MIC_MAIN		"main"
+ #define SELECT_MIC_SUB		"sub"
++#define SELECT_MIC_THIRD        "3rd"
++#define SELECT_MIC_FORUTH       "4th"
+ #define SELECT_MIC_NONE		"none"
+ 
+ #define SELECT_SPK		"select_spk"

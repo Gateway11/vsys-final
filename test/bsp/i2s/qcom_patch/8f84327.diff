@@ -1,0 +1,65 @@
+From 8f843270b59490c14fa337c5d50f96980c3d0250 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Thu, 25 Sep 2025 17:28:43 +0800
+Subject: [PATCH] [HQRSE-68]:[feature] audio SmartPA cali[1/1]
+
+[scope of influence]: audio
+
+[fix]:SmartPA cali
+
+[RootCause]:SmartPA cali
+
+[Solution]:audio SmartPA cali update
+
+Change-Id: Ibb617ec58833ff53ea95de23fea877f5d5999cfe
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/arpal-lx/+/16581
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/device/awinic_ar/src/aw_ar_cali_exe.c b/device/awinic_ar/src/aw_ar_cali_exe.c
+index 518fa9d..d7e1ebd 100644
+--- a/device/awinic_ar/src/aw_ar_cali_exe.c
++++ b/device/awinic_ar/src/aw_ar_cali_exe.c
+@@ -128,7 +128,7 @@
+     if (aw882xx->dev_num == 1) {
+         aw882xx->aw_dev[0].name = g_dev_name_list[AW_DEV_CH_MAX];
+         aw882xx->aw_dev[0].dev_index = 0;
+-    } else if (aw882xx->dev_num < AW_DEV_CH_MAX) {
++    } else if (aw882xx->dev_num <= AW_DEV_CH_MAX) {
+         for (i = 0; i < aw882xx->dev_num; i++) {
+             aw882xx->aw_dev[i].name = g_dev_name_list[i];
+             aw882xx->aw_dev[i].dev_index = i;
+@@ -294,7 +294,7 @@
+     int re_max[AW_DEV_CH_MAX] = { 0 };
+     int i = 0;
+ 
+-    ret = aw_audioreach_dsp_get_re_range(re_min, re_max, aw882xx->num_or_index);
++   /* ret = aw_audioreach_dsp_get_re_range(re_min, re_max, aw882xx->num_or_index);
+     if (ret < 0) {
+         AWPRINTFE("get re range failed");
+         return AW_FAIL;
+@@ -306,7 +306,7 @@
+                    aw882xx->aw_dev[i].name, re[i], re_min[i], re_max[i]);
+             return AW_FAIL;
+         }
+-    }
++    }*/
+ 
+     ret = aw_audioreach_set_re_to_file(re, aw882xx->num_or_index);
+     if (ret < 0) {
+diff --git a/device/src/SpeakerProtection.cpp b/device/src/SpeakerProtection.cpp
+index eeffd00..aa6206c 100644
+--- a/device/src/SpeakerProtection.cpp
++++ b/device/src/SpeakerProtection.cpp
+@@ -76,7 +76,7 @@
+ #include<sstream>
+ 
+ #define NUMBER_OF_SMARTPA_KIRBY 2
+-#define NUMBER_OF_SMARTPA_LAPIS 6
++#define NUMBER_OF_SMARTPA_LAPIS 8
+ 
+ #ifndef PAL_SP_TEMP_PATH
+ #define PAL_SP_TEMP_PATH "/data/misc/audio/audio.cal"

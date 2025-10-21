@@ -1,0 +1,114 @@
+From 6e4b7db012df9f54009ec44957ace7dc67f490c1 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Mon, 22 Sep 2025 11:09:23 +0800
+Subject: [PATCH] [RSE-9]:[feature]Audio MIC bring up[1/1]
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:
+1.Modify configuration file
+
+Change-Id: I0510fcd2e570b8cecb615d600f8870ce493c754c
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/arpal-lx/+/16318
+Tested-by: YuTing Xia
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+index 9b3ec2e..feaceca 100644
+--- a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+@@ -346,12 +346,12 @@
+     </path>
+ 
+     <path name="amic4">
+-        <ctl name="TX DEC1 MUX" value="SWR_MIC" />
+-        <ctl name="TX SMIC MUX1" value="SWR_MIC7" />
+-        <ctl name="TX_AIF1_CAP Mixer DEC1" value="1" />
++        <ctl name="TX DEC5 MUX" value="SWR_MIC" />
++        <ctl name="TX SMIC MUX5" value="SWR_MIC8" />
++        <ctl name="TX_AIF1_CAP Mixer DEC5" value="1" />
+         <ctl name="ADC3 MUX" value="CH3_AMIC4" />
+-        <ctl name="TX3 MODE" value="ADC_LP" />
+-        <ctl name="ADC3 ChMap" value="SWRM_TX2_CH4" />
++        <ctl name="TX2 MODE" value="ADC_LP" />
++        <ctl name="ADC3 ChMap" value="SWRM_TX3_CH1" />
+         <ctl name="ADC3_MIXER Switch" value="1" />
+         <ctl name="AMIC4_MIXER Switch" value="1" />
+     </path>
+@@ -680,8 +680,6 @@
+     </path>
+ 
+     <path name="speaker-mic">
+-        <path name="amic1" />
+-        <path name="amic2" />
+         <path name="amic3" />
+         <!--ctl name="TX_DEC2 Volume" value="102" /-->
+         <path name="amic4" />
+@@ -689,8 +687,6 @@
+     </path>
+ 
+     <path name="speaker-mic-liquid">
+-        <path name="amic1" />
+-        <path name="amic2" />
+         <path name="amic3" />
+         <path name="amic4" />
+     </path>
+@@ -780,16 +776,11 @@
+     </path>
+ 
+     <path name="handset-mic">
+-        <path name="amic1" />
+-        <path name="amic2" />
+         <path name="amic3" />
+         <path name="amic4" />
+     </path>
+ 
+     <path name="handset-mic-unprocessed">
+-        <path name="amic1" />
+-        <ctl name="TX_DEC2 Volume" value="102" />
+-        <path name="amic2" />
+         <ctl name="TX_DEC0 Volume" value="102" />
+         <path name="amic3" />
+         <ctl name="TX_DEC1 Volume" value="102" />
+@@ -1351,8 +1342,6 @@
+         <ctl name="AMIC1_MIXER Switch" value="1" />
+         <ctl name="TX_DEC2 Volume" value="98" />
+         <ctl name="TX_DEC3 Volume" value="88" />-->
+-        <path name="amic1" />
+-        <path name="amic2" />
+         <path name="amic3" />
+         <path name="amic4" />
+     </path>
+diff --git a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+index 33999e6..38a5782 100644
+--- a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+@@ -136,8 +136,8 @@
+         <in-device>
+             <id>PAL_DEVICE_IN_HANDSET_MIC</id>
+             <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-3</back_end_name>
+-            <max_channels>4</max_channels>
+-            <channels>4</channels>
++            <max_channels>2</max_channels>
++            <channels>2</channels>
+             <samplerate>48000</samplerate>
+             <snd_device_name>handset-mic</snd_device_name>
+             <ec_enable>0</ec_enable>
+@@ -277,9 +277,9 @@
+         <in-device>
+             <id>PAL_DEVICE_IN_SPEAKER_MIC</id>
+             <back_end_name>CODEC_DMA-LPAIF_RXTX-TX-3</back_end_name>
+-            <max_channels>4</max_channels>
++            <max_channels>2</max_channels>
+             <samplerate>48000</samplerate>
+-            <channels>4</channels>
++            <channels>2</channels>
+             <ec_enable>0</ec_enable>
+             <snd_device_name>speaker-mic</snd_device_name>
+             <usecase>

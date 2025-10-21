@@ -1,0 +1,153 @@
+From a3c24c5f374cf8289af2576e4652b98d60aa90dd Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Tue, 02 Sep 2025 14:17:18 +0800
+Subject: [PATCH] [RSE-46]:[fix]audio factory test[2/2]
+
+[scope of influence]: 无
+
+[fix]:fix no apdp
+
+[RootCause]:update build.sh
+
+[Solution]:remove sed
+
+Change-Id: If5b31e88420dcfdc98f55bf166580678c0f5eb82
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/hardware/qcom/audio-ar/+/14973
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/hal/AudioDevice.cpp b/hal/AudioDevice.cpp
+index d67cfed..1e64312 100644
+--- a/hal/AudioDevice.cpp
++++ b/hal/AudioDevice.cpp
+@@ -1523,18 +1523,18 @@
+         AHAL_DBG("SetParameters game_voip value = %s\n", value);
+     }
+ #endif
+-
++
+ #ifdef BUILD_LAPIS_AUDIO
+-    ret = str_parms_get_str(parms, "bt_headset_name", value, sizeof(value));
+-    if (ret > 0) {
+-        if ((strcmp(value, "AKG Y50BT") == 0) ||
+-            (strcmp(value, "Mi Bluetooth Neckband Earphones Basic") == 0)) {
+-            bt_headset_tx = true;
+-        }
+-        AHAL_DBG("SetParameters bt_headset_tx value = %s, bt_headset_tx = %d\n", value, bt_headset_tx);
+-    }
+-#endif
+-
++    ret = str_parms_get_str(parms, "bt_headset_name", value, sizeof(value));
++    if (ret > 0) {
++        if ((strcmp(value, "AKG Y50BT") == 0) ||
++            (strcmp(value, "Mi Bluetooth Neckband Earphones Basic") == 0)) {
++            bt_headset_tx = true;
++        }
++        AHAL_DBG("SetParameters bt_headset_tx value = %s, bt_headset_tx = %d\n", value, bt_headset_tx);
++    }
++#endif
++
+     ret = str_parms_get_str(parms, "SmartPACali", value, sizeof(value));
+     if (ret > 0) {
+         if (strcmp(value, "true") == 0) {
+@@ -1615,6 +1615,10 @@
+             fac_test_spk = FAC_TEST_FIVE;
+         } else if(strcmp(value, RIGHTDOWN_SPEAKER) == 0){
+             fac_test_spk = FAC_TEST_SIX;
++        } else if(strcmp(value, LEFTMIDDLE_SPEAKER) == 0){
++            fac_test_spk = FAC_TEST_SEVEN;
++        } else if(strcmp(value, RIGHTMIDDLE_SPEAKER) == 0){
++            fac_test_spk = FAC_TEST_EIGHT;
+         } else if(strcmp(value, SPEAKER_PATH_NONE) == 0){
+             fac_test_spk = FAC_TEST_NONE;
+         } else {
+@@ -2487,8 +2491,8 @@
+         }
+     }
+ 
+-    ret = str_parms_get_str(query, "SmartPACali", value, sizeof(value));
+-    if (ret >= 0) {
++    ret = str_parms_get_str(query, "SmartPACali", value, sizeof(value));
++    if (ret >= 0) {
+         cali_result = pal_get_cali_result();
+         if (cali_result == 0)
+             str_parms_add_str(reply, "SmartPACali", "true");
+diff --git a/hal/AudioStream.cpp b/hal/AudioStream.cpp
+index 234e0b6..5e62ea1 100644
+--- a/hal/AudioStream.cpp
++++ b/hal/AudioStream.cpp
+@@ -2781,6 +2781,14 @@
+                 strlcpy(mPalOutDevice->custom_config.custom_key, "right-down-speaker",
+                     sizeof(mPalOutDevice->custom_config.custom_key));
+                 break;
++            case FAC_TEST_SEVEN:
++                strlcpy(mPalOutDevice->custom_config.custom_key, "left-middle-speaker",
++                    sizeof(mPalOutDevice->custom_config.custom_key));
++                break;
++            case FAC_TEST_EIGHT:
++                strlcpy(mPalOutDevice->custom_config.custom_key, "right-middle-speaker",
++                    sizeof(mPalOutDevice->custom_config.custom_key));
++                break;
+             default:
+                 strlcpy(mPalOutDevice->custom_config.custom_key, "",
+                     sizeof(mPalOutDevice->custom_config.custom_key));
+@@ -2816,6 +2824,14 @@
+                 strlcpy(mPalOutDevice->custom_config.custom_key, "right-up-speaker",
+                     sizeof(mPalOutDevice->custom_config.custom_key));
+                 break;
++            case FAC_TEST_SEVEN:
++                strlcpy(mPalOutDevice->custom_config.custom_key, "left-middle-speaker",
++                    sizeof(mPalOutDevice->custom_config.custom_key));
++                break;
++            case FAC_TEST_EIGHT:
++                strlcpy(mPalOutDevice->custom_config.custom_key, "right-middle-speaker",
++                    sizeof(mPalOutDevice->custom_config.custom_key));
++                break;
+             default:
+                 strlcpy(mPalOutDevice->custom_config.custom_key, "",
+                     sizeof(mPalOutDevice->custom_config.custom_key));
+diff --git a/hal/inc/AudioDevice.h b/hal/inc/AudioDevice.h
+index 807018e..4b14407 100644
+--- a/hal/inc/AudioDevice.h
++++ b/hal/inc/AudioDevice.h
+@@ -64,6 +64,8 @@
+ #define MIC_KEY				"mic_path"
+ #define PRIMARY_MIC_PATH		"primary"
+ #define SECONDARY_MIC_PATH		"secondary"
++#define THIRD_MIC_PATH		        "third"
++#define FORTH_MIC_PATH		        "forth"
+ #define MIC_PATH_NONE			"none"
+ 
+ #define SPEAKER_KEY			"speaker-path"
+@@ -73,6 +75,8 @@
+ #define RIGHTUP_SPEAKER			"right-up-speaker"
+ #define RIGHT_SPEAKER			"right-speaker"
+ #define RIGHTDOWN_SPEAKER		"right-down-speaker"
++#define LEFTMIDDLE_SPEAKER		"left-middle-speaker"
++#define RIGHTMIDDLE_SPEAKER		"right-middle-speaker"
+ #define SPEAKER_PATH_NONE		"none"
+ #define AUDIO_MODE_FAC_BYPASS 100
+ #define AUDIO_MODE_GAME_VOIP 101
+@@ -89,6 +93,8 @@
+ #define SELECT_SPK_UR		"spk_3"
+ #define SELECT_SPK_ULD		"spk_5"
+ #define SELECT_SPK_DLD		"spk_6"
++#define SELECT_SPK_ML		"spk_7"
++#define SELECT_SPK_MR		"spk_8"
+ #define SELECT_SPK_NONE		"none"
+ 
+ /* HDR Audio use case parameters */
+@@ -115,7 +121,9 @@
+     FAC_TEST_THREE,
+     FAC_TEST_FOUR,
+     FAC_TEST_FIVE,
+-    FAC_TEST_SIX
++    FAC_TEST_SIX,
++    FAC_TEST_SEVEN,
++    FAC_TEST_EIGHT
+ };
+ 
+ typedef enum {

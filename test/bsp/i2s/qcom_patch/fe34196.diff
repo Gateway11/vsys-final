@@ -1,0 +1,66 @@
+From fe3419608779f7cf8f8e72f2d3eff607ee20e632 Mon Sep 17 00:00:00 2001
+From: xiayuting <xiayt1@lenovo.com>
+Date: Fri, 22 Aug 2025 18:03:24 +0800
+Subject: [PATCH] [RSE-7]:[feature] audio PA bring up [2/2]
+
+[scope of influence]: audio
+
+[fix]:audio bring up
+
+[RootCause]:audio bring up
+
+[Solution]:import the driver and compile files
+
+Change-Id: I82791a4f1d030089ffbc9634fb16869584ffa800
+Signed-off-by: xiayuting <xiayt1@lenovo.com>
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom-proprietary/audio-devicetree/+/14469
+Tested-by: YuTing Xia
+Reviewed-by: JiangJiang Zhou <zhoujj21@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/pineapple-audio-qrd-aw88461-lapis.dtsi b/pineapple-audio-qrd-aw88461-lapis.dtsi
+index 4464d48..0d063cf 100644
+--- a/pineapple-audio-qrd-aw88461-lapis.dtsi
++++ b/pineapple-audio-qrd-aw88461-lapis.dtsi
+@@ -51,6 +51,20 @@
+         aw-cali-mode = "none";
+         status = "okay";
+     };
++    aw882xx_smartpa@37 {
++        compatible = "awinic,aw882xx_smartpa";
++        reg = <0x37>;
++        reset-gpio = <&tlmm 128 0>;
++        one_rst_flag = <1>;
++        sync-load = <1>;
++        sound-channel = <6>; /*0:pri_l 1:pri_r 2:sec_l 3:sec_r*/
++        rename-flag = <1>;
++        aw-re-min = <4000>;
++        aw-re-max= <30000>;
++        aw-cali-mode = "none";
++        status = "okay";
++    };
++
+     /* AWINIC AW882XX Left Smart PA End */
+ };
+ 
+@@ -96,6 +110,19 @@
+         aw-cali-mode = "none";
+         status = "okay";
+     };
++    aw882xx_smartpa@37 {
++        compatible = "awinic,aw882xx_smartpa";
++        reg = <0x37>;
++        reset-gpio = <&tlmm 28 0>;
++        one_rst_flag = <2>;
++        sync-load = <1>;
++        sound-channel = <7>; /*0:pri_l 1:pri_r 2:sec_l 3:sec_r*/
++        rename-flag = <1>;
++        aw-re-min = <4000>;
++        aw-re-max= <30000>;
++        aw-cali-mode = "none";
++        status = "okay";
++    };
+     /* AWINIC AW882XX Right Smart PA End */
+ };
+ /* Audio Aw88461 Smart PA dts config end*/

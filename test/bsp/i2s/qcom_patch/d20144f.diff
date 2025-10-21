@@ -1,0 +1,106 @@
+From d20144fc9b874dd39ad3b15a80b58286091483b3 Mon Sep 17 00:00:00 2001
+From: xiebo <boxie1@lenovo.com>
+Date: Tue, 02 Sep 2025 14:51:55 +0800
+Subject: [PATCH] [RSE-66]:[fix]audio MIC factory test[1/2]
+
+[scope of influence]: 无
+
+[fix]:fix no apdp
+
+[RootCause]:update build.sh
+
+[Solution]:remove sed
+
+Change-Id: I2d52e1d629520b9326bc217350233fef10eb0047
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/vendor/qcom/opensource/arpal-lx/+/14977
+Tested-by: YuTing Xia
+Reviewed-by: LiCheng Wang <wanglc13@lenovo.com>
+Reviewed-by: Keshuang Lou <louks1@lenovo.com>
+---
+
+diff --git a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+index c470e9f..9b3ec2e 100644
+--- a/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/mixer_paths_pineapple_qrd_lapis.xml
+@@ -267,14 +267,42 @@
+ </path>
+ 
+ <path name="secondary-mic">
++        <ctl name="TX DEC0 MUX" value="SWR_MIC" />
++        <ctl name="TX SMIC MUX0" value="SWR_MIC5" />
++        <ctl name="DEC0_BCS Switch" value="1" />
++        <ctl name="TX_AIF1_CAP Mixer DEC0" value="1" />
++        <ctl name="ADC2 MUX" value="CH2_AMIC3" />
++        <ctl name="ADC2 ChMap" value="SWRM_TX2_CH2" />
++        <ctl name="MBHC ChMap" value="SWRM_TX1_CH3" />
++        <ctl name="TX1 MODE" value="ADC_LP" />
++        <ctl name="BCS Channel" value="CH2" />
++        <ctl name="ADC2_MIXER Switch" value="1" />
++        <ctl name="AMIC3_MIXER Switch" value="1" />
++        <ctl name="ADC2 Volume" value="12" />
++</path>
++
++<path name="third-mic">
++        <ctl name="TX DEC1 MUX" value="SWR_MIC" />
++        <ctl name="TX SMIC MUX1" value="SWR_MIC6" />
++        <ctl name="TX_AIF1_CAP Mixer DEC2" value="1" />
++        <ctl name="ADC3 ChMap" value="SWRM_TX2_CH3" />
++        <ctl name="ADC3 MUX" value="CH3_AMIC4" />
++        <ctl name="TX2 MODE" value="ADC_LP" />
++        <ctl name="ADC3_BCS Disable" value="1" />
++        <ctl name="ADC3_MIXER Switch" value="1" />
++        <ctl name="AMIC4_MIXER Switch" value="1" />
++        <ctl name="ADC3 Volume" value="12" />
++</path>
++
++<path name="fourth-mic">
+         <ctl name="TX DEC5 MUX" value="SWR_MIC" />
+         <ctl name="TX SMIC MUX5" value="SWR_MIC8" />
+         <ctl name="TX_AIF1_CAP Mixer DEC5" value="1" />
+-        <ctl name="ADC3 MUX" value="CH3_AMIC4" />
+-        <ctl name="TX2 MODE" value="ADC_LP" />
+-        <ctl name="ADC3 ChMap" value="SWRM_TX3_CH1" />
+-        <ctl name="ADC3_MIXER Switch" value="1" />
+-        <ctl name="AMIC4_MIXER Switch" value="1" />
++        <ctl name="ADC4 MUX" value="CH4_AMIC5" />
++        <ctl name="TX3 MODE" value="ADC_LP" />
++        <ctl name="ADC4 ChMap" value="SWRM_TX3_CH1" />
++        <ctl name="ADC4_MIXER Switch" value="1" />
++        <ctl name="AMIC5_MIXER Switch" value="1" />
+         <ctl name="ADC4 Volume" value="12" />
+ </path>
+ 
+diff --git a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+index 31251be..33999e6 100644
+--- a/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
++++ b/configs/pineapple/resourcemanager_pineapple_qrd_lapis.xml
+@@ -171,6 +171,14 @@
+                     <snd_device_name>secondary-mic</snd_device_name>
+                     <channels>1</channels>
+                 </custom-config>
++                <custom-config key="third-mic">
++                    <snd_device_name>secondary-mic</snd_device_name>
++                    <channels>1</channels>
++                </custom-config>
++                <custom-config key="fourth-mic">
++                    <snd_device_name>secondary-mic</snd_device_name>
++                    <channels>1</channels>
++                </custom-config>
+             </usecase>
+         <!--Uncomment these lines instead of above lines if needing to enable EC per custom key
+             <usecase>
+@@ -287,6 +295,14 @@
+                     <snd_device_name>secondary-mic</snd_device_name>
+                     <channels>1</channels>
+                 </custom-config>
++                <custom-config key="third-mic">
++                    <snd_device_name>secondary-mic</snd_device_name>
++                    <channels>1</channels>
++                </custom-config>
++                <custom-config key="fourth-mic">
++                    <snd_device_name>secondary-mic</snd_device_name>
++                    <channels>1</channels>
++                </custom-config>
+                 <ec_enable>1</ec_enable>
+                 <custom-config key="unprocessed-hdr-mic-landscape">
+                     <channels>4</channels>
