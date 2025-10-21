@@ -1,0 +1,54 @@
+From facdf4b3aaf7a552e51e8f2536e1efc1e1c696ea Mon Sep 17 00:00:00 2001
+From: chenlijin <chenlj34@lenovo.com>
+Date: Mon, 13 Oct 2025 18:13:54 +0800
+Subject: [PATCH] [GEROLFING-2581] Multi-Camera SELinux
+
+[scope of influence] Multi-Camera SELinux
+
+[Type] feature
+
+[RootCause] NA
+
+[Solution] NA
+
+Change-Id: I83bda01eeeb62dee79d3a5f89d35c8d0e6b620a8
+Reviewed-on: https://vcsc.lenovo.com:8080/c/device/qcom/sepolicy_vndr/+/17019
+Reviewed-by: GuoBin Zhang <zhanggb4@lenovo.com>
+Tested-by: LiJin Chen <chenlj34@lenovo.com>
+---
+
+diff --git a/generic/vendor/common/cameraserver.te b/generic/vendor/common/cameraserver.te
+index a7b9cd7..510eff3 100644
+--- a/generic/vendor/common/cameraserver.te
++++ b/generic/vendor/common/cameraserver.te
+@@ -31,6 +31,7 @@
+ allow cameraserver vendor_sysfs_camera:file r_file_perms;
+ allow cameraserver vendor_sysfs_camera:dir search;
+ allow cameraserver system_file:dir r_dir_perms;
++allow cameraserver video_device:chr_file rw_file_perms;
+ 
+ allow cameraserver system_server:unix_stream_socket { read write };
+ 
+diff --git a/generic/vendor/common/file_contexts b/generic/vendor/common/file_contexts
+index f7a4287..556cc59 100644
+--- a/generic/vendor/common/file_contexts
++++ b/generic/vendor/common/file_contexts
+@@ -77,7 +77,7 @@
+ /dev/dpl_ctrl                                   u:object_r:vendor_rmnet_device:s0
+ /dev/rmnet_ctrl.*                               u:object_r:vendor_rmnet_device:s0
+ /dev/at_.*                                      u:object_r:vendor_at_device:s0
+-/dev/video([0-9])+                              u:object_r:video_device:s0
++/dev/video([0-11])+                             u:object_r:video_device:s0
+ /dev/cvp*                                       u:object_r:video_device:s0
+ /dev/media([0-9])+                              u:object_r:video_device:s0
+ /dev/v4l-subdev.*                               u:object_r:video_device:s0
+diff --git a/generic/vendor/common/service_contexts b/generic/vendor/common/service_contexts
+index 0f94aca..ccf6b7f 100644
+--- a/generic/vendor/common/service_contexts
++++ b/generic/vendor/common/service_contexts
+@@ -74,4 +74,4 @@
+ vendor.qti.hardware.data.iwlandata.IIWlan/slot2                       u:object_r:vendor_hal_iwlan_service:s0
+ vendor.qti.hardware.trustedui.ITrustedUI/default                      u:object_r:vendor_hal_trustedui_aidl_service:s0
+ vendor.qti.hardware.trustedui.ITrustedInput/default                   u:object_r:vendor_hal_trustedui_aidl_service:s0
+-
++android.hardware.camera.provider.ICameraProvider/external/0           u:object_r:hal_camera_service:s0

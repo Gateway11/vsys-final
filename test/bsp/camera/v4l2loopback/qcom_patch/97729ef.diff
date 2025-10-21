@@ -1,0 +1,558 @@
+From 97729ef4753687b57fedab0676bb3ea95d3b925f Mon Sep 17 00:00:00 2001
+From: chenlijin <chenlj34@lenovo.com>
+Date: Mon, 29 Sep 2025 15:12:46 +0800
+Subject: [PATCH] [GEROLFING-2581] Multi-Camera 2/6: external camera HAL
+
+[scope of influence] Multi-Camera
+
+[Type] feature
+
+[RootCause] NA
+
+[Solution] NA
+
+Change-Id: I28b8f868edce7f5c502a8f1a71b1dee8a3c9f2e7
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/hardware/interfaces/+/16770
+Reviewed-by: GuoBin Zhang <zhanggb4@lenovo.com>
+Tested-by: LiJin Chen <chenlj34@lenovo.com>
+---
+
+diff --git a/camera/device/default/ExternalCameraDevice.cpp b/camera/device/default/ExternalCameraDevice.cpp
+index 677fb42..84713b0 100644
+--- a/camera/device/default/ExternalCameraDevice.cpp
++++ b/camera/device/default/ExternalCameraDevice.cpp
+@@ -26,6 +26,11 @@
+ #include <regex>
+ #include <set>
+ 
++// BEGIN Multi-Camera, fengxa2
++#include <linux/v4l2-subdev.h>
++#include <cutils/properties.h>
++// END Multi-Camera
++
+ namespace android {
+ namespace hardware {
+ namespace camera {
+@@ -39,8 +44,13 @@
+ // Other formats to consider in the future:
+ // * V4L2_PIX_FMT_YVU420 (== YV12)
+ // * V4L2_PIX_FMT_YVYU (YVYU: can be converted to YV12 or other YUV420_888 formats)
++// BEGIN Multi-Camera, fengxa2
++// original:
+ const std::array<uint32_t, /*size*/ 2> kSupportedFourCCs{
+         {V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_Z16}};  // double braces required in C++11
++// const std::array<uint32_t, /*size*/ 4> kSupportedFourCCs{
++//         {V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_Z16, V4L2_PIX_FMT_YUV420, V4L2_PIX_FMT_NV12}};  // double braces required in C++11
++// END Multi-Camera
+ 
+ constexpr int MAX_RETRY = 5;                  // Allow retry v4l2 open failures a few times.
+ constexpr int OPEN_RETRY_SLEEP_US = 100'000;  // 100ms * MAX_RETRY = 0.5 seconds
+@@ -89,8 +99,12 @@
+     if (_aidl_return == nullptr) {
+         return fromStatus(Status::ILLEGAL_ARGUMENT);
+     }
++    // BEGIN Multi-Camera, fengxa2
++    // original:
++    // _aidl_return->resourceCost = 100;
++    _aidl_return->resourceCost = 10;
++    // END Multi-Camera
+ 
+-    _aidl_return->resourceCost = 100;
+     return fromStatus(Status::OK);
+ }
+ 
+@@ -263,6 +277,15 @@
+     }
+ }
+ 
++#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
++#define UPDATE(tag, data, size)                        \
++    do {                                               \
++        if (metadata->update((tag), (data), (size))) { \
++            ALOGE("Update " #tag " failed!");          \
++            return -EINVAL;                            \
++        }                                              \
++    } while (0)
++
+ status_t ExternalCameraDevice::initCameraCharacteristics() {
+     if (!mCameraCharacteristics.isEmpty()) {
+         // Camera Characteristics previously initialized. Skip.
+@@ -284,6 +307,21 @@
+         return ret;
+     }
+ 
++    // BEGIN Multi-Camera, fengxa2
++    struct v4l2_capability capability_v4l2;
++    int ret_query_v4l2 = ioctl(fd, VIDIOC_QUERYCAP, &capability_v4l2);
++    if (ret_query_v4l2 < 0) {
++        ALOGE("FXA: v4l2 QUERYCAP %s:%d failed: %s", __FUNCTION__, __LINE__, strerror(errno));
++    }
++    if(strstr((const char*)capability_v4l2.driver,"lenovo_vcam")){
++        const uint8_t facing = ANDROID_LENS_FACING_FRONT;
++        ::android::hardware::camera::common::V1_0::helper::CameraMetadata* metadata = &mCameraCharacteristics;
++        UPDATE(ANDROID_LENS_FACING, &facing, 1);
++        const int32_t orientation = 270;
++        UPDATE(ANDROID_SENSOR_ORIENTATION, &orientation, 1);
++    }
++    // END Multi-Camera
++    
+     ret = initCameraControlsCharsKeys(fd.get(), &mCameraCharacteristics);
+     if (ret != OK) {
+         ALOGE("%s: init camera control characteristics key failed: errorno %d", __FUNCTION__, ret);
+@@ -308,15 +346,6 @@
+     return OK;
+ }
+ 
+-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+-#define UPDATE(tag, data, size)                        \
+-    do {                                               \
+-        if (metadata->update((tag), (data), (size))) { \
+-            ALOGE("Update " #tag " failed!");          \
+-            return -EINVAL;                            \
+-        }                                              \
+-    } while (0)
+-
+ status_t ExternalCameraDevice::initAvailableCapabilities(
+         ::android::hardware::camera::common::V1_0::helper::CameraMetadata* metadata) {
+     if (mSupportedFormats.empty()) {
+@@ -331,6 +360,10 @@
+             case V4L2_PIX_FMT_Z16:
+                 hasDepth = true;
+                 break;
++            // BEGIN Multi-Camera, fengxa2
++            case V4L2_PIX_FMT_NV12:
++            case V4L2_PIX_FMT_YUV420:
++            // END Multi-Camera
+             case V4L2_PIX_FMT_MJPEG:
+                 hasColor = true;
+                 break;
+@@ -632,6 +665,15 @@
+     // For V4L2_PIX_FMT_MJPEG
+     std::array<int, /*size*/ 3> halFormats{{HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                             HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED}};
++    // BEGIN Multi-Camera, fengxa2
++    // For V4L2_PIX_FMT_YUV420: HAL_PIXEL_FORMAT_BLOB would cause 1s stall, I420 does not need stall
++    bool hasColorI420 = false;
++    bool hasColorNV12 = false;
++    std::array<int, 2> halFormatsI420 {HAL_PIXEL_FORMAT_YCbCr_420_888,
++                                        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
++    std::array<int, 2> halFormatsNV12 {HAL_PIXEL_FORMAT_YCbCr_420_888,
++                                        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
++    // END Multi-Camera
+ 
+     for (const auto& supportedFormat : mSupportedFormats) {
+         switch (supportedFormat.fourcc) {
+@@ -641,6 +683,14 @@
+             case V4L2_PIX_FMT_MJPEG:
+                 hasColor = true;
+                 break;
++            // BEGIN Multi-Camera, fengxa2
++            case V4L2_PIX_FMT_NV12:
++                hasColorNV12 = true;
++                break;
++            // case V4L2_PIX_FMT_YUV420:
++            //     hasColorI420 = true;
++            //     break;
++            // END Multi-Camera
+             default:
+                 ALOGW("%s: format %c%c%c%c is not supported!", __FUNCTION__,
+                       supportedFormat.fourcc & 0xFF, (supportedFormat.fourcc >> 8) & 0xFF,
+@@ -674,6 +724,40 @@
+             return ret;
+         }
+     }
++    // BEGIN Multi-Camera, fengxa2
++    // if (hasColorI420) {
++    //     status_t ret =
++    //             initOutputCharsKeysByFormat(metadata, V4L2_PIX_FMT_YUV420, halFormatsI420,
++    //                                         ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
++    //                                         ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
++    //                                         ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
++    //                                         ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
++    //     if (ret != OK) {
++    //         ALOGE("%s: FXA: Unable to initialize color format keys: %s:%d", __FUNCTION__, __LINE__, 
++    //               statusToString(ret).c_str());
++    //         return ret;
++    //     }
++    // }
++    if (hasColorNV12) {
++        // status_t ret =
++        //         initOutputCharsKeysByFormat(metadata, V4L2_PIX_FMT_NV12, halFormatsNV12,
++        //                                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
++        //                                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
++        //                                     ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
++        //                                     ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
++        status_t ret =
++                initOutputCharsKeysByFormat(metadata, V4L2_PIX_FMT_NV12, halFormats,
++                                            ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
++                                            ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
++                                            ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
++                                            ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
++        if (ret != OK) {
++            ALOGE("%s: FXA: Unable to initialize color format keys: %s:%d", __FUNCTION__, __LINE__, 
++                  statusToString(ret).c_str());
++            return ret;
++        }
++    }
++    // END Multi-Camera
+ 
+     status_t ret = calculateMinFps(metadata);
+     if (ret != OK) {
+@@ -832,6 +916,19 @@
+         }
+     }
+ 
++    // BEGIN Multi-Camera, fengxa2
++    struct v4l2_capability capability_v4l2;
++    int ret_query_v4l2 = ioctl(fd, VIDIOC_QUERYCAP, &capability_v4l2);
++    if (ret_query_v4l2 < 0) {
++        ALOGE("FXA: v4l2 QUERYCAP %s failed: %s", __FUNCTION__, strerror(errno));
++    }
++    if(strstr((const char*)capability_v4l2.driver,"lenovo_vcam")){
++        ALOGD("====== %s:%d: capability_v4l2.driver:%s ========", __FUNCTION__, __LINE__, capability_v4l2.driver);
++        SupportedV4L2Format::FrameRate fr = {1,30};
++        format->frameRates.push_back(fr);
++    }
++    // END Multi-Camera
++
+     if (format->frameRates.empty()) {
+         ALOGE("%s: failed to get supported frame rates for format:%c%c%c%c w %d h %d", __FUNCTION__,
+               frameInterval.pixel_format & 0xFF, (frameInterval.pixel_format >> 8) & 0xFF,
+@@ -877,9 +974,30 @@
+     struct v4l2_fmtdesc fmtdesc {
+         .index = 0, .type = V4L2_BUF_TYPE_VIDEO_CAPTURE
+     };
++
++    // BEGIN Multi-Camera, fengxa2
++    struct v4l2_capability capability;
++    int ret_query = ioctl(fd, VIDIOC_QUERYCAP, &capability);
++    if (ret_query < 0) {
++        ALOGE("FXA: v4l2 QUERYCAP %s:%d failed: %s", __FUNCTION__, __LINE__, strerror(errno));
++    }
++    if (capability.device_caps & V4L2_CAP_VIDEO_CAPTURE_MPLANE) {
++        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
++    }
++    // END Multi-Camera
++
+     int ret = 0;
+     while (ret == 0) {
+         ret = TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc));
++
++        // BEGIN Multi-Camera, fengxa2
++        if(ret < 0 && strstr((const char*)capability.driver, "lenovo_vcam")) {
++            // fmtdesc.pixelformat = V4L2_PIX_FMT_YUV420; 
++            fmtdesc.pixelformat = V4L2_PIX_FMT_NV12; 
++	        ret = 0;
++        }
++        // END Multi-Camera
++
+         ALOGV("index:%d,ret:%d, format:%c%c%c%c", fmtdesc.index, ret, fmtdesc.pixelformat & 0xFF,
+               (fmtdesc.pixelformat >> 8) & 0xFF, (fmtdesc.pixelformat >> 16) & 0xFF,
+               (fmtdesc.pixelformat >> 24) & 0xFF);
+@@ -892,6 +1010,32 @@
+         auto it =
+                 std::find(kSupportedFourCCs.begin(), kSupportedFourCCs.end(), fmtdesc.pixelformat);
+         if (it == kSupportedFourCCs.end()) {
++            // BEGIN Multi-Camera, fengxa2
++            ALOGI("%s:%d: capability.driver: %s", __FUNCTION__, __LINE__, (const char*)capability.driver);
++            if(strstr((const char*)capability.driver, "lenovo_vcam")) {
++                SupportedV4L2Format format_640x360{.width = 640, .height = 360, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_640x360, outFmts);
++
++                SupportedV4L2Format format_640x480{.width = 640, .height = 480, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_640x480, outFmts);
++
++                SupportedV4L2Format format_1280x720{.width = 1280, .height = 720, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1280x720, outFmts);
++
++                SupportedV4L2Format format_1280x960{.width = 1280, .height = 960, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1280x960, outFmts);
++
++                SupportedV4L2Format format_1600x1200{.width = 1600, .height = 1200, .fourcc = V4L2_PIX_FMT_NV12};
++                updateFpsBounds(fd, cropType, fpsLimits, format_1600x1200, outFmts);
++
++                SupportedV4L2Format format_1920x1080{ .width = 1920, .height = 1080, .fourcc = V4L2_PIX_FMT_NV12 };
++                updateFpsBounds(fd, cropType, fpsLimits, format_1920x1080, outFmts);
++
++                SupportedV4L2Format format_1920x1440{ .width = 1920, .height = 1440, .fourcc = V4L2_PIX_FMT_NV12 };
++                updateFpsBounds(fd, cropType, fpsLimits, format_1920x1440, outFmts);
++                ret = -1;
++            }
++            // END Multi-Camera
+             fmtdesc.index++;
+             continue;
+         }
+diff --git a/camera/device/default/ExternalCameraDeviceSession.cpp b/camera/device/default/ExternalCameraDeviceSession.cpp
+index c962974..8b51fbc 100644
+--- a/camera/device/default/ExternalCameraDeviceSession.cpp
++++ b/camera/device/default/ExternalCameraDeviceSession.cpp
+@@ -217,10 +217,14 @@
+     // Grab a shared_ptr to 'this' from ndk::SharedRefBase::ref()
+     std::shared_ptr<ExternalCameraDeviceSession> thiz = ref<ExternalCameraDeviceSession>();
+ 
+-    mBufferRequestThread = std::make_shared<BufferRequestThread>(/*parent=*/thiz, mCallback);
+-    mBufferRequestThread->run();
++    // BEGIN Multi-Camera, fengxa2
++    // mBufferRequestThread = std::make_shared<BufferRequestThread>(/*parent=*/thiz, mCallback);
++    // mBufferRequestThread->run();
++    // mOutputThread = std::make_shared<OutputThread>(/*parent=*/thiz, mCroppingType,
++    //                                                mCameraCharacteristics, mBufferRequestThread);
+     mOutputThread = std::make_shared<OutputThread>(/*parent=*/thiz, mCroppingType,
+-                                                   mCameraCharacteristics, mBufferRequestThread);
++                                                   mCameraCharacteristics, nullptr);
++    // END Multi-Camera
+ }
+ 
+ void ExternalCameraDeviceSession::closeOutputThread() {
+@@ -1039,8 +1043,11 @@
+ 
+     return fillCaptureResultCommon(md, timestamp, activeArraySize);
+ }
+-
+-int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Format& v4l2Fmt,
++// BEGIN Multi-Camera, fengxa2
++// original:
++// int ExternalCameraDeviceSession::configureV4l2StreamLocked(const SupportedV4L2Format& v4l2Fmt,
++int ExternalCameraDeviceSession::configureV4l2StreamLocked(SupportedV4L2Format& v4l2Fmt,
++// END Multi-Camera
+                                                            double requestFps) {
+     ATRACE_CALL();
+     int ret = v4l2StreamOffLocked();
+@@ -1083,7 +1090,12 @@
+               fmt.fmt.pix.pixelformat & 0xFF, (fmt.fmt.pix.pixelformat >> 8) & 0xFF,
+               (fmt.fmt.pix.pixelformat >> 16) & 0xFF, (fmt.fmt.pix.pixelformat >> 24) & 0xFF,
+               fmt.fmt.pix.width, fmt.fmt.pix.height);
+-        return -EINVAL;
++        // BEGIN Multi-Camera, fengxa2
++        // original:
++        // return -EINVAL;
++        v4l2Fmt.width = fmt.fmt.pix.width;
++	    v4l2Fmt.height = fmt.fmt.pix.height;
++        // END Multi-Camera
+     }
+ 
+     uint32_t bufferSize = fmt.fmt.pix.sizeimage;
+@@ -1092,7 +1104,10 @@
+     if ((bufferSize == 0) || (bufferSize > expectedMaxBufferSize)) {
+         ALOGE("%s: V4L2 buffer size: %u looks invalid. Expected maximum size: %u", __FUNCTION__,
+               bufferSize, expectedMaxBufferSize);
+-        return -EINVAL;
++        // BEGIN Multi-Camera, fengxa2
++        // original:
++        // return -EINVAL;
++        // END Multi-Camera
+     }
+     mMaxV4L2BufferSize = bufferSize;
+ 
+@@ -1118,11 +1133,15 @@
+         }
+     }
+ 
+-    int fpsRet = setV4l2FpsLocked(fps);
+-    if (fpsRet != 0 && fpsRet != -EINVAL) {
+-        ALOGE("%s: set fps failed: %s", __FUNCTION__, strerror(fpsRet));
+-        return fpsRet;
+-    }
++    // BEGIN Multi-Camera, fengxa2
++    // original:    
++    // int fpsRet = setV4l2FpsLocked(fps);
++    // if (fpsRet != 0 && fpsRet != -EINVAL) {
++    //     ALOGE("%s: set fps failed: %s", __FUNCTION__, strerror(fpsRet));
++    //     return fpsRet;
++    // }
++    mV4l2StreamingFps = fps;
++    // END Multi-Camera
+ 
+     uint32_t v4lBufferCount = (fps >= kDefaultFps) ? mCfg.numVideoBuffers : mCfg.numStillBuffers;
+ 
+@@ -1155,6 +1174,19 @@
+             return -errno;
+         }
+ 
++        // BEGIN Multi-Camera, fengxa2
++        ALOGD("==========FXA: %s:%d: mV4L2Buffer[%d] = (char*)mmap()==========", __FUNCTION__, __LINE__, i);
++        if (buffer.memory == V4L2_MEMORY_MMAP) {    
++            mV4L2Buffer[i] = (char*)mmap(0 /* start anywhere */ ,
++                        buffer.length, PROT_READ, MAP_SHARED, mV4l2Fd.get(),
++                        buffer.m.offset);
++            if (mV4L2Buffer[i] == MAP_FAILED) {
++                ALOGE("%s(%d): Unable to map buffer(length:0x%x offset:0x%x) %s(err:%d)\n",__FUNCTION__,__LINE__, buffer.length,buffer.m.offset,strerror(errno),errno);
++            }
++        }
++        V4l2BufferLen = buffer.length;
++        // END Multi-Camera
++
+         if (TEMP_FAILURE_RETRY(ioctl(mV4l2Fd.get(), VIDIOC_QBUF, &buffer)) < 0) {
+             ALOGE("%s: QBUF %d failed: %s", __FUNCTION__, i, strerror(errno));
+             return -errno;
+@@ -1170,6 +1202,9 @@
+             if (numAttempt == MAX_RETRY) {
+                 break;
+             }
++            // BEGIN Multi-Camera, fengxa2
++            numAttempt++;
++            // END Multi-Camera
+             if (ret < 0) {
+                 ALOGW("%s: VIDIOC_STREAMON failed, wait 33ms and try again", __FUNCTION__);
+                 usleep(IOCTL_RETRY_SLEEP_US);  // sleep 100 ms and try again
+@@ -2747,7 +2782,12 @@
+         return false;
+     };
+ 
+-    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16) {
++    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16
++    // BEGIN Multi-Camera, fengxa2
++    && req->frameIn->mFourcc != V4L2_PIX_FMT_YUV420
++    && req->frameIn->mFourcc != V4L2_PIX_FMT_NV12
++    // END Multi-Camera
++    ) {
+         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
+                              req->frameIn->mFourcc & 0xFF, (req->frameIn->mFourcc >> 8) & 0xFF,
+                              (req->frameIn->mFourcc >> 16) & 0xFF,
+@@ -2829,6 +2869,57 @@
+         }
+     }
+ 
++    // BEGIN Multi-Camera, fengxa2
++    if (req->frameIn->mFourcc == V4L2_PIX_FMT_YUV420) {
++        size_t expectedSize = mYu12Frame->mWidth * mYu12Frame->mHeight * 3 / 2;
++        if (inDataSize < expectedSize) {
++            lk.unlock();
++            return onDeviceError("%s:%d: FXA: I420 input size mismatch!", __FUNCTION__, __LINE__);
++        }
++        size_t frameSize = mYu12Frame->mWidth * mYu12Frame->mHeight;
++        size_t chromaSize = frameSize / 4;
++        std::memcpy(static_cast<uint8_t*>(mYu12FrameLayout.y), inData, frameSize);
++        std::memcpy(static_cast<uint8_t*>(mYu12FrameLayout.cb), inData + frameSize, chromaSize);
++        std::memcpy(static_cast<uint8_t*>(mYu12FrameLayout.cr), inData + frameSize + chromaSize, chromaSize);
++    }
++    if (req->frameIn->mFourcc == V4L2_PIX_FMT_NV12) {
++        ALOGV("%s NV12toI420", __FUNCTION__);
++        ATRACE_BEGIN("NV12toI420");
++        ALOGD("format is BLOB or YV12, use software NV12ToI420");
++        YCbCrLayout input;
++        input.y = inData;
++        input.yStride = mYu12Frame->mWidth;
++        input.cb = inData + mYu12Frame->mWidth * mYu12Frame->mHeight;
++        input.cStride = mYu12Frame->mWidth;
++
++        int res = libyuv::NV12ToI420(
++                static_cast<uint8_t*>(input.y),
++                input.yStride,
++                static_cast<uint8_t*>(input.cb),
++                input.cStride,
++                static_cast<uint8_t*>(mYu12FrameLayout.y),
++                mYu12FrameLayout.yStride,
++                static_cast<uint8_t*>(mYu12FrameLayout.cb),
++                mYu12FrameLayout.cStride,
++                static_cast<uint8_t*>(mYu12FrameLayout.cr),
++                mYu12FrameLayout.cStride,
++                mYu12Frame->mWidth, mYu12Frame->mHeight);
++        ATRACE_END();
++
++        if (res != 0) {
++            // For some webcam, the first few V4L2 frames might be malformed...
++            ALOGE("%s: Convert V4L2 frame to YU12 failed! res %d", __FUNCTION__, res);
++            lk.unlock();
++            Status st = parent->processCaptureRequestError(req);
++            if (st != Status::OK) {
++                return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
++            }
++            signalRequestDone();
++            return true;
++        }
++    }
++    // END Multi-Camera
++
+     ATRACE_BEGIN("Wait for BufferRequest done");
+     res = waitForBufferRequestDone(&req->buffers);
+     ATRACE_END();
+@@ -2919,6 +3010,11 @@
+                     halBuf.acquireFence = relFence;
+                 }
+             } break;
++            // BEGIN Multi-Camera, fengxa2
++            case PixelFormat::IMPLEMENTATION_DEFINED:
++            case PixelFormat::YCRCB_420_SP:
++                break;
++            // END Multi-Camera
+             default:
+                 lk.unlock();
+                 return onDeviceError("%s: unknown output format %x", __FUNCTION__, halBuf.format);
+diff --git a/camera/device/default/ExternalCameraDeviceSession.h b/camera/device/default/ExternalCameraDeviceSession.h
+index e7eb799..64a2cc5 100644
+--- a/camera/device/default/ExternalCameraDeviceSession.h
++++ b/camera/device/default/ExternalCameraDeviceSession.h
+@@ -247,7 +247,11 @@
+     status_t initDefaultRequests();
+ 
+     status_t fillCaptureResult(common::V1_0::helper::CameraMetadata& md, nsecs_t timestamp);
+-    int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
++    // BEGIN Multi-Camera, fengxa2
++    // original:
++    // int configureV4l2StreamLocked(const SupportedV4L2Format& fmt, double fps = 0.0);
++    int configureV4l2StreamLocked(SupportedV4L2Format& fmt, double fps = 0.0);
++    // END Multi-Camera
+     int v4l2StreamOffLocked();
+ 
+     int setV4l2FpsLocked(double fps);
+@@ -337,6 +341,11 @@
+     SupportedV4L2Format mV4l2StreamingFmt;
+     double mV4l2StreamingFps = 0.0;
+     size_t mV4L2BufferCount = 0;
++    // BEGIN Multi-Camera, fengxa2
++    #define V4L2_BUFFER_MAX             32
++    char *mV4L2Buffer[V4L2_BUFFER_MAX] = {nullptr};
++    unsigned int V4l2BufferLen = 0;
++    // END Multi-Camera
+ 
+     static const int kBufferWaitTimeoutSec = 3;  // TODO: handle long exposure (or not allowing)
+     std::mutex mV4l2BufferLock;                  // protect the buffer count and condition below
+diff --git a/camera/provider/default/Android.bp b/camera/provider/default/Android.bp
+index ed45cbe..dbc0722 100644
+--- a/camera/provider/default/Android.bp
++++ b/camera/provider/default/Android.bp
+@@ -93,6 +93,7 @@
+     name: "android.hardware.camera.provider-V1-external-service",
+     defaults: ["camera_external_service_defaults"],
+     init_rc: ["android.hardware.camera.provider-V1-external-service.rc"],
++    vintf_fragments: ["android.hardware.camera.provider.xml"],
+ }
+ 
+ cc_binary {
+diff --git a/camera/provider/default/android.hardware.camera.provider-V1-external-service.rc b/camera/provider/default/android.hardware.camera.provider-V1-external-service.rc
+index 302c56f..8c7b1e7 100644
+--- a/camera/provider/default/android.hardware.camera.provider-V1-external-service.rc
++++ b/camera/provider/default/android.hardware.camera.provider-V1-external-service.rc
+@@ -2,7 +2,11 @@
+     interface aidl android.hardware.camera.provider.ICameraProvider/external/0
+     class hal
+     user cameraserver
+-    group audio camera input drmrpc usb
++    group audio camera input drmrpc usb system
+     ioprio rt 4
+     capabilities SYS_NICE
+-    task_profiles CameraServiceCapacity MaxPerformance
+\ No newline at end of file
++    task_profiles CameraServiceCapacity MaxPerformance
++    disabled
++
++on property:sys.boot_completed=1
++    start vendor.camera.provider-ext
+\ No newline at end of file
+diff --git a/camera/provider/default/android.hardware.camera.provider.xml b/camera/provider/default/android.hardware.camera.provider.xml
+new file mode 100644
+index 0000000..e4150cf
+--- /dev/null
++++ b/camera/provider/default/android.hardware.camera.provider.xml
+@@ -0,0 +1,10 @@
++<manifest version="1.0" type="device">
++	<hal format="aidl">
++        <name>android.hardware.camera.provider</name>
++        <version>1</version>
++        <interface>
++            <name>ICameraProvider</name>
++            <instance>external/0</instance>
++        </interface>
++    </hal>
++</manifest>

@@ -1,0 +1,46 @@
+From 2101d5a074ee9dc0a73421f5dcdc6cf8d6e84a9f Mon Sep 17 00:00:00 2001
+From: chenlijin <chenlj34@lenovo.com>
+Date: Mon, 29 Sep 2025 15:46:56 +0800
+Subject: [PATCH] [GEROLFING-2581] Multi-Camera 6/6: modifying Camera API 1
+
+[scope of influence] Multi-Camera
+
+[Type] feature
+
+[RootCause] NA
+
+[Solution] NA
+
+Change-Id: I13ea08084e01c9a48d6efc20d31e721dd9cdf4dd
+Reviewed-on: https://vcsc.lenovo.com:8080/c/platform/frameworks/base/+/16775
+Reviewed-by: GuoBin Zhang <zhanggb4@lenovo.com>
+Tested-by: LiJin Chen <chenlj34@lenovo.com>
+---
+
+diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware/Camera.java
+index 65b4754..9598fcb 100644
+--- a/core/java/android/hardware/Camera.java
++++ b/core/java/android/hardware/Camera.java
+@@ -317,8 +317,8 @@
+         if (exposeAuxCamera == false && (numberOfCameras > 2)) {
+             numberOfCameras = 2;
+         }
+-        Log.e(TAG, "NumberOfCameras:"+ numberOfCameras + "packageName: " +packageName);
+-        return numberOfCameras;
++        Log.e(TAG, "CLJ NumberOfCameras:"+ numberOfCameras + "packageName: " +packageName);
++        return 1;
+     }
+ 
+     /**
+diff --git a/core/java/android/hardware/camera2/impl/CameraCaptureSessionImpl.java b/core/java/android/hardware/camera2/impl/CameraCaptureSessionImpl.java
+index b3b24cb..366894e 100644
+--- a/core/java/android/hardware/camera2/impl/CameraCaptureSessionImpl.java
++++ b/core/java/android/hardware/camera2/impl/CameraCaptureSessionImpl.java
+@@ -589,6 +589,7 @@
+                 mStateCallback.onClosed(this);
+                 return;
+             } catch (CameraAccessException e) {
++                mStateCallback.onClosed(this);
+                 // OK: close does not throw checked exceptions.
+                 Log.e(TAG, mIdString + "Exception while stopping repeating: ", e);
+ 

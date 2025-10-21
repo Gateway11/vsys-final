@@ -1,0 +1,140 @@
+From e84d630225a93985faed5ffd71cd819c42fd3c1e Mon Sep 17 00:00:00 2001
+From: chenlijin <chenlj34@lenovo.com>
+Date: Mon, 13 Oct 2025 18:24:38 +0800
+Subject: [PATCH] [GEROLFING-2581] Multi-Camera 4/6: adding modules into row device
+
+[scope of influence] Multi-Camera
+
+[Type] feature
+
+[RootCause] NA
+
+[Solution] NA
+
+Change-Id: Idf3895958a3cd5f39abaf2dfec4ca1b65d3e8557
+Reviewed-on: https://vcsc.lenovo.com:8080/c/device/lenovo/lapis_row/+/17021
+Reviewed-by: GuoBin Zhang <zhanggb4@lenovo.com>
+Tested-by: LiJin Chen <chenlj34@lenovo.com>
+---
+
+diff --git a/compatibility_matrix.xml b/compatibility_matrix.xml
+new file mode 100644
+index 0000000..73f4d21
+--- /dev/null
++++ b/compatibility_matrix.xml
+@@ -0,0 +1,10 @@
++<compatibility-matrix version="1.0" type="framework" level="8">
++    <hal format="aidl">
++        <name>android.hardware.camera.provider</name>
++        <version>1</version>
++        <interface>
++            <name>ICameraProvider</name>
++            <instance>external/0</instance>
++        </interface>
++    </hal>
++</compatibility-matrix>
+diff --git a/external_camera_config.xml b/external_camera_config.xml
+new file mode 100644
+index 0000000..293a23c
+--- /dev/null
++++ b/external_camera_config.xml
+@@ -0,0 +1,75 @@
++<ExternalCamera>
++    <Provider>
++        <ignore> <!-- Internal video devices to be ignored by external camera HAL -->
++        <!-- <id>0</id> -->  <!-- No leading/trailing spaces -->
++        </ignore>
++        <CameraIdOffset>0</CameraIdOffset>
++    </Provider>
++    <!-- See ExternalCameraUtils.cpp for default values of Device configurations below-->
++    <Device>
++        <!-- Max JPEG buffer size in bytes-->
++        <MaxJpegBufferSize  bytes="3145728"/>  <!-- 3MB (~= 1080p YUV420) -->
++        <!-- Size of v4l2 buffer queue when streaming >= 30fps -->
++        <!-- Larger value: more request can be cached pipeline (less janky) -->
++        <!-- Smaller value: use less memory -->
++        <NumVideoBuffers  count="4"/>
++        <!-- Size of v4l2 buffer queue when streaming < 30fps -->
++        <NumStillBuffers  count="2"/>
++        <!-- List of maximum fps for various output sizes -->
++        <!-- Any image size smaller than the size listed in Limit row will report
++        fps (as minimum frame duration) up to the fpsBound value. -->
++        <FpsList>
++            <!-- width/height must be increasing, fpsBound must be decreasing-->
++            <Limit  width="176" height="144" fpsBound="60.0" />
++            <Limit  width="176" height="144" fpsBound="30.0" />
++            <Limit  width="176" height="144" fpsBound="20.0" />
++            <Limit  width="176" height="144" fpsBound="15.0" />
++            <Limit  width="320" height="240" fpsBound="60.0" />
++            <Limit  width="320" height="240" fpsBound="30.0" />
++            <Limit  width="320" height="240" fpsBound="20.0" />
++            <Limit  width="320" height="240" fpsBound="15.0" />
++            <Limit  width="352" height="288" fpsBound="30.0" />
++            <Limit  width="352" height="288" fpsBound="20.0" />
++            <Limit  width="352" height="288" fpsBound="15.0" />
++            <Limit  width="640" height="480" fpsBound="60.0" />
++            <Limit  width="640" height="480" fpsBound="30.0" />
++            <Limit  width="640" height="480" fpsBound="20.0" />
++            <Limit  width="640" height="480" fpsBound="15.0" />
++            <Limit  width="640" height="480" fpsBound="10.0" />
++            <Limit  width="800" height="600" fpsBound="30.0" />
++            <Limit  width="800" height="600" fpsBound="20.0" />
++            <Limit  width="800" height="600" fpsBound="15.0" />
++            <Limit  width="1024" height="768" fpsBound="30.0" />
++            <Limit  width="1024" height="768" fpsBound="20.0" />
++            <Limit  width="1024" height="768" fpsBound="15.0" />
++            <Limit  width="1024" height="768" fpsBound="10.0" />
++            <Limit  width="1280" height="720" fpsBound="60.0" />
++            <Limit  width="1280" height="720" fpsBound="30.0" />
++            <Limit  width="1280" height="720" fpsBound="20.0" />
++            <Limit  width="1280" height="720" fpsBound="15.0" />
++            <Limit  width="1280" height="720" fpsBound="10.0" />
++            <Limit  width="1280" height="800" fpsBound="30.0" />
++            <Limit  width="1280" height="800" fpsBound="20.0" />
++            <Limit  width="1280" height="800" fpsBound="15.0" />
++            <Limit  width="1280" height="960" fpsBound="30.0" />
++            <Limit  width="1280" height="960" fpsBound="20.0" />
++            <Limit  width="1280" height="960" fpsBound="15.0" />
++            <Limit  width="1280" height="1024" fpsBound="30.0" />
++            <Limit  width="1280" height="1024" fpsBound="20.0" />
++            <Limit  width="1280" height="1024" fpsBound="15.0" />
++            <Limit  width="1600" height="1200" fpsBound="30.0" />
++            <Limit  width="1600" height="1200" fpsBound="15.0" />
++            <Limit  width="1920" height="1080" fpsBound="30.0" />
++            <Limit  width="1920" height="1080" fpsBound="15.0" />
++            <Limit  width="1920" height="1440" fpsBound="30.0" />
++            <Limit  width="1920" height="1440" fpsBound="15.0" />
++            <Limit  width="2592" height="1944" fpsBound="30.0" />
++            <Limit  width="2592" height="1944" fpsBound="15.0" />
++            <Limit  width="2592" height="1944" fpsBound="10.0" />
++            <Limit  width="2592" height="1944" fpsBound="5.0" />
++            <!-- image size larger than the last entry will not be supported-->
++        </FpsList>
++        <!-- orientation -->
++        <Orientation  degree="0"/>
++    </Device>
++</ExternalCamera>
+diff --git a/lapis_row.mk b/lapis_row.mk
+index 0d1efde..355a931 100644
+--- a/lapis_row.mk
++++ b/lapis_row.mk
+@@ -686,3 +686,18 @@
+     endif
+ endif
+ # Dolby vision feature by linshuai1, JLAPIS-252,at 2024-05-28 end
++
++PRODUCT_PACKAGES += \
++	android.hardware.camera.provider-V1-external-service \
++# 	vendor.lenovo.camera_external_service_defaults \
++# 	vendor.lenovo.camera.provider-V1-external-impl \
++# 	vendor.lenovo.camera.device-external-impl \
++# 	vendor.lenovo.camera.common@1.0-helper 
++# PRODUCT_PACKAGES += \
++# 	vendor.lenovo.camera.provider@2.4-external-service \
++
++# PRODUCT_PACKAGES += \
++#     android.hardware.camera.provider \
++
++DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += device/lenovo/lapis_row/compatibility_matrix.xml
++PRODUCT_COPY_FILES += device/lenovo/lapis_row/external_camera_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/external_camera_config.xml
+\ No newline at end of file
