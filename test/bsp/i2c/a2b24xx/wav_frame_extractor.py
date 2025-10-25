@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """
 WAV Frame Extractor
-A tool for analyzing WAV files, inspecting frame timestamps, and extracting audio segments
+A tool for analyzing WAV files, inspecting timestamps, and extracting audio segments
 Usage: wav_frame_extractor <wav_file> [output_directory] [chunk_size]
 """
 
@@ -57,18 +57,19 @@ def parse_wav_header(filename, chunk_size=128):
             # Calculate frame count considering chunk_size
             bytes_per_sample = bits_per_sample // 8
             bytes_per_frame = num_channels * bytes_per_sample
-            bytes_per_chunk = chunk_size * bytes_per_frame
+            bytes_per_timestamp_frame = chunk_size * bytes_per_frame
             
             # Total frames based on data size and chunk organization
-            total_chunks = subchunk2_size // bytes_per_chunk
-            remaining_bytes = subchunk2_size % bytes_per_chunk
+            total_timestamp_frames = subchunk2_size // bytes_per_timestamp_frame
+            remaining_bytes = subchunk2_size % bytes_per_timestamp_frame
             remaining_frames = remaining_bytes // bytes_per_frame
             
-            total_frames = (total_chunks * chunk_size) + remaining_frames
-            duration = total_frames / sample_rate
+            total_audio_frames = (total_timestamp_frames * chunk_size) + remaining_frames
+            duration = total_audio_frames / sample_rate
             
             print(f"File: {filename}")
-            print(f"Frame count: {total_frames}")
+            #print(f"Audio frames: {total_audio_frames}")
+            print(f"Timestamp frames: {total_audio_frames // chunk_size}")
             print(f"Sample rate: {sample_rate} Hz")
             print(f"Channels: {num_channels}")
             print(f"Bit depth: {bits_per_sample} bits")
@@ -76,7 +77,7 @@ def parse_wav_header(filename, chunk_size=128):
             print(f"Data size: {subchunk2_size} bytes")
             
             return {
-                'frames': total_frames,
+                'audio_frames': total_audio_frames,
                 'sample_rate': sample_rate,
                 'channels': num_channels,
                 'bits_per_sample': bits_per_sample,
@@ -87,8 +88,8 @@ def parse_wav_header(filename, chunk_size=128):
                 'block_align': block_align,
                 'chunk_size': chunk_size,
                 'bytes_per_frame': bytes_per_frame,
-                'bytes_per_chunk': bytes_per_chunk,
-                'total_chunks': total_chunks,
+                'bytes_per_timestamp_frame': bytes_per_timestamp_frame,
+                'total_timestamp_frames': total_timestamp_frames,
                 'remaining_frames': remaining_frames
             }
             
@@ -128,16 +129,21 @@ def save_wav_segment(input_file, output_file, wav_info, start_frame, end_frame=N
     Save a segment of the WAV file from start_frame to end_frame
     If end_frame is None, save from start_frame to the end
     """
+
+    start_timestamp = start_frame // wav_info['chunk_size']
+    end_timestamp = end_frame // wav_info['chunk_size']
     try:
         if end_frame is None:
-            end_frame = wav_info['frames'] - 1
+            end_frame = wav_info['audio_frames'] - 1
         
-        if start_frame < 0 or start_frame >= wav_info['frames']:
-            print(f"Error: Start frame {start_frame} is out of range")
+        if start_frame < 0 or start_frame >= wav_info['audio_frames']:
+            #print(f"Error: Start frame {start_frame} is out of range")
+            print(f"Error: Start timestamp frame {start_timestamp} is out of range")
             return False
         
-        if end_frame < start_frame or end_frame >= wav_info['frames']:
-            print(f"Error: End frame {end_frame} is out of range")
+        if end_frame < start_frame or end_frame >= wav_info['audio_frames']:
+            #print(f"Error: End frame {end_frame} is out of range")
+            print(f"Error: End timestamp frame {end_timestamp} is out of range")
             return False
         
         # Calculate byte positions
@@ -146,7 +152,8 @@ def save_wav_segment(input_file, output_file, wav_info, start_frame, end_frame=N
         end_byte = wav_info['data_start_pos'] + ((end_frame + 1) * bytes_per_frame)
         segment_size = end_byte - start_byte
         
-        print(f"Extracting frames {start_frame} to {end_frame}")
+        #print(f"Extracting audio frames {start_frame} to {end_frame}")
+        print(f"Extracting timestamp frames {start_timestamp} to {end_timestamp}")
         
         # Read the original header
         with open(input_file, 'rb') as infile:
@@ -176,8 +183,8 @@ def save_wav_segment(input_file, output_file, wav_info, start_frame, end_frame=N
                 # Copy the audio data segment
                 bytes_remaining = segment_size
                 while bytes_remaining > 0:
-                    chunk_size = min(8192, bytes_remaining)
-                    data = infile.read(chunk_size)
+                    read_size = min(8192, bytes_remaining)
+                    data = infile.read(read_size)
                     if not data:
                         break
                     outfile.write(data)
@@ -195,20 +202,23 @@ def select_frame_and_extract(wav_info, timestamps, input_file, output_dir):
     """
     Interactive frame selection and extract audio segments
     """
-    total_frames = wav_info['frames']
+    total_audio_frames = wav_info['audio_frames']
     sample_rate = wav_info['sample_rate']
+    chunk_size = wav_info['chunk_size']
+    total_timestamp_frames = wav_info['total_timestamp_frames']
     
-    if timestamps and len(timestamps) != total_frames:
-        print(f"Warning: Timestamp count ({len(timestamps)}) does not match frame count ({total_frames})!")
+    # Calculate number of timestamp frames
+    timestamp_frames = len(timestamps) if timestamps else 0
     
     print(f"\n=== Frame Selection and Extraction Mode ===")
-    print(f"Total frames: {total_frames}")
+    #print(f"Audio frames: {total_audio_frames}")
+    print(f"Timestamp frames: {timestamp_frames}")
     print(f"Duration: {wav_info['duration']:.2f} seconds")
     print(f"Output directory: {output_dir}")
     print("Commands:")
-    print("  [frame_number] - Select a frame and show timestamp")
-    print("  s [start_frame] [end_frame] - Save segment from start_frame to end_frame")
-    print("  sf [start_frame] - Save from start_frame to end of file")
+    print("  [timestamp_index] - Select a timestamp and show corresponding audio frames")
+    print("  st [start_timestamp] [end_timestamp] - Save segment from timestamp start_timestamp to end_timestamp")
+    print("  st [start_timestamp] - Save from timestamp start_timestamp to end of file")
     print("  q - Exit")
     
     while True:
@@ -220,86 +230,92 @@ def select_frame_and_extract(wav_info, timestamps, input_file, output_dir):
             
             parts = user_input.split()
             if len(parts) == 1:
-                # Single frame selection
-                frame_num = int(parts[0])
+                # Direct timestamp index input
+                timestamp_index = int(parts[0])
                 
-                if frame_num < 0 or frame_num >= total_frames:
-                    print(f"Error: Frame number must be between 0 and {total_frames - 1}")
+                if not timestamps or timestamp_index < 0 or timestamp_index >= len(timestamps):
+                    print(f"Error: Timestamp index must be between 0 and {len(timestamps)-1 if timestamps else 0}")
                     continue
                 
-                # Display timestamp
-                if timestamps and frame_num < len(timestamps):
-                    timestamp = timestamps[frame_num]
-                    time_in_seconds = frame_num / sample_rate
-                    
-                    print(f"Frame number: {frame_num}")
-                    print(f"Timestamp: {timestamp}")
-                    print(f"Time: {time_in_seconds:.6f} seconds")
+                timestamp = timestamps[timestamp_index]
+                start_audio_frame = timestamp_index * chunk_size
+                
+                # Calculate end audio frame for this timestamp
+                if timestamp_index == total_timestamp_frames - 1:
+                    # Last chunk might be incomplete
+                    end_audio_frame = total_audio_frames - 1
                 else:
-                    time_in_seconds = frame_num / sample_rate
-                    print(f"Frame number: {frame_num}")
-                    print(f"Time: {time_in_seconds:.6f} seconds")
+                    end_audio_frame = (timestamp_index + 1) * chunk_size - 1
+                
+                start_time = start_audio_frame / sample_rate
+                end_time = end_audio_frame / sample_rate
+                
+                print(f"Timestamp index: {timestamp_index}")
+                print(f"Timestamp value: {timestamp}")
+                #print(f"Corresponding audio frames: {start_audio_frame} to {end_audio_frame}")
+                #print(f"Time range: {start_time:.6f} to {end_time:.6f} seconds")
+                print(f"Time location: {start_time:.6f} seconds")
+                #print(f"Duration: {end_time - start_time:.6f} seconds")
             
-            elif len(parts) >= 2 and parts[0].lower() == 's':
-                # Save segment
-                start_frame = int(parts[1])
+            elif len(parts) >= 2 and parts[0].lower() == 'st':
+                # Save segment by timestamp indices - ensure saving at timestamp frame boundaries
+                start_timestamp = int(parts[1])
                 
                 if len(parts) >= 3:
-                    end_frame = int(parts[2])
+                    end_timestamp = int(parts[2])
                 else:
-                    end_frame = None
+                    end_timestamp = None
                 
-                # Generate output filename based on timestamp
-                base_name = os.path.splitext(os.path.basename(input_file))[0]
+                if not timestamps:
+                    print("Error: No timestamps available")
+                    continue
                 
-                if timestamps and start_frame < len(timestamps):
-                    # Use timestamp for filename
-                    start_timestamp = timestamps[start_frame]
+                if start_timestamp < 0 or start_timestamp >= len(timestamps):
+                    print(f"Error: Start timestamp index must be between 0 and {len(timestamps)-1}")
+                    continue
+                
+                # Ensure saving at timestamp frame boundaries
+                start_audio_frame = start_timestamp * chunk_size
+                
+                if end_timestamp is not None:
+                    if end_timestamp < start_timestamp or end_timestamp >= len(timestamps):
+                        print(f"Error: End timestamp index must be between {start_timestamp} and {len(timestamps)-1}")
+                        continue
                     
-                    if end_frame is not None and end_frame < len(timestamps):
-                        end_timestamp = timestamps[end_frame]
-                        output_file = os.path.join(output_dir, f"{base_name}_timestamp_{start_timestamp}_to_{end_timestamp}.wav")
-                    else:
-                        output_file = os.path.join(output_dir, f"{base_name}_timestamp_{start_timestamp}.wav")
+                    # Ensure end position is also at timestamp frame boundary
+                    end_audio_frame = (end_timestamp + 1) * chunk_size - 1
+                    
+                    # Don't exceed file end
+                    if end_audio_frame >= total_audio_frames:
+                        end_audio_frame = total_audio_frames - 1
+                        print(f"Note: Adjusted end frame to file end: {end_audio_frame}")
                 else:
-                    # Fallback to frame numbers if no timestamps
-                    if end_frame is not None:
-                        output_file = os.path.join(output_dir, f"{base_name}_frame_{start_frame}_to_{end_frame}.wav")
-                    else:
-                        output_file = os.path.join(output_dir, f"{base_name}_frame_{start_frame}.wav")
+                    # Save to end of file
+                    end_audio_frame = total_audio_frames - 1
                 
-                # Save the segment
-                if save_wav_segment(input_file, output_file, wav_info, start_frame, end_frame):
-                    print(f"Segment saved to: {output_file}")
-                else:
-                    print("Failed to save segment")
-            
-            elif len(parts) >= 2 and parts[0].lower() == 'sf':
-                # Save from frame to end
-                start_frame = int(parts[1])
-                
-                # Generate output filename based on timestamp
+                # Generate output filename using timestamp values
                 base_name = os.path.splitext(os.path.basename(input_file))[0]
+                start_ts_value = timestamps[start_timestamp]
                 
-                if timestamps and start_frame < len(timestamps):
-                    # Use timestamp for filename
-                    start_timestamp = timestamps[start_frame]
-                    output_file = os.path.join(output_dir, f"{base_name}_timestamp_{start_timestamp}.wav")
+                if end_timestamp is not None:
+                    end_ts_value = timestamps[end_timestamp]
+                    output_file = os.path.join(output_dir, f"{base_name}_timestamp_{start_ts_value}_to_{end_ts_value}.wav")
                 else:
-                    # Fallback to frame number if no timestamps
-                    output_file = os.path.join(output_dir, f"{base_name}_frame_{start_frame}.wav")
+                    output_file = os.path.join(output_dir, f"{base_name}_timestamp_{start_ts_value}.wav")
                 
-                # Save the segment
-                if save_wav_segment(input_file, output_file, wav_info, start_frame):
+                # Save segment
+                if save_wav_segment(input_file, output_file, wav_info, start_audio_frame, end_audio_frame):
                     print(f"Segment saved to: {output_file}")
+                    #print(f"Audio frames: {start_audio_frame} to {end_audio_frame}")
+                    print(f"Timestamp indices: {start_timestamp} to {end_timestamp if end_timestamp is not None else 'end'}")
                 else:
                     print("Failed to save segment")
             
             else:
                 print("Invalid command. Use:")
-                print("  [frame_number] - Select frame")
-                print("  s [start] [end] - Save segment")
-                print("  sf [start] - Save from start to end")
+                print("  [timestamp_index] - Select timestamp")
+                print("  st [start_timestamp] [end_timestamp] - Save segment from timestamp start_timestamp to end_timestamp")
+                print("  st [start_timestamp] - Save from timestamp start_timestamp to end of file")
                 print("  q - Quit")
                 
         except ValueError:
