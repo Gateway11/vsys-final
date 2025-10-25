@@ -254,7 +254,7 @@ def select_frame_and_extract(wav_info, timestamps, input_file, output_dir):
                 print(f"Timestamp value: {timestamp}")
                 #print(f"Corresponding audio frames: {start_audio_frame} to {end_audio_frame}")
                 #print(f"Time range: {start_time:.6f} to {end_time:.6f} seconds")
-                print(f"Time location: {start_time:.6f} seconds")
+                print(f"Time position: {start_time:.6f} seconds")
                 #print(f"Duration: {end_time - start_time:.6f} seconds")
             
             elif len(parts) >= 2 and parts[0].lower() == 'st':
@@ -283,7 +283,8 @@ def select_frame_and_extract(wav_info, timestamps, input_file, output_dir):
                         continue
                     
                     # Ensure end position is also at timestamp frame boundary
-                    end_audio_frame = (end_timestamp + 1) * chunk_size - 1
+                    #end_audio_frame = (end_timestamp + 1) * chunk_size - 1
+                    end_audio_frame = (end_timestamp) * chunk_size - 1
                     
                     # Don't exceed file end
                     if end_audio_frame >= total_audio_frames:
