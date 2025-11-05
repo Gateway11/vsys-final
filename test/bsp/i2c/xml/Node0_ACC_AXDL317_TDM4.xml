@@ -115,7 +115,8 @@
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" ParamName="REG_A2B0_NODEADR">20</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="128" i2caddr="105" AddrIncr="4" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="Parameter_0">BC</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="128" i2caddr="105" AddrIncr="4" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="Parameter_1">43</action>
-    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="129" i2caddr="105" AddrIncr="4" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="Parameter_2">11 01 01</action>
+    <action instr="delay" CellName="AD242xSubNode_0" ParamName="config Delay">19</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="10" addr="129" i2caddr="105" AddrIncr="4" Protocol="I2C" CellName="AD242xSubNode_0" ParamName="Parameter_2">51 05 01 04 4F 00 4F 00 4F</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243xMain_0" ParamName="REG_A2B0_SWCTL        ">01</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="14" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243xMain_0" ParamName="REG_A2B0_UPSLOTS      ">0A</action>
     <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243xMain_0" ParamName="REG_A2B0_I2SGCFG      ">1F</action>
