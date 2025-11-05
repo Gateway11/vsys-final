@@ -1,0 +1,76 @@
+<?xml version="1.0" standalone="no"?>
+<ROM>
+  <Version_Info>
+    <A2BDLL_Version Version="19.11.0.0" />
+    <A2BStackDLL_Version Version="19.11.0.0" />
+    <SigmaStudio_Version Version="4.07.000.1831" />
+  </Version_Info>
+  <page modetype="Mode 0">
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_CONTROL      ">04</action>
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="2" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_VENDOR       " />
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="94" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_AD243X0_BSDSTAT    " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_CONTROL      ">84</action>
+    <action instr="delay" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="A2B_Delay">19</action>
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTTYPE      " />
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="2" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_VENDOR       " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="27" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTMSK0      ">10 00 09</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="26" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTPND2      ">01</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="15" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_RESPCYCS     ">74</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_CONTROL      ">81</action>
+    <action instr="delay" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="A2B_Delay">01</action>
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTTYPE      " />
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="165" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_AD243X0_SWSTAT2    " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_I2SGCFG      ">17</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_SWCTL        ">01</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="19" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_DISCVRY      ">74</action>
+    <action instr="delay" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="A2B_Delay">32</action>
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTTYPE      " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_SWCTL        ">21</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_NODEADR      ">00</action>
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="5" addr="2" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_VENDOR       " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="11" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_LDNSLOTS     ">80</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="12" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_LUPSLOTS     ">04</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_I2SGCFG      ">51</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_I2SCFG       ">B8</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="71" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_PDMCTL       ">10</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="74" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_GPIODAT      ">10</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="77" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_GPIOOEN      ">10</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="82" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_PINCFG       ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="90" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_AD242X0_CLK2CFG   ">C1</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="3" addr="27" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_INTMSK0      ">67 7F</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="30" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_BECCTL       ">EF</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="NODEADR - Set the node address">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="0" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="CHIP - Set the chip address">53</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="NODEADR - Enable PERI">20</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="1" addr_width="1" data_width="1" len="2" addr="128" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="register key [0]">BC</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="1" addr_width="1" data_width="1" len="2" addr="128" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="register key [1]">43</action>
+    <action instr="delay" CellName="2433_ADXL317_1_2" ParamName="config Delay">19</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="1" addr_width="1" data_width="1" len="2" addr="129" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="I2S config [0]">51</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="1" addr_width="1" data_width="1" len="2" addr="130" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="I2S config [1]">05</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="1" addr_width="1" data_width="1" len="2" addr="131" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="clock rate">01</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="132" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="x-axis self test">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="1" addr_width="1" data_width="1" len="2" addr="133" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="x-axis filter">4F</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="134" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="y-axis self test">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="135" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="y-axis filter">4F</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="136" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="z-axis self test">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="137" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="2433_ADXL317_1_2" ParamName="z-axis filter">4F</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_SWCTL        ">01</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="14" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_UPSLOTS      ">04</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="65" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_I2SGCFG      ">17</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="66" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_I2SCFG       ">11</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="178" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_AD243X0_SPICKDIV   ">03</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="4" addr="27" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTMSK0      ">10 00 09</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_NODEADR      ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_NODEADR      ">80</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="64" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_PLLCTL       ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_NODEADR      ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="16" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_SLOTFMT      ">22</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="17" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_DATCTL       ">03</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_CONTROL      ">81</action>
+    <action instr="delay" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="A2B_Delay">01</action>
+    <action instr="read" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="23" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_INTTYPE      " />
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="1" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_NODEADR      ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="9" i2caddr="105" AddrIncr="0" Protocol="I2C" CellName="HZ_2433M_ACC1_2" ParamName="REG_A2B0_SWCTL        ">00</action>
+    <action instr="writeXbytes" SpiCmd="0" SpiCmdWidth="0" addr_width="1" data_width="1" len="2" addr="18" i2caddr="104" AddrIncr="0" Protocol="I2C" CellName="AD243x Master Node0_HZ_ACCX2" ParamName="REG_A2B0_CONTROL      ">82</action>
+  </page>
+</ROM>
