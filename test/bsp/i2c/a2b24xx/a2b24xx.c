@@ -1162,26 +1162,14 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     pr_info("Major number: %d, Minor number: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
-#if 0
-    const char *filename = NULL;
-    char *content = NULL;
-    of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
-    if (!filename || !(content = a2b_pal_File_Read(filename, &size))) {
-        pr_warn("Using default commandlist file: /lib/firmware/adi_a2b_commandlist.xml\n");
-        content = a2b_pal_File_Read("/lib/firmware/adi_a2b_commandlist.xml", &size);
-    }
-#else
     const char *filename = NULL;
     const char *default_filename = "/lib/firmware/adi_a2b_commandlist.xml";
-    of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
-    filename = filename ? filename : default_filename;
-    char *content = a2b_pal_File_Read(filename, &size);
-#endif
-
+    int ret = of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
+    char *content = a2b_pal_File_Read(ret ? default_filename : filename, &size);
     if (content) {
         pr_info("File content (%zu bytes)\n", size);
 
-		// Parse XML configuration
+        // Parse XML configuration
         parseXML(a2b24xx, content);
         a2b24xx->pA2BConfig = a2b24xx->parseA2BConfig;
         kfree(content);
