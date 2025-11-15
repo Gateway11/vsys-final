@@ -996,6 +996,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     processInterrupt(a2b24xx, true);
+
     a2b24xx_schedule_fault_check(a2b24xx);
 }
 
