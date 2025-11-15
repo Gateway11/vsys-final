@@ -684,7 +684,6 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, a2b24xx->max_node_number});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
-
             a2b24xx->fault_active = false;
         }
 //    }
@@ -927,9 +926,8 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
-    //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-
     pr_info("%s: interrupt handled. %d\n", __func__, a2b24xx->work_allowed);
+
     disable_irq_nosync(irq);
     a2b24xx->irq_disabled = true;
     if (a2b24xx->work_allowed)
@@ -970,6 +968,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
+
     int32_t ret = request_irq(client->irq,
             a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
