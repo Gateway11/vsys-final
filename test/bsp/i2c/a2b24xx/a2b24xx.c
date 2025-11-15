@@ -98,7 +98,7 @@ struct a2b24xx {
 
     struct work_struct setup_work;
     struct delayed_work fault_check_work;
-    struct mutex node_mutex;
+    struct mutex bus_mutex;
 
     bool irq_disabled;
     bool fault_active;
@@ -695,7 +695,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
 
-    mutex_lock(&a2b24xx->node_mutex);
+    mutex_lock(&a2b24xx->bus_mutex);
     for (uint8_t i = 0; i <= a2b24xx->max_node_number; i++) {
         adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         if (adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
@@ -716,7 +716,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         pr_warn("Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode);
     }
-    mutex_unlock(&a2b24xx->node_mutex); // Release lock
+    mutex_unlock(&a2b24xx->bus_mutex); // Release lock
 }
 
 static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
@@ -861,10 +861,10 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             if (node_addr == -1) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
             } else {
-                mutex_lock(&a2b24xx->node_mutex);
+                mutex_lock(&a2b24xx->bus_mutex);
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, node_addr});
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
-                mutex_unlock(&a2b24xx->node_mutex); // Release lock
+                mutex_unlock(&a2b24xx->bus_mutex); // Release lock
             }
         }
         return len;
@@ -874,11 +874,11 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
 
         if (params[0] <= a2b24xx->max_node_number && params[1] < sizeof(config)) {
-            mutex_lock(&a2b24xx->node_mutex);
+            mutex_lock(&a2b24xx->bus_mutex);
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
-            mutex_unlock(&a2b24xx->node_mutex); // Release lock
+            mutex_unlock(&a2b24xx->bus_mutex); // Release lock
         }
         return len;
     }
@@ -887,7 +887,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         pr_info("PDM Slave(%d) MIC(%d)\n", node_addr, mic);
 
         if (node_addr <= a2b24xx->max_node_number) {
-            mutex_lock(&a2b24xx->node_mutex);
+            mutex_lock(&a2b24xx->bus_mutex);
             for (uint8_t i = 0; i <= a2b24xx->max_node_number; i++) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
@@ -909,7 +909,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
                     adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
                 }
             }
-            mutex_unlock(&a2b24xx->node_mutex); // Release lock
+            mutex_unlock(&a2b24xx->bus_mutex); // Release lock
         }
         return len;
     }
@@ -1216,7 +1216,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     a2b24xx->SRFMISS = 0;
     a2b24xx->work_allowed = true;
-    mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
+    mutex_init(&a2b24xx->bus_mutex); // Initialize the mutex
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
     INIT_DELAYED_WORK(&a2b24xx->fault_check_work, a2b24xx_fault_check_work);
