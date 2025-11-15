@@ -155,14 +155,11 @@ static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx)
 
 static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 {
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-
     a2b24xx_disable_fault_check(a2b24xx);
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
-
     a2b24xx_schedule_fault_check(a2b24xx);
     return 0;
 }
