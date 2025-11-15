@@ -103,7 +103,7 @@ struct a2b24xx {
 
     bool irq_disabled;
     bool fault_active;
-    bool work_allowed;
+    bool fault_check_allowed;
 
     uint8_t SRFMISS;
     uint8_t cycles[16];
@@ -135,13 +135,13 @@ static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
 static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx)
 {
-    a2b24xx->work_allowed = false;
+    a2b24xx->fault_check_allowed = false;
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 }
 
 static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
 {
-    a2b24xx->work_allowed = true;
+    a2b24xx->fault_check_allowed = true;
     if (!a2b24xx->irq_disabled || a2b24xx->fault_active) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
@@ -937,7 +937,7 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     pr_info("%s: interrupt handled. %d\n", __func__, irq);
     disable_irq_nosync(irq);
     a2b24xx->irq_disabled = true;
-    if (a2b24xx->work_allowed)
+    if (a2b24xx->fault_check_allowed)
         schedule_delayed_work(&a2b24xx->fault_check_work, 0);
     return IRQ_HANDLED;
 }
@@ -1224,6 +1224,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     a2b24xx->SRFMISS = 0;
     a2b24xx->irq_disabled = false;
+    a2b24xx->fault_check_allowed = true;
     mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
