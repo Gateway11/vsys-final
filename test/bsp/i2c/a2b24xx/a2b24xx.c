@@ -930,7 +930,7 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     struct a2b24xx *a2b24xx = dev_id;
     //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
-    pr_info("%s: interrupt handled. %d\n", __func__, irq);
+    pr_info("%s: interrupt handled. %d\n", __func__, a2b24xx->fault_check_allowed);
     disable_irq_nosync(irq);
     a2b24xx->irq_disabled = true;
     if (a2b24xx->fault_check_allowed)
