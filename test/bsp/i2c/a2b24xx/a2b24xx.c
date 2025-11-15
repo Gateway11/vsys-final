@@ -102,7 +102,7 @@ struct a2b24xx {
     struct mutex node_mutex;
 
     bool irq_disabled;
-    bool fault_occurred;
+    bool fault_active;
 
     uint8_t SRFMISS;
     uint8_t cycles[16];
@@ -138,14 +138,14 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
 
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 #ifdef ENABLE_INTERRUPT_PROCESS
-    if (!a2b24xx->fault_occurred) disable_irq(client->irq);
+    if (!a2b24xx->fault_active) disable_irq(client->irq);
 #endif
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
-    if (a2b24xx->fault_occurred) {
+    if (a2b24xx->fault_active) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
@@ -678,7 +678,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
 
-            a2b24xx->fault_occurred = false;
+            a2b24xx->fault_active = false;
         }
 //    }
 }
@@ -730,7 +730,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
-                a2b24xx->fault_occurred = true;
+                a2b24xx->fault_active = true;
                 a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
 
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
@@ -765,7 +765,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
 
-    a2b24xx->fault_occurred = false;
+    a2b24xx->fault_active = false;
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
@@ -783,7 +783,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_READ:
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                if (pOPUnit->nAddr == A2B_REG_INTTYPE && !a2b24xx->fault_occurred) {
+                if (pOPUnit->nAddr == A2B_REG_INTTYPE && !a2b24xx->fault_active) {
                     processInterrupt(a2b24xx, false);
                     continue;
                 }
@@ -984,7 +984,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     processInterrupt(a2b24xx, true);
-    if (!a2b24xx->irq_disabled || a2b24xx->fault_occurred) {
+    if (!a2b24xx->irq_disabled || a2b24xx->fault_active) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
