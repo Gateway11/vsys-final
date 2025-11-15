@@ -134,7 +134,9 @@ static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
 static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
 {
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
     a2b24xx->work_allowed = true;
+
     if (!a2b24xx->irq_disabled || a2b24xx->fault_active) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
@@ -984,10 +986,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
 static void a2b24xx_fault_check_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-
     processInterrupt(a2b24xx, true);
-
     a2b24xx_schedule_fault_check(a2b24xx);
 }
 
