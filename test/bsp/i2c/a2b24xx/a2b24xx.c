@@ -103,6 +103,7 @@ struct a2b24xx {
 
     bool irq_disabled;
     bool fault_active;
+    bool work_allowed;
 
     uint8_t SRFMISS;
     uint8_t cycles[16];
@@ -132,28 +133,38 @@ static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
 /* Example control - no specific functionality */
 static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
-static int a2b24xx_reset(struct a2b24xx *a2b24xx)
+static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx)
 {
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-
+    a2b24xx->work_allowed = false;
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
-#ifdef ENABLE_INTERRUPT_PROCESS
-    if (!a2b24xx->fault_active) disable_irq(client->irq);
-#endif
-    regcache_cache_bypass(a2b24xx->regmap, true);
+}
 
-    /* A2B reset */
-    adi_a2b_NetworkSetup(a2b24xx->dev);
-
-    if (a2b24xx->fault_active) {
+static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
+{
+    a2b24xx->work_allowed = true;
+    if (!a2b24xx->irq_disabled || a2b24xx->fault_active) {
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
 #ifdef ENABLE_INTERRUPT_PROCESS
     } else {
         enable_irq(client->irq);
+        a2b24xx->irq_disabled = false;
 #endif
     }
+}
+
+static int a2b24xx_reset(struct a2b24xx *a2b24xx)
+{
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
+
+    a2b24xx_disable_fault_check(a2b24xx);
+    regcache_cache_bypass(a2b24xx->regmap, true);
+
+    /* A2B reset */
+    adi_a2b_NetworkSetup(a2b24xx->dev);
+
+    a2b24xx_schedule_fault_check(a2b24xx);
     return 0;
 }
 
@@ -840,14 +851,14 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "Fault Check", 11) == 0) {
-        cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
+    if (strncmp(a2b24xx->command_buffer, "Disable Fault Check", 19) == 0) {
+        a2b24xx_disable_fault_check(a2b24xx);
         return len;
     }
 
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     if (sscanf(a2b24xx->command_buffer, "Loopback Slave%d", &node_addr) == 1) {
-        cancel_delayed_work_sync(&a2b24xx->fault_check_work); // Cancel fault check
+        a2b24xx_disable_fault_check(a2b24xx);
 
         if (node_addr <= a2b24xx->max_node_number) {
             if (node_addr == -1) {
@@ -926,7 +937,8 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     pr_info("%s: interrupt handled. %d\n", __func__, irq);
     disable_irq_nosync(irq);
     a2b24xx->irq_disabled = true;
-    schedule_delayed_work(&a2b24xx->fault_check_work, 0);
+    if (a2b24xx->work_allowed)
+        schedule_delayed_work(&a2b24xx->fault_check_work, 0);
     return IRQ_HANDLED;
 }
 #endif
@@ -984,16 +996,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     processInterrupt(a2b24xx, true);
-    if (!a2b24xx->irq_disabled || a2b24xx->fault_active) {
-        /* Schedule the next fault check at the specified interval */
-        schedule_delayed_work(&a2b24xx->fault_check_work,
-                              msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-#ifdef ENABLE_INTERRUPT_PROCESS
-    } else {
-        enable_irq(client->irq);
-        a2b24xx->irq_disabled = false;
-#endif
-    }
+    a2b24xx_schedule_fault_check(a2b24xx);
 }
 
 /* Template functions */
@@ -1245,11 +1248,11 @@ int a2b24xx_remove(struct device *dev)
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 #endif
 
+    cancel_work_sync(&a2b24xx->setup_work);
+    a2b24xx_disable_fault_check(a2b24xx);
 #ifdef ENABLE_INTERRUPT_PROCESS
     free_irq(client->irq, client);
 #endif
-    cancel_work_sync(&a2b24xx->setup_work);
-    cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 
     pr_info("A2B24xx driver exited\n");
     return 0;
