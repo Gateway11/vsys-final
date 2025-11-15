@@ -132,12 +132,6 @@ static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
 /* Example control - no specific functionality */
 static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
-static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx)
-{
-    a2b24xx->fault_check_allowed = false;
-    cancel_delayed_work_sync(&a2b24xx->fault_check_work);
-}
-
 static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
 {
     a2b24xx->fault_check_allowed = true;
@@ -149,6 +143,12 @@ static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
         enable_irq(client->irq);
         a2b24xx->irq_disabled = false;
     }
+}
+
+static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx)
+{
+    a2b24xx->fault_check_allowed = false;
+    cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 }
 
 static int a2b24xx_reset(struct a2b24xx *a2b24xx)
