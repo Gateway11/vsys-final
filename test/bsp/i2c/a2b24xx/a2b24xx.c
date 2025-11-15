@@ -79,7 +79,8 @@
  * ---------------------------------------------------------------------------------
  * Same settings should be used for all nodes
  */
-// #define ENABLE_BECCTL_CONF
+// #define ENABLE_BECCTL_REG
+// #define ENABLE_INTERRUPT_PROCESS
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -134,7 +135,9 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
+#ifdef ENABLE_INTERRUPT_PROCESS
     if (!a2b24xx->fault_occurred) disable_irq(client->irq);
+#endif
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
@@ -144,8 +147,10 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+#ifdef ENABLE_INTERRUPT_PROCESS
     } else {
         enable_irq(client->irq);
+#endif
     }
     return 0;
 }
@@ -196,7 +201,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
                 instr, &config->nSpiCmd, &config->nSpiCmdWidth,
                 &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) == 9) {
 
-#ifndef ENABLE_BECCTL_CONF
+#ifndef ENABLE_BECCTL_REG
         if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
             config->eOpCode = A2B24XX_INVALID;
             return;
@@ -555,7 +560,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
             a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
 
-#ifdef ENABLE_BECCTL_CONF
+#ifdef ENABLE_BECCTL_REG
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, 0x80});
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_BECNT, 0x00});
 #endif
@@ -910,6 +915,7 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 };
 #endif
 
+#ifdef ENABLE_INTERRUPT_PROCESS
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
@@ -921,6 +927,7 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 
     return IRQ_HANDLED;
 }
+#endif
 
 static void a2b24xx_setup_work(struct work_struct *work)
 {
@@ -955,13 +962,14 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
-
+#ifdef ENABLE_INTERRUPT_PROCESS
     int ret = request_irq(client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_RISING, __func__, a2b24xx);
     if (ret) {
         pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, ret);
+    } else {
+        disable_irq(client->irq);
     }
-
-    disable_irq(client->irq);
+#endif
     mdelay(5000);
     schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
@@ -977,8 +985,10 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
+#ifdef ENABLE_INTERRUPT_PROCESS
     } else {
         enable_irq(client->irq);
+#endif
     }
 }
 
@@ -1230,7 +1240,9 @@ int a2b24xx_remove(struct device *dev)
     unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
 #endif
 
+#ifdef ENABLE_INTERRUPT_PROCESS
     free_irq(client->irq, client);
+#endif
     cancel_work_sync(&a2b24xx->setup_work);
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 
