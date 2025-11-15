@@ -916,7 +916,6 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
     pr_info("%s: interrupt handled. %d\n", __func__, irq);
-
     disable_irq_nosync(irq);
     schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
 
@@ -962,11 +961,10 @@ static void a2b24xx_setup_work(struct work_struct *work)
         pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, ret);
     }
 
-    if (a2b24xx->fault_occurred) {
-        disable_irq(client->irq);
-        schedule_delayed_work(&a2b24xx->fault_check_work,
+    disable_irq(client->irq);
+    mdelay(5000);
+    schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-    }
 }
 
 static void a2b24xx_fault_check_work(struct work_struct *work)
