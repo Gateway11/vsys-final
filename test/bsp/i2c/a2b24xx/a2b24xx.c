@@ -80,7 +80,6 @@
  * Same settings should be used for all nodes
  */
 // #define ENABLE_BECCTL_REG
-// #define ENABLE_INTERRUPT_PROCESS
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -146,11 +145,9 @@ static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
         /* Schedule the next fault check at the specified interval */
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
-#ifdef ENABLE_INTERRUPT_PROCESS
     } else {
         enable_irq(client->irq);
         a2b24xx->irq_disabled = false;
-#endif
     }
 }
 
@@ -928,7 +925,6 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 };
 #endif
 
-#ifdef ENABLE_INTERRUPT_PROCESS
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
@@ -941,7 +937,6 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
         schedule_delayed_work(&a2b24xx->fault_check_work, 0);
     return IRQ_HANDLED;
 }
-#endif
 
 static void a2b24xx_setup_work(struct work_struct *work)
 {
@@ -976,15 +971,11 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
-#ifdef ENABLE_INTERRUPT_PROCESS
-    int ret = request_irq(client->irq,
+    int32_t ret = request_irq(client->irq,
             a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
-    if (ret) {
-        pr_warn("Failed to request IRQ: %d, ret:%d\n", client->irq, ret);
-    } else {
-        a2b24xx->irq_disabled = true;
-    }
-#endif
+    pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
+    a2b24xx->irq_disabled = ret ? false : true;
+
     mdelay(5000);
     schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
@@ -1224,7 +1215,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 #endif
 
     a2b24xx->SRFMISS = 0;
-    a2b24xx->irq_disabled = false;
     a2b24xx->fault_check_allowed = true;
     mutex_init(&a2b24xx->node_mutex); // Initialize the mutex
 
@@ -1252,9 +1242,7 @@ int a2b24xx_remove(struct device *dev)
 
     cancel_work_sync(&a2b24xx->setup_work);
     a2b24xx_disable_fault_check(a2b24xx);
-#ifdef ENABLE_INTERRUPT_PROCESS
     free_irq(client->irq, client);
-#endif
 
     pr_info("A2B24xx driver exited\n");
     return 0;
