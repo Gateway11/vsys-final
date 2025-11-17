@@ -845,17 +845,17 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     a2b24xx->command_buffer[len] = '\0'; // Null-terminate the string
     pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
-    if (strncmp(a2b24xx->command_buffer, "Reset", 5) == 0) {
+    if (strncmp(a2b24xx->command_buffer, "Reset", len - 1) == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "Log Enable", 10) == 0) {
+    if (strncmp(a2b24xx->command_buffer, "Log Enable", len - 1) == 0) {
         a2b24xx->log_enabled = true;
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "Disable Fault Check", 19) == 0) {
+    if (strncmp(a2b24xx->command_buffer, "Disable Fault Check", len - 1) == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
         return len;
     }
