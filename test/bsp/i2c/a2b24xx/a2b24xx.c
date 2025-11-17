@@ -836,26 +836,26 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     uint8_t params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
 
-    size_t len = min(count, sizeof(a2b24xx->command_buffer ) - 1);
+    size_t len = min(count, sizeof(a2b24xx->command_buffer));
     if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    a2b24xx->command_buffer[len] = '\0'; // Null-terminate the string
+    a2b24xx->command_buffer[len - 1] = '\0'; // Null-terminate the string
     pr_info("Received data: %s\n", a2b24xx->command_buffer);
 
-    if (strncmp(a2b24xx->command_buffer, "Reset", len - 1) == 0) {
+    if (strcmp(a2b24xx->command_buffer, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "Log Enable", len - 1) == 0) {
+    if (strcmp(a2b24xx->command_buffer, "Log Enable") == 0) {
         a2b24xx->log_enabled = true;
         return len;
     }
 
-    if (strncmp(a2b24xx->command_buffer, "Disable Fault Check", len - 1) == 0) {
+    if (strcmp(a2b24xx->command_buffer, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
         return len;
     }
