@@ -47,6 +47,9 @@
 #define MAX_RETRIES 2           // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL 5000
 
+#define LOG_PRINT_IF_ENABLED(log_level, ...) \
+    ({if (a2b24xx->log_enabled) pr_##log_level(__VA_ARGA__);})
+
 /**
  * @brief EPL reporter ID for A2B.
  * This ID is used when reporting errors to FSI via EPL.
@@ -103,6 +106,7 @@ struct a2b24xx {
     bool irq_disabled;
     bool fault_active;
     bool work_allowed;
+    bool log_enabled;
 
     uint8_t SRFMISS;
     uint8_t cycles[16];
@@ -674,7 +678,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
             for (uint8_t i = inode; i <= a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i + 1)) {
-                    pr_warn("Node %d processing failed. Stopping further discovery\n", i);
+                    //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
                     return;
                 }
                 mdelay(1);
@@ -711,7 +715,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         lastNode--;
     }
     if (lastNode < a2b24xx->max_node_number) {
-        pr_warn("Fault detected: Node %d is the last node\n", lastNode);
+        LOG_PRINT_IF_ENABLED(warn, "Fault detected: Node %d is the last node\n", lastNode);
         processFaultNode(a2b24xx, lastNode);
     }
     mutex_unlock(&a2b24xx->bus_mutex); // Release lock
@@ -725,17 +729,17 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
     if (dataBuffer[0]) {
         //adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
-            pr_warn("Interrupt Source: Master - ");
+            LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
             inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
-            pr_warn("Interrupt Source: Slave%d - ", dataBuffer[0] & A2B_BITM_INTSRC_INODE);
+            LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Slave%d - ", inode);
         } else {
-            pr_warn("No recognized interrupt source: %d - ", dataBuffer[0]);
+            LOG_PRINT_IF_ENABLED(warn, "No recognized interrupt source: %d - ", dataBuffer[0]);
         }
 
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
-                pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
+                LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: %s\n", intTypeString[i].message);
                 a2b24xx->fault_active = true;
 
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
@@ -746,7 +750,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
                 return dataBuffer[1];
             }
         }
-        pr_cont("Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
+        LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
     } else if (deepCheck) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
@@ -843,6 +847,11 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
 
     if (strncmp(a2b24xx->command_buffer, "Reset", 5) == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
+        return len;
+    }
+
+    if (strncmp(a2b24xx->command_buffer, "Log Enable", 10) == 0) {
+        a2b24xx->log_enabled = true;
         return len;
     }
 
