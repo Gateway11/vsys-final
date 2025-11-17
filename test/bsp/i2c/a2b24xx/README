@@ -88,19 +88,17 @@ static const struct a2b_command cmd_table[] = {
 static ssize_t a2b24xx_ctrl_write(struct file *file,
                         const char __user *buf, size_t count, loff_t *ppos)
 {
-    struct a2b24xx *a2b = file->private_data;
+    struct a2b24xx *a2b24xx = file->private_data;
     int32_t params[MAX_CMD_ARGS] = {0};
     int matched = 0, argc = 0;
     size_t len;
 
-    /* Safely copy user data to kernel buffer */
-    len = min(count, sizeof(a2b->command_buffer));
-    if (copy_from_user(a2b->command_buffer, buf, len))
+    len = min(count, sizeof(a2b24xx->command_buffer));
+    if (copy_from_user(a2b24xx->command_buffer, buf, len))
         return -EFAULT;
 
-    /* Null-terminate and log the command */
-    a2b->command_buffer[len - 1] = '\0';
-    pr_debug("Received command: %s\n", a2b->command_buffer);
+    a2b24xx->command_buffer[len - 1] = '\0'; // Null-terminate the string
+    pr_debug("Received command: %s\n", a2b24xx->command_buffer);
 
     /* Iterate through command dispatch table */
     for (int i = 0; i < ARRAY_SIZE(cmd_table); i++) {
@@ -108,12 +106,12 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         const size_t prefix_len = strlen(cmd->prefix);
 
         /* Match command prefix */
-        if (strncmp(a2b->command_buffer, cmd->prefix, prefix_len) != 0)
+        if (strncmp(a2b24xx->command_buffer, cmd->prefix, prefix_len) != 0)
             continue;
 
         /* Parameter parsing */
         if (cmd->fmt) {
-            argc = sscanf(a2b->command_buffer + prefix_len + 1, 
+            argc = sscanf(a2b24xx->command_buffer + prefix_len + 1, 
                          cmd->fmt, &params[0], &params[1], 
                          &params[2], &params[3]);
         }
@@ -126,7 +124,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         }
 
         /* Execute handler with error checking */
-        if (cmd->handler(a2b, argc, params) < 0)
+        if (cmd->handler(a2b24xx, argc, params) < 0)
             return -EIO;
 
         matched = 1;
@@ -137,31 +135,82 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
 }
 
 /* Command handler implementations */
-static int handle_reset(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_reset(struct a2b24xx *a2bxx, int argc, int32_t *argv)
 {
-    a2b24xx_reset(a2b);
-    pr_info("Controller reset initiated\n");
+    a2b24xx_reset(a2b24xx);
     return 0;
 }
 
-static int handle_cancel_fault_check(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_log_enable(struct a2b24xx *a2bxx, int argc, int32_t *argv)
 {
-    cancel_delayed_work_sync(&a2b->fault_check_work);
-    pr_info("Fault check procedure canceled\n");
+    a2b24xx->log_enabled = true;
     return 0;
 }
 
-static int handle_rx_config(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_cancel_fault_check(struct a2b24xx *a2b24xx, int argc, int32_t *argv)
 {
-    pr_info("Configuring RX Slave%d with parameter %d\n", argv[0], argv[1]);
-    return a2b->ops->config_rx_slave(argv[0], argv[1]);
+    a2b24xx_disable_fault_check(a2b24xx);
+    return 0;
 }
 
-static int handle_pdm_config(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_loopback_config(struct a2b24xx *a2b24xx, int argc, int32_t *argv)
 {
-    int mic = (argc >= 2) ? argv[1] : -1;
-    pr_debug("PDM configuration for slave %d, mic: %d\n", argv[0], mic);
-    return a2b->ops->config_pdm_slave(argv[0], mic);
+    a2b24xx_disable_fault_check(a2b24xx);
+    if (argv[0] <= a2b24xx->max_node_number) {
+        if (argv[0] < 0) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+        } else {
+            mutex_lock(&a2b24xx->bus_mutex);
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, argv[0]});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+            mutex_unlock(&a2b24xx->bus_mutex); // Release lock
+        }
+    }
+    return 0;
+}
+
+static int handle_rx_config(struct a2b24xx *a2b24xx, int argc, int32_t *argv)
+{
+    pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
+
+    uint8_t config[] = {0x11, 0x91};
+    if (argv[0] >= 0 && argv[0] <= a2b24xx->max_node_number && argv[1] < sizeof(config)) {
+        mutex_lock(&a2b24xx->bus_mutex);
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, argv[0]});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[argv[1]]});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+        mutex_unlock(&a2b24xx->bus_mutex); // Release lock
+    }
+    return 0;
+}
+
+static int handle_pdm_config(struct a2b24xx *a2b, int argc, int32_t *argv)
+{
+    pr_info("PDM Slave(%d) MIC(%d)\n", argv[0], argv[1]);
+
+    if (argv[0] <= a2b24xx->max_node_number) {
+        mutex_lock(&a2b24xx->bus_mutex);
+        for (uint8_t i = 0; i <= a2b24xx->max_node_number; i++) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
+            if (argv[0] < 0 || argc == 1) {
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
+            } else if (argv[0] == i) {
+                switch(argv[1]) {
+                    case 0:
+                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
+                        break;
+                    case 1:
+                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x14});
+                        break;
+                }
+            } else {
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            }
+        }
+        mutex_unlock(&a2b24xx->bus_mutex); // Release lock
+    }
+    return 0;
 }
 
 
