@@ -569,7 +569,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
     if (inode == 0 || inode > a2b24xx->max_node_number) return false;
 
-    pr_info("Processing node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
+    LOG_PRINT_IF_ENABLED(info, "Processing node %d: master_fmt=0x%02X, cycle=0x%02X, slave_pos=%d 0x%02X\n",
             inode, a2b24xx->master_fmt, a2b24xx->cycles[inode],
             a2b24xx->slave_pos[inode], a2b24xx->pA2BConfig[a2b24xx->slave_pos[inode]].nAddr);
 
