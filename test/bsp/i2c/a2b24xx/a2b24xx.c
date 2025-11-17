@@ -865,7 +865,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         a2b24xx_disable_fault_check(a2b24xx);
 
         if (node_addr <= a2b24xx->max_node_number) {
-            if (node_addr == -1) {
+            if (node_addr < 0) {
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
             } else {
                 mutex_lock(&a2b24xx->bus_mutex);
