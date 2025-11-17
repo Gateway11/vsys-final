@@ -19,9 +19,9 @@ DAILINK_COMP_ARRAY(COMP_CODEC(NULL, "a2b24xx-hifi")),
 /* Command handler structure definition */
 struct a2b_command {
     const char *prefix;       /* Command prefix identifier */
+    const char *fmt;          /* Parameter format string for sscanf */
     int min_args;             /* Minimum required arguments */
     int (*handler)(struct a2b24xx *, int, uint8_t *); /* Handler function */
-    const char *fmt;          /* Parameter format string for sscanf */
     const char *description;  /* Help text for the command */
 };
 
@@ -34,31 +34,54 @@ static int handle_pdm_slave(struct a2b24xx *a2b, int argc, uint8_t *argv);
 /* Command dispatch table */
 static const struct a2b_command cmd_table[] = {
     {
-        .prefix = "RESET",
+        .prefix = "Reset",
         .min_args = 0,
         .handler = handle_reset,
         .description = "Reset controller"
     },
     {
-        .prefix = "FAULT CHECK",
+        .prefix = "Log Enable",
         .min_args = 0,
-        .handler = handle_fault_check,
+        .handler = handle_log_enable,
+        .description = "Log enable controller"
+    },
+    {
+        .prefix = "Cancel Fault Check",
+        .min_args = 0,
+        .handler = handle_cancel_fault_check,
         .description = "Cancel fault check"
     },
     {
-        .prefix = "RX SLAVE",
-        .min_args = 2,
-        .fmt = "RX SLAVE%hhd %hhd",
-        .handler = handle_rx_slave,
-        .description = "Configure RX slave"
+        .prefix = "Loopback Slave",
+        .min_args = 1,
+        .fmt = "Loopback Slave%hhd",
+        .handler = handle_loopback_config,
+        .description = "Configure loopback"
     },
     {
-        .prefix = "PDM SLAVE",
+        .prefix = "RX Slave",
+        .min_args = 2,
+        .fmt = "RX Slave%hhd %hhd",
+        .handler = handle_rx_config,
+        .description = "Configure RX"
+    },
+    {
+        .prefix = "PDM Slave",
         .min_args = 1,
-        .fmt = "PDM SLAVE%d MIC%d",
-        .handler = handle_pdm_slave,
-        .description = "Configure PDM slave"
+        .fmt = "PDM Slave%d MIC%d",
+        .handler = handle_pdm_config,
+        .description = "Configure PDM"
     }
+};
+
+/* Command dispatch table */
+static const struct a2b_command cmd_table[] = {
+    {"Reset", NULL, 0, handle_reset, "Reset controller"},
+    {"Log Enable", NULL, 0, handle_log_enable, "Log enable controller"},
+    {"Cancel Fault Check", NULL, 0, handle_cancel_fault_check, "Cancel fault check"},
+    {"Loopback Slave", "%d", 1, handle_loopback_config, "Configure loopback"},
+    {"RX Slave", "%d %d", 2, handle_rx_config, "Configure RX"},
+    {"PDM Slave", "%d MIC%d", 1, handle_pdm_config, "Configure PDM"},
 };
 
 /* Enhanced write operation for control interface */
@@ -66,17 +89,17 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
                         const char __user *buf, size_t count, loff_t *ppos)
 {
     struct a2b24xx *a2b = file->private_data;
-    uint8_t params[MAX_CMD_ARGS] = {0};
+    int32_t params[MAX_CMD_ARGS] = {0};
     int matched = 0, argc = 0;
     size_t len;
 
     /* Safely copy user data to kernel buffer */
-    len = min(count, sizeof(a2b->command_buffer) - 1);
+    len = min(count, sizeof(a2b->command_buffer));
     if (copy_from_user(a2b->command_buffer, buf, len))
         return -EFAULT;
 
     /* Null-terminate and log the command */
-    a2b->command_buffer[len] = '\0';
+    a2b->command_buffer[len - 1] = '\0';
     pr_debug("Received command: %s\n", a2b->command_buffer);
 
     /* Iterate through command dispatch table */
@@ -121,20 +144,20 @@ static int handle_reset(struct a2b24xx *a2b, int argc, uint8_t *argv)
     return 0;
 }
 
-static int handle_fault_check(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_cancel_fault_check(struct a2b24xx *a2b, int argc, uint8_t *argv)
 {
     cancel_delayed_work_sync(&a2b->fault_check_work);
     pr_info("Fault check procedure canceled\n");
     return 0;
 }
 
-static int handle_rx_slave(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_rx_config(struct a2b24xx *a2b, int argc, uint8_t *argv)
 {
     pr_info("Configuring RX Slave%d with parameter %d\n", argv[0], argv[1]);
     return a2b->ops->config_rx_slave(argv[0], argv[1]);
 }
 
-static int handle_pdm_slave(struct a2b24xx *a2b, int argc, uint8_t *argv)
+static int handle_pdm_config(struct a2b24xx *a2b, int argc, uint8_t *argv)
 {
     int mic = (argc >= 2) ? argv[1] : -1;
     pr_debug("PDM configuration for slave %d, mic: %d\n", argv[0], mic);
