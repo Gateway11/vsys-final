@@ -737,10 +737,10 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 pr_cont("Interrupt Type: %s\n", intTypeString[i].message);
                 a2b24xx->fault_active = true;
-                a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
 
                 a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
                 if (deepCheck) {
+                    a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
