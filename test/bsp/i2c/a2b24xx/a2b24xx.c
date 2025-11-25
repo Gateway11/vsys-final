@@ -947,7 +947,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-    uint8_t node_number = 0;
+    uint8_t bus_id = 0;
 
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev);
@@ -962,8 +962,8 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
     for (uint32_t i = 0; i < a2b24xx->actionCount; i++) {
-        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && node_number < sizeof(a2b24xx->cycles)) {
-            a2b24xx->cycles[node_number++] = a2b24xx->pA2BConfig[i].paConfigData[0];
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus_id < sizeof(a2b24xx->cycles)) {
+            a2b24xx->cycles[bus_id++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS && a2b24xx->pA2BConfig[i].nAddrWidth == 1) {
             for (int32_t j = i; j > 0; j--) {
