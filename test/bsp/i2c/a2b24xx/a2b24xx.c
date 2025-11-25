@@ -941,8 +941,10 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 
     disable_irq_nosync(irq);
     a2b24xx->irq_disabled = true;
-    if (a2b24xx->work_allowed)
-        schedule_delayed_work(&a2b24xx->fault_check_work, 0);
+    if (a2b24xx->work_allowed) {
+        //schedule_delayed_work(&a2b24xx->fault_check_work, 0);
+        schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
+    }
     return IRQ_HANDLED;
 }
 
