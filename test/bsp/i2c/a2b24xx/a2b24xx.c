@@ -98,10 +98,10 @@ struct a2b24xx {
     unsigned int max_master_fs;
     uint8_t master_fmt;
     bool master;
-    bool has_fault;
     bool irq_disabled;
     bool work_allowed;
     bool log_enabled;
+    bool has_fault;
 
     struct work_struct setup_work;
     struct delayed_work fault_check_work;
@@ -568,7 +568,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 
     if (inode == 0 || inode > a2b24xx->final_node) return false;
 
-    LOG_PRINT_IF_ENABLED(info, "Processing node %d: master_fmt=0x%02X, cycle=0x%02X, node_pos=%d 0x%02X\n",
+    LOG_PRINT_IF_ENABLED(info, "Processing node %d: master fmt=0x%02X, node cycle=0x%02X, node pos=%d 0x%02X\n",
             inode, a2b24xx->master_fmt, a2b24xx->node_cycles[inode],
             a2b24xx->node_pos[inode], a2b24xx->pA2BConfig[a2b24xx->node_pos[inode]].nAddr);
 
@@ -677,7 +677,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
             for (uint8_t i = inode; i <= a2b24xx->final_node; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
-                    LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed. Stopping further discovery\n", i);
+                    LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed. Stopping partial discovery\n", i);
                     return;
                 }
                 mdelay(1);
