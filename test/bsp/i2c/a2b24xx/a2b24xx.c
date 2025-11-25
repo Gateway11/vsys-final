@@ -678,7 +678,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
             for (uint8_t i = inode; i <= a2b24xx->max_node_number; i++) {
                 if (!processSingleNode(a2b24xx, i)) {
-                    //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
+                    LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed. Stopping further discovery\n", i);
                     return;
                 }
                 mdelay(1);
