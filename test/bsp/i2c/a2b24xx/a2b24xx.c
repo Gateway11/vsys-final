@@ -146,8 +146,8 @@ static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
         schedule_delayed_work(&a2b24xx->fault_check_work,
                               msecs_to_jiffies(A2B24XX_FAULT_CHECK_INTERVAL));
     } else {
-        enable_irq(client->irq);
         a2b24xx->irq_disabled = false;
+        enable_irq(client->irq);
     }
 }
 
@@ -669,7 +669,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
 
-    if (inode < 0) {
+    if (inode <= 0) {
         /* Setting up A2B network */
         adi_a2b_NetworkSetup(a2b24xx->dev);
     } else {
@@ -677,7 +677,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
 //        adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
 //        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
             for (uint8_t i = inode; i <= a2b24xx->max_node_number; i++) {
-                if (!processSingleNode(a2b24xx, i + 1)) {
+                if (!processSingleNode(a2b24xx, i)) {
                     //pr_warn("Node %d processing failed. Stopping further discovery\n", i);
                     return;
                 }
@@ -716,7 +716,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     }
     if (lastNode < a2b24xx->max_node_number) {
         LOG_PRINT_IF_ENABLED(warn, "Fault detected: Node %d is the last node\n", lastNode);
-        processFaultNode(a2b24xx, lastNode);
+        processFaultNode(a2b24xx, lastNode + 1);
     }
     mutex_unlock(&a2b24xx->bus_mutex); // Release lock
 }
