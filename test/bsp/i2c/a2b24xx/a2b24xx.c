@@ -777,6 +777,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
 
+    a2b24xx->fault_active = false;
+
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->actionCount; nIndex++) {
         pOPUnit = &a2b24xx->pA2BConfig[nIndex];
