@@ -98,7 +98,6 @@ struct a2b24xx {
     unsigned int max_master_fs;
     uint8_t master_fmt;
     bool master;
-    bool irq_disabled;
     bool work_allowed;
     bool log_enabled;
     bool has_fault;
@@ -140,12 +139,11 @@ static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
     a2b24xx->work_allowed = true;
 
-    if (!a2b24xx->irq_disabled || a2b24xx->has_fault) {
+    if (!client->irq || a2b24xx->has_fault) {
         /* Schedule the next fault check at the specified interval */
-        schedule_delayed_work(
-                &a2b24xx->fault_check_work, A2B24XX_FAULT_CHECK_INTERVAL);
+        schedule_delayed_work(&a2b24xx->fault_check_work,
+                              A2B24XX_FAULT_CHECK_INTERVAL);
     } else {
-        a2b24xx->irq_disabled = false;
         enable_irq(client->irq);
     }
 }
@@ -180,7 +178,7 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol,
 
 #define A2B24XX_CONTROL(x)                                                     \
     SOC_SINGLE_TLV("A2B" #x " Template", 2, 0, 255, 1, a2b24xx_control),       \
-        SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
+    SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
 
 /* Example control */
 static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {
@@ -201,7 +199,6 @@ static void a2b24xx_epl_report_error(uint32_t error_code)
 
     epl_report_error(error_report);
 #endif
-    return;
 }
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
@@ -349,7 +346,8 @@ static char* a2b_pal_File_Read(const char* filename, size_t* outSize) {
                  - 1: Failure
  */
 /********************************************************************************/
-static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[], unsigned int nAddrwidth, unsigned int nAddr)
+static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[], unsigned int nAddrwidth,
+                                    unsigned int nAddr)
 {
     /* Store the read values in the placeholder */
     switch (nAddrwidth) {
@@ -384,17 +382,22 @@ static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[], unsigned int nAddr
     }
 }
 
-static int adi_a2b_I2CWrite(struct device* dev, unsigned short devAddr, unsigned short count, char* bytes)
+static int adi_a2b_I2CWrite(struct device *dev, unsigned short devAddr,
+                            unsigned short count, char *bytes)
 {
     struct i2c_client* client = to_i2c_client(dev);
+
     client->addr = devAddr;
     return i2c_master_send(client, bytes, count);
 }
 
-static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer)
+static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr,
+                           uint16_t writeLength, uint8_t *writeBuffer,
+                           uint16_t readLength, uint8_t *readBuffer)
 {
     int ret = -1;
     struct i2c_client* client = to_i2c_client(dev);
+
     client->addr = devAddr;
 
     struct i2c_msg msg[] = {
@@ -413,18 +416,8 @@ static int adi_a2b_I2CRead(struct device* dev, uint16_t devAddr, uint16_t writeL
     };
 
     ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-    if (ret < 0) {
-        //pr_warn("%s:i2c read device(0x%X) reg 0x%02X failed\n", __func__, devAddr, writeBuffer[0]);
+    if (ret < 0)
         return ret;
-    }
-
-#if 0
-    pr_info("%s:i2c read device(0x%X) reg 0x%02X, cnt %d, val:", __func__, devAddr, writeBuffer[0], readLength);
-    for (uint32_t i = 0; i < readLength; i++) {
-        pr_cont("0x%02X ", readBuffer[i]);
-    }
-    pr_cont("\n");
-#endif
 
     return 0;
 }
@@ -681,6 +674,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
                     return;
                 }
                 mdelay(1);
+
                 uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
                 adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
             }
@@ -783,8 +777,10 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             /* Write */
             case A2B24XX_WRITE:
                 adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
-                (void)memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
-                adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr, (pOPUnit->nAddrWidth + pOPUnit->nDataCount), aDataBuffer);
+                memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+                adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr,
+                             (pOPUnit->nAddrWidth + pOPUnit->nDataCount),
+                             (char *)aDataBuffer);
                 break;
 
             /* Read */
@@ -795,7 +791,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                     processInterrupt(a2b24xx, false);
                     continue;
                 }
-                adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
+                adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth,
+                            aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
 
@@ -820,8 +817,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
 static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp)
 {
     struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
-    filp->private_data = a2b24xx;
 
+    filp->private_data = a2b24xx;
     return 0;
 }
 
@@ -936,7 +933,6 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     pr_info("%s: interrupt handled. %d\n", __func__, a2b24xx->work_allowed);
 
     disable_irq_nosync(irq);
-    a2b24xx->irq_disabled = true;
     if (a2b24xx->work_allowed)
         schedule_delayed_work(&a2b24xx->fault_check_work, 0);
     return IRQ_HANDLED;
@@ -960,15 +956,18 @@ static void a2b24xx_setup_work(struct work_struct *work)
             a2b24xx->final_node = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
     }
+
     for (uint32_t i = 0; i < a2b24xx->totalActions; i++) {
-        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && node_id < sizeof(a2b24xx->node_cycles)) {
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY &&
+            node_id < ARRAY_SIZE(a2b24xx->node_cycles)) {
             a2b24xx->node_cycles[node_id++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
-        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS && a2b24xx->pA2BConfig[i].nAddrWidth == 1) {
+        if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS &&
+            a2b24xx->pA2BConfig[i].nAddrWidth == 1) {
             for (int32_t j = i; j > 0; j--) {
                 if (a2b24xx->pA2BConfig[j].nAddr == A2B_REG_NODEADR
-                        && a2b24xx->pA2BConfig[j + 1].nAddr != A2B_REG_CHIP
-                        && !(a2b24xx->pA2BConfig[j].paConfigData[0] & A2B_BITM_NODEADR_PERI)) {
+                    && a2b24xx->pA2BConfig[j + 1].nAddr != A2B_REG_CHIP
+                    && !(a2b24xx->pA2BConfig[j].paConfigData[0] & A2B_BITM_NODEADR_PERI)) {
                     a2b24xx->node_pos[a2b24xx->pA2BConfig[j].paConfigData[0]] = i;
                     break;
                 }
@@ -979,7 +978,6 @@ static void a2b24xx_setup_work(struct work_struct *work)
     int32_t ret = request_irq(client->irq,
             a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
-    a2b24xx->irq_disabled = ret ? false : true;
 
     mdelay(5000);
     schedule_delayed_work(&a2b24xx->fault_check_work, A2B24XX_FAULT_CHECK_INTERVAL);
@@ -988,8 +986,8 @@ static void a2b24xx_setup_work(struct work_struct *work)
 static void a2b24xx_fault_check_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
-    a2b24xx->has_fault = false;
 
+    a2b24xx->has_fault = false;
     processInterrupt(a2b24xx, true);
     a2b24xx_schedule_fault_check(a2b24xx);
 }
