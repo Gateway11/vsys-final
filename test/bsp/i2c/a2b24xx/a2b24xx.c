@@ -767,14 +767,13 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
 static void adi_a2b_NetworkSetup(struct device* dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
+    a2b24xx->has_fault = false;
 
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
     unsigned int nIndex, nIndex1;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
-
-    a2b24xx->has_fault = false;
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < a2b24xx->totalActions; nIndex++) {
