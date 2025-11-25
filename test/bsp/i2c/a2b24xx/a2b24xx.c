@@ -716,9 +716,9 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     }
     if (lastNode < a2b24xx->max_node_number) {
         LOG_PRINT_IF_ENABLED(warn, "Fault detected: Node %d is the last node\n", lastNode);
+
+        a2b24xx->fault_active = true;
         processFaultNode(a2b24xx, lastNode + 1);
-    } else {
-        a2b24xx->fault_active = false;
     }
     mutex_unlock(&a2b24xx->bus_mutex); // Release lock
 }
@@ -995,6 +995,8 @@ static void a2b24xx_setup_work(struct work_struct *work)
 static void a2b24xx_fault_check_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
+    a2b24xx->fault_active = false;
+
     processInterrupt(a2b24xx, true);
     a2b24xx_schedule_fault_check(a2b24xx);
 }
