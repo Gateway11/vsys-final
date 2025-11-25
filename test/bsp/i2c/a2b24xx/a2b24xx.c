@@ -716,8 +716,6 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     }
     if (lastNode < a2b24xx->max_node_number) {
         LOG_PRINT_IF_ENABLED(warn, "Fault detected: Node %d is the last node\n", lastNode);
-
-        a2b24xx->fault_active = true;
         processFaultNode(a2b24xx, lastNode + 1);
     }
     mutex_unlock(&a2b24xx->bus_mutex); // Release lock
@@ -941,10 +939,8 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 
     disable_irq_nosync(irq);
     a2b24xx->irq_disabled = true;
-    if (a2b24xx->work_allowed) {
-        //schedule_delayed_work(&a2b24xx->fault_check_work, 0);
-        schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(25));
-    }
+    if (a2b24xx->work_allowed)
+        schedule_delayed_work(&a2b24xx->fault_check_work, 0);
     return IRQ_HANDLED;
 }
 
