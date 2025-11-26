@@ -806,10 +806,10 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
                 if (pOPUnit->nAddr == A2B_REG_INTTYPE && !a2b24xx->has_fault) {
                     processInterrupt(a2b24xx, false);
-                    continue;
+                } else {
+                    adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth,
+                                aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 }
-                adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth,
-                            aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
 
