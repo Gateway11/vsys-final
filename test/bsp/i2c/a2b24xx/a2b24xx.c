@@ -115,7 +115,7 @@ struct a2b24xx {
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
     struct class *dev_class;    // Device class
-    char command_buffer[COMMAND_SIZE];
+    char command_buf[COMMAND_SIZE];
 #endif
 
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
@@ -123,7 +123,7 @@ struct a2b24xx {
     size_t totalActions;
 
     uint8_t configBuffer[MAX_CONFIG_DATA];
-    size_t bufferOffset;
+    size_t writeOffset;
 };
 
 static void adi_a2b_NetworkSetup(struct device *dev);
@@ -203,7 +203,7 @@ static void a2b24xx_epl_report_error(uint32_t error_code)
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
-    size_t *bufferOffset = &a2b24xx->bufferOffset;
+    size_t *writeOffset = &a2b24xx->writeOffset;
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
@@ -234,7 +234,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     }
 
     if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
-        if (*bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
+        if (*writeOffset + config->nDataCount > MAX_CONFIG_DATA) {
             pr_warn("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
@@ -242,12 +242,12 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         char *dataStr = strchr(action, '>') + 1; /* Find position after '>' */
         char *token = strsep(&dataStr, " ");
         size_t index = 0;
-        config->paConfigData = a2b24xx->configBuffer + *bufferOffset;
+        config->paConfigData = a2b24xx->configBuffer + *writeOffset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strsep(&dataStr, " ");
         }
-        *bufferOffset += index;
+        *writeOffset += index;
         config->nDataCount = index;
     }
 }
@@ -258,7 +258,7 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
     size_t *totalActions = &a2b24xx->totalActions;
 
     *totalActions = 0;
-    a2b24xx->bufferOffset = 0;
+    a2b24xx->writeOffset = 0;
 
     while (actionStart && *totalActions < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
@@ -848,32 +848,32 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     uint8_t params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
 
-    size_t len = min(count, sizeof(a2b24xx->command_buffer));
-    if (copy_from_user(a2b24xx->command_buffer, buf, len)) {
+    size_t len = min(count, sizeof(a2b24xx->command_buf));
+    if (copy_from_user(a2b24xx->command_buf, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    a2b24xx->command_buffer[len - 1] = '\0'; // Null-terminate the string
-    pr_info("Received data: %s\n", a2b24xx->command_buffer);
+    a2b24xx->command_buf[len - 1] = '\0'; // Null-terminate the string
+    pr_info("Received data: %s\n", a2b24xx->command_buf);
 
-    if (strcmp(a2b24xx->command_buffer, "Reset") == 0) {
+    if (strcmp(a2b24xx->command_buf, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
         return len;
     }
 
-    if (strcmp(a2b24xx->command_buffer, "Log Enable") == 0) {
+    if (strcmp(a2b24xx->command_buf, "Log Enable") == 0) {
         a2b24xx->log_enabled = true;
         return len;
     }
 
-    if (strcmp(a2b24xx->command_buffer, "Disable Fault Check") == 0) {
+    if (strcmp(a2b24xx->command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
         return len;
     }
 
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
-    if (sscanf(a2b24xx->command_buffer, "Loopback Slave%d", &node_addr) == 1) {
+    if (sscanf(a2b24xx->command_buf, "Loopback Slave%d", &node_addr) == 1) {
         a2b24xx_disable_fault_check(a2b24xx);
 
         if (node_addr <= a2b24xx->final_node) {
@@ -889,7 +889,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "RX Slave%hhu %hhu", &params[0], &params[1]) == 2) {
+    if (sscanf(a2b24xx->command_buf, "RX Slave%hhu %hhu", &params[0], &params[1]) == 2) {
         pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
 
         if (params[0] <= a2b24xx->final_node && params[1] < sizeof(config)) {
@@ -902,7 +902,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         return len;
     }
 
-    if (sscanf(a2b24xx->command_buffer, "PDM Slave%d MIC%d", &node_addr, &mic) >= 1) {
+    if (sscanf(a2b24xx->command_buf, "PDM Slave%d MIC%d", &node_addr, &mic) >= 1) {
         pr_info("PDM Slave(%d) MIC(%d)\n", node_addr, mic);
 
         if (node_addr <= a2b24xx->final_node) {
@@ -1205,7 +1205,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         a2b24xx->totalActions = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->totalActions, a2b24xx->bufferOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->totalActions, a2b24xx->writeOffset);
 
 #if 0
     // Print the results
