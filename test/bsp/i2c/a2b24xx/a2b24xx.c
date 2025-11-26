@@ -48,7 +48,7 @@
 #define A2B24XX_FAULT_CHECK_INTERVAL msecs_to_jiffies(5000)
 
 #define LOG_PRINT_IF_ENABLED(log_level, ...) \
-    ({if (a2b24xx->log_enabled) pr_##log_level(__VA_ARGA__);})
+    ({if (a2b24xx->log_enabled) pr_##log_level(__VA_ARGS__);})
 
 /**
  * @brief EPL reporter ID for A2B.
@@ -992,7 +992,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
 
-    int32_t ret = request_irq(client->irq,
+    int32_t ret = devm_request_irq(a2b24xx->dev, client->irq,
             a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
 
@@ -1249,7 +1249,7 @@ EXPORT_SYMBOL_GPL(a2b24xx_probe);
 int a2b24xx_remove(struct device *dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
+    //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
 #ifndef A2B_SETUP_ALSA
     device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
@@ -1260,7 +1260,7 @@ int a2b24xx_remove(struct device *dev)
 
     cancel_work_sync(&a2b24xx->setup_work);
     a2b24xx_disable_fault_check(a2b24xx);
-    free_irq(client->irq, client);
+    //free_irq(client->irq, client);
 
     pr_info("A2B24xx driver exited\n");
     return 0;
