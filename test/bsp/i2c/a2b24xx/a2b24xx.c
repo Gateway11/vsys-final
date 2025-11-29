@@ -1250,7 +1250,6 @@ EXPORT_SYMBOL_GPL(a2b24xx_probe);
 int a2b24xx_remove(struct device *dev)
 {
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
-    //struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
 #ifndef A2B_SETUP_ALSA
     device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
@@ -1261,7 +1260,6 @@ int a2b24xx_remove(struct device *dev)
 
     cancel_work_sync(&a2b24xx->setup_work);
     a2b24xx_disable_fault_check(a2b24xx);
-    //free_irq(client->irq, client);
 
     pr_info("A2B24xx driver exited\n");
     return 0;
