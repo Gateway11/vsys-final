@@ -1234,7 +1234,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 #endif
 
-    a2b24xx->SRFMISS = 0;
     a2b24xx->work_allowed = true;
     mutex_init(&a2b24xx->bus_lock); // Initialize the mutex
 
