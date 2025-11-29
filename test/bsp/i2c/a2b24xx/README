@@ -16,21 +16,6 @@ drive/drive-foundation/platform-config/hardware/nvidia/platform/t264/automotive/
 DAILINK_COMP_ARRAY(COMP_CODEC("a2b24xx.0", "a2b24xx-hifi")),
 DAILINK_COMP_ARRAY(COMP_CODEC(NULL, "a2b24xx-hifi")),
 
-/* Command handler structure definition */
-struct a2b_command {
-    const char *prefix;       /* Command prefix identifier */
-    const char *fmt;          /* Parameter format string for sscanf */
-    int min_args;             /* Minimum required arguments */
-    int (*handler)(struct a2b24xx *, int, uint8_t *); /* Handler function */
-    const char *description;  /* Help text for the command */
-};
-
-/* Command handler declarations */
-static int handle_reset(struct a2b24xx *a2b, int argc, uint8_t *argv);
-static int handle_fault_check(struct a2b24xx *a2b, int argc, uint8_t *argv);
-static int handle_rx_slave(struct a2b24xx *a2b, int argc, uint8_t *argv);
-static int handle_pdm_slave(struct a2b24xx *a2b, int argc, uint8_t *argv);
-
 /* Command dispatch table */
 static const struct a2b_command cmd_table[] = {
     {
@@ -73,6 +58,57 @@ static const struct a2b_command cmd_table[] = {
         .description = "Configure PDM"
     }
 };
+
+/* Command handler implementations */
+static int handle_reset(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
+{
+    a2b24xx_reset(a2b24xx);
+    return 0;
+}
+
+static int handle_log_enable(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
+{
+    a2b24xx->log_enabled = true;
+    return 0;
+}
+
+static int handle_cancel_fault_check(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
+{
+    a2b24xx_disable_fault_check(a2b24xx);
+    return 0;
+}
+
+static int handle_loopback_config(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
+{
+    a2b24xx_disable_fault_check(a2b24xx);
+    if (argv[0] <= a2b24xx->final_node) {
+        if (argv[0] < 0) {
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+        } else {
+            mutex_lock(&a2b24xx->bus_lock);
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, argv[0]});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+            mutex_unlock(&a2b24xx->bus_lock); // Release lock
+        }
+    }
+    return 0;
+}
+
+static int handle_rx_config(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
+{
+    uint8_t config[] = {0x11, 0x91};
+    pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
+
+    uint8_t config[] = {0x11, 0x91};
+    if (!(argv[0] < 0 || argv[0] > a2b24xx->final_node || argv[1] >= sizeof(config))) {
+        mutex_lock(&a2b24xx->bus_lock);
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, argv[0]});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[argv[1]]});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+        mutex_unlock(&a2b24xx->bus_lock); // Release lock
+    }
+    return 0;
+}
 
 /* Command dispatch table */
 static const struct a2b_command cmd_table[] = {
@@ -133,87 +169,6 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
 
     return matched ? len : -EINVAL;
 }
-
-/* Command handler implementations */
-static int handle_reset(struct a2b24xx *a2bxx, int argc, int16_t *argv)
-{
-    a2b24xx_reset(a2b24xx);
-    return 0;
-}
-
-static int handle_log_enable(struct a2b24xx *a2bxx, int argc, int16_t *argv)
-{
-    a2b24xx->log_enabled = true;
-    return 0;
-}
-
-static int handle_cancel_fault_check(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
-{
-    a2b24xx_disable_fault_check(a2b24xx);
-    return 0;
-}
-
-static int handle_loopback_config(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
-{
-    a2b24xx_disable_fault_check(a2b24xx);
-    if (argv[0] <= a2b24xx->final_node) {
-        if (argv[0] < 0) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
-        } else {
-            mutex_lock(&a2b24xx->bus_lock);
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, argv[0]});
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
-            mutex_unlock(&a2b24xx->bus_lock); // Release lock
-        }
-    }
-    return 0;
-}
-
-static int handle_rx_config(struct a2b24xx *a2b24xx, int argc, int16_t *argv)
-{
-    uint8_t config[] = {0x11, 0x91};
-    pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
-
-    uint8_t config[] = {0x11, 0x91};
-    if (!(argv[0] < 0 || argv[0] > a2b24xx->final_node || argv[1] >= sizeof(config))) {
-        mutex_lock(&a2b24xx->bus_lock);
-        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, argv[0]});
-        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[argv[1]]});
-        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
-        mutex_unlock(&a2b24xx->bus_lock); // Release lock
-    }
-    return 0;
-}
-
-static int handle_pdm_config(struct a2b24xx *a2b, int argc, int16_t *argv)
-{
-    pr_info("PDM Slave(%d) MIC(%d)\n", argv[0], argv[1]);
-
-    if (argv[0] <= a2b24xx->final_node) {
-        mutex_lock(&a2b24xx->bus_lock);
-        for (uint8_t i = 0; i <= a2b24xx->final_node; i++) {
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
-            if (argv[0] < 0 || argc == 1) {
-                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
-            } else if (argv[0] == i) {
-                switch(argv[1]) {
-                    case 0:
-                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
-                        break;
-                    case 1:
-                        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x14});
-                        break;
-                }
-            } else {
-                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
-            }
-        }
-        mutex_unlock(&a2b24xx->bus_lock); // Release lock
-    }
-    return 0;
-}
-
 
 
 
