@@ -577,6 +577,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //    and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+    adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_INTPND0, 0xFF});
     mdelay(100);
 
     // Now, periodically try to rediscover the slave-1 partially
@@ -611,11 +612,11 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //          O Clear interrupts, if any
     //          O Wait for 100msec. And reattempt partial rediscovery: from
     //            step - 1
-retry:
+//retry:
     if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         if (++retryCount < MAX_RETRIES) {
-            mdelay(25);
-            goto retry;
+            //mdelay(25);
+            //goto retry;
         }
         adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
         adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
