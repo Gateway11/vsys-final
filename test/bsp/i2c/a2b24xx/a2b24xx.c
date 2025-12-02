@@ -614,7 +614,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 retry:
     if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         if (++retryCount < MAX_RETRIES) {
-            mdelay(50);
+            mdelay(25);
             goto retry;
         }
         adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
