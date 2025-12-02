@@ -599,7 +599,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //    slave node to be discovered to start the discovery process
     //    (DISCVRY = response cycle of the slave1)
     adi_a2b_I2CWrite(dev,
-            A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->node_cycles[inode]});
+        A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->node_cycles[inode]});
 
     // 4. Wait for 35msec for slave node to discover. Can use IRQ interrupt
     //    to check if slave node discovery interrupt is received.
@@ -612,11 +612,11 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //          O Clear interrupts, if any
     //          O Wait for 100msec. And reattempt partial rediscovery: from
     //            step - 1
-//retry:
+retry:
     if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         if (++retryCount < MAX_RETRIES) {
-            //mdelay(25);
-            //goto retry;
+            mdelay(25);
+            goto retry;
         }
         adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
         adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
