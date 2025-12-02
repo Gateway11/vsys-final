@@ -611,11 +611,11 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //          O Clear interrupts, if any
     //          O Wait for 100msec. And reattempt partial rediscovery: from
     //            step - 1
-//retry:
+retry:
     if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
         if (++retryCount < MAX_RETRIES) {
-            //mdelay(25);
-            //goto retry:
+            mdelay(50);
+            goto retry;
         }
         adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
         adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
@@ -727,6 +727,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     }
     if (lastNode < a2b24xx->final_node) {
         LOG_PRINT_IF_ENABLED(warn, "Fault detected: Node %d is the last node\n", lastNode);
+        a2b24xx->has_fault = true;
         processFaultNode(a2b24xx, lastNode + 1);
     }
     mutex_unlock(&a2b24xx->bus_lock); // Release lock
