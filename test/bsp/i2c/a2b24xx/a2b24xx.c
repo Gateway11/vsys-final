@@ -559,6 +559,7 @@ Discovery succeeded with 2 nodes discovered
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
     uint8_t retryCount = 0;
+    int16_t interrupt;
 
     if (inode == 0 || inode > a2b24xx->final_node) return false;
 
@@ -613,7 +614,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //          O Wait for 100msec. And reattempt partial rediscovery: from
     //            step - 1
 retry:
-    int16_t interrupt = processInterrupt(a2b24xx, false);
+    interrupt = processInterrupt(a2b24xx, false);
     if (interrupt != A2B_ENUM_INTTYPE_DSCDONE) {
         if (interrupt == A2B_ENUM_INTTYPE_SRFERR && ++retryCount < MAX_RETRIES) {
             mdelay(25);
