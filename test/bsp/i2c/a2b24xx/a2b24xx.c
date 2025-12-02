@@ -613,8 +613,9 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     //          O Wait for 100msec. And reattempt partial rediscovery: from
     //            step - 1
 retry:
-    if (processInterrupt(a2b24xx, false) != A2B_ENUM_INTTYPE_DSCDONE) {
-        if (++retryCount < MAX_RETRIES) {
+    int16_t interrupt = processInterrupt(a2b24xx, false);
+    if (interrupt != A2B_ENUM_INTTYPE_DSCDONE) {
+        if (interrupt == A2B_ENUM_INTTYPE_SRFERR && ++retryCount < MAX_RETRIES) {
             mdelay(25);
             goto retry;
         }
