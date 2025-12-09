@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -160,6 +160,7 @@ A2B_DSO_PUBLIC a2b_HResult A2B_CALL a2b_periphWriteRead(
 
 a2b_HResult a2b_SpiCmdsAndPeriWriteRead(a2b_StackContext*  ctx, a2b_Int16 nNodeAddr, a2b_SpiCmd eSpiCmd, a2b_UInt16 regAddr, a2b_UInt32 nDataCount, a2b_UInt8* pDataBytes, a2b_UInt16 nRead, void* rBuf, a2b_UInt32 nMaxTransac);
 a2b_HResult a2b_checkSpiErrorInt(a2b_StackContext* pCtx);
+A2B_EXPORT a2b_HResult 	a2b_checkSpiErrorInt(a2b_StackContext *pCtx);
 A2B_END_DECLS
 
 /*======================= D A T A =================================*/

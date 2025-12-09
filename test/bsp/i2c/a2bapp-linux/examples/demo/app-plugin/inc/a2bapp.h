@@ -35,6 +35,7 @@ and its licensors.
 #include "a2b/hwaccess.h"
 #include "a2b/system.h"
 #include "a2b/diag.h"
+#include "adi_a2b_framework.h"
 #include "a2bplugin-master/plugin.h"
 #include "a2bplugin-slave/plugin.h"
 #include "timer_priv.h"

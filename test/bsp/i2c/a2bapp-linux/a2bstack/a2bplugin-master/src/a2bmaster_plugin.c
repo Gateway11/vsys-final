@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -220,7 +220,15 @@ a2b_mailBoxWrite(a2b_Plugin*  plugin,a2b_UInt8* pWriteBuf,
 	{
 		wBuf[nIndex+1u] = pWriteBuf[nIndex];
 	}
-	status = a2b_regWrite(plugin->ctx, nSlvNodeAddr, ((a2b_UInt16)nDataSize+(a2b_UInt16)1u), &wBuf[0]);
+
+	if(nSlvNodeAddr & 0x80)
+	{
+		status = a2b_regBroadcastWrite(plugin->ctx, ((a2b_UInt16)nDataSize+(a2b_UInt16)1u), &wBuf[0]);
+	}
+	else
+	{
+		status = a2b_regWrite(plugin->ctx, nSlvNodeAddr, ((a2b_UInt16)nDataSize+(a2b_UInt16)1u), &wBuf[0]);
+	}
 	if(A2B_FAILED(status))
 	{
 		A2B_TRACE1((plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR),
@@ -310,16 +318,25 @@ a2b_GetCommChInstIdForSlvNode(a2b_Plugin*  plugin, a2b_Int16 nSlvNodeAddr, a2b_U
 	a2b_Bool bRet = A2B_FALSE;
 	a2b_UInt16 nIndex = 0u;
 
-	/* Locate the comm ch instance id for this slave node */
-	for(nIndex = 0u; nIndex < A2B_CONF_COMMCH_MAX_NO_OF_SMART_SLAVES; nIndex++)
-	{
-		if(plugin->commCh.commChSlvNodeIds[nIndex] == nSlvNodeAddr)
+    if (nSlvNodeAddr == 0x80)
+    {
+        *nIndexOut = 0;
+        bRet = A2B_TRUE;
+    }
+    else
+    {
+    	/* Locate the comm ch instance id for this slave node */
+		for(nIndex = 0u; nIndex < A2B_CONF_COMMCH_MAX_NO_OF_SMART_SLAVES; nIndex++)
 		{
-			*nIndexOut = nIndex;
-			bRet = A2B_TRUE;
-			break;
+			if(plugin->commCh.commChSlvNodeIds[nIndex] == nSlvNodeAddr)
+			{
+				*nIndexOut = nIndex;
+				bRet = A2B_TRUE;
+				break;
+			}
 		}
-	}
+    }
+
 	return (bRet);
 }
 
@@ -354,7 +371,7 @@ a2b_mailboxStartTimer
     /* Stop the previously running timer */
     a2b_timerStop( plugin->commCh.mboxTimeoutTimer[nCommChInstNo] );
 
-    /* Single shot timer */
+
     a2b_timerSet( plugin->commCh.mboxTimeoutTimer[nCommChInstNo], delay, 0u );
     a2b_timerSetHandler(plugin->commCh.mboxTimeoutTimer[nCommChInstNo], timerFunc);
     a2b_timerSetData(plugin->commCh.mboxTimeoutTimer[nCommChInstNo], plugin);
@@ -515,6 +532,14 @@ static void a2b_SendMboxEventNotification(a2b_Plugin* plugin, A2B_MAILBOX_EVENT_
 
 	/* Alloc notification message */
 	pMboxnotifyMsg 				= a2b_msgAlloc(plugin->ctx, A2B_MSG_NOTIFY, A2B_MSGNOTIFY_MAILBOX_EVENT);
+	if(A2B_NULL == pMboxnotifyMsg)
+	{
+		A2B_TRACE1((plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR),
+										"a2b_SendMboxEventNotification: %s:  Notification mgs allocation request failed ",
+										A2B_MPLUGIN_PLUGIN_NAME));
+	}
+	else
+	{
 	pMboxEventInfo              = (a2b_MailboxEventInfo*)a2b_msgGetPayload(pMboxnotifyMsg);
 	pMboxEventInfo->eEvent      = eMboxEvent;
 	pMboxEventInfo->nNodeId     = (a2b_UInt16) NodeAddr;
@@ -543,6 +568,7 @@ static void a2b_SendMboxEventNotification(a2b_Plugin* plugin, A2B_MAILBOX_EVENT_
 		 A2B_TRACE1((plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR),
 										"Exit: %s:  Mailbox Event  Notification failed:Communication channel Instance for slave node address not available",
 										A2B_MPLUGIN_PLUGIN_NAME));
+	}
 	}
 }
 
@@ -574,6 +600,14 @@ static void a2b_SendCommChEventNotification(a2b_Plugin* plugin, A2B_COMMCH_EVENT
 
 	/* Alloc Communication channel event notification message */
 	pCommChnotifyMsg 			= a2b_msgAlloc(plugin->ctx, A2B_MSG_NOTIFY, A2B_MSGNOTIFY_COMMCH_EVENT);
+	if(A2B_NULL == pCommChnotifyMsg)
+	{
+		A2B_TRACE1((plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR),
+												"a2b_SendCommChEventNotification: %s:  Communication channel event notification message request failed ",
+												A2B_MPLUGIN_PLUGIN_NAME));
+	}
+	else
+	{
 	pCommChEventInfo            = (a2b_CommChEventInfo*)a2b_msgGetPayload(pCommChnotifyMsg);
 	pCommChEventInfo->eEvent    = eCommChEvent;
 	pCommChEventInfo->nNodeId   = (a2b_UInt16) (a2b_UInt16) NodeAddr;
@@ -588,6 +622,7 @@ static void a2b_SendCommChEventNotification(a2b_Plugin* plugin, A2B_COMMCH_EVENT
 	}
 
 	(void)a2b_msgUnref(pCommChnotifyMsg);
+	}
 }
 
 /*!****************************************************************************
@@ -716,7 +751,7 @@ static void a2b_CommChAssignInstToSlvNodes( a2b_Plugin* plugin)
 		   ((a2b_UInt8)plugin->bdd->nodes[nbddIndex].mbox.mbox1ctl & A2B_BITM_MBOX1CTL_MB1EN)	)
 		{
 			/* Communication channel Authorization is only for slave nodes */
-			if(( nbddIndex != 0u) && (nbddIndex <= A2B_CONF_COMMCH_MAX_NO_OF_SMART_SLAVES) )
+			if(( nbddIndex != 0u) && (nIdIndex < A2B_CONF_COMMCH_MAX_NO_OF_SMART_SLAVES) )
 			{
 				/* Assign the id , bdd includes the master node so reduce by 1 */
 				plugin->commCh.commChSlvNodeIds[nIdIndex] = (a2b_Int16)nbddIndex-1;

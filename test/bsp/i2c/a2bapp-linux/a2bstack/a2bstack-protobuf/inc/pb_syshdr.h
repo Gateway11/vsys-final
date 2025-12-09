@@ -28,6 +28,10 @@ typedef a2b_UInt16 uint16_t;
 typedef a2b_Int32 int32_t;
 typedef a2b_UInt32 uint32_t;
 
+typedef a2b_UInt8 uint_least8_t;
+typedef a2b_Int16 int_least16_t;
+typedef a2b_UInt16 uint_least16_t;
+
 #ifndef _STDDEF_H
 #ifdef A2B_FEATURE_64_BIT_INTEGER
 /* 64-bit quantities should only be needed if the protobufs definitions use

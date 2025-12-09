@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -279,6 +279,7 @@
 /* ------------------------------------------------------------------------------------------------------------------------- */
 #define A2B_BITP_PINCFG_IRQTS                (5u)           /*!< Tristate IRQ - AD242X Only */
 #define A2B_BITP_PINCFG_IRQINV               (4u)           /*!< Invert IRQ - AD242X Only */
+#define A2B_BITP_PINCFG_I2CDRVSTR            (3u)           /*!< I2C Pins Drive Strength -AD232X only*/
 #define A2B_BITP_PINCFG_TXBLP                (2u)           /*!<  LVDS XCVRB Low Power TX Mode */
 #define A2B_BITP_PINCFG_TXALP                (1u)           /*!<  LVDS XCVRA Low Power TX Mode */
 #define A2B_BITP_PINCFG_DRVSTR               (0u)           /*!<  Digital Pin Drive Strength */
@@ -287,6 +288,7 @@
 /* ------------------------------------------------------------------------------------------------------------------------- */
 #define A2B_BITM_PINCFG_IRQTS                (0x00000020u)  /*!< AD242X Only */
 #define A2B_BITM_PINCFG_IRQINV               (0x00000010u)  /*!< AD242X Only */
+#define A2B_BITM_PINCFG_I2CDRVSTR            (0x00000008u)  /*!< AD232X Only */
 #define A2B_BITM_PINCFG_TXBLP                (0x00000004u)
 #define A2B_BITM_PINCFG_TXALP                (0x00000002u)
 #define A2B_BITM_PINCFG_DRVSTR               (0x00000001u)
@@ -2025,6 +2027,7 @@
 /* ------------------------------------------------------------------------------------------------------------------------- */
 /*        I2STEST                              Masks  */
 /* ------------------------------------------------------------------------------------------------------------------------- */
+#define A2B_BITM_I2STEST_EXTLOOPBK           (0x000000C0u)  /*!< AD243X only */
 #define A2B_BITM_I2STEST_BUSLOOPBK           (0x00000010u)  /*!< AD242X only */
 #define A2B_BITM_I2STEST_SELRX1              (0x00000008u)
 #define A2B_BITM_I2STEST_RX2LOOPBK           (0x00000004u)

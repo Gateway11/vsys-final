@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is proprietary & confidential to Analog Devices, Inc.
  * and its licensors. See LICENSE for complete details.
  *
@@ -138,7 +138,9 @@ a2b_HResult a2b_EepromWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWri
 #endif
 
 /*<! Utility functions*/
-static void setRegVal(a2b_UInt32* pnRegVal, a2b_UInt8 nFieldVal, a2b_UInt8 nMask, a2b_UInt8 nPos);
+#ifdef ADI_SIGMASTUDIO_BCF
+static void setRegVal(a2b_UInt32 *pnRegVal, a2b_UInt8 nFieldVal, a2b_UInt8 nMask, a2b_UInt8 nPos);
+#endif
 
 /**
  @}
@@ -754,6 +756,7 @@ static void  adi_a2b_ParseMasterNCD
 		(pCommon->bDwnstreamCompression << (a2b_UInt8)A2B_BITP_SLOTFMT_DNFP) | \
 		(pCommon->bUpstreamCompression << (a2b_UInt8)A2B_BITP_SLOTFMT_UPFP)));
 	pMstrNode->ctrlRegs.datctl = (a2b_UInt32)pMstCfg->sConfigCtrlSettings.nDatctrl;
+	pMstrNode->ctrlRegs.swctl  = (a2b_UInt32)pMstCfg->sRegSettings.nSWCTL;
 
 	pMstrNode->upstreamBcastCnt = pMstrNode->downstreamBcastCnt = pMstrNode->ctrlRegs.bcdnslots;
 	pMstrNode->upstream_count = (pb_size_t)pMstrNode->ctrlRegs.upslots;
@@ -857,7 +860,7 @@ static void  adi_a2b_ParseSlaveNCD
 
 	if (pSlvNode->nodeDescr.oCustomNodeIdSettings.bCustomNodeIdAuth == A2B_ENABLED)
 	{
-		if (pSlvCfg->sCustomNodeAuthSettings.nReadFrm == A2B_READ_FROM_MEM)
+		if (pSlvCfg->sCustomNodeAuthSettings.nReadFrmMemory == A2B_READ_FROM_MEM)
 		{
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.bReadFrmMemory = A2B_ENABLED;
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.has_bReadFrmMemory = A2B_TRUE;
@@ -870,7 +873,7 @@ static void  adi_a2b_ParseSlaveNCD
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.bReadFrmMemory = A2B_DISABLED;
 		}
 
-		if (pSlvCfg->sCustomNodeAuthSettings.nReadFrm == A2B_READ_FROM_GPIO)
+		if (pSlvCfg->sCustomNodeAuthSettings.nReadFrmGPIO == A2B_READ_FROM_GPIO)
 		{
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.bReadGpioPins = A2B_ENABLED;
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.has_bReadGpioPins = A2B_TRUE;
@@ -880,7 +883,7 @@ static void  adi_a2b_ParseSlaveNCD
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.bReadGpioPins = A2B_DISABLED;
 		}
 
-		if (pSlvCfg->sCustomNodeAuthSettings.nReadFrm == A2B_READ_FROM_COMM_CH)
+		if (pSlvCfg->sCustomNodeAuthSettings.nReadFrmCommCh == A2B_READ_FROM_COMM_CH)
 		{
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.bReadFrmCommCh = A2B_ENABLED;
 			pSlvNode->nodeDescr.oCustomNodeIdSettings.has_bReadFrmCommCh = A2B_TRUE;
@@ -926,12 +929,15 @@ static void  adi_a2b_ParseSlaveNCD
 	pSlvNode->ctrlRegs.respcycs = (a2b_UInt32)pSlvCfg->sConfigCtrlSettings.nRespCycle;
 	pSlvNode->ctrlRegs.control = (a2b_UInt32)pSlvCfg->sRegSettings.nCONTROL;
 	pSlvNode->ctrlRegs.slotfmt = 0u;
+    pSlvNode->ctrlRegs.swctl   = (a2b_UInt32)pSlvCfg->sRegSettings.nSWCTL;
 
 
 	/* I2S & PDM registers */
 	pSlvNode->i2cI2sRegs.i2ccfg = (a2b_UInt16)(pSlvCfg->sConfigCtrlSettings.nI2CFrequency) | \
 		(pSlvCfg->sConfigCtrlSettings.nSuperFrameRate);
-
+#ifdef ENABLE_AD232x_SUPPORT
+	pSlvNode->i2cI2sRegs.i2ccfg |= pSlvCfg->sConfigCtrlSettings.bEnI2cFstModePlus << (a2b_UInt8)A2B_BITP_I2CCFG_FMPLUS;
+#endif
 
 	pSlvNode->i2cI2sRegs.pllctl = (pSlvCfg->sRegSettings.nPLLCTL);
 	pSlvNode->i2cI2sRegs.i2sgcfg = (pSlvCfg->sI2SSettings.bEarlySync << (a2b_UInt8)A2B_BITP_I2SGCFG_EARLY) | \
@@ -1179,7 +1185,7 @@ static void  adi_a2b_ParseSlavePinMux012(
 		pSlvNode->pinIoRegs.gpiooen |= (1u << (a2b_UInt8)A2B_BITP_GPIOOEN_IO1OEN);
 		pSlvNode->pinIoRegs.gpiodat |= (pSlvCfg->sGPIOSettings.sOutPinVal.bGPIO1Val << A2B_BITP_GPIODAT_IO1DAT);
 		break;
-	case A2B_GPIO_1_AS_CLKOUT:
+	case A2B_GPIO_1_AS_CLKOUT1:
 #ifdef ENABLE_AD242x_SUPPORT
 		if (A2B_IS_AD242X_CHIP(pSlvNode->nodeDescr.vendor, pSlvNode->nodeDescr.product))
 		{
@@ -1208,7 +1214,7 @@ static void  adi_a2b_ParseSlavePinMux012(
 		pSlvNode->pinIoRegs.gpiooen |= (1u << (a2b_UInt8)A2B_BITP_GPIOOEN_IO2OEN);
 		pSlvNode->pinIoRegs.gpiodat |= (pSlvCfg->sGPIOSettings.sOutPinVal.bGPIO2Val << A2B_BITP_GPIODAT_IO2DAT);
 		break;
-	case A2B_GPIO_2_AS_CLKOUT:
+	case A2B_GPIO_2_AS_CLKOUT2:
 #if defined(ENABLE_AD242x_SUPPORT) || defined(ENABLE_AD243X_SUPPORT)
 		if (A2B_IS_AD242X_CHIP(pSlvNode->nodeDescr.vendor, pSlvNode->nodeDescr.product))
 		{
@@ -1491,6 +1497,9 @@ static void  adi_a2b_ParseMasterNCD_242x
 		(pMstCfg->sGPIOSettings.bIRQInv << (a2b_UInt8)A2B_BITP_PINCFG_IRQINV) | \
 		(pMstCfg->sGPIOSettings.bIRQTriState << (a2b_UInt8)A2B_BITP_PINCFG_IRQTS);
 
+#ifdef ENABLE_AD232x_SUPPORT
+			pMstrNode->pinIoRegs.pincfg |= (pMstCfg->sGPIOSettings.bI2CDriveStrength << (a2b_UInt8)A2B_BITP_PINCFG_I2CDRVSTR);
+#endif
 	/*ClockCFg1 & CFG2*/
 	pMstrNode->pinIoRegs.clk1cfg |= (pMstCfg->sClkOutSettings.bClk1Div << (a2b_UInt8)A2B_BITP_CLKOUT1_CLK1DIV) | \
 		(pMstCfg->sClkOutSettings.bClk1PreDiv << (a2b_UInt8)A2B_BITP_CLKOUT1_CLK1PDIV) | \
@@ -1507,6 +1516,7 @@ static void  adi_a2b_ParseMasterNCD_242x
 
 
 	pMstrNode->i2cI2sRegs.pdmctl2 = pMstCfg->sRegSettings.nPDMCTL2;
+
 	pMstrNode->i2cI2sRegs.pllctl = pMstCfg->sRegSettings.nPLLCTL;
 
 	if (A2B_IS_AD242X_CHIP(pMstrNode->nodeDescr.vendor, pMstrNode->nodeDescr.product))
@@ -1658,7 +1668,6 @@ static void  adi_a2b_ParseSlaveNCD_242x
 
 	pSlvNode->i2cI2sRegs.i2srrsoffs = (pSlvCfg->sI2SSettings.sI2SRateConfig.nRROffset << (a2b_UInt8)A2B_BITP_I2SRRSOFFS_RRSOFFSET);
 
-
 	pSlvNode->i2cI2sRegs.i2srate = (pSlvCfg->sI2SSettings.sI2SRateConfig.bReduce << (a2b_UInt8)A2B_BITP_I2SRATE_REDUCE) | \
 		(pSlvCfg->sI2SSettings.sI2SRateConfig.nSamplingRate) | \
 		(pSlvCfg->sI2SSettings.sI2SRateConfig.nRBCLKRate << (a2b_UInt8)A2B_BITP_I2SRATE_BLCKRATE) | \
@@ -1690,6 +1699,9 @@ static void  adi_a2b_ParseSlaveNCD_242x
 	pSlvNode->pinIoRegs.pincfg = (pSlvCfg->sGPIOSettings.bHighDriveStrength << (a2b_UInt8)A2B_BITP_PINCFG_DRVSTR) | \
 		(pSlvCfg->sGPIOSettings.bIRQInv << (a2b_UInt8)A2B_BITP_PINCFG_IRQINV) | \
 		(pSlvCfg->sGPIOSettings.bIRQTriState << (a2b_UInt8)A2B_BITP_PINCFG_IRQTS);
+#ifdef ENABLE_AD232x_SUPPORT
+	pSlvNode->pinIoRegs.pincfg = (pSlvCfg->sGPIOSettings.bI2CDriveStrength << (a2b_UInt8)A2B_BITP_PINCFG_I2CDRVSTR);
+#endif
 
 	if (A2B_IS_AD2430_8_CHIP(pSlvNode->nodeDescr.vendor, pSlvNode->nodeDescr.product))
 	{
@@ -1829,7 +1841,7 @@ static void  adi_a2b_ParseMasterPinMux12(
 		pMstrNode->pinIoRegs.gpiooen |= (1u << (a2b_UInt8)A2B_BITP_GPIOOEN_IO1OEN);
 		pMstrNode->pinIoRegs.gpiodat |= (pMstCfg->sGPIOSettings.sOutPinVal.bGPIO1Val << A2B_BITP_GPIODAT_IO1DAT);
 		break;
-	case A2B_GPIO_1_AS_CLKOUT:
+	case A2B_GPIO_1_AS_CLKOUT1:
 		pMstrNode->pinIoRegs.clk1cfg |= (1u << (a2b_UInt8)A2B_BITP_CLKOUT1_CLK1EN);
 		break;
 		/* case A2B_GPIO_1_DISABLE:
@@ -1851,7 +1863,7 @@ static void  adi_a2b_ParseMasterPinMux12(
 		pMstrNode->pinIoRegs.gpiooen |= (1u << (a2b_UInt8)A2B_BITP_GPIOOEN_IO2OEN);
 		pMstrNode->pinIoRegs.gpiodat |= (pMstCfg->sGPIOSettings.sOutPinVal.bGPIO2Val << A2B_BITP_GPIODAT_IO2DAT);
 		break;
-	case A2B_GPIO_2_AS_CLKOUT:
+	case A2B_GPIO_2_AS_CLKOUT2:
 		pMstrNode->pinIoRegs.clk2cfg |= (1u << (a2b_UInt8)A2B_BITP_CLKOUT2_CLK2EN);
 		break;
 		/* case A2B_GPIO_2_DISABLE:
@@ -1903,6 +1915,9 @@ static void  adi_a2b_ParseMasterPinMux7(
 	case A2B_GPIO_7_PDMCLK:
 		pMstrNode->i2cI2sRegs.pdmctl2 |= (1u << (a2b_UInt8)A2B_BITP_PDMCTL2_PDMALTCLK);
 		break;
+	case A2B_GPIO_7_RRSTRB:
+		pMstrNode->i2cI2sRegs.i2srrctl |= (1u << (a2b_UInt8)A2B_BITP_I2SRRCTL_ENSTRB);
+		break;
 	default:
 		break;
 
@@ -1949,6 +1964,8 @@ static void  adi_a2b_ParseSlavePinMux7(
 	case A2B_GPIO_7_PDMCLK:
 		pSlvNode->i2cI2sRegs.pdmctl2 |= (1u << (a2b_UInt8)A2B_BITP_PDMCTL2_PDMALTCLK);
 		break;
+	case A2B_GPIO_7_RRSTRB:
+		pSlvNode->i2cI2sRegs.i2srrctl |= (1u << (a2b_UInt8)A2B_BITP_I2SRRCTL_ENSTRB);
 	default:
 		break;
 
@@ -1984,6 +2001,8 @@ static void  adi_a2b_ParseMasterNCD_243x
 {
 	a2b_UInt32 i;
 	a2b_Bool isAd2430_8 = A2B_FALSE;
+	uint32_t* psGPIODMask;
+	A2B_GPIOD_PIN_CONFIG asGPIODConfig;
 
 	isAd2430_8 = A2B_IS_AD2430_8_CHIP(pMstrNode->nodeDescr.vendor, pMstrNode->nodeDescr.product);
 
@@ -2008,7 +2027,19 @@ static void  adi_a2b_ParseMasterNCD_243x
 
 	/* AD243x has TXCTL only */
 	pMstrNode->tuningRegs.txctl = (pMstCfg->sRegSettings.nTXACTL);
-
+	/*Update GPIO0 configuration*/
+	pMstrNode->gpioDist.gpiodinv |= (pMstCfg->sGPIODSettings.sGPIOD0Config.bGPIOSignalInv << 0u);
+	pMstrNode->gpioDist.gpioden |= (pMstCfg->sGPIODSettings.sGPIOD0Config.bGPIODistance << 0u);
+	psGPIODMask = &pMstrNode->gpioDist.gpiod0msk;
+	asGPIODConfig = pMstCfg->sGPIODSettings.sGPIOD0Config;
+	*psGPIODMask = (a2b_UInt16)((asGPIODConfig.abBusPortMask[0] << 0u) | \
+				(asGPIODConfig.abBusPortMask[1] << 1u) | \
+				(asGPIODConfig.abBusPortMask[2] << 2u) | \
+				(asGPIODConfig.abBusPortMask[3] << 3u) | \
+				(asGPIODConfig.abBusPortMask[4] << 4u) | \
+				(asGPIODConfig.abBusPortMask[5] << 5u) | \
+				(asGPIODConfig.abBusPortMask[6] << 6u) | \
+				(asGPIODConfig.abBusPortMask[7] << 7u));
 	/** Populate new registers **/
 	if (!isAd2430_8)
 	{
@@ -2065,7 +2096,8 @@ static void  adi_a2b_ParseMasterNCD_243x
 	{
 		setRegVal(&pMstrNode->i2cI2sRegs.i2scfg, 7u, A2B_BITM_I2SCFG_TXPINS, A2B_BITP_I2SCFG_TXPINS);  //7 is the value of the field if Tx Interlave is enabled for AD243x
 	}
-
+	/*I2STEST register*/
+	pMstrNode->i2cI2sRegs.i2stest = (a2b_UInt8)(pMstCfg->sRegSettings.nI2STEST & A2B_BITM_I2STEST_EXTLOOPBK);
 	adi_a2b_ParseMasterPinMux0(pMstrNode, pMstCfg);
 }
 
@@ -2471,73 +2503,84 @@ static void adi_a2b_ParseADRPinCfg(bdd_Node* pNode, A2B_PIN_ASSIGN_CONFIG* pPinA
 	isAd2430_8 = A2B_IS_AD2430_8_CHIP(pNode->nodeDescr.vendor, pNode->nodeDescr.product);
 
 	/* ADR1 */
+	if (!isAd2430_8)
+	{
 	switch (pPinAssignSettings->oADR1.eFunc)
 	{
 	case FUNC_I2C_CLKOUT1:
-		setRegVal(&pNode->pinIoRegs.clk1cfg, 1u, A2B_BITM_CLKOUT1_CLK1EN, A2B_BITP_CLKOUT1_CLK1EN);
-		break;
-		if (!isAd2430_8)
-		{
+	setRegVal(&pNode->pinIoRegs.clk1cfg, 1u, A2B_BITM_CLKOUT1_CLK1EN, A2B_BITP_CLKOUT1_CLK1EN);
+	break;
+
 	case FUNC_SS0:
-		setRegVal(&pNode->spiRegs.spipicfg, 1u, A2B_BITM_SPIPINCFG_SPIMSS0EN, A2B_BITP_SPIPINCFG_SPIMSS0EN);
-		break;
+	setRegVal(&pNode->spiRegs.spipicfg, 1u, A2B_BITM_SPIPINCFG_SPIMSS0EN, A2B_BITP_SPIPINCFG_SPIMSS0EN);
+	break;
 
 	case FUNC_PWM_OE:
-		setRegVal(&pNode->pwmRegs.pwmcfg, 1u, A2B_BITM_PWMCFG_PWMOEEN, A2B_BITP_PWMCFG_PWMOEEN);
-		break;
-		}
-		else
-		{
-	case FUNC_PWM_CH1:
-		setRegVal(&pNode->pwmRegs.pwmcfg, 1u, A2B_BITM_PWMCFG_PWM1EN, A2B_BITP_PWMCFG_PWM1EN);
-		break;
+	setRegVal(&pNode->pwmRegs.pwmcfg, 1u, A2B_BITM_PWMCFG_PWMOEEN, A2B_BITP_PWMCFG_PWMOEEN);
+	break;
 
-	case FUNC_RR_STRB:
-		setRegVal(&pNode->i2cI2sRegs.i2srrctl, 1u, A2B_BITM_I2SRRCTL_ENSTRB, A2B_BITP_I2SRRCTL_ENSTRB);
-		setRegVal(&pNode->i2cI2sRegs.pdmctl2, 0u, A2B_BITM_PDMCTL2_PDMALTCLK, A2B_BITP_PDMCTL2_PDMALTCLK);
-		break;
-		}
-	default: // AD2430 - Leave to default
-		/* GPIO */
-		if (!isAd2430_8)
-		{
-			setRegVal(&pNode->pwmRegs.pwmcfg, 0u, A2B_BITM_PWMCFG_PWMOEEN, A2B_BITP_PWMCFG_PWMOEEN);
-		}
-		else
-		{
-			setRegVal(&pNode->pwmRegs.pwmcfg, 0u, A2B_BITM_PWMCFG_PWM1EN, A2B_BITP_PWMCFG_PWM1EN);
-		}
-		break;
+	default:
+	// GPIO fallback
+	setRegVal(&pNode->pwmRegs.pwmcfg, 0u, A2B_BITM_PWMCFG_PWMOEEN, A2B_BITP_PWMCFG_PWMOEEN);
+	break;
 	}
 
 	switch (pPinAssignSettings->oADR2.eFunc)
 	{
 	case FUNC_I2C_CLKOUT2:
-		setRegVal(&pNode->pinIoRegs.clk2cfg, 1u, A2B_BITM_CLKOUT2_CLK2EN, A2B_BITP_CLKOUT2_CLK2EN);
-		break;
-		if (!isAd2430_8)
-		{
-	case FUNC_SS2:
-		setRegVal(&pNode->spiRegs.spipicfg, 1u, A2B_BITM_SPIPINCFG_SPIMSS2EN, A2B_BITP_SPIPINCFG_SPIMSS2EN);
-		break;
-		}
-		else
-		{
-	case FUNC_PWM_CH2:
-		setRegVal(&pNode->pwmRegs.pwmcfg, 1u, A2B_BITM_PWMCFG_PWM2EN, A2B_BITP_PWMCFG_PWM2EN);
-		break;
-		}
+	setRegVal(&pNode->pinIoRegs.clk2cfg, 1u, A2B_BITM_CLKOUT2_CLK2EN, A2B_BITP_CLKOUT2_CLK2EN);
+	break;
 
-	default:// // AD2430 - Leave to default
-		if (!isAd2430_8)
-		{
-			setRegVal(&pNode->spiRegs.spipicfg, 0u, A2B_BITM_SPIPINCFG_SPIMSS2EN, A2B_BITP_SPIPINCFG_SPIMSS2EN);
-		}
-		else
-		{
-			setRegVal(&pNode->pwmRegs.pwmcfg, 0u, A2B_BITM_PWMCFG_PWM2EN, A2B_BITP_PWMCFG_PWM2EN);
-		}
-		break;
+	case FUNC_SS2:
+	setRegVal(&pNode->spiRegs.spipicfg, 1u, A2B_BITM_SPIPINCFG_SPIMSS2EN, A2B_BITP_SPIPINCFG_SPIMSS2EN);
+	break;
+
+	default:
+	// GPIO fallback
+	setRegVal(&pNode->spiRegs.spipicfg, 0u, A2B_BITM_SPIPINCFG_SPIMSS2EN, A2B_BITP_SPIPINCFG_SPIMSS2EN);
+	break;
+	}
+
+	}
+	else
+	{
+	switch (pPinAssignSettings->oADR1.eFunc)
+	{
+	case FUNC_I2C_CLKOUT1:
+	setRegVal(&pNode->pinIoRegs.clk1cfg, 1u, A2B_BITM_CLKOUT1_CLK1EN, A2B_BITP_CLKOUT1_CLK1EN);
+	break;
+
+	case FUNC_PWM_CH1:
+	setRegVal(&pNode->pwmRegs.pwmcfg, 1u, A2B_BITM_PWMCFG_PWM1EN, A2B_BITP_PWMCFG_PWM1EN);
+	break;
+
+	case FUNC_RR_STRB:
+	setRegVal(&pNode->i2cI2sRegs.i2srrctl, 1u, A2B_BITM_I2SRRCTL_ENSTRB, A2B_BITP_I2SRRCTL_ENSTRB);
+	setRegVal(&pNode->i2cI2sRegs.pdmctl2, 0u, A2B_BITM_PDMCTL2_PDMALTCLK, A2B_BITP_PDMCTL2_PDMALTCLK);
+	break;
+
+	default:
+	// GPIO fallback
+	setRegVal(&pNode->pwmRegs.pwmcfg, 0u, A2B_BITM_PWMCFG_PWM1EN, A2B_BITP_PWMCFG_PWM1EN);
+	break;
+	}
+
+	switch (pPinAssignSettings->oADR2.eFunc)
+	{
+	case FUNC_I2C_CLKOUT2:
+	setRegVal(&pNode->pinIoRegs.clk2cfg, 1u, A2B_BITM_CLKOUT2_CLK2EN, A2B_BITP_CLKOUT2_CLK2EN);
+	break;
+
+	case FUNC_PWM_CH2:
+	setRegVal(&pNode->pwmRegs.pwmcfg, 1u, A2B_BITM_PWMCFG_PWM2EN, A2B_BITP_PWMCFG_PWM2EN);
+	break;
+
+	default:
+	// GPIO fallback
+	setRegVal(&pNode->pwmRegs.pwmcfg, 0u, A2B_BITM_PWMCFG_PWM2EN, A2B_BITP_PWMCFG_PWM2EN);
+	break;
+	}
+
 	}
 
 }
@@ -2871,6 +2914,8 @@ static void  adi_a2b_ParseSlaveNCD_243x
 	{
 		setRegVal(&pSlvNode->i2cI2sRegs.i2scfg, 7u, A2B_BITM_I2SCFG_TXPINS, A2B_BITP_I2SCFG_TXPINS);//7 is the value of the field if Rx Interlave is enabled for AD243x
 	}
+	/*I2STEST register*/
+	pSlvNode->i2cI2sRegs.i2stest = (a2b_UInt8) (pSlvCfg->sRegSettings.nI2STEST & A2B_BITM_I2STEST_EXTLOOPBK);
 }
 
 
@@ -3118,6 +3163,7 @@ static void adi_a2b_CheckforDefault(bdd_Node* pNode)
 	A2B_UPDATE_HAS(pNode->i2cI2sRegs, i2srrctl, 0);
 	A2B_UPDATE_HAS(pNode->i2cI2sRegs, i2srrsoffs, 0);
 	A2B_UPDATE_HAS(pNode->i2cI2sRegs, pdmctl2, 0);
+	A2B_UPDATE_HAS(pNode->i2cI2sRegs, i2stest, 0);
 
 	/* PIn IO */
 	A2B_UPDATE_HAS(pNode->pinIoRegs, clkcfg, 0);
@@ -3276,7 +3322,7 @@ static void adi_a2b_CheckforAutoConfig(bdd_Node* pNode, bool bAutoConfig)
 		A2B_CLEAR_HAS(pNode->i2cI2sRegs, pdmctl);
 		A2B_CLEAR_HAS(pNode->i2cI2sRegs, errmgmt);
 		A2B_CLEAR_HAS(pNode->i2cI2sRegs, pdmctl2);
-
+		A2B_CLEAR_HAS(pNode->i2cI2sRegs, i2stest);
 		/* PIn IO */
 		A2B_CLEAR_HAS(pNode->pinIoRegs, gpiodat);
 		A2B_CLEAR_HAS(pNode->pinIoRegs, gpiooen);
@@ -3851,7 +3897,9 @@ static a2b_HResult a2b_getData(A2B_ECB* ecb, a2b_UInt16 nWrite,
 	a2b_Byte* rBuf)
 {
 	a2b_UInt8 status = 0;
+#ifndef A2B_BCF_FROM_SOC_EEPROM
 	a2b_UInt16 nOffset;
+#endif
 
 #ifdef A2B_BCF_FROM_SOC_EEPROM
 	status = a2b_EepromWriteRead(ecb->palEcb.i2chnd, A2B_I2C_EEPROM_ADDR, 2u, wBuf, nRead, rBuf);
@@ -3983,7 +4031,7 @@ a2b_HResult a2b_get_bddFrmE2promOrFileIO(A2B_ECB* ecb, bdd_Network* bdd_Graph, a
 
 	/* Decode BDD */
 	a2b_bddDecode(pBuff, nBDDLength, bdd_Graph);
-	if (nSchemaVer == 0x03)
+	if (nSchemaVer >= 0x03)
 	{
 		nChRdIndx += nBDDLength + 1;
 		A2B_PUT_UINT16_BE(nChRdIndx, wBuf, 0u);
@@ -3994,7 +4042,6 @@ a2b_HResult a2b_get_bddFrmE2promOrFileIO(A2B_ECB* ecb, bdd_Network* bdd_Graph, a
 		pTgtProp->nL5TotalBytes = nL5TotalSize;
 	}
 	A2B_GET_UINT16_BE(nL5Idx, pPeriBuf, nPeriConfigLen);
-	nL5Idx++;
 	A2B_PUT_UINT16_BE(nL5Idx, wBuf, 0u);
 
 	status = a2b_getData(ecb, 2u, wBuf, nL5TotalSize, pCustomIdData);
@@ -4035,13 +4082,13 @@ a2b_HResult adi_a2b_extractdata(A2B_ECB* ecb, a2b_UInt8* pCustomIdInfo, ADI_A2B_
 	a2b_UInt8 nNumOfDevices = 0;
 	a2b_UInt8 nIdx = 0;
 	a2b_UInt8 nL5Bytes = pTgtProp->nL5TotalBytes;
-	a2b_UInt8 pCustomIdData[nL5Bytes];
+	a2b_UInt8 pCustomIdData[A2B_MAX_SIZE_OF_CUSTOM_ID_TO_READ];
 	A2B_GET_UINT16_BE(nL5Idx, pCustomIdInfo, 0);
 	A2B_PUT_UINT16_BE(nL5Idx, wBuf, 0u);
 
 	nNumOfDevices = pTgtProp->nSubNodes + 1;
 	status = a2b_getData(ecb, 2u, wBuf, nL5Bytes, pCustomIdData);
-	for(int i = 1; i < pTgtProp->nL5TotalBytes; i++)
+	for(int i = 0; i < pTgtProp->nL5TotalBytes; i++)
 	{
 		//checking for number of devices not equal to 0
 		if(nNumOfDevices != 0)
@@ -4049,18 +4096,8 @@ a2b_HResult adi_a2b_extractdata(A2B_ECB* ecb, a2b_UInt8* pCustomIdInfo, ADI_A2B_
 			//checking whether the length of Custom ID for the respective node is 0
 			if(pCustomIdData[i] != 35)
 			{
-				//To extract the main node length, hopping to the second index in L5 by neglecting the L5 marker.
-				if(i == 1)
-				{
-					pBuff[nIdx] = pCustomIdData[i] + 2;
-				}
-				//To extract the subnode length, hopping to the respective index to fetch the length
-				else
-				{
-					pBuff[nIdx] = pCustomIdData[i] + 1;
-				}
-				//incrementing i by length of Custom ID of that respective node
-				i += pCustomIdData[i];
+				pBuff[nIdx] = pCustomIdData[i];
+				i += pCustomIdData[i];//incrementing i by length of Custom ID of that respective node
 			}
 			//if data at index matches 35 i.e."#", length will be returned 0.
 			else
@@ -4102,7 +4139,7 @@ a2b_HResult a2b_get_nChainsFrmE2promFileIO(A2B_ECB* ecb, a2b_UInt8* pNumChains)
 
 	/* Read Level 0  */
 	A2B_PUT_UINT16_BE(A2B_EEPROM_ADDR_OFFSET, wBuf, 0u);
-	status = a2b_getData(ecb, 2u, wBuf, A2B_LVL0_EEPROM_BYTES, nReadBuf);
+	status = a2b_getData(ecb, 2u, wBuf, A2B_LVL0_EEPROM_BYTES, nReadBuf); //TODO
 	pNumChains[0] = nReadBuf[A2B_LVL0_NUM_CHIAN];
 
 	return status;

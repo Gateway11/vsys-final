@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -75,6 +75,7 @@ A2B_EXPORT A2B_DSO_LOCAL void a2b_memMgrFree(a2b_Handle hnd,
 A2B_EXPORT A2B_DSO_LOCAL a2b_HResult a2b_memMgrClose(a2b_Handle hnd);
 A2B_EXPORT A2B_DSO_LOCAL a2b_HResult a2b_memMgrShutdown(A2B_ECB* ecb);
 
+A2B_DSO_PUBLIC a2b_UInt32 a2b_getMsgPoolAvailable(struct a2b_StackContext *ctx);
 A2B_END_DECLS
 
 /*======================= D A T A =================================*/

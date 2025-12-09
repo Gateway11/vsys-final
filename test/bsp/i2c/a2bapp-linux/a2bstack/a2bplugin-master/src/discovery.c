@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -61,7 +61,7 @@
 #endif	/* _TESSY_INCLUDES_ */
 
 /*======================= D E F I N E S ===========================*/
-
+/** Zeroth index of bdd Node object*/
 #define A2B_MASTER_NODEBDDIDX   (0u)
 
 /** Delay (in msec) for a node discovery */
@@ -76,16 +76,16 @@
 /** Delay (in msec) for a High power CFG4 Open Detect */
 #define A2B_HIGH_PWR_CFG4_OPEN_DETECT								(250U)
 
-/* Scenario information used while logging delay during command list generation for TIMER_RESET */
+/** Scenario information used while logging delay during command list generation for TIMER_RESET **/
 #define A2B_TIMER_RESET_DELAY_SCENARIO								(1U)
 
-/* Scenario information used while logging delay during command list generation for TIMER_DSCVRY */
+/** Scenario information used while logging delay during command list generation for TIMER_DSCVRY **/
 #define A2B_TIMER_DSCVRY_DELAY_SCENARIO								(2U)
 
-/* Scenario information used while logging delay during command list generation. This is specific for Demeter 0.0C silicon. */
+/** Scenario information used while logging delay during command list generation. This is specific for Demeter 0.0C silicon. **/
 #define A2B_0_0C_HIGH_PWR_SWITCH_DELAY_SCENARIO						(3U)
 
-/* Scenario information used while logging delay during command list generation */
+/** Scenario information used while logging delay during command list generation **/
 #define A2B_HIGH_PWR_SWITCH_DELAY_SCENARIO							(4U)
 
 /** Delay (in msec) to wait after a software reset. This is re-used for partial node discovery as well */
@@ -97,11 +97,13 @@
 /** Max number of attempts to read ACTIVE flag **/
 #define A2B_BSD_MAX_ATTEMPTS         (10u)
 #endif
-
+/** Mode for Deinit Discovery end**/
 #define A2B_DEINIT_DSCVREY_END  (1u)
+/**Mode for Deinit Discovery start**/
 #define A2B_DEINIT_START        (2u)
-
+/**VMTR overflow**/
 #define A2B_AD243x_VMTR_OVERFLOW (1u)
+/**VMTR in range**/
 #define A2B_AD243x_VMTR_INRANGE  (0u)
 
 /** Define if a search for a plugin to manage a node should be done
@@ -124,7 +126,7 @@
 
 
 
-
+/**Check for the register in the register group and writ it to the register address**/
 #define A2B_CHECK_AND_WRITE(GRP, REG, REGADR)	do{																				\
 											if ((A2B_SUCCEEDED(status)) && (plugin->bdd->nodes[nodeIdx].GRP.has_##REG))	\
 											{																			\
@@ -134,7 +136,7 @@
 												i2cCount++;																\
 											}																			\
 										}while(0)
-
+/**Check for the register in the register group and writ it to the register address + offset**/
 #define A2B_CHECK_AND_WRITE_ARR(GRP, REG, REGADR, OFFSET)	do{																				\
 											if ((A2B_SUCCEEDED(status)) && (plugin->bdd->nodes[nodeIdx].GRP.has_##REG))	\
 											{																			\
@@ -146,7 +148,7 @@
 										}while(0)
 
 /*======================= L O C A L  P R O T O T Y P E S  =========*/
-
+/**Enum to select different timer and handlers in discovery sequence **/
 typedef enum
 {
     TIMER_DSCVRY,
@@ -160,22 +162,22 @@ typedef enum
 
 
 /*======================= M A C R O S =============================*/
-
+/**to check if the plugin has EEPROM **/
 #define A2B_HAS_EEPROM( plugin, nodeAddr ) \
         ((a2b_UInt32)((plugin)->discovery.hasEeprom) & ((a2b_UInt32)1u << (a2b_UInt32)(nodeAddr)))
-
+/**to check for hasPlugin **/
 #define A2B_HAS_PLUGIN( plugin, nodeAddr ) \
         ((a2b_UInt32)((plugin)->discovery.hasPlugin) & ((a2b_UInt32)1u << (a2b_UInt32)(nodeAddr)))
-
+/**to check for needsPluginInit **/
 #define A2B_NEEDS_PLUGIN_INIT( plugin, nodeAddr ) \
         ((a2b_UInt32)((plugin)->discovery.needsPluginInit) & ((a2b_UInt32)1u << (a2b_UInt32)(nodeAddr)))
-
+/**to check  hasSearchedForHandler**/
 #define A2B_HAS_SEARCHED_FOR_HANLDER(plugin, nodeAddr ) \
         ((a2b_UInt32)((plugin)->discovery.hasSearchedForHandler) & ((a2b_UInt32)1u << (a2b_UInt32)(nodeAddr)))
 
-/* Maps slave node address to an internal slave array index */
+/** Maps slave node address to an internal slave array index **/
 #define A2B_MAP_SLAVE_ADDR_TO_INDEX(a)  ((a2b_UInt16)(a))
-/* Maps slave array index to slave node address */
+/** Maps slave array index to slave node address **/
 #define A2B_MAP_SLAVE_INDEX_TO_ADDR(i)  ((a2b_Int16)(i))
 
 /*======================= C O D E =================================*/
@@ -205,8 +207,14 @@ static a2b_UInt32 	a2b_dscvryInitPlugin(a2b_Plugin* plugin, a2b_Int16  nodeAddr,
 static void 		a2b_dscvryDeinitPlugin(a2b_Plugin* plugin, a2b_UInt32  mode);
 static a2b_HResult 	a2b_ConfigSpreadSpectrum(a2b_Plugin* plugin, a2b_Int16 nodeAddr);
 static a2b_Bool		a2b_isAd243xChip(a2b_UInt8 vendorId, a2b_UInt8 productId);
+#ifdef ENABLE_AD232x_SUPPORT
+static a2b_Bool		a2b_isAd232xChip(a2b_UInt8 vendorId, a2b_UInt8 productId, a2b_UInt8 version);
+#endif
 static a2b_Bool		a2b_isAd2430_8_Chip(a2b_UInt8 vendorId, a2b_UInt8 productId);
 static a2b_Bool		a2b_isAd242xChipOnward(a2b_UInt8 vendorId, a2b_UInt8 productId);
+#ifdef ENABLE_AD232x_SUPPORT
+static a2b_Bool		a2b_isAd232xChipOnward(a2b_UInt8 vendorId, a2b_UInt8 productId, a2b_UInt8 siliconver);
+#endif
 static a2b_Bool		a2b_isCrossTalkFixApply(a2b_UInt8 vendorId, a2b_UInt8 productId);
 static a2b_Bool 	a2b_stackSupportedNode(a2b_UInt8 vendorId, a2b_UInt8 productId, a2b_UInt8 version);
 static a2b_Bool 	a2b_dscvryCustomAuthFrmMem(a2b_Plugin* plugin, a2b_NodeSignature nodeSig);
@@ -226,8 +234,10 @@ static a2b_Bool 	a2b_selfDscvryStartTimer(a2b_Plugin* plugin);
 static a2b_HResult a2b_populateNodeSig(a2b_Plugin* plugin, a2b_Int16 nodeAddr, a2b_NodeSignature* nodeSig);
 #endif
 static a2b_Bool		a2b_discvryHighPwrInit(a2b_Plugin* plugin, a2b_Int16 dscNodeAddr, a2b_Int16 dscNodeBddIdx);
+#if !defined(A2B_FEATURE_EEPROM_OR_FILE_PROCESSING) && !defined(A2B_FEATURE_PNP)
 static a2b_HResult 	a2b_SpiToSpiPeriConfigSendMsg(a2b_Plugin* plugin, a2b_Int16 nodeAddr);
 static void			a2b_SpiToSpiPeriConfigDone(struct a2b_Msg* msg, a2b_Handle userData);
+#endif
 static a2b_UInt16	a2b_getDscvryTimeOutInMs(a2b_Plugin* plugin, a2b_Int16 nodeAddr);
 static a2b_Int32	a2b_dscvryWriteMstrI2sgcfgInvSeq(a2b_Plugin* plugin);
 static void 		a2b_onReDiscTimeout(struct a2b_Timer *timer, a2b_Handle userData);
@@ -514,6 +524,11 @@ a2b_dscvryInitPluginComplete_NoEeprom
     bdd_DiscoveryMode eDscMode;
     a2b_UInt32 nDscvrdNode = 0u;
 
+	a2b_UInt8 wBuf[4u];
+	a2b_Bool  isXTalkFixApplicable;
+	const bdd_Node* bddNodeObj;
+	a2b_Int16 dscNodeBddIdx;
+
      A2B_UNUSED(isCancelled);
 
 	 if(plugin == A2B_NULL)
@@ -521,6 +536,8 @@ a2b_dscvryInitPluginComplete_NoEeprom
 		return;
 	 }
 
+	 dscNodeBddIdx = (a2b_Int16)plugin->discovery.dscNumNodes;
+	 bddNodeObj = &plugin->bdd->nodes[dscNodeBddIdx];
 	 eDscMode = a2b_ovrGetDiscMode(plugin);
 
     if ( msg )
@@ -562,10 +579,54 @@ a2b_dscvryInitPluginComplete_NoEeprom
     	}
     	else
     	{
-			if(nodeAddr == ((a2b_UInt32)plugin->bdd->nodes_count-(a2b_UInt32)2u))
+			if(nodeAddr >= ((a2b_UInt32)plugin->bdd->nodes_count-(a2b_UInt32)2u))
     		{
     			a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_OK );
     		}
+			else
+			{
+				/*Workaround for Optimized Discovery Flow anomaly number(18-00-0068)
+				*
+				* During a sub-node discovery, if host processor performs I2C transaction and the if node getting discovered responds with SRF(if we had written discovery and started node and peripheral initialization.), then
+				* the I2C transaction initiated will get wrong acknowledgement or if it is a read operation we will get garbled data.
+				*
+				*
+				* DISCVRY Register needs to be written after node and Peripheral Initialization
+				* in case of Optimized and advanced discovery */
+				if (!a2b_dscvryStartTimer(plugin, TIMER_DSCVRY, nodeAddr))
+				{
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
+					A2B_DSCVRY_SEQEND(plugin->ctx);
+					return;
+				}
+
+				/*NodeAdr should be set to last Discovered node before writing DISCVRY register*/
+				wBuf[0u] = A2B_REG_NODEADR;
+				wBuf[1u] = (a2b_UInt8)nDscvrdNode;
+				status = a2b_regWrite(plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf);
+
+				isXTalkFixApplicable = a2b_isCrossTalkFixApply(bddNodeObj->nodeDescr.vendor, bddNodeObj->nodeDescr.product);
+				wBuf[0] = A2B_REG_DISCVRY;
+				/* Cross Talk fix is enable, then increase the response cycle */
+				if ((plugin->bdd->policy.bCrossTalkFixApply == A2B_TRUE) && (isXTalkFixApplicable == A2B_TRUE))
+				{
+					wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs + 2u;
+				}
+				else
+				{
+					wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs;
+				}
+
+				status = a2b_regWrite(plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf);
+
+				if (A2B_FAILED(status))
+				{
+					A2B_DSCVRY_ERROR0(plugin->ctx, "a2b_dscvryInitPluginComplete_NoEeprom", "Cannot discover next node");
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
+					A2B_DSCVRY_SEQEND(plugin->ctx);
+					return;
+				}
+			}
 		}
     }
     else
@@ -609,6 +670,10 @@ a2b_dscvryInitPluginComplete_EepromComplete
                                         A2B_FAC_PLUGIN,
                                         A2B_EC_INTERNAL);
     bdd_DiscoveryMode eDscMode;
+    a2b_UInt8 wBuf[4u];
+    	a2b_Bool  isXTalkFixApplicable;
+    	const bdd_Node* bddNodeObj;
+    	a2b_Int16 dscNodeBddIdx;
 
     A2B_UNUSED(isCancelled);
 
@@ -618,6 +683,9 @@ a2b_dscvryInitPluginComplete_EepromComplete
     }
 
     eDscMode = a2b_ovrGetDiscMode(plugin);
+    dscNodeBddIdx = (a2b_Int16)plugin->discovery.dscNumNodes;
+    	 bddNodeObj = &plugin->bdd->nodes[dscNodeBddIdx];
+    	 eDscMode = a2b_ovrGetDiscMode(plugin);
 
     if ( msg )
     {
@@ -676,9 +744,54 @@ a2b_dscvryInitPluginComplete_EepromComplete
        	}
        	else
        	{
-       		if(nodeAddr == ((a2b_UInt32)plugin->bdd->nodes_count-(a2b_UInt32)2u))
+       		if(nodeAddr >= ((a2b_UInt32)plugin->bdd->nodes_count-(a2b_UInt32)2u))
        		{
 				a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_OK );
+       		}
+       		else
+       		{
+
+				/*Workaround for Optimized Discovery Flow anomaly number(18-00-0068)
+				*
+				* During a sub-node discovery, if host processor performs I2C transaction and the if node getting discovered responds with SRF(if we had written discovery and started node and peripheral initialization.), then
+				* the I2C transaction initiated will get wrong acknowledgement or if it is a read operation we will get garbled data.
+				*
+				*
+				* DISCVRY Register needs to be written after node and Peripheral Initialization
+				* in case of Optimized and advanced discovery */
+				if (!a2b_dscvryStartTimer(plugin, TIMER_DSCVRY, nodeAddr))
+				{
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
+					A2B_DSCVRY_SEQEND(plugin->ctx);
+					return;
+				}
+
+				/*NodeAdr should be set to last Discovered node before writing DISCVRY register*/
+				wBuf[0u] = A2B_REG_NODEADR;
+				wBuf[1u] = (a2b_UInt8)nDscvrdNode;
+				status = a2b_regWrite(plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf);
+
+				isXTalkFixApplicable = a2b_isCrossTalkFixApply(bddNodeObj->nodeDescr.vendor, bddNodeObj->nodeDescr.product);
+				wBuf[0] = A2B_REG_DISCVRY;
+				/* Cross Talk fix is enable, then increase the response cycle */
+				if ((plugin->bdd->policy.bCrossTalkFixApply == A2B_TRUE) && (isXTalkFixApplicable == A2B_TRUE))
+				{
+					wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs + 2u;
+				}
+				else
+				{
+					wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs;
+				}
+
+				status = a2b_regWrite(plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf);
+
+				if (A2B_FAILED(status))
+				{
+					A2B_DSCVRY_ERROR0(plugin->ctx, "a2b_dscvryInitPluginComplete_Eeprom", "Cannot discover next node");
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
+					A2B_DSCVRY_SEQEND(plugin->ctx);
+					return;
+				}
        		}
        	}
     }
@@ -802,7 +915,6 @@ a2b_dscvryInitPlugin
     struct a2b_Msg* msg;
     a2b_HResult     result;
     a2b_PluginInit* pluginInit;
-    struct a2b_MsgNotifier 	*notifyIrptI2CError;
     a2b_UInt32 status = A2B_EC_OK;
 
     if ( A2B_NEEDS_PLUGIN_INIT( plugin, nodeAddr ) )
@@ -873,8 +985,8 @@ a2b_dscvryInitPlugin
     }
 
 	/* Register for notifications on I2C to I2C peripheral configuration done events */
-    notifyIrptI2CError = a2b_msgRtrRegisterNotify(plugin->ctx, A2B_MSGREQ_PERIPH_I2C_ERROR , &a2b_I2CErrorReported, A2B_NULL, A2B_NULL);
-	if(notifyIrptI2CError != A2B_NULL)
+	plugin->notifyIrptI2CError = a2b_msgRtrRegisterNotify(plugin->ctx, A2B_MSGREQ_PERIPH_I2C_ERROR, &a2b_I2CErrorReported, A2B_NULL, A2B_NULL);
+	if (plugin->notifyIrptI2CError != A2B_NULL)
 	{
         /* Do nothing */
 	}
@@ -934,7 +1046,11 @@ a2b_dscvryEnd
     a2b_timerStop( plugin->timer );
 
     eDscMode = a2b_ovrGetDiscMode(plugin);
-
+	if (plugin->notifyIrptI2CError)
+	{
+		a2b_msgRtrUnregisterNotify(plugin->notifyIrptI2CError);
+		plugin->notifyIrptI2CError = NULL;
+	}
     if ( (a2b_UInt32)A2B_EC_OK == errCode )
     {
 #ifdef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
@@ -1054,8 +1170,7 @@ a2b_dscvryEnd
 	if(errCode != (a2b_UInt32)A2B_EC_DISCOVERY_PWR_FAULT)
 	{
 		/* Disable power on the B side of the node */
-		a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl);
-
+		a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[plugin->discovery.dscNumNodes].ctrlRegs.swctl);
 		wBuf[0] = A2B_REG_SWCTL;
 		wBuf[1] = ((nUserSWCTL & A2B_REG_USER_SWCTL) | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
 		wBuf[1] &= (~(A2B_BITM_SWCTL_ENSW));
@@ -1321,6 +1436,7 @@ a2b_onDiscTimeout
 	{
 		ret = A2B_MAKE_HRESULT(A2B_SEV_FAILURE, A2B_FAC_PLUGIN, A2B_EC_POWER_DIAG_FAILURE);
 		A2B_TRACE1((plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR), "a2b_pwrDiagStart: failed reading SWSTAT2 register" "errCode=0x%X", &ret));
+		a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_BUSY);
 	}
 	else
 	{
@@ -1364,7 +1480,6 @@ a2b_onSelfDiscTimeout
 )
 {
 	a2b_Plugin* plugin = (a2b_Plugin*)userData;
-	a2b_Bool bActive = false;
 	a2b_UInt8 wBuf[4];
 	a2b_UInt8 rBuf[3];
 	a2b_HResult status;
@@ -1499,6 +1614,9 @@ a2b_onResetTimeout
     )
 {
     a2b_Plugin* plugin = (a2b_Plugin*)userData;
+#ifdef A2BAPP_PC_INTERRUPT_RECHECK
+	a2b_HResult ret = 0;
+#endif
 #ifdef A2B_ENABLE_SUPPORT_TWO_STEP_DISCOVERY
 	a2b_Int16   nodeAddr = 0;
 #endif
@@ -1506,7 +1624,21 @@ a2b_onResetTimeout
 
     if (plugin->discovery.inDiscovery)
     {
-    	if(plugin->discovery.bIsMstrRunning)
+#ifdef A2BAPP_PC_INTERRUPT_RECHECK
+		/* Check the interrupt status one more time in
+	 * case of a timing race condition.
+	 */
+		if (!plugin->discovery.bIsMstrRunning)
+		{
+			ret = a2b_intrQueryIrq(plugin->ctx);
+		}
+#endif
+    	if(plugin->discovery.bIsMstrRunning
+#ifdef A2BAPP_PC_INTERRUPT_RECHECK
+    			&& A2B_SUCCEEDED(ret)
+#endif
+    	)
+
     	{
 #ifdef A2B_ENABLE_SUPPORT_TWO_STEP_DISCOVERY
 			/* checking if this is AD2437 Network, since mixed TRX NW is not allowed, only main node is checked */
@@ -1544,6 +1676,22 @@ a2b_onResetTimeout
 
 } /* a2b_onResetTimeout */
 
+/*!****************************************************************************
+*
+*  \b              a2b_getDscvryTimeOutInMs
+*
+*  Handle the discovery timeout.
+*
+*  \param          [in]    plugin
+*  \param          [in]    nodeAddr
+*
+*  \pre            None
+*
+*  \post           None
+*
+*  \return         returns delay
+*
+******************************************************************************/
 static a2b_UInt16 a2b_getDscvryTimeOutInMs(a2b_Plugin* plugin, a2b_Int16 nodeAddr)
 {
 	a2b_Bool	isAd243xMedHiPwrChip = A2B_FALSE;
@@ -1581,12 +1729,12 @@ static a2b_UInt16 a2b_getDscvryTimeOutInMs(a2b_Plugin* plugin, a2b_Int16 nodeAdd
 *
 *  \param          [in]    plugin
 *  \param          [in]    type
-*
+*  \param          [in]    nodeAddr
 *  \pre            None
 *
 *  \post           None
 *
-*  \return         [add here]
+* \return		true always
 *
 ******************************************************************************/
 static a2b_Bool
@@ -1731,6 +1879,7 @@ a2b_dscvryNodeInterruptInit
     a2b_Int16 nodeAddr = nodeBddIdx-1;
     a2b_HResult status = A2B_RESULT_SUCCESS;
     a2b_UInt32 nRetVal;
+	a2b_Bool isAd243x = A2B_FALSE;
 
     if ((nodeBddIdx < 0) || (nodeBddIdx >= (a2b_Int16)plugin->bdd->nodes_count))
     {
@@ -1739,6 +1888,22 @@ a2b_dscvryNodeInterruptInit
 
     A2B_DSCVRY_SEQGROUP0( plugin->ctx, 
                           "Interrupt Registers" );
+	isAd243x = A2B_IS_AD243X_CHIP(plugin->nodeSig.siliconInfo.vendorId, plugin->nodeSig.siliconInfo.productId);
+	if (isAd243x)
+	{
+		if (plugin->bdd->nodes[nodeBddIdx].spiRegs.has_spimsk)
+		{
+			a2b_UInt8 wBuf[4];
+			wBuf[0] = A2B_REG_SPIMSK;
+			wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[nodeBddIdx].spiRegs.spimsk;
+			status = a2b_regWrite(plugin->ctx, nodeAddr, 2u, wBuf);
+			if (A2B_FAILED(status))
+			{
+				A2B_DSCVRY_SEQEND(plugin->ctx);
+				return A2B_FALSE;
+			}
+		}
+	}
 
     if (plugin->bdd->nodes[nodeBddIdx].has_intRegs)
     {
@@ -1884,15 +2049,6 @@ a2b_dscvryNodeComplete
     
     if ( (bdd_DISCOVERY_MODE_SIMPLE == eDiscMode) && (A2B_NODEADDR_MASTER == nodeAddr) )
     {
-		if (plugin->pwrDiag.results.isNonCriticalFault == A2B_TRUE)
-		{
-			/*	During partial discovery:
-				- Switch is already disabled in line fault section for master. So, proceed for configuring the master node which is discovered. 
-				- CONFIGURING THE MASTER NODE ITSELF MAY NOT BE REQUIRED AS THE NON-CRITICAL FAULT OCCURED BETWEEN MASTER AND SLAVE 0. HOWEVER, KEEPING IT FOR NOW!!
-			*/				
-		}
-		else
-		{
 			a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl);
 
 			wBuf[0] = A2B_REG_SWCTL;
@@ -1901,7 +2057,6 @@ a2b_dscvryNodeComplete
 			wBuf[1] |= (nUserSWCTL & A2B_REG_USER_SWCTL);
 			status = a2b_regWrite(plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf);
 			i2cCount++;
-		}  
     }
 
 	/*RESPCYCS in case of Self Discovery*/
@@ -1957,6 +2112,7 @@ a2b_dscvryNodeComplete
 	A2B_CHECK_AND_WRITE(i2cI2sRegs, pdmctl, PDMCTL);
 	A2B_CHECK_AND_WRITE(i2cI2sRegs, pdmctl2, PDMCTL2);
 	A2B_CHECK_AND_WRITE(i2cI2sRegs, errmgmt, ERRMGMT);
+	A2B_CHECK_AND_WRITE(i2cI2sRegs, i2stest, I2STEST);
 
     A2B_DSCVRY_SEQEND(plugin->ctx);    
 
@@ -2269,24 +2425,16 @@ a2b_dscvryNodeComplete
 		    /* Don't enable switch to last slave */
         	if(nodeAddr != ((a2b_Int16)plugin->bdd->nodes_count - 2))
         	{
-				if (plugin->pwrDiag.results.isNonCriticalFault == A2B_TRUE)
-				{
-					/*	During partial discovery:
-						- Switch is already disabled in line fault section for the slave node where we found a non-critical fault. 
-						- So, proceed for configuring the master node which is discovered
-					*/
-				}
-				else
+				if (nodeAddr < ((a2b_Int16)plugin->discovery.dscNumNodes - (a2b_Int16)1))
 				{
 					a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[nodeAddr].ctrlRegs.swctl);
-
 					wBuf[0] = A2B_REG_SWCTL;
 					/* Enable switch during a fresh discovery */
 					wBuf[1] = A2B_BITM_SWCTL_ENSW | (a2b_UInt8)(plugin->slaveNodeSig[nodeAddr].highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV);
 					wBuf[1] |= (nUserSWCTL & A2B_REG_USER_SWCTL);
 					status = a2b_regWrite(plugin->ctx, nodeAddr, 2u, wBuf);
 					i2cCount++;
-				}				
+				}
         	}
         }
     }
@@ -2309,6 +2457,7 @@ a2b_dscvryNodeComplete
     if (( A2B_SUCCEEDED(status) ) && (bDoEepromCfg) &&
         ( A2B_HAS_EEPROM(plugin, nodeAddr) ) )
     {
+		plugin->overrides[0]= A2B_MPLUGIN_IGN_PERIPH_ERR; // to Ignore peripheral write failure at subnode
         retCode = a2b_periphCfgInitProcessing( plugin, nodeAddr );
         if ( A2B_EXEC_COMPLETE_FAIL == retCode )
         {
@@ -2364,6 +2513,7 @@ a2b_dscvryNodeComplete
 *                  A2B_FALSE == Message sending failed
 *
 ******************************************************************************/
+#ifndef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
 static a2b_HResult a2b_SpiToSpiPeriConfigSendMsg(a2b_Plugin* plugin, a2b_Int16 nodeAddr)
 {
 	struct a2b_Msg *msg;
@@ -2480,7 +2630,7 @@ static void a2b_SpiToSpiPeriConfigDone(struct a2b_Msg* msg, a2b_Handle userData)
 	}
 	A2B_UNUSED(userData);
 }
-
+#endif
 /*!****************************************************************************
 *
 *  \b              a2b_ReportI2CError
@@ -2600,9 +2750,14 @@ a2b_FinalMasterSetup(a2b_Plugin* plugin,
 	a2b_Bool isAd2430_8 = A2B_FALSE;
     a2b_UInt32 				i2cCount = 0u;
     a2b_UInt8 				wBuf[4u];
+	a2b_UInt8               rBuf[4u];
     a2b_Int16 				nodeIdx = nodeAddr+1;
+    a2b_Int16               node;
     a2b_UInt32 	errCode =   (a2b_UInt32)A2B_EC_OK;
-    struct a2b_MsgNotifier 	*notifyIrptSpiToSpiPeriConfigDone;
+	bdd_DiscoveryMode eDscMode;
+#if !defined(A2B_FEATURE_EEPROM_OR_FILE_PROCESSING) && !defined(A2B_FEATURE_PNP)
+    struct a2b_MsgNotifier 	*notifyIrptSpiToSpiPeriConfigDone = A2B_NULL;
+#endif
 
     A2B_UNUSED(errCode);
     
@@ -2632,6 +2787,22 @@ a2b_FinalMasterSetup(a2b_Plugin* plugin,
 			wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[nodeIdx].ctrlRegs.slotfmt;
 			status = a2b_regWrite( plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf );
 			i2cCount++;
+		}
+		if ( A2B_SUCCEEDED(status) )
+		{
+			/* We need to enable phantom power to the next node,
+			* to do so we write to the just discovered node.
+			*/
+			wBuf[0] = A2B_REG_SWCTL;
+			if (plugin->bdd->nodes[plugin->bdd->nodes_count-1].nodeSetting.eHighPwrSwitchCfg == bdd_highPwrSwitchCfg_HPSW_CFG_4)
+			{
+				wBuf[1] = 0x21;
+				status = a2b_regWrite(plugin->ctx, plugin->bdd->nodes_count-2, 2u, wBuf);
+#ifndef A2B_FEATURE_PNP
+				/* Active delay for AD243x after enabling SWCTL */
+				a2b_ActiveDelay(plugin->ctx, A2B_HIGH_PWR_SWITCH_DELAY);
+#endif
+			}
 		}
 
 		if ( A2B_SUCCEEDED(status) )
@@ -2698,24 +2869,119 @@ a2b_FinalMasterSetup(a2b_Plugin* plugin,
 		}
 		A2B_DSCVRY_SEQEND( plugin->ctx );
 
+		eDscMode = a2b_ovrGetDiscMode(plugin);
+
+		if ((bdd_DISCOVERY_MODE_ADVANCED == eDscMode) && ((a2b_Int16)(plugin->discovery.dscNumNodes) == plugin->bdd->nodes_count - 1u))
+		{
+			for (node = plugin->bdd->nodes_count - 2u; node >= 0; node--)
+			{
+				/* CLear BECNT for Sub node*/
+				wBuf[0u] = A2B_REG_BECNT;
+				wBuf[1] = 0U;
+				status = a2b_regWrite(plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf);
+				if (A2B_FAILED(status))
+				{
+					A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+						"INTMASK0 Register Read Failed");
+				}
+
+				/* Enable BECCTL count for sub node*/
+				wBuf[0u] = A2B_REG_BECCTL;
+				wBuf[1u] = (a2b_UInt8)plugin->bdd->nodes[nodeIdx].intRegs.becctl;
+				status = a2b_regWrite(plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf);
+				if (A2B_FAILED(status))
+				{
+					A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+						"INTMASK0 Register Read Failed");
+				}
+
+				/* Enable BECOVF interrupt for sub Node*/
+				wBuf[0u] = A2B_REG_INTMSK0;
+				rBuf[0] = 0U;
+				status = a2b_regWriteRead(plugin->ctx, ((a2b_Int16)nodeAddr), 1, wBuf, 1, rBuf);
+
+				if (A2B_FAILED(status))
+				{
+					A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+						"INTMASK0 Register Read Failed");
+				}
+				else
+				{
+					wBuf[1] = rBuf[0] | A2B_BITM_INTPND0_BECOVF;
+					status = a2b_regWrite(plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf);
+					if (A2B_FAILED(status))
+					{
+						A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+							"INTMSK0 Register Write Failed");
+					}
+				}
+			}
+			/* Clear BECNT for Main node */
+			wBuf[0u] = A2B_REG_BECNT;
+			wBuf[1] = 0U;
+			status = a2b_regWrite(plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf);
+			if (A2B_FAILED(status))
+			{
+				A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+					"INTMSK0 Register Write Failed");
+			}
+			/* Enable BECCTL count for Main node*/
+			wBuf[0u] = A2B_REG_BECCTL;
+			wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[0U].intRegs.becctl;
+			status = a2b_regWrite(plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf); 
+			if (A2B_FAILED(status))
+			{
+				A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+					"INTMSK0 Register Write Failed");
+			}
+
+			/* Enable BECOVF interrupt for Main Node*/
+			wBuf[0u] = A2B_REG_INTMSK0;
+			rBuf[0] = 0U;
+			status = a2b_regWriteRead(plugin->ctx, A2B_NODEADDR_MASTER, 1, wBuf, 1, rBuf);
+
+			if (A2B_FAILED(status))
+			{
+				A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+					"INTMSK0 Register Read Failed");
+			}
+			else
+			{
+				wBuf[1] = rBuf[0] | A2B_BITM_INTPND0_BECOVF;
+				status = a2b_regWrite(plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf);
+				if (A2B_FAILED(status))
+				{
+					A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+						"INTMSK0 Register Write Failed");
+				}
+			}
+		}
+
 #ifndef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
+#ifndef A2B_FEATURE_PNP
 		if (plugin->ctx->stk->accessInterface == A2B_ACCESS_SPI)
 		{
 			a2b_stackResetSpiToSpiPeriReqRespFlags(plugin->ctx);
-
+#ifdef A2B_FEATURE_PARTIAL_DISC
+			if(plugin->discovery.inPartialDiscovery == A2B_FALSE)
+			{
+#endif
 			/* Register for notifications on SPI to SPI peripheral configuration done events */
-			notifyIrptSpiToSpiPeriConfigDone = a2b_msgRtrRegisterNotify(plugin->ctx, A2B_MSGNOTIFY_SPITOSPI_PERICONFIG_DONE, &a2b_SpiToSpiPeriConfigDone, A2B_NULL, A2B_NULL);
-			if (notifyIrptSpiToSpiPeriConfigDone != A2B_NULL)
+			notifyIrptSpiToSpiPeriConfigDone = a2b_msgRtrRegisterNotify(plugin->ctx, A2B_MSGNOTIFY_SPITOSPI_PERICONFIG_DONE , &a2b_SpiToSpiPeriConfigDone, A2B_NULL, A2B_NULL);
+#ifdef A2B_FEATURE_PARTIAL_DISC
+			}
+#endif
+			if(notifyIrptSpiToSpiPeriConfigDone != A2B_NULL)
 			{
 				/* We need to configure the SPI peripherals on the discovered nodes */
-				for (nodeAddr = ((a2b_Int16)plugin->discovery.dscNumNodes - (a2b_Int16)1); nodeAddr > A2B_NODEADDR_MASTER; nodeAddr--)
+				for ( nodeAddr = ((a2b_Int16)plugin->discovery.dscNumNodes-(a2b_Int16)1); nodeAddr > A2B_NODEADDR_MASTER; nodeAddr-- )
 				{
-					isAd243x = A2B_IS_AD243X_CHIP(plugin->slaveNodeSig[nodeAddr].siliconInfo.vendorId,
-						plugin->slaveNodeSig[nodeAddr].siliconInfo.productId);
-					if (isAd243x)
-					{
-						/* Send SPI to SPI peripheral configuration messages to slave plugin */
-						status = a2b_SpiToSpiPeriConfigSendMsg(plugin, nodeAddr);
+				    isAd243x = A2B_IS_AD243X_CHIP(plugin->slaveNodeSig[nodeAddr].siliconInfo.vendorId,
+				        plugin->slaveNodeSig[nodeAddr].siliconInfo.productId);
+				    if(isAd243x)
+				    {
+				        /* Send SPI to SPI peripheral configuration messages to slave plugin */
+				        status = a2b_SpiToSpiPeriConfigSendMsg(plugin, nodeAddr);
 
 						/* Increment the SPI to SPI peripheral configuration requests and the flag */
 						a2b_stackIncrSpiToSpiPeriConfigReqFlags(plugin->ctx, nodeAddr);
@@ -2726,7 +2992,8 @@ a2b_FinalMasterSetup(a2b_Plugin* plugin,
 			{
 				status = A2B_MAKE_HRESULT(A2B_SEV_FAILURE, A2B_FAC_PLUGIN, A2B_EC_INTERNAL);
 			}
-		}		
+		}
+#endif
 #else
         /* We need to configure the SPI peripherals on the discovered nodes */
         for ( nodeAddr = ((a2b_Int16)plugin->discovery.dscNumNodes-(a2b_Int16)1); nodeAddr > A2B_NODEADDR_MASTER; nodeAddr-- )
@@ -3070,6 +3337,32 @@ a2b_dscvryNetComplete
 
 #endif /* A2B_FEATURE_WAIT_ON_PERIPHERAL_CFG_DELAY */
 
+#ifdef A2B_FEATURE_PARTIAL_DISC
+        if (plugin->discovery.inPartialDiscovery)
+		{
+        	for(nNumNodesConfig = ((a2b_Int16)plugin->discovery.dscNumPartialNodes - (a2b_Int16)2);nNumNodesConfig >= A2B_NODEADDR_MASTER; nNumNodesConfig--)
+        	{
+        		if(nNumNodesConfig == A2B_NODEADDR_MASTER)
+        		{
+        			a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl);
+					wBuf[0] = A2B_REG_SWCTL;
+					/* Enable switch during a fresh discovery */
+					wBuf[1] = A2B_BITM_SWCTL_ENSW | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV);
+					wBuf[1] |= (nUserSWCTL & A2B_REG_USER_SWCTL);
+					status = a2b_regWrite(plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf);
+        		}
+        		else
+        		{
+        			a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[nNumNodesConfig].ctrlRegs.swctl);
+					wBuf[0] = A2B_REG_SWCTL;
+					/* Enable switch during a fresh discovery */
+					wBuf[1] = A2B_BITM_SWCTL_ENSW | (a2b_UInt8)(plugin->slaveNodeSig[nNumNodesConfig].highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV);
+					wBuf[1] |= (nUserSWCTL & A2B_REG_USER_SWCTL);
+					status = a2b_regWrite(plugin->ctx, nNumNodesConfig, 2u, wBuf);
+        		}
+        	}
+		}
+#endif
     }
     else /* if ( bdd_DISCOVERY_MODE_MODIFIED == a2b_ovrGetDiscMode(plugin) )*/
     {
@@ -3138,7 +3431,10 @@ a2b_dscvryNetComplete
 	{
 		/* Skip master node configuration as it is a partial discovery and perform only final master setup */
 		initMaster = A2B_FALSE;
-
+#ifdef A2B_FEATURE_PNP
+		a2b_dscvryNodeComplete( plugin, A2B_NODEADDR_MASTER,
+		                                 A2B_TRUE, &errCode );
+#endif
 		if (plugin->discovery.dscNumNodes + (a2b_UInt8)1 >= (a2b_UInt8)plugin->bdd->nodes_count)
 		{
 			/* All the dropped nodes are discovered */
@@ -3184,9 +3480,10 @@ a2b_dscvryNetComplete
 				return;
 			}
 		}
-
+#ifdef DISABLE_PWRDIAG
 		/* Re-enable power fault diagnostics again after partial discovery */
 		plugin->bDisablePwrDiag = A2B_FALSE;
+#endif
 	}
 #endif
 
@@ -3274,6 +3571,7 @@ a2b_dscvryPreSlaveInit
 	a2b_Bool isAd243x;
 	a2b_Bool isAd2430_8 = A2B_FALSE;
 	a2b_Bool  isXTalkFixApplicable;
+	a2b_Bool eDiscMode;
 	const bdd_Node      *bddNodeObj;
 #ifdef A2B_ENABLE_SUPPORT_TWO_STEP_DISCOVERY
 	a2b_UInt8 levelMask;
@@ -3282,6 +3580,8 @@ a2b_dscvryPreSlaveInit
 	/* Discovered node information */
 	a2b_Int16 dscNodeBddIdx = (a2b_Int16)plugin->discovery.dscNumNodes;
 	a2b_Int16 dscNodeAddr = dscNodeBddIdx - 1;
+
+	eDiscMode = a2b_ovrGetDiscMode(plugin);
 
 	/* Must add one to account for the fact that the nodes_count
 	 * also includes the master node.
@@ -3421,6 +3721,7 @@ a2b_dscvryPreSlaveInit
 					if (A2B_FAILED(status))
 					{
 						A2B_SEQ_GENNOTE0(plugin->ctx, A2B_SEQ_CHART_LEVEL_DISCOVERY, "Failed to write SWCTL of the slave node");
+						a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
 						A2B_DSCVRY_SEQEND(plugin->ctx);
 						return A2B_FALSE;
 					}
@@ -3438,6 +3739,7 @@ a2b_dscvryPreSlaveInit
 				else
 				{
 					A2B_SEQ_GENNOTE0(plugin->ctx, A2B_SEQ_CHART_LEVEL_DISCOVERY, "Failed to write SWCTL2 of the slave node");
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
 					A2B_DSCVRY_SEQEND(plugin->ctx);
 					return A2B_FALSE;
 				}
@@ -3446,6 +3748,7 @@ a2b_dscvryPreSlaveInit
 		else
 		{
 			A2B_SEQ_GENNOTE0(plugin->ctx, A2B_SEQ_CHART_LEVEL_DISCOVERY, "Failed to read SWSTAT2 of the master node");
+			a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
 			A2B_DSCVRY_SEQEND(plugin->ctx);
 			return A2B_FALSE;
 		}
@@ -3476,8 +3779,10 @@ a2b_dscvryPreSlaveInit
 #ifdef A2B_FEATURE_PARTIAL_DISC
 		if ((plugin->discovery.inPartialDiscovery == A2B_TRUE) && isAd243x)
 		{
+#ifndef A2B_FEATURE_PNP
 			/* Active delay for AD243x after enabling SWCTL */
 			a2b_ActiveDelay(ctx, A2B_HIGH_PWR_SWITCH_DELAY);
+#endif
 		}
 #endif
 	}
@@ -3506,6 +3811,7 @@ a2b_dscvryPreSlaveInit
         A2B_DSCVRY_ERROR1( ctx, "PreSlaveInit",
                            "Cannot read INTMSK0-2 on nodeAddr: %hd",
                            &dscNodeAddr );
+        a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_INTERNAL );
         A2B_DSCVRY_SEQEND( plugin->ctx );
         return A2B_FALSE;
     }
@@ -3533,7 +3839,7 @@ a2b_dscvryPreSlaveInit
             A2B_DSCVRY_ERROR1( ctx, "PreSlaveInit",
                                "Cannot write to INTMSK0-2 on nodeAddr: %hd",
                                &dscNodeAddr );
-
+			a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
             A2B_DSCVRY_SEQEND( plugin->ctx );
             return A2B_FALSE;
         }
@@ -3551,31 +3857,33 @@ a2b_dscvryPreSlaveInit
 	bddNodeObj = &plugin->bdd->nodes[dscNodeBddIdx];
     isXTalkFixApplicable = a2b_isCrossTalkFixApply(bddNodeObj->nodeDescr.vendor, bddNodeObj->nodeDescr.product);
 
-    wBuf[0] = A2B_REG_DISCVRY;
-	/* Cross Talk fix is enable, then increase the response cycle */
-	if ( (plugin->bdd->policy.bCrossTalkFixApply == 1u) && (isXTalkFixApplicable == A2B_TRUE))
+    if ((eDiscMode != bdd_DISCOVERY_MODE_OPTIMIZED) && (eDiscMode != bdd_DISCOVERY_MODE_ADVANCED))
 	{
-		wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs + 2u;
-	}
-	else
-	{
-		wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs;
-	}
-    status = a2b_regWrite(ctx,  A2B_NODEADDR_MASTER, 2u, &wBuf );
+		if (!a2b_dscvryStartTimer(plugin, TIMER_DSCVRY, dscNodeAddr))
+		{
+			A2B_DSCVRY_SEQEND(plugin->ctx);
+			return A2B_FALSE;
+		}
 
-    if ( A2B_FAILED(status) )
-    {
-        A2B_DSCVRY_ERROR0( ctx, "PreSlaveInit", "Cannot discover next node" );
-        a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_INTERNAL );
-        A2B_DSCVRY_SEQEND( plugin->ctx );
-        return A2B_FALSE;
-    }
+		wBuf[0] = A2B_REG_DISCVRY;
+		/* Cross Talk fix is enable, then increase the response cycle */
+		if ((plugin->bdd->policy.bCrossTalkFixApply == A2B_TRUE) && (isXTalkFixApplicable == A2B_TRUE))
+		{
+			wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs + 2u;
+		}
+		else
+		{
+			wBuf[1] = (a2b_UInt8)plugin->bdd->nodes[dscNodeBddIdx + 1].ctrlRegs.respcycs;
+		}
+		status = a2b_regWrite(plugin->ctx,  A2B_NODEADDR_MASTER, 2u, &wBuf );
 
-	/* Setup/Start the discovery timer */
-	if (!a2b_dscvryStartTimer(plugin, TIMER_DSCVRY, dscNodeAddr))
-	{
-		A2B_DSCVRY_SEQEND(plugin->ctx);
-		return A2B_FALSE;
+		if (A2B_FAILED(status))
+		{
+			A2B_DSCVRY_ERROR0(ctx, "PreSlaveInit", "Cannot discover next node");
+			a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_INTERNAL);
+			A2B_DSCVRY_SEQEND(plugin->ctx);
+			return A2B_FALSE;
+		}
 	}
 
     /* Now we wait for INTTYPE.DSCDONE */
@@ -3596,7 +3904,8 @@ a2b_dscvryPreSlaveInit
   *  Steps taken to init the master node before discovery for high power node
   *
   *  \param          [in]    plugin       plugin specific data
-  *
+  *  \param          [in]   dscNodeAddr  node address
+  *  \param          [in]   dscNodeBddIdx   node index
   *  \pre            None
   *
   *  \post           The following registers are altered:
@@ -3697,6 +4006,7 @@ a2b_dscvryPreMasterInit
     if ( 1u == plugin->bdd->nodes_count )
     {
         A2B_DSCVRY_ERROR0( ctx, "PreMasterInit", "No slave nodes" );
+        plugin->discovery.inDiscovery = A2B_FALSE;
         return A2B_FALSE;
     }
 
@@ -3719,14 +4029,27 @@ a2b_dscvryPreMasterInit
     plugin->nodeSig.siliconInfo.version = rBuf[2u];
     if(bddNodeObj->verifyNodeDescr)
 	{
-		if ((bddNodeObj->nodeDescr.product != plugin->nodeSig.siliconInfo.productId)||
-				(bddNodeObj->nodeDescr.version != plugin->nodeSig.siliconInfo.version))
+		if ((bddNodeObj->nodeDescr.product != plugin->nodeSig.siliconInfo.productId) || (bddNodeObj->nodeDescr.vendor != plugin->nodeSig.siliconInfo.vendorId))
 		{
 			A2B_SEQ_GENNOTE0(plugin->ctx, A2B_SEQ_CHART_LEVEL_DISCOVERY,
 				"master pid violation");
 			A2B_DSCVRY_SEQEND(plugin->ctx);
-			a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_PERMISSION);
+			a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE);
 			return A2B_FALSE;
+		}
+		if (bddNodeObj->nodeDescr.version != 0xFF)
+		{
+			if (bddNodeObj->nodeDescr.version != plugin->nodeSig.siliconInfo.version)
+			{
+				if(!a2b_CheckSiliconRevisionPresent(bddNodeObj->nodeDescr.product,(int) plugin->nodeSig.siliconInfo.version, bddNodeObj->nodeDescr.version))
+				{
+					A2B_SEQ_GENNOTE0(plugin->ctx, A2B_SEQ_CHART_LEVEL_DISCOVERY,
+						"master pid violation");
+					A2B_DSCVRY_SEQEND(plugin->ctx);
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_SILICON_AUTH);
+					return A2B_FALSE;
+				}
+			}
 		}
 	}
     isAd242x = a2b_isAd242xChipOnward(plugin->nodeSig.siliconInfo.vendorId,
@@ -4129,9 +4452,8 @@ a2b_postSelfDscvryInit
 #ifdef A2B_FEATURE_SEQ_CHART
 	a2b_Bool bSeqGroupShown = A2B_FALSE;
 #endif
-	const bdd_Node      *bddNodeObj;
 
-	bddNodeObj = &plugin->bdd->nodes[0];
+
 	if (plugin->nodeSig.siliconInfo.version == 0)
 	{
 		/*Read Num of nodes discovered*/
@@ -4398,7 +4720,7 @@ a2b_dscvryFindNodeHandler
 *
 *  \param          [in]    plugin   plugin specific data
 *
-*  \dscNodeAddr    [in]    Discovered Node Address
+*  \param			[in]   dscNodeAddr  Discovered Node Address
 *
 *  \return         1=error
 *                  0=success
@@ -4415,7 +4737,7 @@ a2b_dscvryVMTRRead
 	a2b_UInt8 	rBuf[4u];
 	a2b_UInt8 	wBuf[4u];
 	a2b_HResult status = A2B_RESULT_SUCCESS;
-	a2b_UInt8 maxThres, minThres, measVolt;
+	a2b_UInt8 maxThres;
 
 	wBuf[0] = A2B_REG_MMRPAGE;
 	wBuf[1] = 0x01;
@@ -4427,11 +4749,9 @@ a2b_dscvryVMTRRead
 
 	wBuf[0] = A2B_REG_VMTR_MNSTAT & 0xFF;
 	status |= a2b_regWriteRead(plugin->ctx, (dscNodeAddr), 1u, wBuf, 1u, rBuf);
-	minThres = rBuf[0];
 
 	wBuf[0] = A2B_REG_VMTR_VLTG1 & 0xFF; // Read the measured voltage
 	status |= a2b_regWriteRead(plugin->ctx, (dscNodeAddr), 1u, wBuf, 1u, rBuf);
-	measVolt = rBuf[0];
 
 	wBuf[0] = A2B_REG_MMRPAGE;
 	wBuf[1] = 0x0;
@@ -4462,7 +4782,7 @@ a2b_dscvryVMTRRead
 *
 *  \param          [in]    plugin   plugin specific data
 *
-*  \nNode    [in]    Discovered Node Address
+*  \param    [in]   nNode  Discovered Node Address
 *
 *  \return         FALSE=error
 *                  TRUE=success
@@ -4475,8 +4795,8 @@ a2b_dscvryVMTREnable
 	a2b_Int16 nNode
 )
 {
-	a2b_HResult nRet = 0U;
-	a2b_UInt8 	rBuf[4u];
+
+
 	a2b_UInt8 	wBuf[4u];
 	a2b_HResult status = A2B_RESULT_SUCCESS;
 	
@@ -4552,7 +4872,6 @@ a2b_dscvryNodeDiscovered
 	a2b_UInt8 			mstrBit;
 	a2b_Bool	bIsAD2430_8MasterPresent = A2B_FALSE;
 	a2b_UInt8 nRet = 0;
-	a2b_UInt8 ControlReg = 0u;
 #ifdef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
 #if defined(A2B_BCF_FROM_SOC_EEPROM) || defined(A2B_BCF_FROM_FILE_IO)
     a2b_UInt8 			nCfgBlocks = 0u;
@@ -4586,6 +4905,8 @@ a2b_dscvryNodeDiscovered
 	isAd2430_8 = a2b_isAd2430_8_Chip(bddNodeObj->nodeDescr.vendor, bddNodeObj->nodeDescr.product);
 	isAd243xMainNode = a2b_isAd243xChip(bddNodeObj->nodeDescr.vendor, bddNodeObj->nodeDescr.product);
 	
+	a2b_ActiveDelay(ctx, A2B_ONNODE_DISCOVERED_DELAY);
+
 	if ((plugin->bdd->policy.bCrossTalkFixApply) && (dscNodeIdx != 1) && (isXTalkFixApplicable == A2B_TRUE))
 	{
 		A2B_DSCVRY_SEQGROUP0(ctx, "A2B CrossTalk Fix");
@@ -4653,6 +4974,13 @@ a2b_dscvryNodeDiscovered
 		a2b_delayForNewStruct(ctx, A2B_NODEADDR_MASTER);
 
 		A2B_DSCVRY_SEQEND(plugin->ctx);
+	}
+	else
+	{
+		/* Anomaly fix for Respcyc Register is not updated at sub nodes */
+		wBuf[0] = A2B_REG_RESPCYCS;
+		wBuf[1] = plugin->bdd->nodes[dscNodeIdx].ctrlRegs.respcycs;
+		status = a2b_regWrite(ctx, (dscNodeIdx - 1), 2, wBuf);
 	}
 	
 
@@ -4730,12 +5058,12 @@ a2b_dscvryNodeDiscovered
             bNetConfigFlag = a2b_SimpleModeChkNodeConfig(plugin);
             if((bdd_DISCOVERY_MODE_SIMPLE == eDiscMode) && (bNetConfigFlag))
             {
-            	plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_PERMISSION;
+            	plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE;
             	a2b_dscvryNetComplete(plugin);
             }
             else
             {
-				a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_PERMISSION );
+				a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE);
             }
 
             A2B_DSCVRY_SEQEND( plugin->ctx );
@@ -4745,31 +5073,56 @@ a2b_dscvryNodeDiscovered
 		/* Mandatory checking for AD2420 & AD2429 */
 		verifyNodeDescr = (a2b_Bool)bddNodeObj->verifyNodeDescr;
         /* Optionally validate the node descriptor info */
-        if ((verifyNodeDescr) &&
-            (( bddNodeObj->nodeDescr.product !=
-                                   nodeSig.siliconInfo.productId ) ||
-             ( bddNodeObj->nodeDescr.version !=
-                                   nodeSig.siliconInfo.version )) )
+        if (verifyNodeDescr)
         {
+			if ((bddNodeObj->nodeDescr.product != nodeSig.siliconInfo.productId) || (bddNodeObj->nodeDescr.vendor != nodeSig.siliconInfo.vendorId))
+			{
+				/* Copy the signature information to the plugin */
+				plugin->slaveNodeSig[dscNodeAddr] = nodeSig;
+				A2B_DSCVRY_ERROR1(ctx, "nodeDiscovered",
+					"Failed Authentication ",
+					&dscNodeAddr);
 
-			/* Copy the signature information to the plugin */
-			plugin->slaveNodeSig[dscNodeAddr] = nodeSig;
-            A2B_DSCVRY_ERROR1( ctx, "nodeDiscovered",
-                              "Failed Authentication ",
-                              &dscNodeAddr );
+				bNetConfigFlag = a2b_SimpleModeChkNodeConfig(plugin);
+				if ((bdd_DISCOVERY_MODE_SIMPLE == a2b_ovrGetDiscMode(plugin)) && (bNetConfigFlag))
+				{
+					plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE;
+					a2b_dscvryNetComplete(plugin);
+				}
+				else
+				{
+					a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE);
+				}
+				A2B_DSCVRY_SEQEND(plugin->ctx);
+				return A2B_FALSE;
+			}
+			if (bddNodeObj->nodeDescr.version != 0XFF)/*if version is 0XFF then silicon version auth must be ignored*/
+			{
+				if (bddNodeObj->nodeDescr.version != nodeSig.siliconInfo.version)
+				{
+					if(!a2b_CheckSiliconRevisionPresent(bddNodeObj->nodeDescr.product,(int) nodeSig.siliconInfo.version, bddNodeObj->nodeDescr.version))
+					{
+						/* Copy the signature information to the plugin */
+						plugin->slaveNodeSig[dscNodeAddr] = nodeSig;
+						A2B_DSCVRY_ERROR1(ctx, "nodeDiscovered",
+							"Faileds silicon Authentication ",
+							&dscNodeAddr);
 
-            bNetConfigFlag = a2b_SimpleModeChkNodeConfig(plugin);
-            if((bdd_DISCOVERY_MODE_SIMPLE == a2b_ovrGetDiscMode(plugin)) && (bNetConfigFlag))
-            {
-            	plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_PERMISSION;
-            	a2b_dscvryNetComplete(plugin);
-            }
-            else
-            {
-				a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_PERMISSION );
-            }
-            A2B_DSCVRY_SEQEND( plugin->ctx );
-            return A2B_FALSE;
+						bNetConfigFlag = a2b_SimpleModeChkNodeConfig(plugin);
+						if ((bdd_DISCOVERY_MODE_SIMPLE == a2b_ovrGetDiscMode(plugin)) && (bNetConfigFlag))
+						{
+							plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_SILICON_AUTH;
+							a2b_dscvryNetComplete(plugin);
+						}
+						else
+						{
+							a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_SILICON_AUTH);
+						}
+						A2B_DSCVRY_SEQEND(plugin->ctx);
+						return A2B_FALSE;
+					}
+				}
+			}
         }
 
         nodeSig.hasI2cCapability = (a2b_Bool)((rBuf[3u] & A2B_BITM_CAPABILITY_I2CAVAIL) != 0u);
@@ -5017,9 +5370,7 @@ a2b_dscvryNodeDiscovered
                         (( bddNodeObj->nodeDescr.vendor != 
                                                nodeSig.eepromInfo.vendorId ) ||
                          ( bddNodeObj->nodeDescr.product != 
-                                               nodeSig.eepromInfo.productId ) ||
-                         ( bddNodeObj->nodeDescr.version != 
-                                               nodeSig.eepromInfo.version )) )
+                                               nodeSig.eepromInfo.productId )) )
                     {
                         /* clear the bit */
                         plugin->discovery.hasEeprom ^= (a2b_UInt32)((a2b_UInt32)1u << dscNodeAddr);
@@ -5028,9 +5379,25 @@ a2b_dscvryNodeDiscovered
                                           "Node %hd EEPROM failed verification",
                                           &dscNodeAddr );
 
-                        a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_PERMISSION );
+                        a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE);
                         A2B_DSCVRY_SEQEND( plugin->ctx );
                         return A2B_FALSE;
+                    }
+                    else if(bddNodeObj->verifyNodeDescr && bddNodeObj->nodeDescr.version != 0XFF)
+                    {
+                    	if(bddNodeObj->nodeDescr.version != nodeSig.eepromInfo.version)
+                    	{
+							if (!a2b_CheckSiliconRevisionPresent(bddNodeObj->nodeDescr.product, nodeSig.eepromInfo.version, bddNodeObj->nodeDescr.version))
+							{
+								A2B_DSCVRY_ERROR1(ctx, "nodeDiscovered",
+									"Node %hd EEPROM- silicon failed verification",
+									&dscNodeAddr);
+
+								a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_SILICON_AUTH);
+								A2B_DSCVRY_SEQEND(plugin->ctx);
+								return A2B_FALSE;
+							}
+                    	}
                     }
                 }
                 else
@@ -5158,7 +5525,13 @@ a2b_dscvryNodeDiscovered
 			}
 			else
 			{
+#ifdef A2B_FEATURE_PNP
+				plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_BUSY;
+				plugin->discovery.dscNumNodes--;
+				a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_DISCOVERY_FAILURE );
+#else
 				a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_CANCELLED );
+#endif
 			}
 		}
 #ifdef A2B_FEATURE_COMM_CH
@@ -5196,37 +5569,57 @@ a2b_dscvryPartial
 )
 {
 	a2b_UInt8 wBuf[2u];
-	a2b_HResult status;
 	a2b_Int16 nodeAddr;
+	a2b_Int16 nNodeIdx;
 	a2b_UInt8 nUserSWCTL;
 
 	plugin->pwrDiag.state = A2B_PWR_DIAG_STATE_INIT;
 	plugin->discovery.inDiscovery = A2B_TRUE;
+#ifdef DISABLE_PWRDIAG
 	plugin->bDisablePwrDiag = A2B_TRUE;
+#endif
 	plugin->discovery.inPartialDiscovery = A2B_TRUE;
 	nodeAddr = (a2b_Int16)plugin->discovery.dscNumNodes - (a2b_Int16)1;
 
 	/* Clear discovery error code of previous attempts */
 	plugin->discovery.discoveryCompleteCode = (a2b_UInt32)A2B_EC_OK;
+	plugin->discovery.bAd243xCfg4OpenDetect = false;
 
 	/* Disable power on the B side of the node */
 	nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[nodeAddr].ctrlRegs.swctl);
 	wBuf[0] = A2B_REG_SWCTL;
 	wBuf[1] = ((nUserSWCTL & A2B_REG_USER_SWCTL) | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
 	wBuf[1] &= (~(A2B_BITM_SWCTL_ENSW));
-	status = a2b_regWrite(plugin->ctx, nodeAddr, 2u, wBuf);
+	a2b_regWrite(plugin->ctx, nodeAddr, 2u, wBuf);
 	
 	/* Wait for re-discovery wait time */	
 	if (a2b_isAd243xChip(plugin->slaveNodeSig[nodeAddr].siliconInfo.vendorId, plugin->slaveNodeSig[nodeAddr].siliconInfo.productId)||
 		a2b_isAd2430_8_Chip(plugin->slaveNodeSig[nodeAddr].siliconInfo.vendorId, plugin->slaveNodeSig[nodeAddr].siliconInfo.productId))
 	{
+#ifndef A2B_FEATURE_PNP /* PNP Interval to attempt discovery takes care of rediscovery timeout */
 		a2b_ActiveDelay(plugin->ctx, plugin->bdd->policy.nRediscWaitTime); /* For AD243x */
+#endif
 	}
 	else
 	{
 		a2b_ActiveDelay(plugin->ctx, A2B_SW_RESET_DELAY); /* For AD242x */
 	}
-	return (a2b_dscvryPreSlaveInit(plugin));
+
+	if(nodeAddr ==  A2B_NODEADDR_MASTER)
+	{
+		return a2b_dscvryPreMasterInit(plugin);
+	}
+	else
+	{
+		for(nNodeIdx = 0; nNodeIdx < (a2b_Int16)plugin->discovery.dscNumNodes; nNodeIdx++)
+		{
+			/* Enable phantom power with external switch mode */
+			wBuf[0] = A2B_REG_SWCTL;
+			wBuf[1] = A2B_BITM_SWCTL_ENSW | A2B_ENUM_SWCTL_MODE_VOLT_ON_VIN;
+			a2b_regWrite(plugin->ctx, nNodeIdx-1, 2u, wBuf);
+		}
+		return a2b_dscvryPreSlaveInit(plugin);
+	}
 }
 #endif
 
@@ -5442,7 +5835,7 @@ static a2b_Bool a2b_dscvryCustomAuthFrmGpio(a2b_Plugin* plugin, a2b_NodeSignatur
 
 	/* GPIO Input Enable*/
 	wBuf[0] = A2B_REG_GPIOIEN;
-	wBuf[1] = ~(A2B_REG_GPIOIEN_RESET) & 0xFF;
+	wBuf[1] = ~(a2b_UInt8)(A2B_REG_GPIOIEN_RESET);
 	status = a2b_regWrite(plugin->ctx, dscNodeAddr, 2u, wBuf);
 	wBuf[0u] = A2B_REG_GPIOIN;
 
@@ -5805,7 +6198,6 @@ static a2b_Bool a2b_dscvryPostAuthViaCommCh(a2b_Plugin* plugin)
     a2b_NodeSignature   nodeSig;
     const bdd_Node      *bddNodeObj = &plugin->bdd->nodes[dscNodeIdx];
 #ifdef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
-    struct a2b_StackContext* ctx = plugin->ctx;
     a2b_UInt8 	wBuf[4u];
     a2b_UInt8 	rBuf[8u];
     a2b_HResult status = A2B_RESULT_SUCCESS;
@@ -5824,7 +6216,7 @@ static a2b_Bool a2b_dscvryPostAuthViaCommCh(a2b_Plugin* plugin)
 		 ( ( plugin->overrides[0u] & A2B_MPLUGIN_IGN_EEPROM ) == 0u )) ||
 		( plugin->periphCfg.nodeCfg[dscNodeAddr] ))
 	{
-		A2B_DSCVRY_SEQGROUP0( ctx,
+		A2B_DSCVRY_SEQGROUP0( plugin->ctx,
 							  "Look for EEPROM at 0x50" );
 
 		/* Read the EEPROM header             */
@@ -5849,7 +6241,7 @@ static a2b_Bool a2b_dscvryPostAuthViaCommCh(a2b_Plugin* plugin)
 				nodeSig.eepromInfo.productId = rBuf[2];
 				nodeSig.eepromInfo.version   = rBuf[3];
 
-				A2B_TRACE5( (ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_INFO),
+				A2B_TRACE5( (plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_INFO),
 							"%s nodeDiscovered(): EEPROM node/vid/pid/ver: "
 							"%02hX/%02bX/%02bX/%02bX",
 							A2B_MPLUGIN_PLUGIN_NAME, &dscNodeAddr,
@@ -5889,32 +6281,46 @@ static a2b_Bool a2b_dscvryPostAuthViaCommCh(a2b_Plugin* plugin)
 					(( bddNodeObj->nodeDescr.vendor !=
 										   nodeSig.eepromInfo.vendorId ) ||
 					 ( bddNodeObj->nodeDescr.product !=
-										   nodeSig.eepromInfo.productId ) ||
-					 ( bddNodeObj->nodeDescr.version !=
-										   nodeSig.eepromInfo.version )) )
+										   nodeSig.eepromInfo.productId )) )
 				{
 					/* clear the bit */
 					plugin->discovery.hasEeprom ^= (a2b_UInt32)((a2b_UInt32)1u << dscNodeAddr);
 
-					A2B_DSCVRY_ERROR1( ctx, "nodeDiscovered",
+					A2B_DSCVRY_ERROR1( plugin->ctx, "nodeDiscovered",
 									  "Node %hd EEPROM failed verification",
 									  &dscNodeAddr );
 
-					a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_PERMISSION );
+					a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_TRANSCEIVER_AUTH_FAILURE );
 					A2B_DSCVRY_SEQEND( plugin->ctx );
 					return A2B_FALSE;
+				}
+				else if(bddNodeObj->verifyNodeDescr && bddNodeObj->nodeDescr.version != 0XFF)
+				{
+				 if(bddNodeObj->nodeDescr.version != nodeSig.eepromInfo.version)
+				 {
+					 if (a2b_CheckSiliconRevisionPresent(bddNodeObj->nodeDescr.product, nodeSig.eepromInfo.version, bddNodeObj->nodeDescr.version))
+					 {
+						 A2B_DSCVRY_ERROR1(ctx, "nodeDiscovered",
+							 "Node %hd EEPROM- silicon failed verification",
+							 &dscNodeAddr);
+
+						 a2b_dscvryEnd(plugin, (a2b_UInt32)A2B_EC_SILICON_AUTH);
+						 A2B_DSCVRY_SEQEND(plugin->ctx);
+						 return A2B_FALSE;
+					 }
+				 }
 				}
 			}
 			else
 			{
-				A2B_DSCVRY_ERROR1( ctx, "nodeDiscovered",
+				A2B_DSCVRY_ERROR1( plugin->ctx, "nodeDiscovered",
 								   "Node %hd EEPROM header CRC incorrect",
 								   &dscNodeAddr );
 			}
 		}
 		else
 		{
-			A2B_DSCVRYNOTE_DEBUG1( ctx, "nodeDiscovered",
+			A2B_DSCVRYNOTE_DEBUG1( plugin->ctx, "nodeDiscovered",
 								   "Node %hd EEPROM not found",
 								   &dscNodeAddr );
 		}
@@ -6286,7 +6692,9 @@ a2b_dscvryReset
 	a2b_Bool		bTempFrstTimeDisc;
 	a2b_Bool		bTempMstrRunning;
 #ifdef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
+#ifdef A2B_FEATURE_TRACE
 	a2b_UInt8 nTempVar;
+#endif
 #endif
 #ifdef	A2B_FEATURE_SELF_DISCOVERY
 	a2b_UInt8 bActiveBSD;
@@ -6835,7 +7243,7 @@ a2b_dscvryStart
         a2b_dscvryEnd( plugin, (a2b_UInt32)A2B_EC_INVALID_STATE );
         return A2B_EXEC_COMPLETE;
     }
-
+#ifndef A2B_FEATURE_PNP
     if ( plugin->bdd->nodes_count == 1u )
     {
         A2B_TRACE1( (plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR),
@@ -6843,7 +7251,7 @@ a2b_dscvryStart
                     A2B_MPLUGIN_PLUGIN_NAME ));
         return A2B_EXEC_COMPLETE;
     }
-
+#endif
     if ( deinitFirst )
     {
         a2b_dscvryDeinitPlugin( plugin, A2B_DEINIT_START );
@@ -6895,7 +7303,7 @@ a2b_SimpleModeChkNodeConfig(a2b_Plugin* plugin)
 *  pass up-slots
 *
 *  \param          [in]    plugin           plugin specific data
-*  				   [in]	   nodeAddr			Node address of the current node
+*  \param		   [in]	   nodeAddr			Node address of the current node
 *  				   							for which the slots has to be
 *  				   							reconfigured.
 *
@@ -6911,50 +7319,98 @@ adi_a2b_ReConfigSlot(a2b_Plugin* plugin,
 {
 
     a2b_UInt8 wBuf[4];
-    a2b_UInt8 nDnslots = 0u;
-    a2b_UInt8 nUpslots = 0u;
-    a2b_UInt8 nMaxBCDSlots = 0u;
-    a2b_UInt8 nIndex = 0u;
-    a2b_UInt16 nNodeIdx = (a2b_UInt16)((a2b_UInt32)nodeAddr+1u);
+    a2b_UInt8 rBuf[4];
+    a2b_UInt16 nNodeIdx = (a2b_UInt16)((a2b_UInt32)nodeAddr + 1u);
     a2b_HResult status;
 
-    A2B_DSCVRY_SEQGROUP0( plugin->ctx,
-                              "Reconfig Slots Registers" );
+    A2B_DSCVRY_SEQGROUP0(plugin->ctx,
+        "Reconfig Slots Registers");   
+    /* Clear BECCTL register for Sub node*/
+    wBuf[0u] = A2B_REG_BECCTL;
+    wBuf[1] = 0U;
+	status = a2b_regWrite( plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf );
+    if (A2B_FAILED(status))
+    {
+    	A2B_DSCVRY_ERROR0(plugin->ctx, adi_a2b_ReConfigSlot,
+            "BECCTL Register Write Failed");
+    }
 
+    /* Mask the BECOVF interrupt for Sub node*/
+    wBuf[0u] = A2B_REG_INTMSK0;
+    rBuf[0] = 0U;
+    status = a2b_regWriteRead(plugin->ctx, ((a2b_Int16)nodeAddr), 1, wBuf, 1, rBuf);
 
-	nUpslots = (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.lupslots;
-	nDnslots = (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.ldnslots;
+    if (A2B_FAILED(status))
+    {
+    	A2B_DSCVRY_ERROR0(plugin->ctx, adi_a2b_ReConfigSlot,
+            "INTMASK0 Register Read Failed");
+    }
+    else
+    {
+        wBuf[1] = rBuf[0] & (~A2B_BITM_INTPND0_BECOVF);
+        status = a2b_regWrite( plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf );
+        if (A2B_FAILED(status))
+        {
+        	A2B_DSCVRY_ERROR0(plugin->ctx, adi_a2b_ReConfigSlot,
+                "INTMSK0 Register Write Failed");
+        }
+    }
 
-	nNodeIdx--;
-	for(nIndex=0u; nIndex< plugin->discovery.dscNumNodes-1u; nIndex++)
-	{
-		wBuf[0u] = A2B_REG_DNSLOTS;
-		wBuf[1u] = nDnslots;
-		status = a2b_regWrite(plugin->ctx, ((a2b_Int16)nNodeIdx - (a2b_Int16)1u), 2u, wBuf );
+    if (nodeAddr == 0)
+    {
+        /* Clear BECCTL register for Main node*/
+        wBuf[0u] = A2B_REG_BECCTL;
+        wBuf[1] = 0U;
+        status = a2b_regWrite( plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf );
+        if (A2B_FAILED(status))
+        {
+        	A2B_DSCVRY_ERROR0(plugin->ctx, adi_a2b_ReConfigSlot,
+                "BECCTL Register Write Failed");
+        }
 
-		wBuf[0u] = A2B_REG_UPSLOTS;
-		wBuf[1u] = nUpslots;
-		status = a2b_regWrite(plugin->ctx, ((a2b_Int16)nNodeIdx - (a2b_Int16)1u), 2u, wBuf );
+        /* Mask the BECOVF interrupt for Main node*/
+        wBuf[0u] = A2B_REG_INTMSK0;
+        rBuf[0] = 0U;
+        status = a2b_regWriteRead(plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 1, wBuf, 1, rBuf);
 
-		nUpslots += (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.lupslots;
-		nDnslots += (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.ldnslots;
+        if (A2B_FAILED(status))
+        {
+        	A2B_DSCVRY_ERROR0(plugin->ctx, adi_a2b_ReConfigSlot,
+                "INTMASK0 Register Read Failed");
+        }
+        else
+        {
+            wBuf[1] = rBuf[0] & (~A2B_BITM_INTPND0_BECOVF);
+            status = a2b_regWrite( plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf );
+            if (A2B_FAILED(status))
+            {
+            	A2B_DSCVRY_ERROR0(plugin->ctx, adi_a2b_ReConfigSlot,
+                    "INTMSK0 Register Write Failed");
+            }
+        }            
+    }
+      
+    /* Write DN Slots for Sub node*/
+    wBuf[0u] = A2B_REG_DNSLOTS;
+    wBuf[1u] = (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.dnslots;
+    status = a2b_regWrite( plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf );
+    /* Write Up Slots for Sub node */
+    wBuf[0u] = A2B_REG_UPSLOTS;
+    wBuf[1u] = (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.upslots;
+    status = a2b_regWrite( plugin->ctx, ((a2b_Int16)nodeAddr), 2u, wBuf );
+   
+    if (nodeAddr == 0u)
+    {
+        /* Write DN Slots for Main Node*/
+        wBuf[0u] = A2B_REG_DNSLOTS;
+        wBuf[1u] = (a2b_UInt8)plugin->bdd->nodes[0].ctrlRegs.dnslots;
+        status = a2b_regWrite( plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf );
 
-		if((plugin->bdd->nodes[nNodeIdx].ctrlRegs.has_bcdnslots) &&
-				(nMaxBCDSlots < plugin->bdd->nodes[nNodeIdx].ctrlRegs.bcdnslots))
-		{
-		   nMaxBCDSlots = (a2b_UInt8)plugin->bdd->nodes[nNodeIdx].ctrlRegs.bcdnslots;
-		}
-
-		nNodeIdx--;
-	}
-
-	wBuf[0u] = A2B_REG_DNSLOTS;
-	wBuf[1u] = nDnslots + nMaxBCDSlots;
-	status  = a2b_regWrite( plugin->ctx, A2B_NODEADDR_MASTER, 2u, &wBuf );
-
-	wBuf[0u] = A2B_REG_UPSLOTS;
-	wBuf[1u] = nUpslots;
-	status  = a2b_regWrite( plugin->ctx, A2B_NODEADDR_MASTER, 2u, &wBuf );
+        /*Write UP Slots for Main Node*/
+        wBuf[0u] = A2B_REG_UPSLOTS;
+        wBuf[1u] = (a2b_UInt8)plugin->bdd->nodes[0].ctrlRegs.upslots;
+        status = a2b_regWrite( plugin->ctx, ((a2b_Int16)A2B_NODEADDR_MASTER), 2u, wBuf );
+    }
 
 	A2B_DSCVRY_SEQEND(plugin->ctx);
 	return(status);
@@ -6969,11 +7425,13 @@ adi_a2b_ReConfigSlot(a2b_Plugin* plugin,
 *  series chip.
 *
 *  \param          [in]    vendorId         Vendor Identifier
-*  				   [in]	   productId		Product Identifier
+*  \param		   [in]	   productId		Product Identifier
 *  \pre            None
 *
 *  \post           None
 *
+* \return    False= if chip is not AD242X/AD243X/AD232X
+*				TRUE = if chip is AD242X/AD243X/AD232XS
 *
 ******************************************************************************/
 
@@ -6981,7 +7439,30 @@ static a2b_Bool a2b_isAd242xChipOnward(a2b_UInt8 vendorId, a2b_UInt8 productId)
 {
 	return (A2B_IS_AD242X_CHIP(vendorId, productId) || A2B_IS_AD243X_CHIP(vendorId, productId) || A2B_IS_AD2430_8_CHIP(vendorId, productId));
 }
+#ifdef ENABLE_AD232x_SUPPORT
+/*!****************************************************************************
+*
+*  \b              a2b_isAd232xChipOnward
+*
+*  This function detects whether the A2B chip is a after AD232X
+*  series chip.
+*
+*  \param          [in]    vendorId         Vendor Identifier
+*  				   [in]	   productId		Product Identifier
+*				   [in]   siliconver			Silicon version
+*  \pre            None
+*
+*  \post           None
+*
+*
+******************************************************************************/
 
+
+static a2b_Bool	a2b_isAd232xChipOnward(a2b_UInt8 vendorId, a2b_UInt8 productId, a2b_UInt8 siliconver)
+{
+	return (A2B_IS_AD242X_CHIP(vendorId, productId) || A2B_IS_AD243X_CHIP(vendorId, productId) || A2B_IS_AD2430_8_CHIP(vendorId, productId) || A2B_IS_AD232X_CHIP(vendorId, productId, siliconver));
+}
+#endif
 /*!****************************************************************************
 *
 *  \b              a2b_isCrossTalkFixApply
@@ -7010,11 +7491,13 @@ static a2b_Bool a2b_isCrossTalkFixApply(a2b_UInt8 vendorId, a2b_UInt8 productId)
 *  series chip.
 *
 *  \param          [in]    vendorId         Vendor Identifier
-*  				   [in]	   productId		Product Identifier
+*  \param				   [in]	   productId		Product Identifier
 *  \pre            None
 *
 *  \post           None
 *
+*  \return			False= if chip is not ad243x series
+*					True = if chip is ad43x series
 *
 ******************************************************************************/
 
@@ -7022,7 +7505,29 @@ static a2b_Bool a2b_isAd243xChip(a2b_UInt8 vendorId, a2b_UInt8 productId)
 {
 	return (A2B_IS_AD243X_CHIP(vendorId, productId));
 }
+#ifdef ENABLE_AD232x_SUPPORT
+/*!****************************************************************************
+*
+*  \b              a2b_isAd232xChip
+*
+*  This function detects whether the A2B chip is a newer AD232X
+*  series chip.
+*
+*  \param          [in]    vendorId         Vendor Identifier
+*  				   [in]	   productId		Product Identifier
+*				   [in]	   version			Silicon version
+*  \pre            None
+*
+*  \post           None
+*
+*
+******************************************************************************/
 
+static a2b_Bool a2b_isAd232xChip(a2b_UInt8 vendorId, a2b_UInt8 productId, a2b_UInt8 version)
+{
+	return (A2B_IS_AD232X_CHIP(vendorId, productId, version));
+}
+#endif
 /*!****************************************************************************
 *
 *  \b              a2b_isAd2430_8_Chip
@@ -7031,11 +7536,13 @@ static a2b_Bool a2b_isAd243xChip(a2b_UInt8 vendorId, a2b_UInt8 productId)
 *  series chip.
 *
 *  \param          [in]    vendorId         Vendor Identifier
-*  				   [in]	   productId		Product Identifier
+*  	\param			   [in]	   productId		Product Identifier
 *  \pre            None
 *
 *  \post           None
 *
+*  \return    False= if chip is not AD2430 or AD2438
+*				TRUE = if chip is AD2430 or AD2438
 *
 ******************************************************************************/
 
@@ -7052,8 +7559,8 @@ static a2b_Bool a2b_isAd2430_8_Chip(a2b_UInt8 vendorId, a2b_UInt8 productId)
 *  series chip which has medium or high power capabilities using SWCTL2.HPSW_CFG field.
 *
 *  \param          [in]		plugin	Pointer to Plugin
-*  				   [in]		node	Node number
-*  				   [in/out] pbRet	A2B_TRUE: if we detect a medium or high power node
+*  \param   	   [in]		node	Node number
+*  \param		   [in,out] pbRet	A2B_TRUE: if we detect a medium or high power node
 *									A2B_FALSE: if we do not detect a medium or high power node
 *  \pre            None
 *
@@ -7118,14 +7625,14 @@ a2b_HResult a2b_isAd243xMedHiPwrUseSwctl2(a2b_Plugin* plugin, a2b_Int16 node, a2
 *  series chip which has medium or high power capabilities using SWCTL2.HPSW_CFG field.
 *
 *  \param          [in]		plugin  Pointer to Plugin
-*  				   [in]		node	Node number
-*  				   [in/out]	pbRet   A2B_TRUE: if we detect a medium or high power node
+*  \param		   [in]		node	Node number
+*  \param		   [in,out]	pbRet   A2B_TRUE: if we detect a medium or high power node
 *									A2B_FALSE: if we do not detect a medium or high power node
 *  \pre            None
 *
 *  \post           None
 *
-*
+* \return   success or failure
 ******************************************************************************/
 a2b_HResult a2b_isAd243xMedHiPwrUseBdd(a2b_Plugin* plugin, a2b_Int16 node, a2b_Bool *pbRet)
 {
@@ -7166,12 +7673,14 @@ a2b_HResult a2b_isAd243xMedHiPwrUseBdd(a2b_Plugin* plugin, a2b_Int16 node, a2b_B
 *  This function detects whether the stack supportes the A2B chip.
 *
 *  \param          [in]    vendorId         Vendor Identifier
-*  				   [in]	   productId		Product Identifier
-*  				   [in]	   version			Version Number
+*  \param		   [in]	   productId		Product Identifier
+*  \param 			[in]	   version			Version Number
 *  \pre            None
 *
 *  \post           None
 *
+* \return     False= if stack does not support the chip
+*				true = if stack supports the chip
 *
 ******************************************************************************/
 static a2b_Bool a2b_stackSupportedNode(a2b_UInt8 vendorId, a2b_UInt8 productId, a2b_UInt8 version)
@@ -7187,13 +7696,14 @@ static a2b_Bool a2b_stackSupportedNode(a2b_UInt8 vendorId, a2b_UInt8 productId, 
 *  This function detects if there is a medium or high power bus power nodes present in the network
 *
 *  \param          [in]		plugin   Pointer to Plugin
-*  				   [in/out]	pbIsMedOrHighPwrBusPwrdNodePresent	
+*  \param		   [in,out]	pbIsMedOrHighPwrBusPwrdNodePresent
 *  									A2B_TRUE: if we detect a medium or high power node
 *									A2B_FALSE: if we do not detect a medium or high power node
 *  \pre            None
 *
 *  \post           None
 *
+* \return  status, success or failure
 *
 ******************************************************************************/
 a2b_HResult a2b_CheckIfMedOrHighPwrBusPwrdNodePresentInNetwrk(a2b_Plugin* plugin, a2b_Bool *pbIsMedOrHighPwrBusPwrdNodePresent)
@@ -7255,7 +7765,7 @@ a2b_HResult a2b_CheckIfMedOrHighPwrBusPwrdNodePresentInNetwrk(a2b_Plugin* plugin
 *  This function detects if there is a AD243x node present in the network based on information in BDD object
 *
 *  \param          [in]		plugin   Pointer to Plugin
-*  				   [in/out]	pbIsAD243xNodeNodePresent
+*  \param		   [in,out]	pbIsAD243xNodeNodePresent
 *  									A2B_TRUE: if we detect a AD243x node
 *									A2B_FALSE: if we do not detect a AD243x node
 *  \pre            None
@@ -7292,7 +7802,7 @@ void a2b_CheckIfAD243xNodePresentInNetwrk(a2b_Plugin* plugin, a2b_Bool *pbIsAD24
 *  This function checks if Plutus is present in network or not
 *
 *  \param          [in]		plugin   Pointer to Plugin
-*  				   [in/out]	pbIsAD2430_8NodeNodePresent
+*  \param		   [in,out]	pbIsAD2430_8NodeNodePresent
 *  									A2B_TRUE: if we detect a AD2430/8 node
 *									A2B_FALSE: if we do not detect a AD2430/8 node
 *  \pre            None
@@ -7327,7 +7837,7 @@ void a2b_CheckIfAD2430_8NodePresentInNetwrk(a2b_Plugin* plugin, a2b_Bool* pbIsAD
 *  This function checks if upstream LPS is AD2430 / 38 master or not
 *
 *  \param          [in]		plugin   Pointer to Plugin
-*  				   [in/out]	pbIsAD2430_8NodeNodePresent
+*  \param		   [in,out]	pbIsAD2430_8NodeNodePresent
 *  									A2B_TRUE: if we detect a AD2430/8 master node
 *									A2B_FALSE: if we do not detect a AD2430/8 node
 *  \pre            None
@@ -7357,11 +7867,109 @@ void a2b_CheckIfAD2430_8NodeMasterPrsnt(a2b_Plugin* plugin, a2b_Bool* pbIsAD2430
 		}
 	}
 }
-/**
- @}
-*/
+
+/*!***********************************************************************
+* 
+* \b	a2b_CheckSiliconRevisionPresent 
+* 
+*	This function checks if the specified or lesser version silicon revision is present
+* 
+*  \param		[in] productId
+*  \param		[in] siliconvalread revision to be checked
+*  \param		[in] siliconver
+* 
+*	\pre		None
+*	\post		None
+******************************************************************************/
 
 
-/**
- @}
-*/
+a2b_Bool a2b_CheckSiliconRevisionPresent(uint32_t productId, uint32_t siliconvalread, uint32_t siliconver)
+{
+	uint32_t siliconrev[10] = {0};
+	uint32_t size = 0;
+	uint32_t i=0;
+	a2b_Bool status = A2B_TRUE;
+	if (siliconver > siliconvalread)/*if the silicon version selected is greater than the silicon version read, it returns false*/
+	{
+		status = A2B_FALSE;
+	}
+	if (status)
+	{
+		switch (productId)
+		{
+		case 0x21:
+		case 0x22:
+		case 0x25:
+			siliconrev[0] = 0x00;
+			siliconrev[1] = 0x01;
+			siliconrev[2] = 0x02;
+			size = 3;
+			break;
+		case 0x20:
+		case 0x29:
+			siliconrev[0] = 0x00;
+			siliconrev[1] = 0x01;
+			siliconrev[2] = 0x02;
+			size = 3;
+			break;
+		case 0x26:
+		case 0x27:
+		case 0x28:
+			siliconrev[0] = 0x00;
+			siliconrev[1] = 0x01;
+			siliconrev[2] = 0x02;
+			siliconrev[3] = 0x03;
+			siliconrev[4] = 0x80;/*IRIS*/
+			siliconrev[5] = 0x81;
+			siliconrev[6] = 0x82;
+			siliconrev[7] = 0x83;
+			size = 8;
+			break;
+		case 0x33:
+			siliconrev[0] = 0x10;
+			siliconrev[1] = 0x12;
+			siliconrev[2] = 0x20;
+			size = 3;
+			break;
+		case 0x30:
+		case 0x38:
+			siliconrev[0] = 0x00;
+			siliconrev[1] = 0x01;
+			size = 2;
+			break;
+		case 0x35:
+		case 0x37:
+			siliconrev[0] = 0x11;
+			siliconrev[1] = 0x13;
+			siliconrev[2] = 0x21;
+			size = 3;
+			break;
+		default:
+			status = A2B_FALSE;
+			break;
+		}
+
+		for (i = 0; i < size; i++)
+		{
+			if (siliconvalread == siliconrev[i])
+			{
+				status = A2B_TRUE;
+				break;
+			}
+			else if (siliconvalread < siliconrev[i])
+			{
+				status = A2B_FALSE;
+				break;
+			}
+			else
+			{
+				//do nothing
+			}
+		}
+	}
+	else
+	{
+		//do nothing as status is A2B_FALSE
+	}
+	return status;
+}

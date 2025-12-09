@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -547,6 +547,10 @@ a2b_pluginExecute
 #ifndef A2B_FEATURE_TRACE
     A2B_UNUSED(ctx);
 #endif
+    if(nodeAddr == A2B_NODEADDR_NOTUSED)
+       {
+           return A2B_FALSE;
+       }
     
     if ( (plugin == A2B_NULL) || (A2B_NULL == msg) )
     {

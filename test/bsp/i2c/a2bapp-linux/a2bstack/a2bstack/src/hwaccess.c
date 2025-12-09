@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -62,8 +62,9 @@ static a2b_UInt8 ReadDataBuffer[256u];
 /*
 ** Function Prototype section
 */
+#ifdef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
 static a2b_UInt32 a2b_SpiCmdsAndPeriWrite(a2b_StackContext*  ctx, a2b_Int16 nNodeAddr, a2b_SpiCmd eSpiCmd, a2b_UInt16 regAddr, a2b_UInt32 nDataCount, a2b_UInt8* pDataBytes, a2b_UInt32 nMaxTransac);
-
+#endif
 /*!****************************************************************************
 *  \ingroup         a2bstack_hwaccess
 *
@@ -147,10 +148,9 @@ A2B_DSO_PUBLIC a2b_HResult a2b_regWrite(
 *
 *  \param   [in]    node    The A2B node address.
 *
-*  \param   [in]    nWrite  The number of bytes to write.
+*  \param   [in]    nRegAddr  Register address
 *
-*  \param   [in]    wBuf    A buffer containing the data to write. The buffer
-*                           is of size 'nWrite' bytes.
+*  \param   [in]    nRegVal    Register value
 *
 *  \pre     None
 *
@@ -210,10 +210,9 @@ A2B_DSO_PUBLIC a2b_HResult a2b_simpleRegWrite(
 *
 *  \param   [in]    node    The A2B node address.
 *
-*  \param   [in]    nWrite  The number of bytes to write.
+*  \param   [in]    nRegAddr  Register address.
 *
-*  \param   [in]    wBuf    A buffer containing the data to write. The buffer
-*                           is of size 'nWrite' bytes.
+*  \param   [in]    rVal    Register value.
 *
 *  \pre     None
 *

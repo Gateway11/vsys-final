@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -386,8 +386,11 @@ typedef struct a2b_NetDiscovery
          *  reference that is available for the life of the stack.  This
          *  pointer is copied and used within the master plugin.
          */
+#ifndef A2B_FEATURE_PNP
         const struct _bdd_Network* bdd;
-
+#else
+        struct _bdd_Network* bdd;
+#endif
         /** EEPROM/Peripheral Pkg loaded into a binary form */
         const a2b_Byte*       periphPkg;
 

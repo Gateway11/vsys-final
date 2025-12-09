@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -61,11 +61,11 @@ a2b_mstr_getVerInfo
 {
     if ( A2B_NULL != verInfo )
     {
-        verInfo->resp.majorVer = 19u;
-        verInfo->resp.minorVer = 10u;
-        verInfo->resp.relVer = 9u;
+        verInfo->resp.majorVer = 2u;
+        verInfo->resp.minorVer = 0u;
+        verInfo->resp.relVer = 0u;
         verInfo->resp.buildInfo =
-                    "date: Fri 15 Mar 2024 5:00:00 PM IST,"
+                    "date: Wed 09 July 2025 6:00:00 PM IST,"
                     "rev: 217e5ad87cf68de7d9c1004ea1e6913dcd8f79b6,"
                     "build: 1,"
                     "owner: ADI,"

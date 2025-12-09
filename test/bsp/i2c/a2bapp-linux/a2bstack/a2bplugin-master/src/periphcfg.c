@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -1004,7 +1004,7 @@ a2b_periphCfgProcessing
         	}
 
         	/* Copy the Unit address */
-        	plugin->periph.rpSPIBuf[nodeAddr][spiUnitCount] = (a2b_UInt8 *)periphNode->addr;
+        	plugin->periph.rpSPIBuf[nodeAddr][spiUnitCount] = (a2b_UInt8 *)((uintptr_t)periphNode->addr);
         	plugin->periph.spiUnitCount[nodeAddr]++;
         	plugin->periph.bIsPreSpiWr = 1u;
         }
@@ -1335,7 +1335,6 @@ a2b_periphSpiCfgProcessing
     a2b_UInt8 wBuf[2];
     a2b_UInt8 crc8;
 
-    a2b_Bool bA2bReg = A2B_FALSE;
     a2b_UInt8 cfgType;
     a2b_UInt8 cfgCrc;
     a2b_UInt16 numExec;
@@ -1390,7 +1389,7 @@ a2b_periphSpiCfgProcessing
                           &nodeAddr,
                           &numExec);
 
-        periphNode->addr = (uintptr_t)plugin->periph.rpSPIBuf[nodeAddr][numExec]; //TODO
+        periphNode->addr = (a2b_UInt16)((uintptr_t)plugin->periph.rpSPIBuf[nodeAddr][numExec]);
         rpBuf = (a2b_UInt8*)&plugin->periph.rBuf;
 
         /* Read the config block header bytes */

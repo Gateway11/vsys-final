@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -310,6 +310,8 @@ A2B_END_DECLS
 	((a2b_Bool)((vid == 0xADu) && ((pid == 0x26u) || (pid == 0x27u) || \
 	(pid == 0x28u)||(pid == 0x29u) || (pid == 0x20u))))
 
+#define A2B_IS_AD232X_CHIP(vid, pid, ver) \
+    ((a2b_Bool)((vid == 0XAD) && ((pid == 0x27) || (pid == 0x28)) && (ver == 0x80)))
 
 /** This defines the logic used when a node is discovered
  *  to verify that the discovered node can be supported
@@ -321,6 +323,7 @@ A2B_END_DECLS
               (a2b_Bool)( A2B_IS_AD241X_CHIP(vid, pid) 	|| 	\
             		  	  A2B_IS_AD242X_CHIP(vid, pid)	|| 	\
 						  A2B_IS_AD243X_CHIP(vid, pid)  ||	\
+                          A2B_IS_AD232X_CHIP(vid, pid, ver) || \
                           A2B_IS_AD2430_8_CHIP(vid, pid)) \
             )
 #endif /* A2B_DEFS_H_ */

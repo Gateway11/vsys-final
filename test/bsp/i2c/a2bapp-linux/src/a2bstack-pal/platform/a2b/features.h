@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2015 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -166,6 +166,11 @@
  * This option controls whether 243x is supported in the BDD
  */
 #define ENABLE_AD243x_SUPPORT
+
+/**
+ * This option controls whether 232x is supported in the BDD
+ */
+#define ENABLE_AD232x_SUPPORT
 
 /**
  * This option controls whether BDD is to be parsed from

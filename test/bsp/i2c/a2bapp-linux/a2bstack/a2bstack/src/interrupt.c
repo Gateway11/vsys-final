@@ -2,7 +2,7 @@
 *
 * Project: a2bstack
 *
-* Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+* Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
 * This software is subject to the terms and conditions of the license set
 * forth in the project LICENSE file. Downloading, reproducing, distributing or
 * otherwise using the software constitutes acceptance of the license. The
@@ -398,7 +398,7 @@ a2b_intrQueryIrq
 	a2b_StackContext*   slaveCtx;
 	a2b_Bool bBreakLoop = A2B_FALSE;
 	a2b_UInt8 nTempVar;
-	a2b_Bool bInterfaceBusy;
+	a2b_Bool bInterfaceBusy = A2B_FALSE;
 
 	if (A2B_NULL == ctx)
 	{

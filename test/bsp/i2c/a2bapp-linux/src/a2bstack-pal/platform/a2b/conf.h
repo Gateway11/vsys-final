@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2015 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -218,6 +218,9 @@
   * this busy check count needs to be changed based on platform  
   */
 #define A2B_SPI_MAX_BUSY_CHECK_CNT  (256u)
+
+/** Configure this macro to wait (in ms) after node discovery to fix the silicon anomaly  **/
+#define A2B_ONNODE_DISCOVERED_DELAY (1u)
 /*======================= D A T A T Y P E S =======================*/
 
 A2B_BEGIN_DECLS

@@ -1,5 +1,5 @@
 /*******************************************************************************
-Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
 This software is proprietary & confidential to Analog Devices, Inc.
 and its licensors.
 ******************************************************************************
@@ -206,12 +206,12 @@ and its licensors.
 #define A2B_GPIO_1_INPUT							(0x00u)
 #define A2B_GPIO_1_OUTPUT							(0x01u)
 #define A2B_GPIO_1_DISABLE							(0x02u)
-#define A2B_GPIO_1_AS_CLKOUT						(0x03u)
+#define A2B_GPIO_1_AS_CLKOUT1						(0x03u)
 
 #define A2B_GPIO_2_INPUT							(0x00u)
 #define A2B_GPIO_2_OUTPUT							(0x01u)
 #define A2B_GPIO_2_DISABLE							(0x02u)
-#define A2B_GPIO_2_AS_CLKOUT						(0x03u)
+#define A2B_GPIO_2_AS_CLKOUT2						(0x03u)
 
 #define A2B_GPIO_3_INPUT							(0x00u)
 #define A2B_GPIO_3_OUTPUT							(0x01u)
@@ -239,6 +239,7 @@ and its licensors.
 #define A2B_GPIO_7_OUTPUT							(0x01u)
 #define A2B_GPIO_7_DISABLE							(0x02u)
 #define A2B_GPIO_7_PDMCLK							(0x03u)
+#define A2B_GPIO_7_RRSTRB							(0x04u)
 
 /* GPIOD settings for AD242x only */
 #define A2B_MASK_BUSFLAG_0							(0x0)
@@ -461,8 +462,14 @@ typedef struct A2B_CUSTOM_NODE_AUTHENTICATION
 	/*! Enable/Disable Custom Node ID settings */
 	a2b_UInt8	bCustomNodeIdAuth;
 
-	/*! Custom node authorization settings to be read from Memory/GPIO */
-	a2b_UInt8	nReadFrm;
+	/*! Custom node authorization settings to be read from Memory */
+	a2b_UInt8	nReadFrmMemory;
+
+	/*! Custom node authorization settings to be read from GPIO */
+	a2b_UInt8	nReadFrmGPIO;
+
+	/*! Custom node authorization settings to be read from Comm Ch */
+	a2b_UInt8	nReadFrmCommCh;
 
 	/*! Address of device to read from */
 	a2b_UInt8	nDeviceAddr;
@@ -538,6 +545,10 @@ typedef enum
 	ADI_A2B_AD2430,
 	/*!  Enum for AD2438 */
 	ADI_A2B_AD2438,
+	/*!  Enum for AD2327 */
+	ADI_A2B_AD2327,
+	/*!  Enum for AD2328 */
+	ADI_A2B_AD2328,
 
 }ADI_A2B_PARTNUM;
 
@@ -1188,7 +1199,6 @@ typedef struct
 
 
 	/*! \struct A2B_PDM_SETTINGS
-	PDM Settings( Only for slaves )
 	*/
 	typedef struct
 	{
@@ -1225,7 +1235,7 @@ typedef struct
 		/*! HPF Corner Select*/
 		A2B_PDMCTL_HPF_CORNERFREQ ePDMHpfCorner;
 
-	}A2B_SLAVE_PDM_SETTINGS;
+	}A2B_NODE_PDM_SETTINGS;
 
 	/*! \struct A2B_SLAVE_PIN_MUX_SETTINGS
 	GPIO pin multiplication status
@@ -1486,6 +1496,9 @@ typedef struct
 		/*! Digital Pin drive strength */
 		a2b_UInt8 bHighDriveStrength;
 
+		/*! I2C Pins Drive Strength AD232X only*/
+		a2b_UInt8 bI2CDriveStrength;
+
 		/*! IRQ Pin Invert */
 		a2b_UInt8 bIRQInv;
 
@@ -1511,6 +1524,9 @@ typedef struct
 
 		/*! Digital Pin drive strength */
 		a2b_UInt8 bHighDriveStrength;
+
+		/*! I2C Pins drive strength -AD232X only*/
+		a2b_UInt8 bI2CDriveStrength;
 
 		/*! IRQ Pin Invert */
 		a2b_UInt8 bIRQInv;
@@ -1602,6 +1618,9 @@ typedef struct
 		/*! Report SRF miss error  */
 		a2b_UInt8 bReportSRFMissErr;
 
+		/*! Report GPIO  0 Interrupt -AD243x only*/
+		a2b_UInt8 bReportGPIO0;
+
 		/*! Report GPIO  1 Interrupt */
 		a2b_UInt8 bReportGPIO1;
 
@@ -1692,6 +1711,9 @@ typedef struct
 	*/
 	typedef struct
 	{
+		/*! Master GPIOD0 configuration structure -AD243x only*/
+		A2B_GPIOD_PIN_CONFIG sGPIOD0Config;
+
 		/*! Master GPIOD1 configuration structure */
 		A2B_GPIOD_PIN_CONFIG sGPIOD1Config;
 
@@ -2143,7 +2165,7 @@ typedef struct
 		A2B_SLAVE_I2S_SETTINGS  		sI2SSettings;
 
 		/*! PDM settings  */
-		A2B_SLAVE_PDM_SETTINGS			sPDMSettings;
+		A2B_NODE_PDM_SETTINGS			sPDMSettings;
 
 		/*! GPIO settings  */
 		A2B_SLAVE_GPIO_SETTINGS    		sGPIOSettings;
@@ -2222,6 +2244,9 @@ typedef struct
 
 		/*! A2B I2S Settings */
 		A2B_MASTER_I2S_SETTINGS  			sI2SSettings;
+
+		/*A2B PDM Settings*/
+		A2B_NODE_PDM_SETTINGS				sPDMSettings;
 
 		/*! GPIO settings  */
 		A2B_MASTER_GPIO_SETTINGS    		sGPIOSettings;

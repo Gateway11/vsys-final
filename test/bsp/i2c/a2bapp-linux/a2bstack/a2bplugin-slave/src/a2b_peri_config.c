@@ -1,5 +1,5 @@
 /*******************************************************************************
-Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
 This software is proprietary & confidential to Analog Devices, Inc.
 and its licensors. 
 *******************************************************************************
@@ -44,6 +44,7 @@ and its licensors.
 #include "a2b/stack.h"
 #include "a2b/i2c.h"
 #include "a2b/error.h"
+#include "adi_a2b_datatypes.h"
 #include "a2b/timer.h"
 #include "a2b/util.h"
 #include "a2b/trace.h"
@@ -52,6 +53,7 @@ and its licensors.
 #include "a2b/timer.h"
 #include "a2b/regdefs.h"
 #include "a2b/seqchart.h"
+#include "a2b/hwaccess.h"
 #include "spi_priv.h"
 #ifdef _TESSY_INCLUDES_
 #include "stackctx.h"
@@ -64,8 +66,8 @@ and its licensors.
 
 
 /*============= D A T A =============*/
-#ifndef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
 ADI_A2B_MEM_PERI_CONFIG_DATA
+#if !defined(A2B_BCF_FROM_SOC_EEPROM) && !defined(A2B_BCF_FROM_FILE_IO)
 static a2b_UInt8 			aDataBuffer[ADI_A2B_MAX_PERI_CONFIG_UNIT_SIZE];
 static a2b_UInt8 			aDataWriteReadBuf[4u];
 #endif
@@ -76,11 +78,16 @@ static a2b_UInt8 			aDataWriteReadBuf[4u];
 */
 #ifdef ENABLE_PERI_CONFIG_BCF
 
+#if !defined(A2B_BCF_FROM_SOC_EEPROM) && !defined(A2B_BCF_FROM_FILE_IO)
 static a2b_UInt32 a2b_genSpiCmdsAndPeriWrite(a2b_Plugin* plugin, a2b_SpiCmd eSpiCmd, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig, a2b_UInt32 nIdxOfPeriConfigUnit, a2b_UInt32 nMaxTransac);
 static a2b_UInt32 RemoteDeviceConfigI2cToI2c(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig);
 static a2b_UInt32 RemoteDeviceConfigSpiToI2c(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig);
 static a2b_UInt32 RemoteDeviceConfigSpiToSpi(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig);
 static a2b_UInt32 adi_a2b_RemoteDeviceConfig(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig, a2b_Bool bConfigSpiPeri);
+#ifdef A2B_FEATURE_PNP
+static a2b_Int32 a2b_pnp_periphCfgProcessing(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig, a2b_UInt16 hw_ifAddr);
+#endif
+#endif
 
 /*
 ** Function Definition section
@@ -103,9 +110,9 @@ static a2b_UInt32 adi_a2b_RemoteDeviceConfig(a2b_Plugin* plugin, const ADI_A2B_P
 a2b_HResult adi_a2b_PeriheralConfig(struct a2b_Plugin* plugin, const ADI_A2B_NODE_PERICONFIG *pPeriConfig, a2b_Bool bConfigSpiPeri)
 {
     a2b_UInt32 nResult = 0u;
+#if !defined(A2B_BCF_FROM_SOC_EEPROM) && !defined(A2B_BCF_FROM_FILE_IO) || defined(A2B_FEATURE_PNP)
     a2b_UInt8 i;
     a2b_Int16 nodeAddr;
-#if !defined(A2B_BCF_FROM_SOC_EEPROM) && !defined(A2B_BCF_FROM_FILE_IO)
     nodeAddr = plugin->nodeSig.nodeAddr;
     A2B_UNUSED(nodeAddr);
 	A2B_TRACE1((plugin->ctx, (A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_INFO),
@@ -125,7 +132,7 @@ a2b_HResult adi_a2b_PeriheralConfig(struct a2b_Plugin* plugin, const ADI_A2B_NOD
     return nResult;
 } 
 
-#if !defined(A2B_BCF_FROM_SOC_EEPROM) && !defined(A2B_BCF_FROM_FILE_IO)
+#if (!defined(A2B_BCF_FROM_SOC_EEPROM) && !defined(A2B_BCF_FROM_FILE_IO)) || defined(A2B_FEATURE_PNP)
 
 /****************************************************************************/
 /*!
@@ -214,6 +221,125 @@ static a2b_UInt32 a2b_genSpiCmdsAndPeriWrite(a2b_Plugin* plugin, a2b_SpiCmd eSpi
 	return (nReturn);
 }
 
+#ifdef A2B_FEATURE_PNP
+static a2b_Int32 a2b_pnp_periphCfgProcessing(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig, a2b_UInt16 hw_ifAddr)
+{
+    a2b_UInt32 	nNumOpUnits;
+    a2b_UInt8 	nIndex;
+    a2b_Int16 	nNodeAddr;
+    a2b_HResult status = A2B_RESULT_SUCCESS;
+    a2b_UInt32  EEPROMAddr;
+	a2b_UInt8   wBuf[2];
+	a2b_UInt8   crc8;
+	a2b_UInt8   cfgType;
+	a2b_UInt8   cfgCrc;
+	a2b_UInt16  payloadLen,payloadDataLen;
+	a2b_UInt8   regAddr;
+
+    nNumOpUnits = psDeviceConfig->nNumPeriConfigUnit;
+    nNodeAddr 	= plugin->nodeSig.nodeAddr;
+
+    EEPROMAddr = (a2b_UInt32)&psDeviceConfig->paPeriConfigUnit[0];
+
+    for(nIndex= 0u ; nIndex < nNumOpUnits ; nIndex++ )
+    {
+    	/* Read the config block header bytes */
+    	/* [Two byte internal EEPROM address] */
+    	wBuf[0] = (a2b_UInt8)(EEPROMAddr >> 8u);
+    	wBuf[1] = (a2b_UInt8)(EEPROMAddr & 0xFFu);
+    	status = a2b_periphWriteRead(plugin->ctx, nNodeAddr, hw_ifAddr, 2u,  wBuf, 3u,  aDataBuffer);
+
+    	if ( A2B_FAILED(status) )
+    	{
+    		return status;
+    	}
+
+    	cfgType = (aDataBuffer[0] >> 4u);
+    	cfgCrc  = aDataBuffer[2];
+
+    	payloadLen = (a2b_UInt16)((a2b_UInt16)(((a2b_UInt16)aDataBuffer[0]) << (a2b_UInt16)8u) |
+    				((a2b_UInt16)aDataBuffer[1])) & (a2b_UInt16)0xFFFu;
+    	payloadDataLen=payloadLen;
+
+    	EEPROMAddr += 3;
+
+    	/* Read the payload if needed */
+    	if ( (a2b_UInt8)CFGBLK_TYPE_C == cfgType )
+    	{
+    		crc8 = a2b_crc8(aDataBuffer, 0u, 2u);
+
+    		/* Verify the CRC */
+    		if ( cfgCrc != crc8)
+    		{
+    			return 1u;
+    		}
+
+    		/* Set a timer for the delay */
+    		(void)a2b_ActiveDelay(plugin->ctx, payloadLen);
+    	}
+    	else
+    	{
+    		/* The cfgCrc is byte[2] which for this message
+    		 * it equates to the addr/reg
+    		 */
+    		regAddr = cfgCrc;
+
+    		if ( payloadLen > A2B_MAX_PERIPHERAL_BUFFER_SIZE )
+    		{
+    			return 1u;
+    		}
+
+              if ( (a2b_UInt8)CFGBLK_TYPE_B == cfgType )
+              {
+                  /* Determine the CRC for the portion of the cfg block
+                   * that we have read thus far.  We'll complete the CRC
+                   * calculation after the payload has been read.
+                   */
+                  crc8 = a2b_crc8(aDataBuffer, 0u, 3u);
+              }
+
+              /* Read the payload */
+
+              wBuf[0] = (a2b_UInt8)(EEPROMAddr >> 8u);
+              wBuf[1] = (a2b_UInt8)(EEPROMAddr & 0xFFu);
+              status  = a2b_periphWriteRead(plugin->ctx, nNodeAddr, hw_ifAddr, 2u, wBuf, payloadLen, aDataBuffer );
+              if ( A2B_FAILED(status) )
+              {
+                  return 1u;
+              }
+
+              if ( (a2b_UInt8)CFGBLK_TYPE_B == cfgType )
+              {
+                  /* Complete the CRC calculation */
+                  crc8 = a2b_crc8Cont(aDataBuffer, crc8, 0u,
+                                      ((a2b_UInt32)payloadLen-1u));
+
+                  if ( crc8 != aDataBuffer[payloadLen-1u] )
+                  {
+                      return 1;
+                  }
+                  /* Actual payload to be written is excluding the CRC byte */
+                  payloadDataLen=payloadDataLen-1u;
+              }
+
+    		  status = a2b_i2cPeriphWrite(plugin->ctx,
+    				                      nNodeAddr,
+    									  (a2b_UInt16)regAddr,
+    									  payloadDataLen,
+    									  aDataBuffer );
+    		  if ( A2B_FAILED(status) )
+    		  {
+    			  return 1;
+    		  }
+
+    		  EEPROMAddr += payloadLen;
+    		}
+    }
+
+    return status;
+}
+#endif
+
 /****************************************************************************/
 /*!
     @brief          This function configures/programs peripherals connected
@@ -230,11 +356,13 @@ static a2b_UInt32 a2b_genSpiCmdsAndPeriWrite(a2b_Plugin* plugin, a2b_SpiCmd eSpi
 /********************************************************************************/
 static a2b_UInt32 RemoteDeviceConfigI2cToI2c(a2b_Plugin* plugin, const ADI_A2B_PERI_DEVICE_CONFIG* psDeviceConfig)
 {
-    a2b_UInt32 					nReturn = 0u, nNumOpUnits, nDelayVal, nRes;
+	a2b_UInt32 					nReturn = 0u;
+	a2b_HResult 				status = A2B_RESULT_SUCCESS;
+#ifndef A2B_FEATURE_PNP
+	a2b_UInt32 					nNumOpUnits, nDelayVal, nRes;
     ADI_A2B_PERI_CONFIG_UNIT* 	pOPUnit;
     a2b_UInt8 					nIndex, nIndex1;
     a2b_Int16 					nNodeAddr;
-    a2b_HResult 				status = A2B_RESULT_SUCCESS;
     struct a2b_Msg*              msgI2CError;
 
     nNumOpUnits = psDeviceConfig->nNumPeriConfigUnit;
@@ -322,7 +450,13 @@ static a2b_UInt32 RemoteDeviceConfigI2cToI2c(a2b_Plugin* plugin, const ADI_A2B_P
             break;
         }
     }
-
+#else
+       	status = a2b_pnp_periphCfgProcessing(plugin, psDeviceConfig, psDeviceConfig->nDeviceAddress);
+        if(status != A2B_RESULT_SUCCESS)
+        {
+        	nReturn = 1u;
+        }
+#endif
     return(nReturn);
 }
 

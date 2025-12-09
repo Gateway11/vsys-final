@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -139,6 +139,10 @@ typedef enum {
 
 	/* Master running interrupt not detected */
 	A2B_EC_MSTR_NOT_RUNNING,
+	/** Transceiver authentication
+	* failure (Vendor ID, Product ID and Silicon Revision mismatch)
+	**/
+	A2B_EC_TRANSCEIVER_AUTH_FAILURE,
 
 	/* Two step discovery is failed because of following reason:
 	 * - Power Good signal is not availalbe
@@ -154,7 +158,10 @@ typedef enum {
 
 
     /* A2B Node I2C Read/write Error */
-    A2B_EC_I2C_ERROR
+    A2B_EC_I2C_ERROR,
+
+    /*A2B Node silicon revision authentication failure*/
+    A2B_EC_SILICON_AUTH
 
 } a2b_StackErrorCode;
 

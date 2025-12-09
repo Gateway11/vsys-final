@@ -2,7 +2,7 @@
 *
 * Project: a2bstack
 *
-* Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+* Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
 * This software is subject to the terms and conditions of the license set
 * forth in the project LICENSE file. Downloading, reproducing, distributing or
 * otherwise using the software constitutes acceptance of the license. The
@@ -256,8 +256,8 @@ static a2b_HResult a2b_spiWrite(a2b_StackContext* ctx, a2b_UInt16 ss, a2b_UInt16
 *
 *  \param   [in]    ctx     The stack context associated with the write/read.
 *
-*  \param   [in]    addr    The 7-bit spi address.
-*
+*  \param   [in]    spiSs    SPI slave select.
+* 
 *  \param   [in]    nWrite  The number of bytes to write.
 *
 *  \param   [in]    wBuf    A buffer containing the data to write. The buffer
@@ -488,7 +488,7 @@ static a2b_HResult a2b_spiFd(a2b_StackContext* ctx, a2b_UInt16 spiSS, a2b_UInt16
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
-*  \param   [in]    spiSS   SPI Slave Select
+*  \param   [in]    spiSs   SPI Slave Select
 *
 *  \param   [in]    nWrite  The number of bytes to write.
 *
@@ -541,7 +541,7 @@ static a2b_HResult a2b_spiLocalRegWrite(a2b_StackContext* ctx, a2b_UInt16 spiSs,
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
-*  \param   [in]    spiSS   SPI Slave Select
+*  \param   [in]    spiSs   SPI Slave Select
 *
 *  \param   [in]    nWrite  The number of bytes to write.
 *
@@ -601,7 +601,7 @@ static a2b_HResult a2b_spiLocalRegWriteRead(a2b_StackContext* ctx, a2b_UInt16 sp
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
-*  \param   [in]    spiSS   SPI Slave Select
+*  \param   [in]    spiSs   SPI Slave Select
 *
 *  \param   [in]    nodeaddr Address of the node for which the SPI transaction is intended for.
 *
@@ -658,7 +658,7 @@ static a2b_HResult a2b_spiBusRegWrite(a2b_StackContext* ctx, a2b_UInt16 spiSs, a
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
-*  \param   [in]    spiSS   SPI Slave Select
+*  \param   [in]    spiSs   SPI Slave Select
 *
 *  \param   [in]    nodeaddr Address of the node for which the SPI transaction is intended for.
 *
@@ -728,7 +728,7 @@ static a2b_HResult a2b_spiBusRegWriteRead(a2b_StackContext* ctx, a2b_UInt16 spiS
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
-*  \param   [in]    spiSS   SPI Slave Select
+*  \param   [in]    spiSs   SPI Slave Select
 *
 *  \param   [in]    nodeaddr Address of the slave node for which the SPI to I2C transaction is intended for.
 *
@@ -785,7 +785,7 @@ static a2b_HResult a2b_spiRemoteI2cWrite(a2b_StackContext* ctx, a2b_UInt16 spiSs
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
-*  \param   [in]    spiSS   SPI Slave Select
+*  \param   [in]    spiSs   SPI Slave Select
 *
 *  \param   [in]    nodeaddr Address of the node for which the SPI transaction is intended for.
 *
@@ -1258,7 +1258,7 @@ static a2b_HResult a2b_spiDtBulkWriteNb(a2b_StackContext* ctx, a2b_SpiCmd cmd, a
 *
 *  \param   [in]    nRead  The number of bytes to read.
 *
-*  \param   [in]    rBuf    Values read from the remote slave nodes is stored in this buffer.
+*  \param   [in]    rbuf    Values read from the remote slave nodes is stored in this buffer.
 *
 *  \pre     None
 *
@@ -1342,7 +1342,7 @@ static a2b_HResult a2b_spiDtFullDuplex(a2b_StackContext* ctx, a2b_SpiCmd cmd, a2
 *
 *  \param   [in]    nRead  The number of bytes to read.
 *
-*  \param   [in]    rBuf    Values read from the remote slave nodes is stored in this buffer.
+*  \param   [in]    rbuf    Values read from the remote slave nodes is stored in this buffer.
 *
 *  \pre     None
 *
@@ -1427,7 +1427,7 @@ static a2b_HResult isSpiLengthValid(a2b_UInt16 length, a2b_UInt16 min, a2b_UInt1
 {
 	a2b_HResult	result = A2B_MAKE_HRESULT(A2B_SEV_FAILURE, A2B_FAC_SPI, A2B_EC_SPI_INVALID_LENGTH);
 
-	if((length >= min) || (length <= max ))
+	if ((length >= min) && (length <= max))
 	{
 		result = A2B_RESULT_SUCCESS;
 	}
@@ -2214,6 +2214,8 @@ A2B_DSO_PUBLIC a2b_HResult a2b_spiPeriphWriteRead(struct a2b_StackContext* ctx, 
 *
 *  \param   [in]    ctx     The stack context associated with the write.
 *
+*  \param   [in]    spiSs   SPI slave select.
+* 
 *  \param   [in]    nRead   The number of bytes to read from the device.
 *
 *  \param   [in]    rbuf    A buffer in which to write the results of the read.
@@ -2352,6 +2354,8 @@ A2B_DSO_PUBLIC a2b_UInt8   a2b_prepSpiSsNodeByte(a2b_Int16 nNodeaddr, a2b_UInt16
 *
 * \param   [in]    ctx         The stack context.
 *
+* \param   [in]    spiSs  SPI slave select
+* \param   [in]    maxTryCnt  max retry count
 * \pre     None
 *
 * \post    None

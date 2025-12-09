@@ -1,5 +1,5 @@
 /*******************************************************************************
- Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  This software is proprietary & confidential to Analog Devices, Inc.
  and its licensors.
  *******************************************************************************
@@ -164,7 +164,7 @@ static void a2b_CPTxPortInterrupt(a2b_UInt8 aCPPortintrType[], a2b_Int16 nNodeAd
 static void a2b_CPRxPortInterrupt(a2b_UInt8 aCPPortintrType[], a2b_Int16 nNodeAddr);
 #endif
 
-#ifndef ADI_SIGMASTUDIO_BCF
+#ifdef A2B_THIRD_PARTY
 static a2b_Bool a2b_loadBdd ( const a2b_Char* bddPath, bdd_Network* bdd);
 #endif
 
@@ -396,13 +396,15 @@ static a2b_Int32 getCurrentSuperBCFIndex(a2b_App_t *pApp_Info, a2b_Int32 nRetryC
  ******************************************************************************/
 static a2b_Int32 a2b_load(a2b_App_t *pApp_Info)
 {
-	uint32_t nResult = 0, pos;
-	int i = 0;
-	uint16_t nL5Ptr = 0;
+	uint32_t nResult = 0;
 #ifdef ENABLE_SUPERBCF
 	a2b_Int32 nSuperBcfIndex;
 #endif
 	a2b_HResult stat;
+#ifdef A2B_BCF_FROM_FILE_IO
+	int i=0;
+	a2b_UInt8 pos=0;
+#endif
 #ifdef ADI_A2B_BCF_COMPRESSED
 	a2b_Bool bRet;
 #endif
@@ -508,7 +510,13 @@ static a2b_Int32 a2b_load(a2b_App_t *pApp_Info)
 
 #elif  defined (A2B_BCF_FROM_FILE_IO)
 	/* BCF file Open */
-	a2b_pal_FileOpen(&pApp_Info->ecb, A2B_CONF_BINARY_BCF_FILE_URL);
+	if(a2b_pal_FileOpen(&pApp_Info->ecb, A2B_CONF_BINARY_BCF_FILE_URL))
+	{
+		nResult = 1;
+		A2B_APP_DBG_LOG("Bus configuration file open fails\n\r");
+		return nResult;
+    }
+
 #ifdef A2B_APP_STATIC_MEMORY_FOR_STACK
 	pApp_Info->panDatFileBuff = gE2PromMemBuf;
 	pApp_Info->pTargetProperties = &gTgtProperties;
@@ -531,15 +539,7 @@ static a2b_Int32 a2b_load(a2b_App_t *pApp_Info)
 	{
 		for(i = 0; i < pApp_Info->pTargetProperties->nSubNodes + 1; i++)
 		{
-			if(i == 0)
-			{
-				A2B_GET_UINT16_BE(pApp_Info->nCustomIdPtr[i], pApp_Info->anEeepromPeriCfgInfo, pos);
-				pApp_Info->nCustomIdPtr[i]++;
-			}
-			else
-			{
-				A2B_GET_UINT16_BE(pApp_Info->nCustomIdPtr[i], pApp_Info->anEeepromPeriCfgInfo, pos);
-			}
+			A2B_GET_UINT16_BE(pApp_Info->nCustomIdPtr[i], pApp_Info->anEeepromPeriCfgInfo, pos);
 			pos += 2;
 		}
 	}
@@ -587,7 +587,16 @@ static a2b_Int32 a2b_load(a2b_App_t *pApp_Info)
 #else
 
 	pApp_Info->ecb.baseEcb.heap = malloc(pApp_Info->ecb.baseEcb.heapSize);
-	A2B_APP_DBG_LOG("Allocate Heap done \n\r");
+	if (pApp_Info->ecb.baseEcb.heap == NULL)
+	{
+		nResult = 1;
+	    A2B_APP_DBG_LOG("Heap allocation failed \n\r");
+	    return nResult;
+	}
+	else
+	{
+		A2B_APP_DBG_LOG("Allocate Heap done \n\r");
+	}
 #endif
 
 
@@ -709,6 +718,7 @@ static a2b_Int32 a2b_start(a2b_App_t *pApp_Info)
 	pApp_Info->notifyPowerFault = a2b_msgRtrRegisterNotify(pApp_Info->ctx,
 			A2B_MSGNOTIFY_POWER_FAULT, a2bapp_onPowerFault, pApp_Info, A2B_NULL);
 
+	/* Register for notifications on I2C error */
 	pApp_Info->notifyI2CError = a2b_msgRtrRegisterNotify(pApp_Info->ctx,
 			A2B_MSGREQ_PERIPH_I2C_ERROR_APP, a2bapp_onI2CError, pApp_Info, A2B_NULL);
 
@@ -763,11 +773,16 @@ static a2b_Int32 a2b_sendDiscoveryMessage(a2b_App_t *pApp_Info)
 	if (pApp_Info->bdd.policy.bEnablePartialDisc && (nNodeStartPartialDisc != A2B_NODEADDR_MASTER))
 	{
 		msg = a2b_msgAlloc(pApp_Info->ctx, A2B_MSG_REQUEST, A2B_MSGREQ_NET_POST_DISCOVERY);
+		if(A2B_NULL == msg)
+		{
+			return (a2b_Int32)A2B_EC_RESOURCE_UNAVAIL;
+		}
 		/* Attach the Boolean flag to the message */
 		discPartialReq = (a2b_NetPostDiscovery*)a2b_msgGetPayload(msg);
 		discPartialReq->req.bIsPartialDiscEnabled = A2B_TRUE;
 		discPartialReq->req.bBusDropDetected = A2B_TRUE;
 		discPartialReq->req.nBusDropNodeId = nNodeStartPartialDisc;
+		pApp_Info->nodesDiscovered = nNodeStartPartialDisc;
 		/* Add this context to the message */
 		a2b_msgSetUserData(msg, (a2b_Handle)pApp_Info, A2B_NULL);
 		(void)a2b_msgRtrSendRequest(msg, A2B_NODEADDR_MASTER, a2bapp_onDiscoveryComplete);
@@ -777,7 +792,10 @@ static a2b_Int32 a2b_sendDiscoveryMessage(a2b_App_t *pApp_Info)
 	{
 		/* Create a network discovery request message */
 		msg = a2b_msgAlloc(pApp_Info->ctx, A2B_MSG_REQUEST, A2B_MSGREQ_NET_DISCOVERY);
-
+		if(A2B_NULL ==  msg)
+		{
+			return (a2b_Int32)A2B_EC_RESOURCE_UNAVAIL;
+		}
 		/* Attach the BDD information to the message */
 		discReq = (a2b_NetDiscovery*)a2b_msgGetPayload(msg);
 		discReq->req.bdd = &pApp_Info->bdd;
@@ -1017,7 +1035,12 @@ static a2b_Int32 a2b_setupPwrDiag(a2b_App_t *pApp_Info)
 
 	/* Create a Disable Line Diagnostics request message*/
 	msg = a2b_msgAlloc(pApp_Info->ctx, A2B_MSG_REQUEST, A2B_MSGREQ_NET_DISBALE_LINEDIAG);
-
+	if(A2B_NULL == msg)
+	{
+		nResult = A2B_EC_RESOURCE_UNAVAIL;
+	}
+	else
+	{
 	/* Attach the Boolean flag to the message , By default line diagnostics enabled */
 	pIsLineDiagDisabled = (a2b_Bool*)a2b_msgGetPayload(msg);
 	*pIsLineDiagDisabled = A2B_FALSE; /* Set the flag to True, in case app wants to disable */
@@ -1025,7 +1048,7 @@ static a2b_Int32 a2b_setupPwrDiag(a2b_App_t *pApp_Info)
 	(void)a2b_msgRtrSendRequest(msg, A2B_NODEADDR_MASTER, A2B_NULL);
 	(void)a2b_msgUnref(msg);
 	a2b_ActiveDelay(pApp_Info->ctx, 5u);
-
+	}
 	return nResult;
 }
 
@@ -1118,7 +1141,23 @@ a2b_UInt32 a2b_reset(a2b_App_t *pApp_Info)
 {
 	a2b_HResult nRet = 0U;
 
-    nRet = a2b_AppWriteReg(pApp_Info->ctx, A2B_NODEADDR_MASTER , A2B_REG_CONTROL, A2B_ENUM_CONTROL_RESET_PE);
+	if((pApp_Info->bdd.nodes[0].nodeDescr.product != 0x28) && (pApp_Info->bdd.nodes[0].nodeDescr.product != 0x29) && (pApp_Info->bdd.nodes[0].nodeDescr.product != 0x25) )
+    {
+		if((pApp_Info->bdd.policy.bOverrideSelfDisc == false) && ((pApp_Info->bdd.nodes[0].nodeDescr.product == 0x33) ||
+		(pApp_Info->bdd.nodes[0].nodeDescr.product == 0x35)	|| (pApp_Info->bdd.nodes[0].nodeDescr.product == 0x37) ))
+		{
+			//do nothing
+		}
+		else
+		{
+			nRet = a2b_AppWriteReg(pApp_Info->ctx, A2B_NODEADDR_MASTER , A2B_REG_CONTROL, A2B_ENUM_CONTROL_RESET_PE);
+		}
+    }
+    else
+    {
+    	nRet = a2b_AppWriteReg(pApp_Info->ctx, A2B_NODEADDR_MASTER , A2B_REG_CONTROL, A2B_ENUM_CONTROL_RESET_PE | A2B_ENUM_CONTROL_MSTR);
+    }
+
     if ( A2B_FAILED(nRet) )
     {
     	nRet = 1U;
@@ -1145,6 +1184,7 @@ a2b_UInt32 a2b_reset(a2b_App_t *pApp_Info)
  ******************************************************************************/
 a2b_UInt32 a2b_multimasterSetup(a2b_App_t *pApp_Info)
 {
+
 #if (defined (ADI_SIGMASTUDIO_BCF)) && (!defined(ENABLE_SUPERBCF))
 	uint8_t nNumMasters;
 	uint8_t nIndex;
@@ -1179,7 +1219,7 @@ a2b_UInt32 a2b_multimasterSetup(a2b_App_t *pApp_Info)
 
 #elif defined(A2B_BCF_FROM_FILE_IO)
 
-	uint8_t nNumChains[1];
+	a2b_UInt8 nNumChains[1];
 	uint8_t nIndex = 0;
 	uint32_t nResult = 0;
 
@@ -1248,6 +1288,7 @@ a2b_UInt32 a2b_setup(a2b_App_t *pApp_Info)
 				break;
 			}
 			gApp_Info.bfaultDone = A2B_FALSE;
+			//gApp_Info.bBusDropDetected = A2B_FALSE;
 		}
 		else if (gApp_Info.faultNode != gApp_Info.bdd.nodes_count - 1)
 		{
@@ -1272,7 +1313,24 @@ a2b_UInt32 a2b_setup(a2b_App_t *pApp_Info)
 
 			if(pApp_Info->ctx != A2B_NULL)
 			{
-				nResult = a2b_AppWriteReg(pApp_Info->ctx, A2B_NODEADDR_MASTER , A2B_REG_CONTROL, A2B_ENUM_CONTROL_RESET_PE);
+
+				if((pApp_Info->bdd.nodes[0].nodeDescr.product != 0x28) && (pApp_Info->bdd.nodes[0].nodeDescr.product != 0x29) && (pApp_Info->bdd.nodes[0].nodeDescr.product != 0x25) )
+					{
+						if((pApp_Info->bdd.policy.bOverrideSelfDisc == false) && ((pApp_Info->bdd.nodes[0].nodeDescr.product == 0x33) ||
+								(pApp_Info->bdd.nodes[0].nodeDescr.product == 0x35)	|| (pApp_Info->bdd.nodes[0].nodeDescr.product == 0x37)))
+						{
+							//do nothing
+						}
+						else
+						{
+							nResult = a2b_AppWriteReg(pApp_Info->ctx, A2B_NODEADDR_MASTER , A2B_REG_CONTROL, A2B_ENUM_CONTROL_RESET_PE);
+						}
+
+					}
+				else
+					{
+						nResult = a2b_AppWriteReg(pApp_Info->ctx, A2B_NODEADDR_MASTER , A2B_REG_CONTROL, A2B_ENUM_CONTROL_RESET_PE | A2B_ENUM_CONTROL_MSTR);
+					}
 			}
 
 			nResult = a2b_start(pApp_Info);
@@ -1387,7 +1445,7 @@ a2b_UInt32 a2b_multiMasterFault_monitor(a2b_App_t *pApp_Info)
 
 #elif defined(A2B_BCF_FROM_SOC_EEPROM) || defined(A2B_BCF_FROM_FILE_IO)
 
-	uint8_t nNumChains[1];
+
 	uint8_t nNumMasters = pApp_Info[0].nNumChains;
 	uint8_t nIndex;
 	uint32_t nResult = 0;
@@ -1439,10 +1497,11 @@ a2b_UInt32 a2b_fault_monitor(a2b_App_t *pApp_Info)
 	}
 
 	/* If line diagnostics enabled and non-zero re-attempts configured */
-	if ((pApp_Info->pTargetProperties->bLineDiagnostics == 1) && (pApp_Info->pTargetProperties->nAttemptsCriticalFault != 0))
+	if ((pApp_Info->pTargetProperties->bLineDiagnostics == 1) && (pApp_Info->pTargetProperties->nAttemptsCriticalFault != 0)
+				&& (pApp_Info->nDiscTryCnt < pApp_Info->pTargetProperties->nAttemptsCriticalFault))
 	{
 		/* If fault has occurred  */
-		if ((pApp_Info->bRetry == A2B_TRUE) && (pApp_Info->bfaultDone == A2B_TRUE))
+		if((pApp_Info->bRetry == A2B_TRUE) && (pApp_Info->bfaultDone == A2B_TRUE))
 		{
 			pApp_Info->bRetry = A2B_FALSE;
 			nChainIndex = pApp_Info->ecb.palEcb.nChainIndex;
@@ -1454,11 +1513,12 @@ a2b_UInt32 a2b_fault_monitor(a2b_App_t *pApp_Info)
 			/* delay between re-discovery attempt */
 			a2b_ActiveDelay(pApp_Info->ctx, pApp_Info->pTargetProperties->nRediscInterval);
 #ifdef A2B_FEATURE_PARTIAL_DISC
-			if(pApp_Info->bBusDropDetected != false && nNodeStartPartialDisc == -1)
+			if(pApp_Info->faultNode == A2B_NODEADDR_MASTER || ((pApp_Info->faultCode == A2B_ENUM_INTTYPE_PWRERR_CS_GND || pApp_Info->faultCode == A2B_ENUM_INTTYPE_PWRERR_CS_VBAT || pApp_Info->faultCode == A2B_ENUM_INTTYPE_PWRERR_NLS_GND || pApp_Info->faultCode == A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT) && nNodeStartPartialDisc == A2B_NODEADDR_MASTER))
 #endif
 			{
 				/* stop a2b stack */
 				nResult = a2b_stop(pApp_Info);
+				pApp_Info->bBusDropDetected = false;
 			}
 
 
@@ -1521,13 +1581,13 @@ static void a2bapp_onInterrupt(struct a2b_Msg* msg, a2b_Handle userData)
 		{
 			if (interrupt)
 			{
-				A2B_APP_LOG("\n\rINTERRUPT: intrType=%u nodeAddr=%d\n\r", interrupt->intrType, interrupt->nodeAddr);
+				A2B_APP_LOG("\n\rINTERRUPT: intrType=%u nodeAddr=%d", interrupt->intrType, interrupt->nodeAddr);
 
 				/* Add your code to handle interrupt */
 			}
 			else
 			{
-				A2B_APP_LOG("\n\rINTERRUPT: failed to retrieve payload\n\r");
+				A2B_APP_LOG("\n\rINTERRUPT: failed to retrieve payload");
 			}
 		}
 	}
@@ -1562,6 +1622,7 @@ static a2b_HResult a2bapp_HandlePwrFaultAnomaly(a2b_App_t *pApp_Info, a2b_Interr
 		if ((nValVmtrMxstat & 0x02U) == 0x02U)
 		{
 			pApp_Info->bRetry = A2B_TRUE;
+			pApp_Info->bfaultDone = A2B_TRUE;
 		}
 	}
 
@@ -1602,10 +1663,12 @@ static a2b_HResult a2bapp_VMTRMonitor(struct a2b_StackContext *ctx, a2b_Int16 no
 	a2b_UInt8   nReg;
 
 	nRet |= a2b_AppWriteReg(ctx, nodeAddr, A2B_REG_MMRPAGE, 0x01U);
+	nRet |= a2b_AppWriteReg(ctx, nodeAddr, (a2b_UInt8)A2B_REG_VMTR_VEN, 0x00U); // Disable VMTR
 	nReg = (A2B_REG_VMTR_MXSTAT & 0xFF);
 	nRet |= a2b_AppReadReg (ctx, nodeAddr, nReg, maxThres);
 	nReg = (A2B_REG_VMTR_MNSTAT & 0xFF);
 	nRet |= a2b_AppReadReg (ctx, nodeAddr, nReg, minThres);
+	nRet |= a2b_AppWriteReg(ctx, nodeAddr, (a2b_UInt8)A2B_REG_VMTR_MXSTAT,0x7FU); // W1C register to clear the VMTE interrupt
 	nRet |= a2b_AppWriteReg(ctx, nodeAddr, A2B_REG_MMRPAGE, 0x00U);
 
 	return (nRet);
@@ -2041,7 +2104,11 @@ static void a2bapp_onDiscoveryComplete(struct a2b_Msg* msg, a2b_Bool isCancelled
 		else
 		{
 			results = (a2b_NetDiscovery*)a2b_msgGetPayload(msg);
-			if (A2B_SUCCEEDED(results->resp.status))
+			if ((A2B_SUCCEEDED(results->resp.status))
+#ifdef A2B_FEATURE_PARTIAL_DISC
+					|| ((pApp_Info->bFrstTimeDisc == true)  && (((results->resp.status & 0xFF) == A2B_EC_BUSY) ||  ((results->resp.status & 0xFF) == A2B_EC_DISCOVERY_PWR_FAULT)))
+#endif
+			)
 			{
 
 				A2B_APP_LOG("Discovery succeeded with %d nodes discovered\n\r", results->resp.numNodes);
@@ -2066,22 +2133,55 @@ static void a2bapp_onDiscoveryComplete(struct a2b_Msg* msg, a2b_Bool isCancelled
 					a2b_timerSet(pApp_Info->hTmrToHandleBecovf, A2B_APP_TMRTOHANDLE_BECOVF_AFTER_INTERVAL, A2B_APP_TMRTOHANDLE_BECOVF_REPEAT_INTERVAL);
 					a2b_timerStart(pApp_Info->hTmrToHandleBecovf);
 #ifdef A2B_FEATURE_PARTIAL_DISC
-					if (pApp_Info->bdd.policy.bEnablePartialDisc && (results->resp.numNodes != 0))
+					if (pApp_Info->bdd.policy.bEnablePartialDisc && (results->resp.numNodes != 0) && (results->resp.numNodes < pApp_Info->bdd.nodes_count -1))
+					{
+						/* Partial discovery successful */
+						nNodeStartPartialDisc = results->resp.numNodes;
+					}
+					else
 					{
 						/* Partial discovery successful */
 						nNodeStartPartialDisc = A2B_NODEADDR_MASTER;
 					}
 #endif
 				}
+#ifdef A2B_FEATURE_PARTIAL_DISC
+				if(((results->resp.status & 0xFF) == A2B_EC_BUSY) ||  ((results->resp.status & 0xFF) == A2B_EC_DISCOVERY_PWR_FAULT))
+				{
+					gApp_Info.bBusDropDetected = A2B_TRUE;
+				}
+				else
+				{
+#endif
 				/* If power fault was detected earlier clear flags and attempt count */
 				pApp_Info->nDiscTryCnt = 0;
 				pApp_Info->bfaultDone = A2B_FALSE;
-
+#ifdef A2B_FEATURE_PARTIAL_DISC
+				}
+#endif
 			}
 			else if( ((results->resp.status & 0xFF) == A2B_EC_BUSY) && (pApp_Info->bdd.policy.bEnablePartialDisc))
 			{
 				A2B_APP_LOG("\n\rPartial Discovery attempted and no new node found!\n\r");
 				pApp_Info->discoverySuccessful = A2B_FALSE;
+
+			
+				pApp_Info->bfaultDone = A2B_TRUE;
+
+				if ((pApp_Info->nDiscTryCnt < pApp_Info->pTargetProperties->nAttemptsCriticalFault))
+			    {
+						pApp_Info->bRetry = A2B_TRUE;
+				}
+								/* If maximum attempts reached clear the post discovery retry flag */
+			    else if ((pApp_Info->nDiscTryCnt == pApp_Info->pTargetProperties->nAttemptsCriticalFault))
+				{
+				    	pApp_Info->bfaultDone = A2B_FALSE;
+				}
+				else
+				{
+					//do nothing
+				}
+			
 			}
 			else
 			{
@@ -2097,23 +2197,43 @@ static void a2bapp_onDiscoveryComplete(struct a2b_Msg* msg, a2b_Bool isCancelled
 					/* Supplier id authentication failure */
 					pApp_Info->faultNode = results->resp.numNodes;
 					pApp_Info->bCustomAuthFailed = true;
-
+					A2B_APP_LOG("Transceiver Custom Node Authentication failed\n\r");
 				}
-				if ((results->resp.status & 0xFFFF) == A2B_EC_PERMISSION)
+				else if((results->resp.status & 0xFFFF) == A2B_EC_TRANSCEIVER_AUTH_FAILURE)
 				{
 					/* Basic authentication failure */
 
 					pApp_Info->faultNode = results->resp.numNodes + 1;
-					pApp_Info->bCustomAuthFailed = true;
-					A2B_APP_LOG("Node Authentication failed\n\r");
+					A2B_APP_LOG("Transceiver Node Authentication failed. Vendor ID or Product ID, Node: %d \n\r",pApp_Info->faultNode);
 
 				}
-				if((results->resp.status & 0xFFFF) == A2B_EC_MSTR_NOT_RUNNING)
+				else if ((results->resp.status & 0xFFFF) == A2B_EC_SILICON_AUTH)
+				{
+					/* Silicon authentication failure */
+
+					pApp_Info->faultNode = results->resp.numNodes + 1;
+					A2B_APP_LOG("Silicon Authentication failed- node %d\n\r",results->resp.numNodes + 1);
+
+				}
+				else if((results->resp.status & 0xFFFF) == A2B_EC_MSTR_NOT_RUNNING)
 				{
 					/* No master running interrupt */
 					A2B_APP_LOG("Master running interrupt not detected. Possible SYNC issues. \n\r");
 				}
-
+				else if ((results->resp.status & 0xFFFF) == A2B_EC_PERMISSION)
+				{
+					pApp_Info->faultNode = results->resp.numNodes+1;
+					A2B_APP_LOG("Read access to the vendor ID, Product ID, Version and Capability registers are failed\n\r");
+				}
+				else if( ((results->resp.status & 0xFF) == A2B_EC_BUSY) && (pApp_Info->pTargetProperties->bAutoRediscOnFault == A2B_ENABLED))
+				{
+					pApp_Info->bfaultDone = true;
+					pApp_Info->faultNode = results->resp.numNodes+1;
+				}
+				else
+				{
+					//do nothing
+				}
 				if(pApp_Info->bdd.nodes[0].nodeDescr.product == 0x37)
 				{
 					if((results->resp.status & 0xFFFF) == A2B_EC_TWOSTEP_DISC_FAILED)
@@ -2367,12 +2487,13 @@ static void a2bapp_onPowerFault(struct a2b_Msg *msg, a2b_Handle userData)
 	{
 		/* Set flags to indicate fault post discovery */
 		/* Possibly a node has dropped off the network.. try finding it out */
+		
 		(void)a2b_AppDetectBusDrop(pAppInfo);
-
 		/***********************************************************/
 		/* Add your custom post discovery fault and link code here */
 		/***********************************************************/
 #ifdef A2B_FEATURE_PARTIAL_DISC
+		
 		if ((pAppInfo->bBusDropDetected == true) && (pAppInfo->bdd.policy.bEnablePartialDisc))
 		{
 			for ( i = A2B_NODEADDR_MASTER; i < nNodeStartPartialDisc; i++)
@@ -2530,7 +2651,11 @@ static void a2b_app_handle_becovf(struct a2b_Timer* timer, a2b_Handle userData)
 		}
 
 		/* Check for bus drop periodically */
-		if ((pApp_Info->nBecovfRstCnt % A2B_BUS_DROP_CHK_PERIOD == 0) && (pApp_Info->bBusDropDetected == false))
+		if ((pApp_Info->nBecovfRstCnt % A2B_BUS_DROP_CHK_PERIOD == 0)
+#ifndef A2B_FEATURE_PARTIAL_DISC
+				|| (pApp_Info->bBusDropDetected == false) /* If partial discovery feature is not enabled, this fucntion detetcs the bus drop only once */
+#endif
+			)
 		{
 			pApp_Info->nBecovfRstCnt = 0;
 			(void)a2b_AppDetectBusDrop(pApp_Info);
@@ -2590,6 +2715,7 @@ static a2b_HResult a2b_AppDetectBusDrop(a2b_App_t *pApp_Info)
 		pApp_Info->bBusDropDetected = false;
 	}
 #endif
+
 	return (nRet);
 }
 

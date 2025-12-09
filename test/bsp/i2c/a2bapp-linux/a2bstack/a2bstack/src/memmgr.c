@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -590,4 +590,37 @@ a2b_memMgrShutdown
     return A2B_RESULT_SUCCESS;
 } /* a2b_memMgrShutdown */
 
+/*!****************************************************************************
+*  \func        a2b_getMsgPoolAvailable
+*  \public
+*
+*  \b              a2b_memMgrClose
+*
+*  Returns the number of free blocks available in the pool for message allocation
+*  Note: A minimum of 5 blocks is required to process a message allocation during job execution.
+*
+*  \param          [in]    hnd      The handle to the stack's heap.
+*
+*  \return         number of Free blocks available in the pool
+*
+******************************************************************************/
+A2B_DSO_PUBLIC a2b_UInt32 a2b_getMsgPoolAvailable(struct a2b_StackContext *ctx)
+{
+	a2b_Int32 idx;
+	a2b_StackHeap* stackHeap = ctx->stk->heapHnd;
+	a2b_Msg*    msg = A2B_NULL;
+	a2b_UInt32 poolRem = 0;
+	if ( A2B_NULL != stackHeap )
+	{
+		for ( idx = 0; idx < stackHeap->numPools; ++idx )
+		{
+			if ( sizeof(*msg) == stackHeap->pools[idx].pool.bytesPerBlock )
+			{
+					poolRem = stackHeap->pools[idx].pool.numFree;
+					break;
+			}
+		}
+	}
+	return poolRem;
+}
 #endif /* A2B_FEATURE_MEMORY_MANAGER */

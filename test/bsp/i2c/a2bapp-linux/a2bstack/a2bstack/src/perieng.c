@@ -1,5 +1,5 @@
 /*******************************************************************************
-Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
 This software is proprietary & confidential to Analog Devices, Inc.
 and its licensors.
 ******************************************************************************
@@ -56,6 +56,7 @@ static void			a2b_rstSpiOthInfo	(a2b_SpiInfo *pSpiInfo);
 static a2b_Bool 	a2b_checkWrRdMode	(a2b_SpiWrRdParams *pSpiWrRdParams);
 static a2b_HResult 	a2b_checkSpiFdParams(a2b_StackContext *pCtx, a2b_SpiWrRdParams *pSpiWrRdParams);
 static a2b_HResult 	a2b_enablSpiErrorInt(a2b_StackContext *pCtx);
+a2b_HResult 	a2b_checkSpiErrorInt(a2b_StackContext *pCtx);
 static a2b_HResult  a2b_checkSpiAtomicParams(a2b_StackContext *pCtx, a2b_SpiWrRdParams *pSpiWrRdParams);
 static a2b_HResult 	a2b_checkSpiBulkParams(a2b_StackContext *pCtx, a2b_SpiWrRdParams *pSpiWrRdParams);
 static a2b_Bool 	a2b_checkSpiOnGoingTransaction(a2b_StackContext *pCtx);
@@ -607,7 +608,7 @@ static void a2b_onRemoteDevConfigSpiToSpiResponseTimeout(struct a2b_Timer *timer
 /*****************************************************************************/
 static a2b_HResult spiWrBlock(a2b_StackContext *pCtx, a2b_SpiWrRdParams *pSpiWrRdParams)
 {
-	a2b_UInt32	nDataSplitSizeInBytes = 0u, nNumberOfDataBlocks = 0u, nNumberOfLeftOutDataInBytes = 0u, nTempAddr, nBaseAddr, nAddrIncremBytes;
+	a2b_UInt32	nDataSplitSizeInBytes = 0u, nNumberOfDataBlocks = 0u, nNumberOfLeftOutDataInBytes = 0u, nTempAddr, nBaseAddr = 0u, nAddrIncremBytes;
 	a2b_UInt32	nDataBlockIdx,nMaxDataSize, nRem, nActualDataSizeInBytes;
 	a2b_SpiCmd 	eSpiCmd;
 	a2b_HResult result = A2B_RESULT_SUCCESS;
@@ -742,7 +743,7 @@ static a2b_HResult spiWrBlock(a2b_StackContext *pCtx, a2b_SpiWrRdParams *pSpiWrR
 /*****************************************************************************/
 static a2b_HResult spiWrRdBlock(a2b_StackContext *pCtx, a2b_SpiWrRdParams *pSpiWrRdParams)
 {
-	a2b_UInt32	nDataSplitSizeInBytes = 0u, nNumberOfDataBlocks = 0u, nNumberOfLeftOutDataInBytes = 0u, nTempAddr, nBaseAddr, nAddrIncremBytes;
+	a2b_UInt32	nDataSplitSizeInBytes = 0u, nNumberOfDataBlocks = 0u, nNumberOfLeftOutDataInBytes = 0u, nTempAddr, nBaseAddr = 0u, nAddrIncremBytes;
 	a2b_UInt32	nDataBlockIdx,nMaxDataSize, nRem, nActualDataSizeInBytes;
 	a2b_SpiCmd 	eSpiCmd;
 	a2b_HResult 	result = A2B_RESULT_SUCCESS;
@@ -1250,7 +1251,7 @@ static a2b_HResult a2b_handlePayloadPendingTx(a2b_StackContext* pCtx, a2b_Int8 n
 	a2b_SpiWrRdParams 	*pSpiWrRdParams;
 	a2b_Bool 			bSpiWrRdMode = A2B_TRUE;
 	a2b_UInt8			nAddrWidth, nAddrOffset, nUsrSpiCmdAndAddrBytes;
-	a2b_UInt32			nDataSplitSizeInBytes, nNumberOfDataBlocks, nNumberOfLeftOutDataInBytes, nDataBlockIdx, nTempAddr, nBaseAddr, nAddrIncremBytes;
+	a2b_UInt32			nDataSplitSizeInBytes, nNumberOfDataBlocks, nNumberOfLeftOutDataInBytes, nDataBlockIdx, nTempAddr, nBaseAddr = 0u, nAddrIncremBytes;
 	a2b_UInt8 			anTempWbuf[A2B_REMOTEDEVCONFIG_SPITOSPI_MAX_TRANS_SZ_INBYTES];
 
 	pSpiInfo		= &pCtx->stk->oSpiInfo;
@@ -1375,7 +1376,7 @@ static a2b_HResult a2b_handlePayloadPendingRx(a2b_StackContext* pCtx, a2b_Int8 n
 	a2b_SpiWrRdParams 	*pSpiWrRdParams;
 	a2b_Bool 			bSpiWrRdMode = A2B_TRUE;
 	a2b_UInt8			nAddrWidth, nAddrOffset, nUsrSpiCmdAndAddrBytes;
-	a2b_UInt32			nTempAddr, nDataSplitSizeInBytes, nNumberOfDataBlocks, nNumberOfLeftOutDataInBytes, nDataBlockIdx, nBaseAddr, nAddrIncremBytes;
+	a2b_UInt32			nTempAddr, nDataSplitSizeInBytes, nNumberOfDataBlocks, nNumberOfLeftOutDataInBytes, nDataBlockIdx, nBaseAddr = 0u, nAddrIncremBytes;
 	a2b_UInt8 			anTempWbuf[A2B_REMOTEDEVCONFIG_SPITOSPI_MAX_TRANS_SZ_INBYTES];
 
 	pSpiInfo		= &pCtx->stk->oSpiInfo;
@@ -2034,34 +2035,33 @@ A2B_DSO_PUBLIC a2b_HResult adi_a2b_spiPeriWrRd(struct a2b_StackContext *pCtx, a2
 			if (A2B_SUCCEEDED(result))
 			{
 				pSpiInfo 				 				= &pCtx->stk->oSpiInfo;
+#if 0 /* SPI Error Interrupts Enable is now part of discovery sequence */
 				/* Enable SPI error interrupts */
 				if(pSpiInfo->eDTOptimizationMode == A2B_SPI_DT_NO_OPTIMIZE_FOR_SPEED)
 				{
 					result = a2b_enablSpiErrorInt(pCtx);
 				}
+#endif
+				pSpiInfoSpiWrRdParams = &pSpiInfo->oSpiWrRdParams;
 
-				if (A2B_SUCCEEDED(result))
+				pSpiInfoSpiWrRdParams->nNode = pSpiWrRdParams->nNode;
+				pSpiInfoSpiWrRdParams->nSlaveSel = pSpiWrRdParams->nSlaveSel;
+				pSpiInfoSpiWrRdParams->nWriteBytes = pSpiWrRdParams->nWriteBytes;
+				pSpiInfoSpiWrRdParams->pWBuf = pSpiWrRdParams->pWBuf;
+				pSpiInfoSpiWrRdParams->nReadBytes = pSpiWrRdParams->nReadBytes;
+				pSpiInfoSpiWrRdParams->pRBuf = pSpiWrRdParams->pRBuf;
+				pSpiInfoSpiWrRdParams->nAddrIncrement = pSpiWrRdParams->nAddrIncrement;
+				pSpiInfoSpiWrRdParams->nAddrWidth = pSpiWrRdParams->nAddrWidth;
+				pSpiInfoSpiWrRdParams->nAddrOffset = pSpiWrRdParams->nAddrOffset;
+
+				if (pSpiInfo->eApiMode == A2B_API_BLOCKING)
 				{
-					pSpiInfoSpiWrRdParams	 				= &pSpiInfo->oSpiWrRdParams		;
-
-					pSpiInfoSpiWrRdParams->nNode			= pSpiWrRdParams->nNode			;
-					pSpiInfoSpiWrRdParams->nSlaveSel        = pSpiWrRdParams->nSlaveSel     ;
-					pSpiInfoSpiWrRdParams->nWriteBytes      = pSpiWrRdParams->nWriteBytes   ;
-					pSpiInfoSpiWrRdParams->pWBuf         	= pSpiWrRdParams->pWBuf			;
-					pSpiInfoSpiWrRdParams->nReadBytes       = pSpiWrRdParams->nReadBytes    ;
-					pSpiInfoSpiWrRdParams->pRBuf         	= pSpiWrRdParams->pRBuf			;
-					pSpiInfoSpiWrRdParams->nAddrIncrement   = pSpiWrRdParams->nAddrIncrement;
-					pSpiInfoSpiWrRdParams->nAddrWidth       = pSpiWrRdParams->nAddrWidth    ;
-					pSpiInfoSpiWrRdParams->nAddrOffset      = pSpiWrRdParams->nAddrOffset   ;
-
-					if(pSpiInfo->eApiMode == A2B_API_BLOCKING)
-					{
-						result = a2b_spiWrRdBlock(pCtx, pSpiInfoSpiWrRdParams);
-					}
-					else  /* if(pSpiInfo->eApiMode == A2B_API_NON_BLOCKING)*/
-					{
-						result = a2b_spiWrRdNonBlock(pCtx, pSpiInfoSpiWrRdParams);
-					}
+					result = a2b_spiWrRdBlock(pCtx, pSpiInfoSpiWrRdParams);
+				}
+				else  /* if(pSpiInfo->eApiMode == A2B_API_NON_BLOCKING)*/
+				{
+					result = a2b_spiWrRdNonBlock(pCtx, pSpiInfoSpiWrRdParams);
+				
 				}
 			}
 		}

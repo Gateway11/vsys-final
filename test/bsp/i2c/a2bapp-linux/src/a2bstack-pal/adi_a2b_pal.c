@@ -332,15 +332,13 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
     msg.buf   = (a2b_Byte*)wBuf;
 
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
-        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, 
-                cnt=%d, ret=%d\n", addr, wBuf[0], nWrite - 1, nReturnValue);
+        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", addr, wBuf[0], nWrite - 1, nReturnValue);
         return 1;
     }
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < (nWrite - 1); i++) {
-        printf(I2C_DEV_PATH " write device(%#x) 
-                reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
+        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                addr, wBuf[0] + i, wBuf[0] + i,
                wBuf[i + 1], PRINTF_BYTE_TO_BINARY_INT8(wBuf[i + 1]), nWrite - 1);
     }
@@ -395,15 +393,13 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
     msg[1].buf = rBuf;
 
     if ((nReturnValue = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
-        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, 
-                cnt=%d, ret=%d\n", addr, wBuf[0], nRead, nReturnValue);
+        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", addr, wBuf[0], nRead, nReturnValue);
         return 1;
     }
 
 #ifdef A2B_PRINT_CONSOLE
-    for (uint16_t i = 0; i < nRead && nWrite == 1; i++) {
-        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, 
-                val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
+    for (uint16_t i = 0; i < nRead && nWrite == 1 && wBuf[0] != 0x16; i++) {
+        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                addr, wBuf[0] + i,
                wBuf[0] + i, rBuf[i], PRINTF_BYTE_TO_BINARY_INT8(rBuf[i]), nRead);
     }
@@ -950,7 +946,7 @@ static a2b_UInt32 adi_a2b_AudioHostConfig(a2b_PalEcb*  palEcb, ADI_A2B_PERI_DEVI
                     adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr, 0);
             	    memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
 
-            	    a2b_pal_I2cWriteFunc(palEcb->i2chnd, (a2b_UInt16)psDeviceConfig->nDeviceAddress,
+            	    nReturn = a2b_pal_I2cWriteFunc(palEcb->i2chnd, (a2b_UInt16)psDeviceConfig->nDeviceAddress,
             	    		(pOPUnit->nAddrWidth + pOPUnit->nDataCount), &aDataBuffer[0u]);
                     break;
             /* read */

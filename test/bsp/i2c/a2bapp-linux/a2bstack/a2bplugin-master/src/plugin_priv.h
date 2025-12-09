@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -75,7 +75,7 @@ typedef struct a2b_PeripheralNode
     /** Current cfg block [0..n-1] */
     a2b_UInt8                   cfgIdx;
     /** Last read EEPROM Address*/
-    uintptr_t                   addr; // TODO
+    uintptr_t                  addr; //TODO
     /** Timer used for peripheral delays */
     struct a2b_Timer*           timer;
     /** This is needed for timers, etc. */
@@ -335,14 +335,21 @@ typedef struct a2b_Plugin
 
     /** Loaded network BDD specific to this stack */
     a2b_Bool                    bddLoaded;
+#ifndef A2B_FEATURE_PNP
     /** Pointer to the BDD Network structure */
     const bdd_Network*          bdd;
-
+#else
+    /** Pointer to the BDD Network structure */
+    bdd_Network*          bdd;
+#endif
     /** Discovery tracking */
     a2b_PluginDiscovery         discovery;
 
     /** Power fault diagnosis context */
     a2b_PwrDiagCtx              pwrDiag;
+
+    /*I2C error notifier*/
+    struct a2b_MsgNotifier* notifyIrptI2CError;
 
 #ifdef A2B_FEATURE_EEPROM_OR_FILE_PROCESSING
     /** EEPROM peripheral processing */

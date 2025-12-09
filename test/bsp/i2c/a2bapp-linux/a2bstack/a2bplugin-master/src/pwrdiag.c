@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -178,7 +178,7 @@ a2b_pwrDiagNotifyComplete
         if ( disableBusPower )
         {
 			nodeAddr = plugin->pwrDiag.upstrSelfPwrNode;
-			nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[nodeAddr + 1].ctrlRegs.swctl);
+			nUserSWCTL = ((a2b_UInt8)(plugin->bdd->nodes[nodeAddr + 1].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 
             /* Make best effort to turn off the phantom power at the upstream node */
             wBuf[0] = A2B_REG_SWCTL;
@@ -354,7 +354,7 @@ a2b_pwrDiagStartDiscovery
     a2b_Plugin* plugin
     )
 {
-    a2b_Byte wBuf[2];
+    a2b_Byte wBuf[2] = { 0,0 };
     a2b_UInt32 mask;
     a2b_HResult result = A2B_MAKE_HRESULT(A2B_SEV_FAILURE, A2B_FAC_PLUGIN, A2B_EC_INVALID_PARAMETER);
 	a2b_Bool 	isAd243x = A2B_FALSE;
@@ -908,7 +908,7 @@ a2b_pwrDiagStart
 					wBuf[0] = A2B_REG_SWCTL;
 					wBuf[1] = 0u;
 					{
-						a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl);
+						a2b_UInt8 nUserSWCTL = (a2b_UInt8)((plugin->bdd->nodes[plugin->pwrDiag.upstrSelfPwrNode + 1].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 						wBuf[1] |= (nUserSWCTL | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
 					}
 					result = a2b_regWrite( plugin->ctx, plugin->pwrDiag.upstrSelfPwrNode, 2u, wBuf);
@@ -988,13 +988,13 @@ a2b_pwrDiagStart
                  */
                 if ( A2B_NODEADDR_MASTER == nodeAddr )
                 {
-					a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl);
+					a2b_UInt8 nUserSWCTL = ((a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 					wBuf[1] |= (nUserSWCTL | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
                     result = a2b_regWrite( plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf);
                 }
                 else
                 {
-					a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[plugin->discovery.dscNumNodes].ctrlRegs.swctl);
+					a2b_UInt8 nUserSWCTL = ((a2b_UInt8)(plugin->bdd->nodes[plugin->discovery.dscNumNodes].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 					wBuf[1] |= (nUserSWCTL | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
                     result = a2b_regWrite(plugin->ctx, nodeAddr, 2u, wBuf);
                 }
@@ -1081,13 +1081,13 @@ a2b_pwrDiagStart
 					*/
 					if (A2B_NODEADDR_MASTER == nodeAddr)
 					{
-						a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl);
+						a2b_UInt8 nUserSWCTL = ((a2b_UInt8)(plugin->bdd->nodes[0].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 						wBuf[1] |= (nUserSWCTL | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
 						result = a2b_regWrite(plugin->ctx, A2B_NODEADDR_MASTER, 2u, wBuf);
 					}
 					else
 					{
-						a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[plugin->discovery.dscNumNodes].ctrlRegs.swctl);
+						a2b_UInt8 nUserSWCTL = ((a2b_UInt8)(plugin->bdd->nodes[plugin->discovery.dscNumNodes].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 						wBuf[1] |= (nUserSWCTL | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
 						result = a2b_regWrite(plugin->ctx, nodeAddr, 2u, wBuf);
 					}
@@ -1118,7 +1118,7 @@ a2b_pwrDiagStart
 					 * entire downstream bus is effectively shut down.
 					 */
 					{
-						a2b_UInt8 nUserSWCTL = (a2b_UInt8)(plugin->bdd->nodes[plugin->pwrDiag.upstrSelfPwrNode + 1].ctrlRegs.swctl);
+						a2b_UInt8 nUserSWCTL = ((a2b_UInt8)(plugin->bdd->nodes[plugin->pwrDiag.upstrSelfPwrNode + 1].ctrlRegs.swctl) & (~(A2B_BITM_SWCTL_ENSW)));
 						wBuf[1] |= (nUserSWCTL | (a2b_UInt8)(plugin->nodeSig.highPwrSwitchModeOverride << A2B_BITP_SWCTL_DET_OV));
 					}
 					result = a2b_regWrite(plugin->ctx, plugin->pwrDiag.upstrSelfPwrNode, 2u, wBuf);
@@ -1170,6 +1170,7 @@ a2b_pwrDiagStart
 					/* SRF miss - typical of Open circuit */
 					do
 					{
+						
 						wBuf[0] = A2B_REG_INTTYPE;
 						wBuf[1] = 0u;
 						result = (a2b_UInt32)a2b_regWriteRead( plugin->ctx, A2B_NODEADDR_MASTER, 1u, wBuf, 1u, &nType);
@@ -1204,11 +1205,44 @@ a2b_pwrDiagStart
 						}
 
 						/* SRF  */
-						if (nType == A2B_ENUM_INTTYPE_SRFERR)
 						{
+							a2b_ActiveDelay(plugin->ctx, 1u);
 							nSRFCount++;
-						}
+							/* Reading Vendor ID of next or dropped node */
+							wBuf[0] = A2B_REG_VENDOR;
+							wBuf[1] = 0u;
+							rBuf[0] = 0;
+							result = (a2b_UInt32)a2b_regWriteRead(plugin->ctx, nodeAddr + 1, 1u, wBuf, 1u, rBuf);
+							if (A2B_FAILED(result))
+							{
+								/* We failed reading vendor id register */
+								result = A2B_MAKE_HRESULT(A2B_SEV_FAILURE,
+									A2B_FAC_PLUGIN,
+									A2B_EC_POWER_DIAG_FAILURE);
+								A2B_TRACE1((plugin->ctx,
+									(A2B_TRC_DOM_PLUGIN | A2B_TRC_LVL_ERROR),
+									"a2b_pwrDiagStart: failed reading from "
+									"A2B_REG_VENDOR => errCode=0x%X", &result));
 
+								nStat = 1u;
+								break;
+							}
+							else
+							{
+								bddNodeObj = &plugin->bdd->nodes[nodeAddr + 1];
+								if (rBuf[0] != bddNodeObj->nodeDescr.vendor)
+								{
+									/* vendor ID mismatch */
+									nStat = 1u;
+									break;
+								}
+								else
+								{
+									/* Continue as this might be due to temporary glitches */
+								}
+							}
+						}
+						
 						/* Indeterminate Interrupt Types */
 						if (((nType == A2B_ENUM_INTTYPE_PWRERR_FAULT) ||
 								(nType == A2B_ENUM_INTTYPE_PWRERR_CS_VBAT)) ||
@@ -1397,7 +1431,7 @@ a2b_pwrDiagDiagnose
                 break;
 			case A2B_ENUM_INTTYPE_PWRERR_CS_GND:
 			case A2B_ENUM_INTTYPE_PWRERR_CS_VBAT:
-
+				a2b_CheckIfAD2430_8NodeMasterPrsnt(plugin, &bIsAD2430_8MasterPresent);
 				result = a2b_CheckIfMedOrHighPwrBusPwrdNodePresentInNetwrk(plugin, &bIsMedOrHighPwrBusPwrdNodePresent);
 				if ((intrType == A2B_ENUM_INTTYPE_PWRERR_CS_VBAT) && (bIsMedOrHighPwrBusPwrdNodePresent == A2B_TRUE) && (A2B_SUCCEEDED(result)))
 				{

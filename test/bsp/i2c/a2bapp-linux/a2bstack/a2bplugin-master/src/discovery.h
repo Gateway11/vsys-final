@@ -2,7 +2,7 @@
  *
  * Project: a2bstack
  *
- * Copyright (c) 2023 - Analog Devices Inc. All Rights Reserved.
+ * Copyright (c) 2025 - Analog Devices Inc. All Rights Reserved.
  * This software is subject to the terms and conditions of the license set 
  * forth in the project LICENSE file. Downloading, reproducing, distributing or 
  * otherwise using the software constitutes acceptance of the license. The 
@@ -110,6 +110,7 @@ A2B_EXPORT void a2b_CheckIfAD2430_8NodePresentInNetwrk(a2b_Plugin* plugin, a2b_B
 A2B_EXPORT void a2b_CheckIfAD2430_8NodeMasterPrsnt(a2b_Plugin* plugin, a2b_Bool *pbIsAD2430_8NodeNodePresent);
 A2B_EXPORT a2b_HResult a2b_isAd243xMedHiPwrUseSwctl2(a2b_Plugin* plugin, a2b_Int16 node, a2b_Bool *pbRet);
 A2B_EXPORT a2b_HResult a2b_isAd243xMedHiPwrUseBdd(a2b_Plugin* plugin, a2b_Int16 node, a2b_Bool *pbRet);
+A2B_EXPORT a2b_Bool a2b_CheckSiliconRevisionPresent(uint32_t productId, uint32_t siliconvalread, uint32_t siliconver);
 
 A2B_END_DECLS
 
