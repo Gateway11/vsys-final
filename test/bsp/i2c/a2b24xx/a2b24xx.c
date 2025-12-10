@@ -729,7 +729,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         lastNode--;
     }
     if (lastNode < a2b24xx->num_nodes) {
-        LOG_PRINT_IF_ENABLED(warn, "Fault detected: Node %d is the last node\n", lastNode);
+        LOG_PRINT_IF_ENABLED(warn, "Bus drop detected @ Node: %d\n", lastNode);
         a2b24xx->has_fault = true;
         processFaultNode(a2b24xx, lastNode + 1);
     }
