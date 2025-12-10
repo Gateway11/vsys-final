@@ -839,6 +839,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     struct a2b24xx *a2b24xx = file->private_data;
     int16_t argc = 0, params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
+    uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0};
 
     size_t len = min(count, sizeof(a2b24xx->command_buf));
     if (copy_from_user(a2b24xx->command_buf, buf, len)) {
@@ -856,16 +857,18 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     } else if (strcmp(a2b24xx->command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
-    } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd", &params[0]) == 1) {
+    // https://juejin.cn/post/7197790401494925369
+    } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
         a2b24xx_disable_fault_check(a2b24xx);
 
-        if (params[0] <= a2b24xx->num_nodes) {
+        if (params[0] <= a2b24xx->num_nodes && (uint16_t)params[0] < sizeof(i2stest)) {
             if (params[0] < 0) {
-                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
             } else {
                 mutex_lock(&a2b24xx->bus_lock);
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
-                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, 0x06});
+                adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
                 mutex_unlock(&a2b24xx->bus_lock); // Release lock
             }
         }
