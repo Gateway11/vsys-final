@@ -43,7 +43,6 @@
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
-#define MAX_SRFMISS_FREQ 2      // Maximum allowed occurrences of SRFMISS
 #define MAX_RETRIES 2           // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL msecs_to_jiffies(5000)
 
@@ -106,7 +105,6 @@ struct a2b24xx {
     struct delayed_work fault_check_work;
     struct mutex bus_lock;
 
-    uint8_t SRFMISS;
     uint8_t num_nodes;
     uint8_t node_cycles[16];
     uint16_t node_pos[16];
@@ -680,31 +678,25 @@ retry:
 }
 
 static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
-//    uint8_t dataBuffer[1] = {0}; //A2B_REG_NODE
-
     if (inode <= 0) {
         /* Setting up A2B network */
         adi_a2b_NetworkSetup(a2b24xx->dev);
     } else {
-//        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
-//        adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer);
-//        if ((dataBuffer[0] & A2B_BITM_NODE_LAST) || a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ) {
-            for (uint8_t i = inode; i <= a2b24xx->num_nodes; i++) {
-                if (!processSingleNode(a2b24xx, i)) {
-                    LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed. Stopping partial discovery\n", i);
-                    return;
-                }
-                mdelay(1);
-
-                uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
-                adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
+        for (uint8_t i = inode; i <= a2b24xx->num_nodes; i++) {
+            if (!processSingleNode(a2b24xx, i)) {
+                LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed. Stopping partial discovery\n", i);
+                return;
             }
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, a2b24xx->num_nodes});
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
-            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
-            a2b24xx->has_fault = false;
+            mdelay(1);
+
+            uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
+            adi_a2b_I2CRead(a2b24xx->dev, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
         }
-//    }
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, a2b24xx->num_nodes});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
+        a2b24xx->has_fault = false;
+    }
 }
 
 static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
@@ -714,8 +706,9 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     mutex_lock(&a2b24xx->bus_lock);
     for (uint8_t i = 0; i <= a2b24xx->num_nodes; i++) {
         adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-        if (adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer) < 0) {
-            // If discovery is not completed during system boot, the A2B_NODE.LAST bit for the last node will not be set
+        if (adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer)) {
+            // If discovery is not completed during system boot, the A2B_NODE.LAST
+            //  bit for the last node will not be set
             lastNode = i - 1;
             break;
         }
@@ -723,10 +716,6 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
             lastNode = i; // Set lastNode when the A2B_NODE.LAST bit is found
             break;
         }
-    }
-    if (inode >= 0 && inode < lastNode /*&& a2b24xx->SRFMISS >= MAX_SRFMISS_FREQ*/) {
-        pr_info("###### inode=%d, lastNode=%d, SRFMISS=%d\n", inode, lastNode, a2b24xx->SRFMISS);
-        lastNode--;
     }
     if (lastNode < a2b24xx->num_nodes) {
         LOG_PRINT_IF_ENABLED(warn, "Bus drop detected @ Node: %d\n", lastNode);
@@ -756,7 +745,6 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
                 LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: %s\n", intTypeString[i].message);
                 a2b24xx->has_fault = true;
 
-                a2b24xx->SRFMISS = dataBuffer[1] == A2B_ENUM_INTTYPE_SRFERR ? a2b24xx->SRFMISS + 1 : 0;
                 if (deepCheck) {
                     a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
                     checkFaultNode(a2b24xx, inode);
