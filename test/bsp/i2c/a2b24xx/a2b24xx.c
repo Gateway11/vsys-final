@@ -867,7 +867,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
             } else {
-                // Peripheral -> Slave: Loopback Slave0 0
+                // Peripheral -> Slave: Loopback Slave0 0/2
                 // Slave -> DAC/Speaker: Loopback Slave0 1
                 mutex_lock(&a2b24xx->bus_lock);
                 adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
