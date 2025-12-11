@@ -560,7 +560,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     uint8_t retryCount = 0;
     int16_t interrupt;
 
-    if (inode == 0 || inode > a2b24xx->num_nodes) return false;
+    if (!CHECK_RANGE(inode, 1, a2b24xx->num_nodes)) return false;
 
     LOG_PRINT_IF_ENABLED(info,
         "Processing node %d: master fmt=0x%02X, node cycle=0x%02X, node pos=%d 0x%02X\n",
