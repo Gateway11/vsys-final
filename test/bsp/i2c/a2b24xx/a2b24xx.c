@@ -598,8 +598,8 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     // 3. Write master node DISCVRY register with expected response cycle of
     //    slave node to be discovered to start the discovery process
     //    (DISCVRY = response cycle of the slave1)
-    adi_a2b_I2CWrite(dev,
-        A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->node_cycles[inode]});
+    adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2,
+                    (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->node_cycles[inode]});
 
     // 4. Wait for 35msec for slave node to discover. Can use IRQ interrupt
     //    to check if slave node discovery interrupt is received.
@@ -672,7 +672,8 @@ retry:
                 break;
         }
     }
-    adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+    adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4,
+                    (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
 
     kfree(aDataBuffer); // Free memory before returning
     return true;
