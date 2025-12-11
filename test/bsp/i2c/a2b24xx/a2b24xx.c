@@ -46,6 +46,7 @@
 #define MAX_RETRIES 2           // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL msecs_to_jiffies(5000)
 
+#define CHECK_RANGE(val, lo, hi) (((val) >= (lo)) && ((val) <= (hi)))
 #define LOG_PRINT_IF_ENABLED(log_level, ...) \
     ({if (a2b24xx->log_enabled) pr_##log_level(__VA_ARGS__);})
 
@@ -860,29 +861,27 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         a2b24xx_disable_fault_check(a2b24xx);
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
-        if (params[0] <= a2b24xx->num_nodes && (uint16_t)params[0] < sizeof(i2stest)) {
-            if (params[0] < 0) {
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
-            } else {
-                mutex_lock(&a2b24xx->bus_lock);
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
-                adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
-                //adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 3, (uint8_t[]){A2B_REG_LDNSLOTS, 0x80, 0x02});
-                adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 3, (uint8_t[]){A2B_REG_I2SGCFG, 0x12, 0x11});
-                adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_DNMASK0, 0x03});
-                adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
+        if (params[0] < 0) {
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
+        } else if (params[0] <= a2b24xx->num_nodes && CHECK_RANGE(params[1], 0, sizeof(i2stest))) {
+            mutex_lock(&a2b24xx->bus_lock);
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            //adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 3, (uint8_t[]){A2B_REG_LDNSLOTS, 0x80, 0x02});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 3, (uint8_t[]){A2B_REG_I2SGCFG, 0x12, 0x11});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_DNMASK0, 0x03});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
 
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x03});
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4,
-                        (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
-                mutex_unlock(&a2b24xx->bus_lock); // Release lock
-            }
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x03 /* 0xFF */});
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4,
+                    (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+            mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
     } else if (sscanf(a2b24xx->command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
-        pr_info("RX Slave(%d) (%d)\n", params[0], params[1]);
-
-        if ((uint16_t)params[0] <= a2b24xx->num_nodes && params[1] < sizeof(config)) {
+        bool valid_node = CHECK_RANGE(params[0], 0, a2b24xx->num_nodes);
+        bool valid_index = CHECK_RANGE(params[1], 0, ARRAY_SIZE(config));
+        if (valid_node && valid_index) {
             mutex_lock(&a2b24xx->bus_lock);
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
@@ -890,8 +889,6 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
     } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params, &params[1])) > 0) {
-        pr_info("PDM Slave(%d) MIC(%d)\n", params[0], params[1]);
-
         if (params[0] <= a2b24xx->num_nodes) {
             mutex_lock(&a2b24xx->bus_lock);
             for (uint8_t i = 0; i <= a2b24xx->num_nodes; i++) {
