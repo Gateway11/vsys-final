@@ -841,7 +841,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
 
     int16_t argc = 0, params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
-    uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0};
+    uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
 
     size_t len = min(count, sizeof(a2b24xx->command_buf));
     if (copy_from_user(a2b24xx->command_buf, buf, len)) {
@@ -874,7 +874,8 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
                 adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
 
                 adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x03});
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4,
+                        (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
                 mutex_unlock(&a2b24xx->bus_lock); // Release lock
             }
         }
@@ -888,7 +889,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
-    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", &params[0], &params[1])) >= 1) {
+    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params, &params[1])) > 0) {
         pr_info("PDM Slave(%d) MIC(%d)\n", params[0], params[1]);
 
         if (params[0] <= a2b24xx->num_nodes) {
