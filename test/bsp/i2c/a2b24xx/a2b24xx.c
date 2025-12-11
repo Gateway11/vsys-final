@@ -860,8 +860,6 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         a2b24xx_disable_fault_check(a2b24xx);
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
-        a2b24xx_disable_fault_check(a2b24xx);
-
         if (params[0] <= a2b24xx->num_nodes && (uint16_t)params[0] < sizeof(i2stest)) {
             if (params[0] < 0) {
                 adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
