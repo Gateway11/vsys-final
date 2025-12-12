@@ -875,7 +875,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
             for (int16_t i = params[0]; i >= 0 && params[0] != 0; i--) {
                 adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
-                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02});
+                adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02});
             }
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SGCFG, 0x12});
 
