@@ -889,7 +889,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
-    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params, &params[1])) > 0) {
+    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params, params + 1)) > 0) {
         if (params[0] <= a2b24xx->num_nodes) {
             mutex_lock(&a2b24xx->bus_lock);
             for (uint8_t i = 0; i <= a2b24xx->num_nodes; i++) {
