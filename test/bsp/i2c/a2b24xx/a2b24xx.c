@@ -84,6 +84,12 @@
  */
 // #define ENABLE_BECCTL_REG
 
+// https://ez.analog.com/a2b/f/q-a/534983/can-i-have-a2b-slave-nodes-operating-at-different-sync-frequencies
+// https://ez.analog.com/a2b/f/q-a/540266/a2b---drx-dtx-mux-or-switch
+// https://ez.analog.com/a2b/f/q-a/571688/49-152mhz-bick-on-tdm
+// https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
+// https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
+
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;
