@@ -1315,7 +1315,8 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     const char *filename = NULL;
     const char *default_filename = "/lib/firmware/adi_a2b_commandlist.xml";
     of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
-    char *content = a2b_pal_File_Read(filename ? filename : default_filename, &size);
+    char *content =
+        a2b_pal_File_Read(filename ? filename : default_filename, &size);
     if (content) {
         pr_info("File content (%zu bytes)\n", size);
 
