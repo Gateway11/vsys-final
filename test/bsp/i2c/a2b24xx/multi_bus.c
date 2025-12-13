@@ -158,7 +158,7 @@ static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx) {
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
     bool any_fault = a2b24xx->bus.has_fault;
 
-    for (uint8_t i = 0; i < a2b24xx->bus.num_nodes && !any_fault; i++) {
+    for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes && !any_fault; i++) {
         any_fault = a2b24xx->bus.nodes[i].sub_bus &&
                     a2b24xx->bus.nodes[i].sub_bus->has_fault;
     }
@@ -183,7 +183,7 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx) {
 
     /* A2B reset */
     adi_a2b_NetworkSetup(a2b24xx->dev, &a2b24xx->bus, 0);
-    for (uint8_t i = 0; i < a2b24xx->bus.num_nodes; i++) {
+    for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes; i++) {
         if (a2b24xx->bus.nodes[i].sub_bus) {
             adi_a2b_NetworkSetup(a2b24xx->dev, a2b24xx->bus.nodes[i].sub_bus, i);
         }
@@ -1006,8 +1006,8 @@ static void a2b24xx_setup_work(struct work_struct *work) {
         }
     }
 
-    bus->nodes = devm_kzalloc(
-        a2b24xx->dev, sizeof(struct a2b_node) * bus->num_nodes, GFP_KERNEL);
+    bus->nodes = devm_kzalloc(a2b24xx->dev,
+                sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
     for (uint32_t i = 0; i < bus->totalActions; i++) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY &&
             bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
@@ -1042,7 +1042,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work) {
     a2b24xx->bus.has_fault = false;
 
     processInterrupt(a2b24xx, &a2b24xx->bus, 0, true);
-    for (uint8_t i = 0; i < a2b24xx->bus.num_nodes; i++) {
+    for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes; i++) {
         if (a2b24xx->bus.nodes[i].sub_bus) {
             a2b24xx->bus.nodes[i].sub_bus->has_fault = false;
             processInterrupt(a2b24xx, a2b24xx->bus.nodes[i].sub_bus, i, true);
