@@ -1122,7 +1122,8 @@ static void a2b24xx_setup_work(struct work_struct *work) {
 }
 
 static void a2b24xx_fault_check_work(struct work_struct *work) {
-    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
+    struct a2b24xx *a2b24xx =
+            container_of(work, struct a2b24xx, fault_check_work.work);
     a2b24xx->bus.has_fault = false;
 
     processInterrupt(a2b24xx, &a2b24xx->bus, 0, true);
