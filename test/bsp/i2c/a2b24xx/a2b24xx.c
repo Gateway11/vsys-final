@@ -559,7 +559,7 @@ Discovery succeeded with 2 nodes discovered
 
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
-    uint8_t retryCount = 0;
+    uint8_t retry_count = 0;
     int16_t interrupt;
 
     if (!CHECK_RANGE(inode, 1, a2b24xx->num_nodes)) return false;
@@ -617,7 +617,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 retry:
     interrupt = processInterrupt(a2b24xx, false);
     if (interrupt != A2B_ENUM_INTTYPE_DSCDONE) {
-        if (++retryCount < MAX_RETRIES && interrupt == A2B_ENUM_INTTYPE_SRFERR) {
+        if (++retry_count < MAX_RETRIES && interrupt == A2B_ENUM_INTTYPE_SRFERR) {
             mdelay(25);
             goto retry;
         }
