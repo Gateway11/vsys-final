@@ -523,23 +523,22 @@ static inline uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t inode, 
     return addr;
 }
 
-#define BUS_SELECT(dev, bus_, inode_, addr_)                                                        \
-({                                                                                                  \
-    static uint8_t last_bus_, last_addr_;                                                           \
-    uint8_t ret_ = (addr_);                                                                         \
-    if (bus_) {                                                                                     \
-        if (bus_ != last_bus_ || addr_ != last_addr_) {                                             \
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_});          \
-            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr_});               \
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_ | 0x20});   \
-        }                                                                                           \
-        last_addr_ = addr_;                                                                         \
-        ret_ = A2B_BUS_ADDR;                                                                        \
-    } else if (bus_ != last_bus_) {                                                                 \
-        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});               \
+#define BUS_SELECT(dev, __bus, __parent, __addr)                                                    \
+    static uint8_t __last_bus, __last_addr;                                                         \
+    uint8_t __ret = (__addr);                                                                       \
+    if (__bus) {                                                                                    \
+        if (__bus != __last_bus || __addr != __last_addr) {                                         \
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});        \
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, __addr});              \
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent | 0x20}); \
+         }                                                                                          \
+        __last_addr = __addr;                                                                       \
+        __ret = A2B_BUS_ADDR;                                                                       \
+    } else if (__bus != __last_bus) {                                                               \
+        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});            \
     }                                                                                               \
-    last_bus_ = bus_;                                                                               \
-    ret_;                                                                                           \
+    __last_bus = __bus;                                                                             \
+    __ret;                                                                                          \
 })
 
 static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, uint8_t inode)
