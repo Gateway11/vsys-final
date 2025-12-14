@@ -917,15 +917,12 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     return IRQ_HANDLED;
 }
 
-static void a2b24xx_setup_work(struct work_struct *work)
+static void a2b24xx_setup(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent)
 {
-    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-    struct a2b_bus *bus = &a2b24xx->bus;
     uint8_t node_id = 0;
 
     /* Setting up A2B network */
-    adi_a2b_NetworkSetup(a2b24xx->dev, bus, 0);
+    adi_a2b_NetworkSetup(a2b24xx->dev, bus, parent);
 
     for (int32_t i = (bus->totalActions - 1); i >= 0; i--) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
@@ -952,7 +949,14 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
+}
 
+static void a2b24xx_setup_work(struct work_struct *work)
+{
+    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
+
+    a2b24xx_setup(a2b24xx, &a2b24xx->bus, 0);
     int32_t ret = devm_request_irq(a2b24xx->dev,
             client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
