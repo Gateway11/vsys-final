@@ -263,9 +263,6 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
     char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the action buffer
     size_t *totalActions = &a2b24xx->totalActions;
 
-    *totalActions = 0;
-    a2b24xx->writeOffset = 0;
-
     while (actionStart && *totalActions < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
