@@ -261,9 +261,8 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
 static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
     const char *actionStart = strstr(xml, "<action");
     char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the action buffer
-    size_t *totalActions = &a2b24xx->totalActions;
 
-    while (actionStart && *totalActions < MAX_ACTIONS) {
+    while (actionStart && a2b24xx->totalActions < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
@@ -275,8 +274,8 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(a2b24xx, action, &a2b24xx->parseA2BConfig[*totalActions]);
-        (*totalActions)++;
+        parseAction(a2b24xx, action, &a2b24xx->parseA2BConfig[a2b24xx->totalActions]);
+        a2b24xx->totalActions++;
         actionStart = strstr(actionEnd, "<action");
     }
 exit:
