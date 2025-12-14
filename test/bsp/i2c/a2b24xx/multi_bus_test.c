@@ -133,6 +133,9 @@ struct a2b24xx {
     struct mutex bus_lock;
     struct a2b_bus bus;
 
+    uint8_t last_bus;
+    uint8_t last_addr;
+
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;           // Device number
     struct cdev cdev;        // cdev structure
@@ -499,41 +502,44 @@ const IntTypeString_t intTypeString[] = {
     // Master Only "},
 };
 
-static uint8_t biusSelect(struct device *dev, uint8_t bus, uint8_t inode, uint8_t addr)
+static uint8_t busSelect(struct a2b24xx *a2b24xx, uint8_t bus, uint8_t inode, uint8_t addr)
 {
-    static uint8_t last_bus, last_addr;
-
     if (bus) {
-        if (bus != last_bus || addr != last_addr) {
+        if (bus != a2b24xx->last_bus || addr != a2b24xx->last_addr) {
             /* address type changed, need sub bus control */
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
-            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode | 0x20});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode | 0x20});
         }
-        last_addr = addr;
+        a2b24xx->last_addr = addr;
         addr = A2B_BUS_ADDR;
     }
-    last_bus = bus;
+    a2b24xx->last_bus = bus;
     return addr;
 }
 
-#define BUS_SELECT(dev, bus_, inode_, addr_)                                                      \
-({                                                                                                \
-    static uint8_t last_bus_, last_addr_;                                                         \
-    uint8_t ret_ = (addr_);                                                                       \
-                                                                                                  \
-    if (bus_) {                                                                                   \
-        if (bus_ != last_bus_ || addr_ != last_addr_) {                                           \
-            /* address type changed, need sub bus control */                                      \
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_});        \
-            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr_});             \
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_ | 0x20}); \
-        }                                                                                         \
-        last_addr_ = addr_;                                                                       \
-        ret_ = A2B_BUS_ADDR;                                                                      \
-    }                                                                                             \
-    last_bus_ = bus_;                                                                             \
-    ret_;                                                                                         \
+static void clearBusSelect(struct a2b24xx *a2b24xx)
+{
+    a2b24xx->last_addr = 0;
+    adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, 0});
+}
+
+#define BUS_SELECT(a2b24xx, bus_, inode_, addr_)                                                            \
+({                                                                                                          \
+    uint8_t ret_ = (addr_);                                                                                 \
+                                                                                                            \
+    if (bus_) {                                                                                             \
+        if (bus_ != a2b24xx->last_bus || addr_ != a2b24xx->last_addr) {                                     \
+            /* address type changed, need sub bus control */                                                \
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_});         \
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr_});              \
+            adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_ | 0x20});  \
+        }                                                                                                   \
+        a2b24xx->last_addr = addr_;                                                                         \
+        ret_ = A2B_BUS_ADDR;                                                                                \
+    }                                                                                                       \
+    a2b24xx->last_bus = bus_;                                                                               \
+    ret_;                                                                                                   \
 })
 
 static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, uint8_t inode)
