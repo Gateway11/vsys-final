@@ -30,8 +30,8 @@
 #include <sound/soc.h>
 #include <sound/tlv.h>
 
-#include "adi_a2b_commandlist.h"
 #include "a2b24xx.h"
+#include "adi_a2b_commandlist.h"
 #include "regdefs.h"
 
 // #define A2B_SETUP_ALSA
@@ -144,40 +144,39 @@ struct a2b24xx {
     size_t writeOffset;
 };
 
-static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus,
-                                 uint8_t inode);
-static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
-                                uint8_t parent, bool rediscover);
+static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_t inode);
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, bool rediscover);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
 
 /* Example control - no specific functionality */
 static const DECLARE_TLV_DB_MINMAX_MUTE(a2b24xx_control, 0, 0);
 
-static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx) {
+static void a2b24xx_schedule_fault_check(struct a2b24xx *a2b24xx)
+{
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
     bool any_fault = a2b24xx->bus.has_fault;
 
     for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes && !any_fault; i++) {
-        any_fault = a2b24xx->bus.nodes[i].sub_bus &&
-                    a2b24xx->bus.nodes[i].sub_bus->has_fault;
+        any_fault = a2b24xx->bus.nodes[i].sub_bus && a2b24xx->bus.nodes[i].sub_bus->has_fault;
     }
 
     if (!client->irq || any_fault) {
         /* Schedule the next fault check at the specified interval */
-        schedule_delayed_work(&a2b24xx->fault_check_work,
-                              A2B24XX_FAULT_CHECK_INTERVAL);
+        schedule_delayed_work(&a2b24xx->fault_check_work, A2B24XX_FAULT_CHECK_INTERVAL);
     } else {
         enable_irq(client->irq);
     }
 }
 
-static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx) {
+static void a2b24xx_disable_fault_check(struct a2b24xx *a2b24xx)
+{
     a2b24xx->work_allowed = false;
     cancel_delayed_work_sync(&a2b24xx->fault_check_work);
 }
 
-static int a2b24xx_reset(struct a2b24xx *a2b24xx) {
+static int a2b24xx_reset(struct a2b24xx *a2b24xx)
+{
     a2b24xx_disable_fault_check(a2b24xx);
     regcache_cache_bypass(a2b24xx->regmap, true);
 
@@ -194,8 +193,8 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx) {
     return 0;
 }
 
-static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol,
-                             struct snd_ctl_elem_value *ucontrol) {
+static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
     struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
     struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(component);
 
@@ -212,7 +211,8 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol,
 /* Example control */
 static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {A2B24XX_CONTROL(1)};
 
-static void a2b24xx_epl_report_error(uint32_t error_code) {
+static void a2b24xx_epl_report_error(uint32_t error_code)
+{
 #ifdef CONFIG_TEGRA_EPL
     struct epl_error_report_frame error_report;
     u64 time;
@@ -228,15 +228,14 @@ static void a2b24xx_epl_report_error(uint32_t error_code) {
 #endif
 }
 
-static void parseAction(struct a2b24xx *a2b24xx, const char *action,
-                        ADI_A2B_DISCOVERY_CONFIG *config) {
+static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config)
+{
     char instr[20], protocol[10];
     size_t *writeOffset = &a2b24xx->writeOffset;
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
-               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth,
-               &config->nDataWidth, &config->nDataCount, &config->nAddr,
+               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr,
                &config->nDeviceAddr, protocol) == 9) {
 
 #ifndef ENABLE_BECCTL_REG
@@ -273,8 +272,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action,
         size_t index = 0;
         config->paConfigData = a2b24xx->configBuffer + *writeOffset;
         while (token != NULL && config->nDataCount) {
-            config->paConfigData[index++] =
-                (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
+            config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strsep(&dataStr, " ");
         }
         *writeOffset += index;
@@ -282,10 +280,10 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action,
     }
 }
 
-static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *xml) {
+static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *xml)
+{
     const char *actionStart = strstr(xml, "<action");
-    const char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of
-                                                    // memory for the data buffer
+    const char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
     while (actionStart && bus->totalActions < MAX_ACTIONS) {
         const char *actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
@@ -307,7 +305,8 @@ exit:
     kfree(action);
 }
 
-static char *a2b_pal_File_Read(const char *filename, size_t *outSize) {
+static char *a2b_pal_File_Read(const char *filename, size_t *outSize)
+{
     struct file *file;
     char *buffer = NULL;
     loff_t pos = 0;
@@ -374,8 +373,8 @@ static char *a2b_pal_File_Read(const char *filename, size_t *outSize) {
                  - 1: Failure
  */
 /********************************************************************************/
-static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[],
-                                     unsigned int nAddrwidth, unsigned int nAddr) {
+static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[], unsigned int nAddrwidth, unsigned int nAddr)
+{
     /* Store the read values in the placeholder */
     switch (nAddrwidth) {
     /* Byte */
@@ -409,8 +408,9 @@ static void adi_a2b_Concat_Addr_Data(unsigned char pDstBuf[],
     }
 }
 
-static int adi_a2b_I2CWrite(struct device *dev, unsigned short devAddr,
-                            unsigned short count, char *bytes) {
+static int adi_a2b_I2CWrite(struct device *dev,
+        unsigned short devAddr, unsigned short count, char *bytes)
+{
     struct i2c_client *client = to_i2c_client(dev);
 
     client->addr = devAddr;
@@ -418,26 +418,28 @@ static int adi_a2b_I2CWrite(struct device *dev, unsigned short devAddr,
 }
 
 static int adi_a2b_I2CRead(struct device *dev, uint16_t devAddr,
-                           uint16_t writeLength, uint8_t *writeBuffer,
-                           uint16_t readLength, uint8_t *readBuffer) {
+        uint16_t writeLength, uint8_t *writeBuffer, uint16_t readLength, uint8_t *readBuffer)
+{
     int ret = -1;
     struct i2c_client *client = to_i2c_client(dev);
 
     client->addr = devAddr;
 
     struct i2c_msg msg[] = {
-        [0] = {
-            .addr = client->addr,
-            .flags = 0,
-            .len = writeLength,
-            .buf = writeBuffer,
-        },
-        [1] = {
-            .addr = client->addr,
-            .flags = I2C_M_RD,
-            .len = readLength,
-            .buf = readBuffer,
-        },
+        [0] =
+            {
+                .addr = client->addr,
+                .flags = 0,
+                .len = writeLength,
+                .buf = writeBuffer,
+            },
+        [1] =
+            {
+                .addr = client->addr,
+                .flags = I2C_M_RD,
+                .len = readLength,
+                .buf = readBuffer,
+            },
     };
 
     ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
@@ -453,19 +455,20 @@ typedef struct {
 } IntTypeString_t;
 
 const IntTypeString_t intTypeString[] = {
-    {A2B_ENUM_INTTYPE_HDCNTERR, "HDCNTERR "}, {A2B_ENUM_INTTYPE_DDERR, "DDERR "},
-    {A2B_ENUM_INTTYPE_CRCERR, "CRCERR "}, {A2B_ENUM_INTTYPE_DPERR, "DPERR "},
-    {A2B_ENUM_INTTYPE_BECOVF, "BECOVF "}, {A2B_ENUM_INTTYPE_SRFERR, "SRFERR "},
+    {A2B_ENUM_INTTYPE_HDCNTERR, "HDCNTERR "},
+    {A2B_ENUM_INTTYPE_DDERR, "DDERR "},
+    {A2B_ENUM_INTTYPE_CRCERR, "CRCERR "},
+    {A2B_ENUM_INTTYPE_DPERR, "DPERR "},
+    {A2B_ENUM_INTTYPE_BECOVF, "BECOVF "},
+    {A2B_ENUM_INTTYPE_SRFERR, "SRFERR "},
     {A2B_ENUM_INTTYPE_PWRERR_CS_GND, "PWRERR (Cable Shorted to GND) "},
     {A2B_ENUM_INTTYPE_PWRERR_CS_VBAT, "PWRERR (Cable Shorted to VBat) "},
     {A2B_ENUM_INTTYPE_PWRERR_CS, "PWRERR (Cable Shorted Together) "},
     {A2B_ENUM_INTTYPE_PWRERR_CDISC, "PWRERR (Cable Disconnected or Open "
                                     "Circuit) (AD240x/10/2x Slaves Only) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CREV,
-        "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV,
-        "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse "
-        "Connected (AD243x Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CREV, "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV, "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse "
+                                        "Connected (AD243x Only) "},
     {A2B_ENUM_INTTYPE_PWRERR_FAULT, "PWRERR (Indeterminate Fault) "},
     //{A2B_ENUM_INTTYPE_IO0PND               ,        "IO0PND - Slave Only "},
     //{A2B_ENUM_INTTYPE_IO1PND               ,        "IO1PND - Slave Only "},
@@ -482,10 +485,8 @@ const IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_PWRERR_NLS_VBAT, "PWRERR - Non-Localized Short to VBat "},
     {A2B_ENUM_INTTYPE_PWRERR_OTH, "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
     //{A2B_ENUM_INTTYPE_SPIDONE              ,        "SPI Done"},
-    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR,
-        "SPI Remote Register Access Error - Master Only"},
-    {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR,
-        "SPI Remote I2C Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR, "SPI Remote Register Access Error - Master Only"},
+    {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR, "SPI Remote I2C Access Error - Master Only"},
     {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR, "SPI Data Tunnel Access Error"},
     {A2B_ENUM_INTTYPE_SPI_BAD_CMD, "SPI Bad Command"},
     {A2B_ENUM_INTTYPE_SPI_FIFO_OVRFLW, "SPI FIFO Overflow"},
@@ -493,17 +494,15 @@ const IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_VMTR, "VMTR Interrupt"},
     {A2B_ENUM_INTTYPE_IRPT_MSG_ERR, "PWRERR - Interrupt Messaging Error "},
     {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF, "Startup Error - Return to Factory "},
-    {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR,
-        "Slave INTTYPE Read Error - Master Only "},
+    {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR, "Slave INTTYPE Read Error - Master Only "},
     //{A2B_ENUM_INTTYPE_STANDBY_DONE         ,        "Standby Done - Master
     // Only "}, {A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING -
     // Master Only "},
 };
 
-static uint8_t busSelect(struct a2b24xx *a2b24xx, uint8_t bus, uint8_t inode,
-                          uint8_t addr) {
-    static uint8_t last_bus;
-    static uint8_t last_addr;
+static inline uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t inode, uint8_t addr)
+{
+    static uint8_t last_bus, last_addr;
 
     if (bus) {
         if (bus != last_bus || addr != last_addr) {
@@ -514,80 +513,78 @@ static uint8_t busSelect(struct a2b24xx *a2b24xx, uint8_t bus, uint8_t inode,
         }
         last_addr = addr;
         addr = A2B_BUS_ADDR;
+    } else if (bus != last_bus) {
+        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
     }
     last_bus = bus;
     return addr;
 }
 
-static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
-                              uint8_t parent, uint8_t inode) {
+#define BUS_SELECT(dev, bus_, inode_, addr_)                                                        \
+({                                                                                                  \
+    static uint8_t last_bus_, last_addr_;                                                           \
+    uint8_t ret_ = (addr_);                                                                         \
+    if (bus_) {                                                                                     \
+        if (bus_ != last_bus_ || addr_ != last_addr_) {                                             \
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_});          \
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr_});               \
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode_ | 0x20});   \
+        }                                                                                           \
+        last_addr_ = addr_;                                                                         \
+        ret_ = A2B_BUS_ADDR;                                                                        \
+    } else if (bus_ != last_bus_) {                                                                 \
+        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});               \
+    }                                                                                               \
+    last_bus_ = bus_;                                                                               \
+    ret_;                                                                                           \
+})
+
+static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, uint8_t inode)
+{
     struct device *dev = a2b24xx->dev;
     uint8_t retryCount = 0;
     int16_t interrupt;
 
-    if (!CHECK_RANGE(inode, 1, bus->num_nodes))
-        return false;
+    if (!CHECK_RANGE(inode, 1, bus->num_nodes)) return false;
 
-    LOG_PRINT_IF_ENABLED(info, "Bus %d @ Parent %d Node %d processing: master "
-                         "fmt=0x%02X, cycle=0x%02X, pos=%d 0x%02X\n",
-                         bus->id, parent, inode, bus->master_fmt,
-                         bus->nodes[inode].cycle, bus->nodes[inode].position,
+    LOG_PRINT_IF_ENABLED(info, "Bus %d @ Parent %d Node %d processing: master fmt=0x%02X, cycle=0x%02X, pos=%d 0x%02X\n",
+                         bus->id, parent, inode, bus->master_fmt, bus->nodes[inode].cycle, bus->nodes[inode].position,
                          bus->pA2BConfig[bus->nodes[inode].position].nAddr);
 
 #ifdef ENABLE_BECCTL_REG
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_NODEADR, 0x80});
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                     (uint8_t[]){A2B_REG_BECNT, 0x00});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, 0x80});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_BECNT, 0x00});
 #endif
 
-    // 1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear
-    // interrupt pending bits (INTPEND=0xFF) and wait for 100ms
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_NODEADR, inode - 1});
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                     (uint8_t[]){A2B_REG_SWCTL, 0x00});
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                     (uint8_t[]){A2B_REG_INTPND0, 0xFF});
+    // 1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_INTPND0, 0xFF});
     mdelay(100);
 
     // Now, periodically try to rediscover the slave-1 partially
-    // 1. Write SWCTL=0x21 to all upsteam nodes other than the node from which
-    // we are discovering the next node( In above example Write Master node
-    // SWCTL=0x21)
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_SWCTL, 0x21});
+    // 1. Write SWCTL=0x21 to all upsteam nodes other than the node from which we are discovering the next node( In above example Write Master node SWCTL=0x21)
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
     for (uint8_t i = 0; i < (inode - 1); i++) {
-        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                         (uint8_t[]){A2B_REG_NODEADR, i});
-        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                         (uint8_t[]){A2B_REG_SWCTL, 0x21});
+        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
+        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
     }
 
-    // 2. Write SWCTL=0x01 in the next upsteam node of discovering node
-    // (SWCTL=0x01 in Slave0)
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_NODEADR, inode - 1});
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                     (uint8_t[]){A2B_REG_SWCTL, 0x01});
+    // 2. Write SWCTL=0x01 in the next upsteam node of discovering node (SWCTL=0x01 in Slave0)
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
 
-    // 3. Write master node DISCVRY register with expected response cycle of
-    // slave node to be discovered to start the discovery process (DISCVRY =
-    // response cycle of the slave1)
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_DISCVRY, bus->nodes[inode].cycle});
+    // 3. Write master node DISCVRY register with expected response cycle of slave node to be discovered to start the discovery process (DISCVRY = response cycle of the slave1)
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_DISCVRY, bus->nodes[inode].cycle});
 
-    // 4. Wait for 35msec for slave node to discover. Can use IRQ interrupt to
-    // check if slave node discovery interrupt is received.
+    // 4. Wait for 35msec for slave node to discover. Can use IRQ interrupt to check if slave node discovery interrupt is received.
     mdelay(35);
 
-    // 5. If rediscovery is unsuccessful  i.e. resulted in timeout or Open wire
-    // fault (INTTYPE: 0x0C) raised:
+    // 5. If rediscovery is unsuccessful  i.e. resulted in timeout or Open wire fault (INTTYPE: 0x0C) raised:
     //          O End the discovery
     //          O Open the Slave node0 switch
     //          O Clear interrupts, if any
-    //          O Wait for 100msec. And reattempt partial rediscovery: from step
-    //          - 1
+    //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
 retry:
     interrupt = processInterrupt(a2b24xx, bus, parent, false);
     if (interrupt != A2B_ENUM_INTTYPE_DSCDONE) {
@@ -595,59 +592,43 @@ retry:
             mdelay(25);
             goto retry;
         }
-        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                         (uint8_t[]){A2B_REG_SWCTL, 0x00});
-        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                         (uint8_t[]){A2B_REG_CONTROL, 0x82});
+        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
         return false;
     }
 
-    // 6. If rediscovery is successful (got the slave node discovery interrupt
-    // (INTTYPE==0x18),
+    // 6. If rediscovery is successful (got the slave node discovery interrupt (INTTYPE==0x18),
     //          O Update SWCTL=0x01 in all upsteam nodes
-    //          O After slave register programming, configure SLOTFMT, DATCTL
-    //          and NEWSTRCT on master node to start the audio communication.
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_SWCTL, 0x01});
+    //          O After slave register programming, configure SLOTFMT, DATCTL and NEWSTRCT on master node to start the audio communication.
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
     for (uint8_t i = 0; i < inode; i++) {
-        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                         (uint8_t[]){A2B_REG_NODEADR, i});
-        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                         (uint8_t[]){A2B_REG_SWCTL, 0x01});
+        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
+        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
     }
 
     ADI_A2B_DISCOVERY_CONFIG *pOPUnit;
-    unsigned char *aDataBuffer = kmalloc(
-        6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned int nDelayVal;
 
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                     (uint8_t[]){A2B_REG_NODEADR, inode});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, inode});
     for (uint32_t i = bus->nodes[inode].position; i < bus->totalActions; i++) {
         pOPUnit = &bus->pA2BConfig[i];
 
         // Simple Advanced Optimized Modified
-        if ((pOPUnit->nAddr == A2B_REG_NODEADR &&
-                pOPUnit->nDeviceAddr == A2B_BASE_ADDR &&
-                (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode) ||
-            (pOPUnit->nAddr == A2B_REG_DISCVRY &&
-                pOPUnit->nDeviceAddr == A2B_BASE_ADDR) ||
-            (pOPUnit->nAddr == A2B_REG_SWCTL &&
-                pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
+        if ((pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_BASE_ADDR
+                    && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
+                || (pOPUnit->nAddr == A2B_REG_DISCVRY && pOPUnit->nDeviceAddr == A2B_BASE_ADDR)
+                || (pOPUnit->nAddr == A2B_REG_SWCTL && pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
 
-        pr_info("iiooooooooiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr,
-                pOPUnit->nAddr);
+        pr_info("iiooooooooiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
 
         switch (pOPUnit->eOpCode) {
         case A2B24XX_WRITE:
-            adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth,
-                                     pOPUnit->nAddr);
-            memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData,
-                   pOPUnit->nDataCount);
-            adi_a2b_I2CWrite(
-                dev, busSelect(dev, bus->id, parent, pOPUnit->nDeviceAddr),
-                (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
+            adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+            memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, pOPUnit->nDeviceAddr),
+                    (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
             break;
         case A2B24XX_DELAY:
             nDelayVal = 0u;
@@ -660,60 +641,44 @@ retry:
             break;
         }
     }
-    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 4,
-                     (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
+    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent,
+                A2B_BASE_ADDR), 4, (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
 
     kfree(aDataBuffer); // Free memory before returning
     return true;
 }
 
-static void processFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
-                             uint8_t parent, int8_t inode) {
+static void processFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, int8_t inode)
+{
     if (inode <= 0) {
         /* Setting up A2B network */
         adi_a2b_NetworkSetup(a2b24xx->dev, bus, parent);
     } else {
         for (uint8_t i = inode; i <= bus->num_nodes; i++) {
             if (!processSingleNode(a2b24xx, bus, parent, i)) {
-                LOG_PRINT_IF_ENABLED(warn,
-                                     "Bus %d @ Parent %d Node %d processing "
-                                     "failed. Stopping partial discovery\n",
-                                     bus->id, parent, i);
+                LOG_PRINT_IF_ENABLED(warn, "Bus %d @ Parent %d Node %d processing failed. Stopping partial discovery\n", bus->id, parent, i);
                 return;
             }
             mdelay(1);
 
             uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
-            adi_a2b_I2CRead(a2b24xx->dev,
-                            busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 1,
-                            (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
+            adi_a2b_I2CRead(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
         }
-        adi_a2b_I2CWrite(a2b24xx->dev,
-                         busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                         (uint8_t[]){A2B_REG_NODEADR, bus->num_nodes});
-        adi_a2b_I2CWrite(a2b24xx->dev,
-                         busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 2,
-                         (uint8_t[]){A2B_REG_SWCTL, 0x00});
-        adi_a2b_I2CWrite(a2b24xx->dev,
-                         busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                         (uint8_t[]){A2B_REG_CONTROL, 0x82});
+        adi_a2b_I2CWrite(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, bus->num_nodes});
+        adi_a2b_I2CWrite(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
+        adi_a2b_I2CWrite(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_CONTROL, 0x82});
     }
 }
 
-static void checkFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
-                           uint8_t parent, int8_t inode) {
+static void checkFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, int8_t inode)
+{
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t last_node = A2B_MASTER_NODE;
 
     for (uint8_t i = 0; i <= bus->num_nodes; i++) {
-        adi_a2b_I2CWrite(a2b24xx->dev,
-                         busSelect(dev, bus->id, parent, A2B_BASE_ADDR), 2,
-                         (uint8_t[]){A2B_REG_NODEADR, i});
-        if (adi_a2b_I2CRead(a2b24xx->dev,
-                            busSelect(dev, bus->id, parent, A2B_BUS_ADDR), 1,
-                            (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer)) {
-            // If discovery is not completed during system boot, the
-            // A2B_NODE.LAST bit for the last node will not be set
+        adi_a2b_I2CWrite(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
+        if (adi_a2b_I2CRead(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer)) {
+            // If discovery is not completed during system boot, the A2B_NODE.LAST bit for the last node will not be set
             last_node = i - 1;
             break;
         }
@@ -723,35 +688,30 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
         }
     }
     if (last_node < bus->num_nodes) {
-        LOG_PRINT_IF_ENABLED(warn, "Bus %d drop detected @ Parent %d Node: %d\n",
-                             bus->id, parent, last_node);
+        LOG_PRINT_IF_ENABLED(warn, "Bus %d drop detected @ Parent %d Node: %d\n", bus->id, parent, last_node);
         bus->has_fault = true;
         processFaultNode(a2b24xx, bus, parent, last_node + 1);
     }
 }
 
-static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
-                                uint8_t parent, bool deepCheck) {
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, bool deepCheck)
+{
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
     mutex_lock(&a2b24xx->bus_lock);
-    adi_a2b_I2CRead(a2b24xx->dev, busSelect(dev, bus->id, parent, A2B_BASE_ADDR),
-                    1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
+    adi_a2b_I2CRead(a2b24xx->dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
-            LOG_PRINT_IF_ENABLED(warn, "Bus %d Parent %d Interrupt Source: Master - ",
-                                 bus->id, parent);
+            LOG_PRINT_IF_ENABLED(warn, "Bus %d Parent %d Interrupt Source: Master - ", bus->id, parent);
         } else {
             inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
-            LOG_PRINT_IF_ENABLED(warn, "Bus %d Parent %d Interrupt Source: Slave%d - ",
-                                 bus->id, parent, inode);
+            LOG_PRINT_IF_ENABLED(warn, "Bus %d Parent %d Interrupt Source: Slave%d - ", bus->id, parent, inode);
         }
 
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
-                LOG_PRINT_IF_ENABLED(cont,
-                                 "Interrupt Type: %s\n", intTypeString[i].message);
+                LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: %s\n", intTypeString[i].message);
                 bus->has_fault = true;
 
                 if (deepCheck) {
@@ -761,8 +721,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
                 return dataBuffer[1];
             }
         }
-        LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: Ignorable interrupt (Code: %d)\n",
-                             dataBuffer[1]);
+        LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
     } else if (deepCheck) {
         checkFaultNode(a2b24xx, bus, parent, A2B_INVALID_NODE);
@@ -778,15 +737,14 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
  @return         None
  */
 /********************************************************************************/
-static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus,
-                                 uint8_t inode) {
+static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_t inode)
+{
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
     bus->has_fault = false;
 
     ADI_A2B_DISCOVERY_CONFIG *pOPUnit;
     unsigned int nIndex, nIndex1;
-    unsigned char *aDataBuffer = kmalloc(
-        6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
 
@@ -797,26 +755,21 @@ static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus,
         switch (pOPUnit->eOpCode) {
         /* Write */
         case A2B24XX_WRITE:
-            adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth,
-                                     pOPUnit->nAddr);
-            memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData,
-                   pOPUnit->nDataCount);
-            adi_a2b_I2CWrite(
-                dev, busSelect(dev, bus->id, inode, pOPUnit->nDeviceAddr),
-                (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
+            adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
+            memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, pOPUnit->nDeviceAddr),
+                    (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
             break;
 
         /* Read */
         case A2B24XX_READ:
             (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
-            adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth,
-                                     pOPUnit->nAddr);
+            adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
             if (pOPUnit->nAddr == A2B_REG_INTTYPE && !bus->has_fault) {
                 processInterrupt(a2b24xx, bus, inode, false);
             } else {
-                adi_a2b_I2CRead(dev, busSelect(dev, bus->id, inode,
-                    pOPUnit->nDeviceAddr), pOPUnit->nAddrWidth, aDataWriteReadBuf,
-                    pOPUnit->nDataCount, aDataBuffer);
+                adi_a2b_I2CRead(dev, BUS_SELECT(dev, bus->id, inode, pOPUnit->nDeviceAddr),
+                        pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
             }
             mdelay(2); // Couple of milliseconds should be OK
             break;
@@ -839,7 +792,8 @@ static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus,
 
 #ifndef A2B_SETUP_ALSA
 // Function to handle device open
-static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp) {
+static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp)
+{
     struct a2b24xx *a2b24xx = container_of(inode->i_cdev, struct a2b24xx, cdev);
 
     filp->private_data = a2b24xx;
@@ -847,8 +801,8 @@ static int a2b24xx_ctrl_open(struct inode *inode, struct file *filp) {
 }
 
 // Function to handle write operations
-static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf,
-                                  size_t count, loff_t *ppos) {
+static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
     struct a2b24xx *a2b24xx = file->private_data;
     struct device *dev = a2b24xx->dev;
     struct a2b_bus *bus = &a2b24xx->bus;
@@ -873,84 +827,58 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf,
         a2b24xx->log_enabled = true;
     } else if (strcmp(a2b24xx->command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
-    } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0],
-                      &params[1]) >= 1) {
+    } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
         mutex_lock(&a2b24xx->bus_lock);
         if (params[0] < 0) {
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BASE_ADDR),
-                             2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BASE_ADDR),
-                             2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
-        } else if (params[0] <= a2b24xx->bus.num_nodes &&
-                   CHECK_RANGE(params[1], 0, sizeof(i2stest))) {
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BASE_ADDR),
-                             2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_PDMCTL, 0x00});
-            // adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR),
-            //                 3, (uint8_t[]){A2B_REG_LDNSLOTS, 0x80, 0x02});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_I2SCFG, 0x11});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_DNMASK0, 0x03});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
+        } else if (params[0] <= a2b24xx->bus.num_nodes && CHECK_RANGE(params[1], 0, sizeof(i2stest))) {
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            // adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 3, (uint8_t[]){A2B_REG_LDNSLOTS, 0x80, 0x02});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SCFG, 0x11});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_DNMASK0, 0x03});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
             for (int16_t i = params[0]; i >= 0 && params[0] != 0; i--) {
-                adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode,
-                             A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
-                adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode,
-                             A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02});
+                adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
+                adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02});
             }
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_I2SGCFG, 0x12});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SGCFG, 0x12});
 
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BASE_ADDR),
-                             2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02 /* 0xFF */});
-            adi_a2b_I2CWrite(
-                dev, busSelect(dev, bus->id, inode, A2B_BASE_ADDR), 4,
-                (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->bus.master_fmt, 0x03, 0x81});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02 /* 0xFF */});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 4,
+                    (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->bus.master_fmt, 0x03, 0x81});
         }
         mutex_unlock(&a2b24xx->bus_lock); // Release lock
-    } else if (sscanf(a2b24xx->command_buf, "RX Slave%hd %hd", &params[0],
-                      &params[1]) == 2) {
+    } else if (sscanf(a2b24xx->command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
         bool valid_node = CHECK_RANGE(params[0], 0, a2b24xx->bus.num_nodes);
         bool valid_index = CHECK_RANGE(params[1], 0, ARRAY_SIZE(config));
         if (valid_node && valid_index) {
             mutex_lock(&a2b24xx->bus_lock);
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BASE_ADDR),
-                             2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
-            adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, A2B_BUS_ADDR), 2,
-                             (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
-    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params,
-                              params + 1)) >= 1) {
+    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params, params + 1)) >= 1) {
         if (params[0] <= a2b24xx->bus.num_nodes) {
             mutex_lock(&a2b24xx->bus_lock);
             for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes; i++) {
-                adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, 
-                                A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
-                adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode,
-                                A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
+                adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
+                adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SCFG, 0x01});
                 if (params[0] < 0 || argc == 1) {
-                    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode,
-                                A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
+                    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x15});
                 } else if (params[0] == i) {
                     switch (params[1]) {
                     case 0:
-                        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, 
-                                A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
+                        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x11});
                         break;
                     case 1:
-                        adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, 
-                                A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x14});
+                        adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x14});
                         break;
                     }
                 } else {
-                    adi_a2b_I2CWrite(dev, busSelect(dev, bus->id, inode, 
-                                A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+                    adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, inode, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
                 }
             }
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
@@ -968,7 +896,8 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 };
 #endif
 
-static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id) {
+static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
+{
     struct a2b24xx *a2b24xx = dev_id;
     pr_info("%s: interrupt handled. %d\n", __func__, a2b24xx->work_allowed);
 
@@ -980,7 +909,8 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id) {
     return IRQ_HANDLED;
 }
 
-static void a2b24xx_setup_work(struct work_struct *work) {
+static void a2b24xx_setup_work(struct work_struct *work)
+{
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
     struct a2b_bus *bus = &a2b24xx->bus;
@@ -999,20 +929,15 @@ static void a2b24xx_setup_work(struct work_struct *work) {
         }
     }
 
-    bus->nodes = devm_kzalloc(a2b24xx->dev,
-                sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
+    bus->nodes = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
     for (uint32_t i = 0; i < bus->totalActions; i++) {
-        if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY &&
-            bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->nodes[node_id++].cycle = bus->pA2BConfig[i].paConfigData[0];
         }
-        if (bus->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS &&
-            bus->pA2BConfig[i].nAddrWidth == 1) {
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS && bus->pA2BConfig[i].nAddrWidth == 1) {
             for (int32_t j = i; j >= 0; j--) {
-                if (bus->pA2BConfig[j].nAddr == A2B_REG_NODEADR &&
-                    bus->pA2BConfig[j + 1].nAddr != A2B_REG_CHIP &&
-                    !(bus->pA2BConfig[j].paConfigData[0] &
-                        A2B_BITM_NODEADR_PERI)) {
+                if (bus->pA2BConfig[j].nAddr == A2B_REG_NODEADR && bus->pA2BConfig[j + 1].nAddr != A2B_REG_CHIP &&
+                    !(bus->pA2BConfig[j].paConfigData[0] & A2B_BITM_NODEADR_PERI)) {
                     bus->nodes[bus->pA2BConfig[j].paConfigData[0]].position = i;
                     break;
                 }
@@ -1020,18 +945,17 @@ static void a2b24xx_setup_work(struct work_struct *work) {
         }
     }
 
-    int32_t ret = devm_request_irq(a2b24xx->dev, client->irq, a2b24xx_irq_handler,
-                         IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
+    int32_t ret = devm_request_irq(a2b24xx->dev,
+            client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
 
     mdelay(5000);
-    schedule_delayed_work(&a2b24xx->fault_check_work,
-                          A2B24XX_FAULT_CHECK_INTERVAL);
+    schedule_delayed_work(&a2b24xx->fault_check_work, A2B24XX_FAULT_CHECK_INTERVAL);
 }
 
-static void a2b24xx_fault_check_work(struct work_struct *work) {
-    struct a2b24xx *a2b24xx =
-            container_of(work, struct a2b24xx, fault_check_work.work);
+static void a2b24xx_fault_check_work(struct work_struct *work)
+{
+    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
     a2b24xx->bus.has_fault = false;
 
     processInterrupt(a2b24xx, &a2b24xx->bus, 0, true);
@@ -1046,8 +970,8 @@ static void a2b24xx_fault_check_work(struct work_struct *work) {
 
 /* Template functions */
 static int a2b24xx_hw_params(struct snd_pcm_substream *substream,
-                             struct snd_pcm_hw_params *params,
-                             struct snd_soc_dai *dai) {
+                struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
+{
     // struct snd_soc_component *codec = dai->component;
     // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
     // unsigned int rate = params_rate(params);
@@ -1058,14 +982,16 @@ static int a2b24xx_hw_params(struct snd_pcm_substream *substream,
     return ret;
 }
 
-static int a2b24xx_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-                                unsigned int rx_mask, int slots, int width) {
+static int a2b24xx_set_tdm_slot(struct snd_soc_dai *dai,
+                unsigned int tx_mask, unsigned int rx_mask, int slots, int width)
+{
     // Add custom functionality
 
     return 0;
 }
 
-static int a2b24xx_mute(struct snd_soc_dai *dai, int mute, int stream) {
+static int a2b24xx_mute(struct snd_soc_dai *dai, int mute, int stream)
+{
     // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
 
     // Add custom functionality
@@ -1073,7 +999,8 @@ static int a2b24xx_mute(struct snd_soc_dai *dai, int mute, int stream) {
     return 0;
 }
 
-static int a2b24xx_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt) {
+static int a2b24xx_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
     int ret = 0;
 
     // Add custom functionality
@@ -1081,8 +1008,8 @@ static int a2b24xx_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt) {
     return ret;
 }
 
-static int a2b24xx_startup(struct snd_pcm_substream *substream,
-                           struct snd_soc_dai *dai) {
+static int a2b24xx_startup(struct snd_pcm_substream *substream, struct snd_soc_dai *dai)
+{
     // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(dai->component);
 
     // Add custom functionality
@@ -1106,8 +1033,7 @@ static struct snd_soc_dai_driver a2b24xx_dai = {
             .channels_min = 1,
             .channels_max = 32,
             .rates = SNDRV_PCM_RATE_KNOT,
-            .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |
-                       SNDRV_PCM_FMTBIT_S32_LE,
+            .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
             .sig_bits = 24,
         },
     .playback =
@@ -1116,8 +1042,7 @@ static struct snd_soc_dai_driver a2b24xx_dai = {
             .channels_min = 1,
             .channels_max = 32,
             .rates = SNDRV_PCM_RATE_KNOT,
-            .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |
-                       SNDRV_PCM_FMTBIT_S32_LE,
+            .formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
             .sig_bits = 24,
         },
     .ops = &a2b24xx_dai_ops,
@@ -1129,8 +1054,9 @@ static const unsigned int a2b24xx_rates[] = {
 };
 
 /* Set system clock */
-static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id,
-                              int source, unsigned int freq, int dir) {
+static int a2b24xx_set_sysclk(struct snd_soc_component *codec,
+                int clk_id, int source, unsigned int freq, int dir)
+{
     // struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
     // unsigned int mask = 0;
     // unsigned int clk_src;
@@ -1142,7 +1068,8 @@ static int a2b24xx_set_sysclk(struct snd_soc_component *codec, int clk_id,
 }
 
 /* Codec probe */
-static int a2b24xx_codec_probe(struct snd_soc_component *codec) {
+static int a2b24xx_codec_probe(struct snd_soc_component *codec)
+{
     struct a2b24xx *a2b24xx = snd_soc_component_get_drvdata(codec);
     int ret = 0;
 
@@ -1164,8 +1091,8 @@ static struct snd_soc_component_driver a2b24xx_codec_driver = {
 
 /* Driver probe */
 int a2b24xx_probe(struct device *dev, struct regmap *regmap,
-                  enum a2b24xx_type type,
-                  void (*switch_mode)(struct device *dev)) {
+                enum a2b24xx_type type, void (*switch_mode)(struct device *dev))
+{
     struct a2b24xx *a2b24xx;
     int ret;
     size_t size;
@@ -1216,15 +1143,13 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     // Create the device node
     device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
-    pr_info("Major: %d, Minor: %d\n", MAJOR(a2b24xx->dev_num),
-            MINOR(a2b24xx->dev_num));
+    pr_info("Major: %d, Minor: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
     const char *filename = NULL;
     const char *default_filename = "/lib/firmware/adi_a2b_commandlist.xml";
     of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
-    char *content =
-        a2b_pal_File_Read(filename ? filename : default_filename, &size);
+    char *content = a2b_pal_File_Read(filename ? filename : default_filename, &size);
     if (content) {
         pr_info("File content (%zu bytes)\n", size);
 
@@ -1237,8 +1162,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         a2b24xx->bus.totalActions = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->bus.totalActions,
-            a2b24xx->writeOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->bus.totalActions, a2b24xx->writeOffset);
 
 #if 0
     // Print the results
@@ -1280,14 +1204,15 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 }
 EXPORT_SYMBOL_GPL(a2b24xx_probe);
 
-int a2b24xx_remove(struct device *dev) {
+int a2b24xx_remove(struct device *dev)
+{
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
 
 #ifndef A2B_SETUP_ALSA
-    device_destroy(a2b24xx->dev_class, a2b24xx->dev_num);  // Destroy the device node
-    class_destroy(a2b24xx->dev_class);  // Destroy the device class
-    cdev_del(&a2b24xx->cdev);  // Delete the cdev
-    unregister_chrdev_region(a2b24xx->dev_num, 1);  // Free the device number
+    device_destroy(a2b24xx->dev_class, a2b24xx->dev_num); // Destroy the device node
+    class_destroy(a2b24xx->dev_class);                    // Destroy the device class
+    cdev_del(&a2b24xx->cdev);                             // Delete the cdev
+    unregister_chrdev_region(a2b24xx->dev_num, 1);        // Free the device number
 #endif
 
     cancel_work_sync(&a2b24xx->setup_work);
@@ -1298,9 +1223,7 @@ int a2b24xx_remove(struct device *dev) {
 }
 EXPORT_SYMBOL_GPL(a2b24xx_remove);
 
-static bool a2b24xx_register_volatile(struct device *dev, unsigned int reg) {
-    return true;
-}
+static bool a2b24xx_register_volatile(struct device *dev, unsigned int reg) { return true; }
 
 const struct regmap_config a2b24xx_regmap_config = {
     .max_register = 255,
