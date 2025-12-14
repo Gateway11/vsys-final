@@ -523,6 +523,7 @@ static uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t parent, uint8_
 }
 
 #define BUS_SELECT(dev, __bus, __parent, __addr)                                                    \
+({                                                                                                  \
     static uint8_t __last_bus, __last_addr;                                                         \
     uint8_t __ret = (__addr);                                                                       \
     if (__bus) {                                                                                    \
