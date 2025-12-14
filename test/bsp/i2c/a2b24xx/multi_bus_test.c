@@ -499,7 +499,7 @@ const IntTypeString_t intTypeString[] = {
     // Master Only "},
 };
 
-static uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t inode, uint8_t addr)
+static inline uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t inode, uint8_t addr)
 {
     static uint8_t last_bus, last_addr;
 
