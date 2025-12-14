@@ -282,8 +282,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action,
     }
 }
 
-static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
-                     const char *xml) {
+static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *xml) {
     const char *actionStart = strstr(xml, "<action");
     const char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of
                                                     // memory for the data buffer
@@ -545,7 +544,6 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus,
                      (uint8_t[]){A2B_REG_BECNT, 0x00});
 #endif
 
-    // https://ez.analog.com/a2b/f/q-a/536836/a2b-hotpluggable-or-how-to-resync-the-bus
     // 1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear
     // interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, busControl(dev, bus->id, parent, A2B_BASE_ADDR), 2,
@@ -856,10 +854,12 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf,
                                   size_t count, loff_t *ppos) {
     struct a2b24xx *a2b24xx = file->private_data;
     struct device *dev = a2b24xx->dev;
+    struct a2b_bus *bus = &a2b24xx->bus;
 
     int16_t argc = 0, params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
     uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
+    uint8_t inode = 0;
 
     size_t len = min(count, sizeof(a2b24xx->command_buf));
     if (copy_from_user(a2b24xx->command_buf, buf, len)) {
@@ -876,7 +876,6 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf,
         a2b24xx->log_enabled = true;
     } else if (strcmp(a2b24xx->command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
-        // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0],
                       &params[1]) >= 1) {
         mutex_lock(&a2b24xx->bus_lock);
