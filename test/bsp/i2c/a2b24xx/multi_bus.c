@@ -503,21 +503,20 @@ const IntTypeString_t intTypeString[] = {
     // Master Only "},
 };
 
-static inline uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t inode, uint8_t addr)
+static uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t parent, uint8_t addr)
 {
     static uint8_t last_bus, last_addr;
-
     if (bus) {
         if (bus != last_bus || addr != last_addr) {
             /* address type changed, need sub bus control */
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, parent});
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode | 0x20});
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, parent| 0x20});
         }
         last_addr = addr;
         addr = A2B_BUS_ADDR;
     } else if (bus != last_bus) {
-        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
+        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, parent});
     }
     last_bus = bus;
     return addr;
