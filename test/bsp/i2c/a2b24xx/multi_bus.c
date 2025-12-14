@@ -41,7 +41,7 @@
 #define COMMAND_SIZE 128       // Buffer size for receiving commands
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
 
 #define MAX_RETRIES 2 // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL msecs_to_jiffies(5000)
@@ -93,7 +93,8 @@
 // https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
 // https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
 
-// clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never, TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
+// clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never, \
+    TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
 
 struct a2b_bus;
 struct a2b_node {
