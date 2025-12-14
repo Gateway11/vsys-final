@@ -93,6 +93,8 @@
 // https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
 // https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
 
+// clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never, TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
+
 struct a2b_bus;
 struct a2b_node {
     struct a2b_bus *sub_bus;
