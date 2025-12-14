@@ -454,22 +454,19 @@ typedef struct {
 } IntTypeString_t;
 
 const IntTypeString_t intTypeString[] = {
-    {A2B_ENUM_INTTYPE_HDCNTERR, "HDCNTERR "},
-    {A2B_ENUM_INTTYPE_DDERR, "DDERR "},
-    {A2B_ENUM_INTTYPE_CRCERR, "CRCERR "},
-    {A2B_ENUM_INTTYPE_DPERR, "DPERR "},
-    {A2B_ENUM_INTTYPE_BECOVF, "BECOVF "},
-    {A2B_ENUM_INTTYPE_SRFERR, "SRFERR "},
+    {A2B_ENUM_INTTYPE_HDCNTERR, "HDCNTERR "}, {A2B_ENUM_INTTYPE_DDERR, "DDERR "},
+    {A2B_ENUM_INTTYPE_CRCERR, "CRCERR "}, {A2B_ENUM_INTTYPE_DPERR, "DPERR "},
+    {A2B_ENUM_INTTYPE_BECOVF, "BECOVF "}, {A2B_ENUM_INTTYPE_SRFERR, "SRFERR "},
     {A2B_ENUM_INTTYPE_PWRERR_CS_GND, "PWRERR (Cable Shorted to GND) "},
     {A2B_ENUM_INTTYPE_PWRERR_CS_VBAT, "PWRERR (Cable Shorted to VBat) "},
     {A2B_ENUM_INTTYPE_PWRERR_CS, "PWRERR (Cable Shorted Together) "},
-    {A2B_ENUM_INTTYPE_PWRERR_CDISC,
-     "PWRERR (Cable Disconnected or Open Circuit) (AD240x/10/2x Slaves Only) "},
+    {A2B_ENUM_INTTYPE_PWRERR_CDISC, "PWRERR (Cable Disconnected or Open "
+                                    "Circuit) (AD240x/10/2x Slaves Only) "},
     {A2B_ENUM_INTTYPE_PWRERR_CREV,
-     "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
+        "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
     {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV,
-     "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse "
-     "Connected (AD243x Only) "},
+        "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse "
+        "Connected (AD243x Only) "},
     {A2B_ENUM_INTTYPE_PWRERR_FAULT, "PWRERR (Indeterminate Fault) "},
     //{A2B_ENUM_INTTYPE_IO0PND               ,        "IO0PND - Slave Only "},
     //{A2B_ENUM_INTTYPE_IO1PND               ,        "IO1PND - Slave Only "},
@@ -479,7 +476,7 @@ const IntTypeString_t intTypeString[] = {
     //{A2B_ENUM_INTTYPE_IO5PND               ,        "IO5PND "},
     //{A2B_ENUM_INTTYPE_IO6PND               ,        "IO6PND "},
     //{A2B_ENUM_INTTYPE_IO7PND               ,        "IO7PND "},
-    //{A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only "},
+    //{A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only"},
     {A2B_ENUM_INTTYPE_I2CERR, "I2CERR - Master Only "},
     {A2B_ENUM_INTTYPE_ICRCERR, "ICRCERR - Master Only "},
     {A2B_ENUM_INTTYPE_PWRERR_NLS_GND, "PWRERR - Non-Localized Short to GND "},
@@ -487,9 +484,9 @@ const IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_PWRERR_OTH, "PWRERR - Other Error, Check SWSTAT2/SWSTAT3."},
     //{A2B_ENUM_INTTYPE_SPIDONE              ,        "SPI Done"},
     {A2B_ENUM_INTTYPE_SPI_REMOTE_REG_ERR,
-     "SPI Remote Register Access Error - Master Only"},
+        "SPI Remote Register Access Error - Master Only"},
     {A2B_ENUM_INTTYPE_SPI_REMOTE_I2C_ERR,
-     "SPI Remote I2C Access Error - Master Only"},
+        "SPI Remote I2C Access Error - Master Only"},
     {A2B_ENUM_INTTYPE_SPI_DATA_TUN_ERR, "SPI Data Tunnel Access Error"},
     {A2B_ENUM_INTTYPE_SPI_BAD_CMD, "SPI Bad Command"},
     {A2B_ENUM_INTTYPE_SPI_FIFO_OVRFLW, "SPI FIFO Overflow"},
@@ -498,7 +495,7 @@ const IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_IRPT_MSG_ERR, "PWRERR - Interrupt Messaging Error "},
     {A2B_ENUM_INTTYPE_STRTUP_ERR_RTF, "Startup Error - Return to Factory "},
     {A2B_ENUM_INTTYPE_SLAVE_INTTYPE_ERR,
-     "Slave INTTYPE Read Error - Master Only "},
+        "Slave INTTYPE Read Error - Master Only "},
     //{A2B_ENUM_INTTYPE_STANDBY_DONE         ,        "Standby Done - Master
     // Only "}, {A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING -
     // Master Only "},
@@ -512,12 +509,12 @@ static uint8_t busControl(struct a2b24xx *a2b24xx, uint8_t bus, uint8_t inode,
     if (bus) {
         if (bus != last_bus || addr != last_addr) {
             /* address type changed, need sub bus control */
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2,
-                             (uint8_t[]){A2B_REG_NODEADR, inode});
-            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2,
-                             (uint8_t[]){A2B_REG_CHIP, addr});
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2,
-                             (uint8_t[]){A2B_REG_NODEADR, inode | 0x20});
+            adi_a2b_I2CWrite(
+                dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
+            adi_a2b_I2CWrite(
+                dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});
+            adi_a2b_I2CWrite(
+                dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode | 0x20});
         }
         last_addr = addr;
         addr = A2B_BUS_ADDR;
@@ -636,12 +633,12 @@ retry:
 
         // Simple Advanced Optimized Modified
         if ((pOPUnit->nAddr == A2B_REG_NODEADR &&
-             pOPUnit->nDeviceAddr == A2B_BASE_ADDR &&
-             (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode) ||
+                pOPUnit->nDeviceAddr == A2B_BASE_ADDR &&
+                (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode) ||
             (pOPUnit->nAddr == A2B_REG_DISCVRY &&
-             pOPUnit->nDeviceAddr == A2B_BASE_ADDR) ||
+                pOPUnit->nDeviceAddr == A2B_BASE_ADDR) ||
             (pOPUnit->nAddr == A2B_REG_SWCTL &&
-             pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
+                pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
 
         pr_info("iiooooooooiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr,
@@ -1019,7 +1016,7 @@ static void a2b24xx_setup_work(struct work_struct *work) {
                 if (bus->pA2BConfig[j].nAddr == A2B_REG_NODEADR &&
                     bus->pA2BConfig[j + 1].nAddr != A2B_REG_CHIP &&
                     !(bus->pA2BConfig[j].paConfigData[0] &
-                      A2B_BITM_NODEADR_PERI)) {
+                        A2B_BITM_NODEADR_PERI)) {
                     bus->nodes[bus->pA2BConfig[j].paConfigData[0]].position = i;
                     break;
                 }
