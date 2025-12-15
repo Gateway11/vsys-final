@@ -58,40 +58,7 @@
  * This ID is used when reporting errors to FSI via EPL.
  */
 #define A2B24XX_EPL_REPORTER_ID 0x8103
-
-/*
- * Recommendation for BECCTL, for normal operation
- *
- * Do not enable reporting of individual bit errors (CRCERR, DPERR, DDERR,
- * HDCNTERR, ICRCERR).
- * - The A2B transceiver automatically takes action on these errors (like
- * repeating last known sample, ignoring erroneous interrupt, and retrying).
- * - Even if individual bit error reporting is enabled, the Host DSP may not
- * need to do any corrective action.
- *
- * Instead, count the bit errors in the Bit Error Counter (BECNT) and take the
- * required action if excessive bit errors. For example, in most systems,
- * counting CRC errors in the BECNT register could be sufficient.
- * - Mask all Bit Failure Interrupts, except for Bit Error Count Overflow.
- *
- * ---------------------------------------------------------------------------------
- * |         | Master | Slave  | Comment                                           |
- * ---------------------------------------------------------------------------------
- * | INTMSKO | 0x70   | 0x70   | Interrupt enabled for SRFERR, BECOVF, and PWRERR  |
- * ---------------------------------------------------------------------------------
- * | INTMSK2 | 0x0B   |  --    | Interrupt enabled for SLVIRQ, I2CERR, and DSCDONE |
- * ---------------------------------------------------------------------------------
- * | BECCTL  | 0xE4   | 0xE4   | Configuration example: Threshold 256, ENCRC       |
- * ---------------------------------------------------------------------------------
- * Same settings should be used for all nodes
- */
 // #define ENABLE_BECCTL_REG
-
-// https://ez.analog.com/a2b/f/q-a/534983/can-i-have-a2b-slave-nodes-operating-at-different-sync-frequencies
-// https://ez.analog.com/a2b/f/q-a/540266/a2b---drx-dtx-mux-or-switch
-// https://ez.analog.com/a2b/f/q-a/571688/49-152mhz-bick-on-tdm
-// https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
-// https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
 
 // clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never,
 //    TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
