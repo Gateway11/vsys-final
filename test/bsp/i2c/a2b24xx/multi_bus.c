@@ -471,27 +471,6 @@ const IntTypeString_t intTypeString[] = {
     // Master Only "},
 };
 
-#if 0
-static uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t parent, uint8_t addr)
-{
-    static uint8_t last_bus, last_addr;
-    if (bus) {
-        if (bus != last_bus || addr != last_addr) {
-            /* address type changed, need sub bus control */
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, parent});
-            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, parent| 0x20});
-        }
-        last_addr = addr;
-        addr = A2B_BUS_ADDR;
-    } else if (bus != last_bus) {
-        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, parent});
-    }
-    last_bus = bus;
-    return addr;
-}
-#endif
-
 #define BUS_SELECT(dev, __bus, __parent, __addr)                                                    \
 ({                                                                                                  \
     static uint8_t __last_bus, __last_addr;                                                         \
@@ -519,7 +498,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint
 
     if (!CHECK_RANGE(inode, 1, bus->num_nodes)) return false;
 
-    LOG_PRINT_IF_ENABLED(info, "Bus %d @ Parent %d Node %d processing: master fmt=0x%02X, cycle=0x%02X, pos=%d 0x%02X\n",
+    LOG_PRINT_IF_ENABLED(info, "Bus %d (parent %d) node %d processing: master fmt=0x%02X, cycle=0x%02X, pos=%d 0x%02X\n",
                          bus->id, parent, inode, bus->master_fmt, bus->nodes[inode].cycle, bus->nodes[inode].position,
                          bus->pA2BConfig[bus->nodes[inode].position].nAddr);
 
@@ -630,7 +609,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8
     } else {
         for (uint8_t i = inode; i <= bus->num_nodes; i++) {
             if (!processSingleNode(a2b24xx, bus, parent, i)) {
-                LOG_PRINT_IF_ENABLED(warn, "Bus %d @ Parent %d Node %d processing failed. Stopping partial discovery\n", bus->id, parent, i);
+                LOG_PRINT_IF_ENABLED(warn, "Bus %d (parent %d) node %d processing failed: stopping partial discovery\n", bus->id, parent, i);
                 return;
             }
             mdelay(1);
@@ -664,7 +643,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t
         }
     }
     if (last_node < bus->num_nodes) {
-        LOG_PRINT_IF_ENABLED(warn, "Bus %d drop detected @ Parent %d Node: %d\n", bus->id, parent, last_node);
+        LOG_PRINT_IF_ENABLED(warn, "Bus %d (parent %d) drop detected @ Node: %d\n", bus->id, parent, last_node);
         bus->has_fault = true;
         processFaultNode(a2b24xx, bus, parent, last_node + 1);
     }
@@ -681,10 +660,10 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, ui
     adi_a2b_I2CRead(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
-            LOG_PRINT_IF_ENABLED(warn, "Bus %d Parent %d Interrupt Source: Master - ", bus->id, parent);
+            LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Master - ");
         } else {
             inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
-            LOG_PRINT_IF_ENABLED(warn, "Bus %d Parent %d Interrupt Source: Slave%d - ", bus->id, parent, inode);
+            LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Slave%d - ", inode);
         }
 
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
