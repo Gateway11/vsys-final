@@ -93,8 +93,8 @@
 // https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
 // https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
 
-// clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never, \
-    TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
+// clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never,
+//    TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
 
 struct a2b_bus;
 struct a2b_node {
@@ -108,10 +108,11 @@ struct a2b_bus {
     ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
     size_t totalActions;
 
-    uint8_t id;
+    struct a2b_node *nodes;
     uint8_t num_nodes;
-    uint8_t master_fmt;
 
+    uint8_t id;
+    uint8_t master_fmt;
     bool has_fault;
 };
 
@@ -286,7 +287,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
 static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *xml)
 {
     const char *actionStart = strstr(xml, "<action");
-    const char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
+    char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
     while (actionStart && bus->totalActions < MAX_ACTIONS) {
         const char *actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
@@ -503,6 +504,7 @@ const IntTypeString_t intTypeString[] = {
     // Master Only "},
 };
 
+#if 0
 static uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t parent, uint8_t addr)
 {
     static uint8_t last_bus, last_addr;
@@ -521,6 +523,7 @@ static uint8_t busSelect(struct device *dev, uint8_t bus, uint8_t parent, uint8_
     last_bus = bus;
     return addr;
 }
+#endif
 
 #define BUS_SELECT(dev, __bus, __parent, __addr)                                                    \
 ({                                                                                                  \
@@ -758,7 +761,7 @@ static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < bus->totalActions; nIndex++) {
-        pOPUnit = &bus.pA2BConfig[nIndex];
+        pOPUnit = &bus->pA2BConfig[nIndex];
         /* Operation code */
         switch (pOPUnit->eOpCode) {
         /* Write */
