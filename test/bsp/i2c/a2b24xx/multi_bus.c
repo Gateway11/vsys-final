@@ -628,24 +628,24 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t
     struct device *dev = a2b24xx->dev;
 
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
-    int8_t last_node = A2B_MASTER_NODE;
+    int8_t lastNode = A2B_MASTER_NODE;
 
     for (uint8_t i = 0; i <= bus->num_nodes; i++) {
         adi_a2b_I2CWrite(dev, BUS_SELECT(dev, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, i});
         if (adi_a2b_I2CRead(dev, BUS_SELECT(dev, bus->id, parent, A2B_BUS_ADDR), 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer)) {
             // If discovery is not completed during system boot, the A2B_NODE.LAST bit for the last node will not be set
-            last_node = i - 1;
+            lastNode = i - 1;
             break;
         }
         if (dataBuffer[0] & A2B_BITM_NODE_LAST) {
-            last_node = i; // Set last_node when the A2B_NODE.LAST bit is found
+            lastNode = i; // Set lastNode when the A2B_NODE.LAST bit is found
             break;
         }
     }
-    if (last_node < bus->num_nodes) {
-        LOG_PRINT_IF_ENABLED(warn, "Bus %d (parent %d) drop detected @ Node: %d\n", bus->id, parent, last_node);
+    if (lastNode < bus->num_nodes) {
+        LOG_PRINT_IF_ENABLED(warn, "Bus %d (parent %d) drop detected @ Node: %d\n", bus->id, parent, lastNode);
         bus->has_fault = true;
-        processFaultNode(a2b24xx, bus, parent, last_node + 1);
+        processFaultNode(a2b24xx, bus, parent, lastNode + 1);
     }
 }
 
