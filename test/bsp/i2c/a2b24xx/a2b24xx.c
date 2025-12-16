@@ -867,7 +867,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         if (params[0] < 0) {
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
-        } else if (params[0] <= a2b24xx->num_nodes && CHECK_RANGE(params[1], 0, sizeof(i2stest))) {
+        } else if (params[0] <= a2b24xx->num_nodes && CHECK_RANGE(params[1], 0, sizeof(i2stest) - 1)) {
             mutex_lock(&a2b24xx->bus_lock);
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
@@ -888,7 +888,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         }
     } else if (sscanf(a2b24xx->command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
         bool valid_node = CHECK_RANGE(params[0], 0, a2b24xx->num_nodes);
-        bool valid_index = CHECK_RANGE(params[1], 0, ARRAY_SIZE(config));
+        bool valid_index = CHECK_RANGE(params[1], 0, ARRAY_SIZE(config) - 1);
         if (valid_node && valid_index) {
             mutex_lock(&a2b24xx->bus_lock);
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
