@@ -261,7 +261,7 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
         size_t actionLength = actionEnd - actionStart + 1;
 
         if (actionLength >= 6000) {
-            pr_warn("Warning: Action length exceeds buffer size!\n");
+            pr_warn("Warning: Action length exceeds buffer size! line=%zu\n", bus->totalActions);
             goto exit;
         }
 
@@ -439,14 +439,14 @@ const IntTypeString_t intTypeString[] = {
     {A2B_ENUM_INTTYPE_PWRERR_CREV          ,        "PWRERR (Cable Reverse Connected) (AD240x/10/2x Slaves Only) "},
     {A2B_ENUM_INTTYPE_PWRERR_CDISC_REV     ,        "PWRERR - Cable is Disconnected (Open Circuit) or Wrong Port or Reverse Connected (AD243x Only) "},
     {A2B_ENUM_INTTYPE_PWRERR_FAULT         ,        "PWRERR (Indeterminate Fault) "},
-    {A2B_ENUM_INTTYPE_IO0PND               ,        "IO0PND - Slave Only "},
-    {A2B_ENUM_INTTYPE_IO1PND               ,        "IO1PND - Slave Only "},
-    {A2B_ENUM_INTTYPE_IO2PND               ,        "IO2PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO0PND               ,        "IO0PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO1PND               ,        "IO1PND - Slave Only "},
+    //{A2B_ENUM_INTTYPE_IO2PND               ,        "IO2PND - Slave Only "},
     {A2B_ENUM_INTTYPE_IO3PND               ,        "IO3PND "},
     {A2B_ENUM_INTTYPE_IO4PND               ,        "IO4PND "},
     {A2B_ENUM_INTTYPE_IO5PND               ,        "IO5PND "},
     {A2B_ENUM_INTTYPE_IO6PND               ,        "IO6PND "},
-    {A2B_ENUM_INTTYPE_IO7PND               ,        "IO7PND "},
+    //{A2B_ENUM_INTTYPE_IO7PND               ,        "IO7PND "},
     //{A2B_ENUM_INTTYPE_DSCDONE              ,        "DSCDONE - Master Only "},
     {A2B_ENUM_INTTYPE_I2CERR               ,        "I2CERR - Master Only "},
     {A2B_ENUM_INTTYPE_ICRCERR              ,        "ICRCERR - Master Only "},
