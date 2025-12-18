@@ -72,7 +72,7 @@ struct a2b_node {
 
 struct a2b_bus {
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
-    ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
+    ADI_A2B_DISCOVERY_CONFIG fileA2BConfig[MAX_ACTIONS];
     size_t num_actions;
 
     struct a2b_node *nodes;
@@ -271,7 +271,7 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(a2b24xx, action, &bus->parseA2BConfig[bus->num_actions]);
+        parseAction(a2b24xx, action, &bus->fileA2BConfig[bus->num_actions]);
         bus->num_actions++;
         actionStart = strstr(actionEnd, "<action");
     }
@@ -1113,7 +1113,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
         // Parse XML configuration
         parseXML(a2b24xx, &a2b24xx->bus, content);
-        a2b24xx->bus.pA2BConfig = a2b24xx->bus.parseA2BConfig;
+        a2b24xx->bus.pA2BConfig = a2b24xx->bus.fileA2BConfig;
         kfree(content);
     } else {
         a2b24xx->bus.pA2BConfig = gaA2BConfig;
