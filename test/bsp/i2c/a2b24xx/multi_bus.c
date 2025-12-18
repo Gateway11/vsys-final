@@ -104,7 +104,7 @@ struct a2b24xx {
     struct mutex bus_lock;
     struct a2b_bus bus;
 
-    uint8_t last_bus;
+    uint8_t last_bus_id;
     uint8_t last_addr;
 
 #ifndef A2B_SETUP_ALSA
@@ -475,17 +475,17 @@ const IntTypeString_t intTypeString[] = {
 ({                                                                                                           \
     uint8_t __ret = (__addr);                                                                                \
     if (__bus) {                                                                                             \
-        if (__bus != a2b24xx->last_bus || __addr != a2b24xx->last_addr) {                                    \
+        if (__bus != a2b24xx->last_bus_id || __addr != a2b24xx->last_addr) {                                 \
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});        \
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, __addr});              \
             adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent | 0x20}); \
          }                                                                                                   \
         a2b24xx->last_addr = __addr;                                                                         \
         __ret = A2B_BUS_ADDR;                                                                                \
-    } else if (__bus != a2b24xx->last_bus) {                                                                 \
+    } else if (__bus != a2b24xx->last_bus_id) {                                                              \
         adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});                     \
     }                                                                                                        \
-    a2b24xx->last_bus = __bus;                                                                               \
+    a2b24xx->last_bus_id = __bus;                                                                            \
     __ret;                                                                                                   \
 })
 
