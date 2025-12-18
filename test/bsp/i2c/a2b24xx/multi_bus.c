@@ -73,7 +73,7 @@ struct a2b_node {
 struct a2b_bus {
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
     ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
-    size_t totalActions;
+    size_t num_actions;
 
     struct a2b_node *nodes;
     uint8_t num_nodes;
@@ -114,8 +114,8 @@ struct a2b24xx {
     char command_buf[COMMAND_SIZE];
 #endif
 
-    uint8_t configBuffer[MAX_CONFIG_DATA];
-    size_t writeOffset;
+    uint8_t config_buffer[MAX_CONFIG_DATA];
+    size_t write_offset;
 };
 
 static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_t parent);
@@ -205,7 +205,7 @@ static void a2b24xx_epl_report_error(uint32_t error_code)
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config)
 {
     char instr[20], protocol[10];
-    size_t *writeOffset = &a2b24xx->writeOffset;
+    size_t *write_offset = &a2b24xx->write_offset;
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
@@ -236,7 +236,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     }
 
     if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
-        if (*writeOffset + config->nDataCount > MAX_CONFIG_DATA) {
+        if (*write_offset + config->nDataCount > MAX_CONFIG_DATA) {
             pr_warn("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
@@ -244,12 +244,12 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         char *dataStr = strchr(action, '>') + 1; /* Find position after '>' */
         char *token = strsep(&dataStr, " ");
         size_t index = 0;
-        config->paConfigData = a2b24xx->configBuffer + *writeOffset;
+        config->paConfigData = a2b24xx->config_buffer + *write_offset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strsep(&dataStr, " ");
         }
-        *writeOffset += index;
+        *write_offset += index;
         config->nDataCount = index;
     }
 }
@@ -259,20 +259,20 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
     const char *actionStart = strstr(xml, "<action");
     char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
 
-    while (actionStart && bus->totalActions < MAX_ACTIONS) {
+    while (actionStart && bus->num_actions < MAX_ACTIONS) {
         const char *actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
         if (actionLength >= 6000) {
-            pr_warn("Warning: Action length exceeds buffer size! line=%zu\n", bus->totalActions);
+            pr_warn("Warning: Action length exceeds buffer size! line=%zu\n", bus->num_actions);
             goto exit;
         }
 
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(a2b24xx, action, &bus->parseA2BConfig[bus->totalActions]);
-        bus->totalActions++;
+        parseAction(a2b24xx, action, &bus->parseA2BConfig[bus->num_actions]);
+        bus->num_actions++;
         actionStart = strstr(actionEnd, "<action");
     }
 exit:
@@ -561,7 +561,7 @@ retry:
     unsigned int nDelayVal;
 
     adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, inode});
-    for (uint32_t i = bus->nodes[inode].position; i < bus->totalActions; i++) {
+    for (uint32_t i = bus->nodes[inode].position; i < bus->num_actions; i++) {
         pOPUnit = &bus->pA2BConfig[i];
 
         // Simple Advanced Optimized Modified
@@ -710,7 +710,7 @@ static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_
     unsigned int nDelayVal;
 
     /* Loop over all the configuration */
-    for (nIndex = 0; nIndex < bus->totalActions; nIndex++) {
+    for (nIndex = 0; nIndex < bus->num_actions; nIndex++) {
         pOPUnit = &bus->pA2BConfig[nIndex];
         /* Operation code */
         switch (pOPUnit->eOpCode) {
@@ -877,7 +877,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev, bus, 0);
 
-    for (int32_t i = (bus->totalActions - 1); i >= 0; i--) {
+    for (int32_t i = (bus->num_actions - 1); i >= 0; i--) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
             bus->master_fmt = bus->pA2BConfig[i].paConfigData[0];
             break;
@@ -888,7 +888,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
     }
 
     bus->nodes = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
-    for (uint32_t i = 0; i < bus->totalActions; i++) {
+    for (uint32_t i = 0; i < bus->num_actions; i++) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->nodes[node_id++].cycle = bus->pA2BConfig[i].paConfigData[0];
         }
@@ -1117,15 +1117,15 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         kfree(content);
     } else {
         a2b24xx->bus.pA2BConfig = gaA2BConfig;
-        a2b24xx->bus.totalActions = CONFIG_LEN;
+        a2b24xx->bus.num_actions = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->bus.totalActions, a2b24xx->writeOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->bus.num_actions, a2b24xx->write_offset);
 
 #if 0
     // Print the results
     const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->bus.pA2BConfig;
-    for (int i = 0; i < a2b24xx->bus.totalActions; i++) {
+    for (int i = 0; i < a2b24xx->bus.num_actions; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
                 pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
