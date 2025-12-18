@@ -111,7 +111,6 @@ struct a2b24xx {
     dev_t dev_num;           // Device number
     struct cdev cdev;        // cdev structure
     struct class *dev_class; // Device class
-    char command_buf[COMMAND_SIZE];
 #endif
 
     uint8_t config_buffer[MAX_CONFIG_DATA];
@@ -768,27 +767,28 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
     struct device *dev = a2b24xx->dev;
     struct a2b_bus *bus = &a2b24xx->bus;
 
+    char command_buf[COMMAND_SIZE] = {0};
     int16_t argc = 0, params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
     uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
     uint8_t parent = 0;
 
-    size_t len = min(count, sizeof(a2b24xx->command_buf));
-    if (copy_from_user(a2b24xx->command_buf, buf, len)) {
+    size_t len = min(count, sizeof(command_buf));
+    if (copy_from_user(command_buf, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    a2b24xx->command_buf[len - 1] = '\0'; // Null-terminate the string
-    pr_info("Received data: %s\n", a2b24xx->command_buf);
+    command_buf[len - 1] = '\0'; // Null-terminate the string
+    pr_info("Received data: %s\n", command_buf);
 
-    if (strcmp(a2b24xx->command_buf, "Reset") == 0) {
+    if (strcmp(command_buf, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
-    } else if (strcmp(a2b24xx->command_buf, "Log Enable") == 0) {
+    } else if (strcmp(command_buf, "Log Enable") == 0) {
         a2b24xx->log_enabled = true;
-    } else if (strcmp(a2b24xx->command_buf, "Disable Fault Check") == 0) {
+    } else if (strcmp(command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
-    } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
+    } else if (sscanf(command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
         mutex_lock(&a2b24xx->bus_lock);
         if (params[0] < 0) {
             adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
@@ -810,7 +810,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
             adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 4, (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
         }
         mutex_unlock(&a2b24xx->bus_lock); // Release lock
-    } else if (sscanf(a2b24xx->command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
+    } else if (sscanf(command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
         if (CHECK_RANGE(params[0], 0, bus->num_nodes) && CHECK_RANGE(params[1], 0, ARRAY_SIZE(config) - 1)) {
             mutex_lock(&a2b24xx->bus_lock);
             adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
@@ -818,7 +818,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
             adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
-    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", &params[0], &params[1])) >= 1) {
+    } else if ((argc = sscanf(command_buf, "PDM Slave%hd MIC%hd", &params[0], &params[1])) >= 1) {
         if (params[0] <= bus->num_nodes) {
             mutex_lock(&a2b24xx->bus_lock);
             for (uint8_t i = 0; i <= bus->num_nodes; i++) {
