@@ -280,8 +280,9 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
         action[actionLength] = '\0'; // Null-terminate
 
         parseAction(a2b24xx, action, &bus->fileA2BConfig[bus->num_actions]);
-        bus->num_actions++;
-        if (!(actionStart = strstr(actionEnd, "<action"))) {
+        if ((actionStart = strstr(actionEnd, "<action"))) {
+            bus->num_actions++;
+        } else {
             actionStart = strstr(actionEnd, "<include");
         }
     }
