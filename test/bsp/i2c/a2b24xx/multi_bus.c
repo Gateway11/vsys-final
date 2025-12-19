@@ -968,6 +968,8 @@ static void a2b24xx_setup_work(struct work_struct *work)
 
         if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
             a2b24xx_setup(a2b24xx, *bus, a2b24xx->bus_parents[i]);
+        } else {
+            *bus = NULL;
         }
     }
 
