@@ -41,7 +41,7 @@
 #define COMMAND_SIZE 128       // Buffer size for receiving commands
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA (MAX_ACTIONS << 1)
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
 #define MAX_RETRIES 2 // Maximum number of retries
 #define A2B24XX_FAULT_CHECK_INTERVAL msecs_to_jiffies(5000)
