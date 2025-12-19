@@ -859,10 +859,8 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     pr_info("%s: interrupt handled. %d\n", __func__, a2b24xx->work_allowed);
 
     disable_irq_nosync(irq);
-    if (a2b24xx->work_allowed) {
-        // schedule_delayed_work(&a2b24xx->fault_check_work, 0);
+    if (a2b24xx->work_allowed)
         schedule_delayed_work(&a2b24xx->fault_check_work, msecs_to_jiffies(1));
-    }
     return IRQ_HANDLED;
 }
 
