@@ -233,9 +233,9 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = A2B24XX_DELAY;
         config->nDataCount = 1;
-        //<include file=/lib/firmeware/adi_a2b_commandlist.xml parent="5" />
     } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
-                a2b24xx->sub_bus_files[a2b24xx->num_files], &a2b24xx->bus_parents[a2b24xx->num_files]) == 2) {
+                a2b24xx->sub_bus_files[a2b24xx->num_files],
+                &a2b24xx->bus_parents[a2b24xx->num_files]) == 2) {
         a2b24xx->num_files++;
         return;
     } else {
