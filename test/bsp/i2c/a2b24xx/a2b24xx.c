@@ -120,15 +120,14 @@ struct a2b24xx {
     dev_t dev_num;              // Device number
     struct cdev cdev;           // cdev structure
     struct class *dev_class;    // Device class
-    char command_buf[COMMAND_SIZE];
 #endif
 
     ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
-    ADI_A2B_DISCOVERY_CONFIG parseA2BConfig[MAX_ACTIONS];
-    size_t totalActions;
+    ADI_A2B_DISCOVERY_CONFIG fileA2BConfig[MAX_ACTIONS];
+    size_t num_actions;
 
-    uint8_t configBuffer[MAX_CONFIG_DATA];
-    size_t writeOffset;
+    uint8_t config_buffer[MAX_CONFIG_DATA];
+    size_t write_offset;
 };
 
 static void adi_a2b_NetworkSetup(struct device *dev);
@@ -209,7 +208,7 @@ static void a2b24xx_epl_report_error(uint32_t error_code)
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
-    size_t *writeOffset = &a2b24xx->writeOffset;
+    size_t *write_offset = &a2b24xx->write_offset;
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
@@ -240,7 +239,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     }
 
     if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
-        if (*writeOffset + config->nDataCount > MAX_CONFIG_DATA) {
+        if (*write_offset + config->nDataCount > MAX_CONFIG_DATA) {
             pr_warn("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
@@ -248,12 +247,12 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         char *dataStr = strchr(action, '>') + 1; /* Find position after '>' */
         char *token = strsep(&dataStr, " ");
         size_t index = 0;
-        config->paConfigData = a2b24xx->configBuffer + *writeOffset;
+        config->paConfigData = a2b24xx->config_buffer + *write_offset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strsep(&dataStr, " ");
         }
-        *writeOffset += index;
+        *write_offset += index;
         config->nDataCount = index;
     }
 }
@@ -262,7 +261,7 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
     const char *actionStart = strstr(xml, "<action");
     char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the action buffer
 
-    while (actionStart && a2b24xx->totalActions < MAX_ACTIONS) {
+    while (actionStart && a2b24xx->num_actions < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
@@ -274,8 +273,8 @@ static void parseXML(struct a2b24xx *a2b24xx, const char *xml) {
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(a2b24xx, action, &a2b24xx->parseA2BConfig[a2b24xx->totalActions]);
-        a2b24xx->totalActions++;
+        parseAction(a2b24xx, action, &a2b24xx->fileA2BConfig[a2b24xx->num_actions]);
+        a2b24xx->num_actions++;
         actionStart = strstr(actionEnd, "<action");
     }
 exit:
@@ -643,7 +642,7 @@ retry:
     unsigned int nDelayVal;
 
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
-    for (uint32_t i = a2b24xx->node_pos[inode]; i < a2b24xx->totalActions; i++) {
+    for (uint32_t i = a2b24xx->node_pos[inode]; i < a2b24xx->num_actions; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
         // Simple Advanced Optimized Modified
@@ -784,7 +783,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
     unsigned int nDelayVal;
 
     /* Loop over all the configuration */
-    for (nIndex = 0; nIndex < a2b24xx->totalActions; nIndex++) {
+    for (nIndex = 0; nIndex < a2b24xx->num_actions; nIndex++) {
         pOPUnit = &a2b24xx->pA2BConfig[nIndex];
         /* Operation code */
         switch (pOPUnit->eOpCode) {
@@ -843,27 +842,28 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     struct a2b24xx *a2b24xx = file->private_data;
     struct device *dev = a2b24xx->dev;
 
+    char command_buf[COMMAND_SIZE] = {0};
     int16_t argc = 0, params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
     uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
 
-    size_t len = min(count, sizeof(a2b24xx->command_buf));
-    if (copy_from_user(a2b24xx->command_buf, buf, len)) {
+    size_t len = min(count, sizeof(command_buf));
+    if (copy_from_user(command_buf, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
     }
 
-    a2b24xx->command_buf[len - 1] = '\0'; // Null-terminate the string
-    pr_info("Received data: %s\n", a2b24xx->command_buf);
+    command_buf[len - 1] = '\0'; // Null-terminate the string
+    pr_info("Received data: %s\n", command_buf);
 
-    if (strcmp(a2b24xx->command_buf, "Reset") == 0) {
+    if (strcmp(command_buf, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
-    } else if (strcmp(a2b24xx->command_buf, "Log Enable") == 0) {
+    } else if (strcmp(command_buf, "Log Enable") == 0) {
         a2b24xx->log_enabled = true;
-    } else if (strcmp(a2b24xx->command_buf, "Disable Fault Check") == 0) {
+    } else if (strcmp(command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
-    } else if (sscanf(a2b24xx->command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
+    } else if (sscanf(command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
         if (params[0] < 0) {
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
@@ -886,7 +886,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
                     (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
-    } else if (sscanf(a2b24xx->command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
+    } else if (sscanf(command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
         bool valid_node = CHECK_RANGE(params[0], 0, a2b24xx->num_nodes);
         bool valid_index = CHECK_RANGE(params[1], 0, ARRAY_SIZE(config) - 1);
         if (valid_node && valid_index) {
@@ -896,7 +896,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
-    } else if ((argc = sscanf(a2b24xx->command_buf, "PDM Slave%hd MIC%hd", params, params + 1)) > 0) {
+    } else if ((argc = sscanf(command_buf, "PDM Slave%hd MIC%hd", params, params + 1)) > 0) {
         if (params[0] <= a2b24xx->num_nodes) {
             mutex_lock(&a2b24xx->bus_lock);
             for (uint8_t i = 0; i <= a2b24xx->num_nodes; i++) {
@@ -954,7 +954,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
     /* Setting up A2B network */
     adi_a2b_NetworkSetup(a2b24xx->dev);
 
-    for (int32_t i = (a2b24xx->totalActions - 1); i > 0; i--) {
+    for (int32_t i = (a2b24xx->num_actions - 1); i > 0; i--) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
             a2b24xx->master_fmt = a2b24xx->pA2BConfig[i].paConfigData[0];
             break;
@@ -964,7 +964,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
 
-    for (uint32_t i = 0; i < a2b24xx->totalActions; i++) {
+    for (uint32_t i = 0; i < a2b24xx->num_actions; i++) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY &&
             node_id < ARRAY_SIZE(a2b24xx->node_cycles)) {
             a2b24xx->node_cycles[node_id++] = a2b24xx->pA2BConfig[i].paConfigData[0];
@@ -1186,19 +1186,19 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
         // Parse XML configuration
         parseXML(a2b24xx, content);
-        a2b24xx->pA2BConfig = a2b24xx->parseA2BConfig;
+        a2b24xx->pA2BConfig = a2b24xx->fileA2BConfig;
         kfree(content);
     } else {
         a2b24xx->pA2BConfig = gaA2BConfig;
-        a2b24xx->totalActions = CONFIG_LEN;
+        a2b24xx->num_actions = CONFIG_LEN;
     }
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->totalActions, a2b24xx->writeOffset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->num_actions, a2b24xx->write_offset);
 
 #if 0
     // Print the results
     const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->pA2BConfig;
-    for (int i = 0; i < a2b24xx->totalActions; i++) {
+    for (int i = 0; i < a2b24xx->num_actions; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case A2B24XX_WRITE:
                 pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
