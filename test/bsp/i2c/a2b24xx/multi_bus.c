@@ -286,6 +286,8 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
             actionStart = strstr(actionEnd, "<include");
         }
     }
+    bus->num_actions++;
+
 exit:
     kfree(action);
 }
