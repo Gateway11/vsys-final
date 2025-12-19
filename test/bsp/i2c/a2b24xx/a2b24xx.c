@@ -574,45 +574,35 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
 #endif
 
     // https://ez.analog.com/a2b/f/q-a/536836/a2b-hotpluggable-or-how-to-resync-the-bus
-    // 1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node
-    //    and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
+    // 1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_INTPND0, 0xFF});
     mdelay(100);
 
     // Now, periodically try to rediscover the slave-1 partially
-    // 1. Write SWCTL=0x21 to all upsteam nodes other than the node from
-    //    which we are discovering the next node( In above example Write
-    //    Master node SWCTL=0x21)
+    // 1. Write SWCTL=0x21 to all upsteam nodes other than the node from which we are discovering the next node( In above example Write Master node SWCTL=0x21)
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
     for (uint8_t i = 0; i < (inode - 1); i++) {
         adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x21});
     }
 
-    // 2. Write SWCTL=0x01 in the next upsteam node of discovering node
-    //    (SWCTL=0x01 in Slave0)
+    // 2. Write SWCTL=0x01 in the next upsteam node of discovering node (SWCTL=0x01 in Slave0)
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
 
-    // 3. Write master node DISCVRY register with expected response cycle of
-    //    slave node to be discovered to start the discovery process
-    //    (DISCVRY = response cycle of the slave1)
-    adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2,
-                    (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->node_cycles[inode]});
+    // 3. Write master node DISCVRY register with expected response cycle of slave node to be discovered to start the discovery process (DISCVRY = response cycle of the slave1)
+    adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DISCVRY, a2b24xx->node_cycles[inode]});
 
-    // 4. Wait for 35msec for slave node to discover. Can use IRQ interrupt
-    //    to check if slave node discovery interrupt is received.
+    // 4. Wait for 35msec for slave node to discover. Can use IRQ interrupt to check if slave node discovery interrupt is received.
     mdelay(35);
 
-    // 5. If rediscovery is unsuccessful  i.e. resulted in timeout or Open wire
-    //    fault (INTTYPE: 0x0C) raised:
+    // 5. If rediscovery is unsuccessful  i.e. resulted in timeout or Open wire fault (INTTYPE: 0x0C) raised:
     //          O End the discovery
     //          O Open the Slave node0 switch
     //          O Clear interrupts, if any
-    //          O Wait for 100msec. And reattempt partial rediscovery: from
-    //            step - 1
+    //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
 retry:
     interrupt = processInterrupt(a2b24xx, false);
     if (interrupt != A2B_ENUM_INTTYPE_DSCDONE) {
@@ -625,11 +615,9 @@ retry:
         return false;
     }
 
-    // 6. If rediscovery is successful (got the slave node discovery interrupt
-    //    (INTTYPE==0x18),
+    // 6. If rediscovery is successful (got the slave node discovery interrupt (INTTYPE==0x18),
     //          O Update SWCTL=0x01 in all upsteam nodes
-    //          O After slave register programming, configure SLOTFMT, DATCTL
-    //            and NEWSTRCT on master node to start the audio communication.
+    //          O After slave register programming, configure SLOTFMT, DATCTL and NEWSTRCT on master node to start the audio communication.
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x01});
     for (uint8_t i = 0; i < inode; i++) {
         adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
@@ -637,8 +625,7 @@ retry:
     }
 
     ADI_A2B_DISCOVERY_CONFIG* pOPUnit;
-    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of
-                                                            // memory for the data buffer
+    unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned int nDelayVal;
 
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode});
@@ -865,6 +852,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     } else if (sscanf(command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
         if (params[0] < 0) {
+            a2b24xx_disable_fault_check(a2b24xx);
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
         } else if (params[0] <= a2b24xx->num_nodes && CHECK_RANGE(params[1], 0, sizeof(i2stest) - 1)) {
