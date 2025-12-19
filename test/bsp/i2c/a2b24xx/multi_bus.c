@@ -482,7 +482,7 @@ const IntTypeString_t intTypeString[] = {
         a2b24xx->last_addr = __addr;                                                                         \
         __ret = A2B_BUS_ADDR;                                                                                \
     } else if (__bus != a2b24xx->last_bus_id) {                                                              \
-        adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});                     \
+        adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});            \
     }                                                                                                        \
     a2b24xx->last_bus_id = __bus;                                                                            \
     __ret;                                                                                                   \
@@ -652,7 +652,6 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, ui
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
-    mutex_lock(&a2b24xx->bus_lock);
     adi_a2b_I2CRead(a2b24xx->dev,
             BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
@@ -686,7 +685,6 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, ui
     } else if (deepCheck) {
         checkFaultNode(a2b24xx, bus, parent, A2B_INVALID_NODE);
     }
-    mutex_unlock(&a2b24xx->bus_lock); // Release lock
     return -1;
 }
 
@@ -916,6 +914,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, fault_check_work.work);
     a2b24xx->bus.has_fault = false;
 
+    mutex_lock(&a2b24xx->bus_lock);
     processInterrupt(a2b24xx, &a2b24xx->bus, 0, true);
     for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes; i++) {
         if (a2b24xx->bus.nodes[i].sub_bus) {
@@ -923,6 +922,7 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
             processInterrupt(a2b24xx, a2b24xx->bus.nodes[i].sub_bus, i, true);
         }
     }
+    mutex_unlock(&a2b24xx->bus_lock); // Release lock
     a2b24xx_schedule_fault_check(a2b24xx);
 }
 
