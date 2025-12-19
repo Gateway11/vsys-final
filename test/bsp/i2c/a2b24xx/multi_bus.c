@@ -107,6 +107,10 @@ struct a2b24xx {
     uint8_t last_bus_id;
     uint8_t last_addr;
 
+    char sub_bus_files[5][128];
+    uint8_t bus_parents[5];
+    uint8_t num_files;
+
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;           // Device number
     struct cdev cdev;        // cdev structure
@@ -207,7 +211,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     size_t *write_offset = &a2b24xx->write_offset;
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
-                 =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s\"",
+                 =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s",
                instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr,
                &config->nDeviceAddr, protocol) == 9) {
 
@@ -229,6 +233,11 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = A2B24XX_DELAY;
         config->nDataCount = 1;
+    } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
+                a2b24xx->sub_bus_files[a2b24xx->num_files],
+                &a2b24xx->bus_parents[a2b24xx->num_files]) == 2) {
+        a2b24xx->num_files++;
+        return;
     } else {
         config->eOpCode = A2B24XX_INVALID;
         return;
@@ -271,8 +280,11 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
         action[actionLength] = '\0'; // Null-terminate
 
         parseAction(a2b24xx, action, &bus->fileA2BConfig[bus->num_actions]);
-        bus->num_actions++;
-        actionStart = strstr(actionEnd, "<action");
+        if ((actionStart = strstr(actionEnd, "<action"))) {
+            bus->num_actions++;
+        } else {
+            actionStart = strstr(actionEnd, "<include");
+        }
     }
 exit:
     kfree(action);
@@ -864,15 +876,55 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     return IRQ_HANDLED;
 }
 
-static void a2b24xx_setup_work(struct work_struct *work)
-{
-    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
-    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-    struct a2b_bus *bus = &a2b24xx->bus;
+static bool a2b24xx_load_config(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *filename) {
+    size_t size;
+
+    char *content = a2b_pal_File_Read(filename, &size);
+    if (!content) return false;
+
+    pr_info("File content (%zu bytes)\n", size);
+
+    // Parse XML configuration
+    parseXML(a2b24xx, bus, content);
+    bus->pA2BConfig = bus->fileA2BConfig;
+    kfree(content);
+
+    pr_info("Action count: %zu, Buffer used: %zu\n", bus->num_actions, a2b24xx->write_offset);
+
+#if 0
+    // Print the results
+    const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = bus->pA2BConfig;
+    for (int i = 0; i < bus->num_actions; i++) {
+        switch (pA2BConfig[i].eOpCode) {
+            case A2B24XX_WRITE:
+                pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
+                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
+                break;
+            case A2B24XX_READ:
+                pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s\n",
+                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
+                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
+                continue;
+            case A2B24XX_DELAY:
+                pr_info("Action %02d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
+                break;
+        }
+
+        for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
+            pr_cont("0x%02X ", pA2BConfig[i].paConfigData[j]);
+        }
+        pr_cont("\n");
+    }
+#endif
+    return true;
+}
+
+static void a2b24xx_setup(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent) {
     uint8_t node_id = 0;
 
     /* Setting up A2B network */
-    adi_a2b_NetworkSetup(a2b24xx->dev, bus, 0);
+    adi_a2b_NetworkSetup(a2b24xx->dev, bus, parent);
 
     for (int32_t i = (bus->num_actions - 1); i >= 0; i--) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
@@ -899,9 +951,26 @@ static void a2b24xx_setup_work(struct work_struct *work)
             }
         }
     }
+}
 
-    int32_t ret = devm_request_irq(a2b24xx->dev,
-            client->irq, a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
+static void a2b24xx_setup_work(struct work_struct *work)
+{
+    struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
+    struct i2c_client *client = to_i2c_client(a2b24xx->dev);
+    struct a2b_bus **bus;
+
+    a2b24xx_setup(a2b24xx, &a2b24xx->bus, 0);
+    for (uint8_t i = 0; i < a2b24xx->num_files; i++) {
+        bus = &a2b24xx->bus.nods[a2b24xx->bus_parents[i]]->sub_bus;
+        *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
+
+        if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
+            a2b24xx_setup(a2b24xx, *bus, a2b24xx->bus_parents[i]);
+        }
+    }
+
+    int32_t ret = devm_request_irq(a2b24xx->dev, client->irq,
+            a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
 
     mdelay(5000);
@@ -1106,47 +1175,10 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     const char *filename = NULL;
     const char *default_filename = "/lib/firmware/adi_a2b_commandlist.xml";
     of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
-    char *content = a2b_pal_File_Read(filename ? filename : default_filename, &size);
-    if (content) {
-        pr_info("File content (%zu bytes)\n", size);
-
-        // Parse XML configuration
-        parseXML(a2b24xx, &a2b24xx->bus, content);
-        a2b24xx->bus.pA2BConfig = a2b24xx->bus.fileA2BConfig;
-        kfree(content);
-    } else {
-        a2b24xx->bus.pA2BConfig = gaA2BConfig;
-        a2b24xx->bus.num_actions = CONFIG_LEN;
+    if (!a2b24xx_load_config(a2b24xx, &a2b24xx->bus, filename ? filename : default_filename)) {
+        a2b24xx->pA2BConfig = gaA2BConfig;
+        a2b24xx->num_actions = CONFIG_LEN;
     }
-
-    pr_info("Action count: %zu, Buffer used: %zu\n", a2b24xx->bus.num_actions, a2b24xx->write_offset);
-
-#if 0
-    // Print the results
-    const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = a2b24xx->bus.pA2BConfig;
-    for (int i = 0; i < a2b24xx->bus.num_actions; i++) {
-        switch (pA2BConfig[i].eOpCode) {
-            case A2B24XX_WRITE:
-                pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
-                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
-                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
-                break;
-            case A2B24XX_READ:
-                pr_info("Action %02d: nDeviceAddr=0x%02X, eOpCode= read, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s\n",
-                       i, pA2BConfig[i].nDeviceAddr, pA2BConfig[i].nAddrWidth,
-                       pA2BConfig[i].nAddr, pA2BConfig[i].nAddr, pA2BConfig[i].nDataCount, pA2BConfig[i].eProtocol == SPI ? "SPI" : "I2C");
-                continue;
-            case A2B24XX_DELAY:
-                pr_info("Action %02d: delay, nDataCount=%hu, sleep=", i, pA2BConfig[i].nDataCount);
-                break;
-        }
-
-        for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            pr_cont("0x%02X ", pA2BConfig[i].paConfigData[j]);
-        }
-        pr_cont("\n");
-    }
-#endif
 
     a2b24xx->work_allowed = true;
     mutex_init(&a2b24xx->bus_lock); // Initialize the mutex
