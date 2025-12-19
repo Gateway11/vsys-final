@@ -107,7 +107,7 @@ struct a2b24xx {
     uint8_t last_bus_id;
     uint8_t last_addr;
 
-    uint8_t sub_bus_files[5][128];
+    char sub_bus_files[5][128];
     uint8_t bus_parents[5];
     uint8_t num_files;
 
@@ -233,8 +233,9 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = A2B24XX_DELAY;
         config->nDataCount = 1;
-    } else if (sscanf(action, "<include=%s parent=\"%hhu\"",
-                a2b24xx->sub_bus_files[a2b24xx->num_files], a2b24xx->bus_parents[a2b24xx->num_files]) == 2) {
+        //<include file=/lib/firmeware/adi_a2b_commandlist.xml parent="5" />
+    } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
+                a2b24xx->sub_bus_files[a2b24xx->num_files], &a2b24xx->bus_parents[a2b24xx->num_files]) == 2) {
         a2b24xx->num_files++;
         return;
     } else {
@@ -280,7 +281,9 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
 
         parseAction(a2b24xx, action, &bus->fileA2BConfig[bus->num_actions]);
         bus->num_actions++;
-        actionStart = strstr(actionEnd, "<action");
+        if (!(actionStart = strstr(actionEnd, "<action"))) {
+            actionStart = strstr(actionEnd, "<include");
+        }
     }
 exit:
     kfree(action);
