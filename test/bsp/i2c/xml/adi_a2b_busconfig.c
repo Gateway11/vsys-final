@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "adi_a2b_commandlist.h"
 #include "a2b-pal-interface.h"
@@ -10,12 +11,36 @@
 #define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA MAX_ACTIONS << 6
 
-ADI_A2B_DISCOVERY_CONFIG *pA2BConfig, parseA2BConfig[MAX_ACTIONS];
-static size_t actionCount = 0;
-static int32_t deviceHandle;
+struct a2b_bus;
+struct a2b_node {
+    struct a2b_bus *sub_bus;
+    uint16_t position;
+    uint8_t cycle;
+};
 
-static uint8_t configBuffer[MAX_CONFIG_DATA];
-size_t bufferOffset = 0;
+struct a2b_bus {
+    ADI_A2B_DISCOVERY_CONFIG *pA2BConfig;
+    ADI_A2B_DISCOVERY_CONFIG fileA2BConfig[MAX_ACTIONS];
+    size_t num_actions;
+
+    struct a2b_node *nodes;
+    uint8_t num_nodes;
+    uint8_t id;
+    uint8_t master_fmt;
+};
+
+struct a2b_bus bus;
+char sub_bus_files[16][128];
+uint8_t bus_parents[16];
+uint8_t num_files;
+
+uint8_t last_bus_id;
+uint8_t last_addr;
+
+uint8_t config_buffer[MAX_CONFIG_DATA];
+size_t write_offset = 0;
+
+int32_t deviceHandle;
 
 void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t deviceAddr) {
     char instr[20], protocol[10];
@@ -41,34 +66,37 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
     } else if (strstr(action, "instr=\"delay\"") != NULL) {
         config->eOpCode = DELAY;
         config->nDataCount = 1;
+    } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
+                sub_bus_files[num_files], &bus_parents[num_files]) == 2) {
+        num_files++;
+        return;
     } else {
         config->eOpCode = INVALID;
         return;
     }
 
     if (config->eOpCode == WRITE || config->eOpCode == DELAY) {
-        if (bufferOffset + config->nDataCount > MAX_CONFIG_DATA) {
+        if (write_offset + config->nDataCount >= MAX_CONFIG_DATA) {
             printf("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
         // Parse multiple numbers
         char* token = strtok(strchr(action, '>') + 1 /* Find position after '>' */, " ");
         size_t index = 0;
-        config->paConfigData = configBuffer + bufferOffset;
+        config->paConfigData = config_buffer + write_offset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strtok(NULL, " ");
         }
-        bufferOffset += index;
+        write_offset += index;
         config->nDataCount = index;
     }
 }
 
-void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* actionCount) {
+void parseXML(struct a2b_bus *bus, const char* xml) {
     const char* actionStart = strstr(xml, "<action");
-    *actionCount = 0;
 
-    while (actionStart && *actionCount < MAX_ACTIONS) {
+    while (actionStart && bus->num_actions < MAX_ACTIONS) {
         const char* actionEnd = strchr(actionStart, '\n'); // Use '\n' as end marker
         size_t actionLength = actionEnd - actionStart + 1;
 
@@ -76,10 +104,14 @@ void parseXML(const char* xml, ADI_A2B_DISCOVERY_CONFIG* configs, size_t* action
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(action, &configs[*actionCount], 104);
-        (*actionCount)++;
-        actionStart = strstr(actionEnd, "<action");
+        parseAction(action, &bus->fileA2BConfig[bus->num_actions], 104);
+        if ((actionStart = strstr(actionEnd, "<action"))) {
+            bus->num_actions++;
+        } else {
+            actionStart = strstr(actionEnd, "<include");
+        }
     }
+    bus->num_actions++;
 }
 
 void concatAddrData(uint8_t destBuffer[], uint32_t addrWidth, uint32_t addr) {
@@ -142,10 +174,10 @@ const IntTypeInfo_t intTypeInfo[] = {
     //{A2B_ENUM_INTTYPE_IO0PND             , NULL,            "IO0PND - Slave Only "},
     //{A2B_ENUM_INTTYPE_IO1PND             , NULL,            "IO1PND - Slave Only "},
     //{A2B_ENUM_INTTYPE_IO2PND             , NULL,            "IO2PND - Slave Only "},
-    //{A2B_ENUM_INTTYPE_IO3PND             , NULL,            "IO3PND "},
-    //{A2B_ENUM_INTTYPE_IO4PND             , NULL,            "IO4PND "},
-    //{A2B_ENUM_INTTYPE_IO5PND             , NULL,            "IO5PND "},
-    //{A2B_ENUM_INTTYPE_IO6PND             , NULL,            "IO6PND "},
+    {A2B_ENUM_INTTYPE_IO3PND             , NULL,            "IO3PND "},
+    {A2B_ENUM_INTTYPE_IO4PND             , NULL,            "IO4PND "},
+    {A2B_ENUM_INTTYPE_IO5PND             , NULL,            "IO5PND "},
+    {A2B_ENUM_INTTYPE_IO6PND             , NULL,            "IO6PND "},
     //{A2B_ENUM_INTTYPE_IO7PND             , NULL,            "IO7PND "},
     //{A2B_ENUM_INTTYPE_DSCDONE            , NULL,            "DSCDONE - Master Only "},
     {A2B_ENUM_INTTYPE_I2CERR             , defaultHandler,  "I2CERR - Master Only "},
@@ -168,42 +200,29 @@ const IntTypeInfo_t intTypeInfo[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING       , NULL,            "MSTR_RUNNING - Master Only "},
 };
 
-#if 0
-/* Interrupt category flags (bitmask) */
-typedef enum {
-    INT_FLAG_ERROR     = 0x01,  // Critical errors requiring immediate attention
-    INT_FLAG_IGNORABLE = 0x02,  // Non-critical interrupts that can be safely ignored
-    INT_FLAG_REPORT    = 0x04   // Events requiring external reporting/logging
-} IntCategory;
+#define BUS_SELECT(__bus, __parent, __addr)                                                                    \
+({                                                                                                             \
+    uint8_t __ret = (__addr);                                                                                  \
+    if (__bus) {                                                                                               \
+        if (last_bus_id != __bus || last_addr != __addr) {                                                     \
+            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});        \
+            adi_a2b_I2C_Write(&deviceHandle, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, __addr});              \
+            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent | 0x20}); \
+         }                                                                                                     \
+        last_addr = __addr;                                                                                    \
+        __ret = A2B_BUS_ADDR;                                                                                  \
+    } else if (last_bus_id != __bus) {                                                                         \
+        adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});            \
+    }                                                                                                          \
+    last_bus_id = __bus;                                                                                       \
+    __ret;                                                                                                     \
+})
 
-/* Interrupt descriptor structure */
-typedef struct {
-    uint8_t type;               // Interrupt type identifier
-    uint8_t flags;              // Category flags (bitmask of IntCategory)
-    void (*handle)(uint8_t intType, void* context);  // Generic handler callback
-    const char* description;       // Description information
-} IntTypeInfo_t;
-
-const IntTypeInfo_t intTypeInfo[] = {
-    {
-        .type = A2B_ENUM_INTTYPE_HDCNTERR,
-        .flags = INT_FLAG_ERROR | INT_FLAG_REPORT,
-        .handler = logPowerError,
-        .description = "HDCNTERR"
-    },
-    {
-        .type = A2B_ENUM_INTTYPE_DDERR,
-        .flags = INT_FLAG_ERROR | INT_FLAG_REPORT,
-        .handler = defaultHandler,
-        .description = "DDERR"
-    },
-}
-#endif
-
-void processInterrupt() {
+void processInterrupt(struct a2b_bus *bus, uint8_t parent) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(&deviceHandle,
+            BUS_SELECT(bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
         adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
@@ -225,7 +244,7 @@ void processInterrupt() {
     }
 }
 
-void setupNetwork() {
+void setupNetwork(struct a2b_bus *bus, uint8_t parent) {
     ADI_A2B_DISCOVERY_CONFIG* pOpUnit;
     uint32_t index, innerIndex;
 
@@ -233,24 +252,25 @@ void setupNetwork() {
     static uint8_t dataWriteReadBuffer[4u];
     uint32_t delayValue;
 
-    for (index = 0; index < actionCount; index++) {
-        pOpUnit = &pA2BConfig[index];
+    for (index = 0; index < bus->num_actions; index++) {
+        pOpUnit = &bus->pA2BConfig[index];
         /* Operation code */
         switch (pOpUnit->eOpCode) {
             case WRITE:
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
-                adi_a2b_I2C_Write(&deviceHandle, (uint16_t)pOpUnit->nDeviceAddr, (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
+                adi_a2b_I2C_Write(&deviceHandle, BUS_SELECT(bus->id, parent, (uint16_t)pOpUnit->nDeviceAddr),
+                        (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
                 break;
 
             case READ:
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
-                    processInterrupt();
+                    processInterrupt(bus, parent);
                     continue;
                 }
-                adi_a2b_I2C_WriteRead(&deviceHandle, (uint16_t)pOpUnit->nDeviceAddr,
+                adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus->id, parent, (uint16_t)pOpUnit->nDeviceAddr),
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
                 break;
 
@@ -268,27 +288,25 @@ void setupNetwork() {
     }
 }
 
-int main(int argc, char* argv[]) {
-    const char* filename = "adi_a2b_commandlist.xml";
+bool loadConfig(struct a2b_bus *bus, const char *filename) {
     size_t size;
 
-    if (argc == 2) filename = argv[1];
+    char *content = a2b_pal_File_Read(filename, &size);
+    if (!content) return false;
 
-    char* content = a2b_pal_File_Read(filename, &size);
-    if (content) {
-        printf("File content (%zu bytes):\n%s\n", size, content);
-        parseXML(content, parseA2BConfig, &actionCount);
-        pA2BConfig = parseA2BConfig;
-        free(content);
-    } else {
-        pA2BConfig = gaA2BConfig;
-        actionCount = CONFIG_LEN;
-    }
-    printf("Action count: %zu, Buffer used: %zu\n", actionCount, bufferOffset);
+    printf("File content (%zu bytes)\n", size);
+
+    // Parse XML configuration
+    parseXML(bus, content);
+    bus->pA2BConfig = bus->fileA2BConfig;
+    free(content);
+
+    printf("File=%s, action count=%zu, buffer used=%zu\n", filename, bus->num_actions, write_offset);
 
 #if 0
     // Print the results
-    for (int i = 0; i < actionCount; i++) {
+    const ADI_A2B_DISCOVERY_CONFIG* pA2BConfig = bus->pA2BConfig;
+    for (int i = 0; i < bus->num_actions; i++) {
         switch (pA2BConfig[i].eOpCode) {
             case WRITE:
                 printf("Action %03d: nDeviceAddr=0x%02X, eOpCode=write, nAddrWidth=%d, nAddr=%05d 0x%04X, nDataCount=%hu, eProtocol=%s, paConfigData=",
@@ -311,12 +329,66 @@ int main(int argc, char* argv[]) {
         printf("\n");
     }
 #endif
+    return true;
+}
+
+void setup(struct a2b_bus *bus, uint8_t parent) {
+    uint8_t node_id = 0;
+
+    /* Configure A2B system */
+    setupNetwork(bus, parent);
+
+    for (int32_t i = (bus->num_actions - 1); i >= 0; i--) {
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
+            bus->master_fmt = bus->pA2BConfig[i].paConfigData[0];
+            break;
+        }
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
+            bus->num_nodes = bus->pA2BConfig[i].paConfigData[0];
+        }
+    }
+
+    bus->nodes = calloc(bus->num_nodes + 1, sizeof(struct a2b_node));
+    for (uint32_t i = 0; i < bus->num_actions; i++) {
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
+            bus->nodes[node_id++].cycle = bus->pA2BConfig[i].paConfigData[0];
+        }
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS && bus->pA2BConfig[i].nAddrWidth == 1) {
+            for (int32_t j = i; j >= 0; j--) {
+                if (bus->pA2BConfig[j].nAddr == A2B_REG_NODEADR && bus->pA2BConfig[j + 1].nAddr != A2B_REG_CHIP &&
+                    !(bus->pA2BConfig[j].paConfigData[0] & A2B_BITM_NODEADR_PERI)) {
+                    bus->nodes[bus->pA2BConfig[j].paConfigData[0]].position = i;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+int main(int argc, char* argv[]) {
+    const char* default_filename = "adi_a2b_commandlist.xml";
+
+    if (!loadConfig(&bus, argc == 2 ? argv[1] : default_filename)) {
+        bus.pA2BConfig = gaA2BConfig;
+        bus.num_actions = CONFIG_LEN;
+    }
 
     /* PAL call, open I2C driver */
     deviceHandle = adi_a2b_I2C_Open(A2B_BASE_ADDR);
     
-    /* Configure A2B system */
-    setupNetwork();
+    setup(&bus, 0);
+    for (uint8_t i = 0; i < num_files; i++) {
+        bus.nodes[bus_parents[i]].sub_bus = calloc(1, sizeof(struct a2b_bus));
+        bus.nodes[bus_parents[i]].sub_bus->id = i + 1;
+
+        if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, sub_bus_files[i])) {
+            setup(bus.nodes[bus_parents[i]].sub_bus, bus_parents[i]);
+        } else {
+            free(bus.nodes[bus_parents[i]].sub_bus);
+            bus.nodes[bus_parents[i]].sub_bus = NULL;
+        }
+    }
+
 
     adi_a2b_I2C_Close(deviceHandle);
 
