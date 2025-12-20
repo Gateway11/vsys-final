@@ -219,11 +219,10 @@ const IntTypeInfo_t intTypeInfo[] = {
     __ret;                                                                                                     \
 })
 
-void processInterrupt(struct a2b_bus *bus, uint8_t parent) {
+void processInterrupt(struct a2b_bus *bus, uint8_t parent, uint8_t addr) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(&deviceHandle,
-            BUS_SELECT(bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus->id, parent, addr), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
         adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
@@ -268,7 +267,7 @@ void setupNetwork(struct a2b_bus *bus, uint8_t parent) {
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
-                    processInterrupt(bus, parent);
+                    processInterrupt(bus, parent, pOpUnit->nDeviceAddr);
                     continue;
                 }
                 adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus->id, parent, (uint16_t)pOpUnit->nDeviceAddr),
