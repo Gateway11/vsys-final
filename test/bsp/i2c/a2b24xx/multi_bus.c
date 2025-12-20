@@ -243,7 +243,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     }
 
     if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
-        if (a2b24xx->write_offset + config->nDataCount > MAX_CONFIG_DATA) {
+        if (a2b24xx->write_offset + config->nDataCount >= MAX_CONFIG_DATA) {
             pr_warn("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
