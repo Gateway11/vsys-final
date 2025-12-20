@@ -121,8 +121,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_t parent);
-static int16_t processInterrupt(struct a2b24xx *a2b24xx,
-        struct a2b_bus *bus, uint8_t parent, uint8_t addr, bool rediscover);
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, bool rediscover);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
 
@@ -548,7 +547,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint
     //          O Clear interrupts, if any
     //          O Wait for 100msec. And reattempt partial rediscovery: from step - 1
 retry:
-    interrupt = processInterrupt(a2b24xx, bus, parent, A2B_BASE_ADDR, false);
+    interrupt = processInterrupt(a2b24xx, bus, parent, false);
     if (interrupt != A2B_ENUM_INTTYPE_DSCDONE) {
         if (++retry_count < MAX_RETRIES && interrupt == A2B_ENUM_INTTYPE_SRFERR) {
             mdelay(25);
@@ -660,14 +659,13 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t
     }
 }
 
-static int16_t processInterrupt(struct a2b24xx *a2b24xx,
-        struct a2b_bus *bus, uint8_t parent, uint8_t addr, bool deepCheck)
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t parent, bool deepCheck)
 {
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
     adi_a2b_I2CRead(a2b24xx->dev,
-            BUS_SELECT(a2b24xx, bus->id, parent, addr), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
+            BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Master - ");
@@ -738,7 +736,7 @@ static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus, uint8_
             (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
             adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
             if (pOPUnit->nAddr == A2B_REG_INTTYPE && !bus->has_fault) {
-                processInterrupt(a2b24xx, bus, parent, pOPUnit->nDeviceAddr, false);
+                processInterrupt(a2b24xx, bus, parent, false);
             } else {
                 adi_a2b_I2CRead(dev, BUS_SELECT(a2b24xx, bus->id, parent, pOPUnit->nDeviceAddr),
                         pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
@@ -990,11 +988,11 @@ static void a2b24xx_fault_check_work(struct work_struct *work)
     a2b24xx->bus.has_fault = false;
 
     mutex_lock(&a2b24xx->bus_lock);
-    processInterrupt(a2b24xx, &a2b24xx->bus, 0, A2B_BASE_ADDR, true);
+    processInterrupt(a2b24xx, &a2b24xx->bus, 0, true);
     for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes; i++) {
         if (a2b24xx->bus.nodes[i].sub_bus) {
             a2b24xx->bus.nodes[i].sub_bus->has_fault = false;
-            processInterrupt(a2b24xx, a2b24xx->bus.nodes[i].sub_bus, i, A2B_BASE_ADDR, true);
+            processInterrupt(a2b24xx, a2b24xx->bus.nodes[i].sub_bus, i, true);
         }
     }
     mutex_unlock(&a2b24xx->bus_lock); // Release lock
