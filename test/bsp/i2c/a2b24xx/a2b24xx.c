@@ -208,7 +208,6 @@ static void a2b24xx_epl_report_error(uint32_t error_code)
 
 static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DISCOVERY_CONFIG *config) {
     char instr[20], protocol[10];
-    size_t *write_offset = &a2b24xx->write_offset;
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s",
@@ -239,7 +238,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     }
 
     if (config->eOpCode == A2B24XX_WRITE || config->eOpCode == A2B24XX_DELAY) {
-        if (*write_offset + config->nDataCount >= MAX_CONFIG_DATA) {
+        if (a2b24xx->write_offset + config->nDataCount >= MAX_CONFIG_DATA) {
             pr_warn("Warning: Exceeding maximum configuration data limit!\n");
             return;
         }
@@ -247,12 +246,12 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         char *dataStr = strchr(action, '>') + 1; /* Find position after '>' */
         char *token = strsep(&dataStr, " ");
         size_t index = 0;
-        config->paConfigData = a2b24xx->config_buffer + *write_offset;
+        config->paConfigData = a2b24xx->config_buffer + a2b24xx->write_offset;
         while (token != NULL && config->nDataCount) {
             config->paConfigData[index++] = (uint8_t)strtoul(token, NULL, 16); // Convert to hexadecimal
             token = strsep(&dataStr, " ");
         }
-        *write_offset += index;
+        a2b24xx->write_offset += index;
         config->nDataCount = index;
     }
 }
