@@ -77,7 +77,6 @@ struct a2b_bus {
 
     struct a2b_node *nodes;
     uint8_t num_nodes;
-
     uint8_t id;
     uint8_t master_fmt;
     bool has_fault;
@@ -958,12 +957,11 @@ static void a2b24xx_setup_work(struct work_struct *work)
 {
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
-    struct a2b_bus **bus;
 
     a2b24xx_setup(a2b24xx, &a2b24xx->bus, 0);
     for (uint8_t i = 0; i < a2b24xx->num_files; i++) {
         if (CHECK_RANGE(a2b24xx->bus_parents[i], 0, a2b24xx->bus.num_nodes)) {
-            bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
+            struct a2b_bus **bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
             *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
             *bus->id = i + 1;
 
