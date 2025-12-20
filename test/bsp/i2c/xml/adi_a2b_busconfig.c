@@ -10,6 +10,7 @@
 
 #define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA MAX_ACTIONS << 6
+#define CHECK_RANGE(val, lo, hi) (((val) >= (lo)) && ((val) <= (hi)))
 
 struct a2b_bus;
 struct a2b_node {
@@ -378,14 +379,16 @@ int main(int argc, char* argv[]) {
     
     setup(&bus, 0);
     for (uint8_t i = 0; i < num_files; i++) {
-        bus.nodes[bus_parents[i]].sub_bus = calloc(1, sizeof(struct a2b_bus));
-        bus.nodes[bus_parents[i]].sub_bus->id = i + 1;
+        if (CHECK_RANGE(bus_parents[i], 0, bus.num_nodes)) {
+            bus.nodes[bus_parents[i]].sub_bus = calloc(1, sizeof(struct a2b_bus));
+            bus.nodes[bus_parents[i]].sub_bus->id = i + 1;
 
-        if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, sub_bus_files[i])) {
-            setup(bus.nodes[bus_parents[i]].sub_bus, bus_parents[i]);
-        } else {
-            free(bus.nodes[bus_parents[i]].sub_bus);
-            bus.nodes[bus_parents[i]].sub_bus = NULL;
+            if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, sub_bus_files[i])) {
+                setup(bus.nodes[bus_parents[i]].sub_bus, bus_parents[i]);
+            } else {
+                free(bus.nodes[bus_parents[i]].sub_bus);
+                bus.nodes[bus_parents[i]].sub_bus = NULL;
+            }
         }
     }
 
