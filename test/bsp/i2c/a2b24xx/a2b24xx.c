@@ -787,7 +787,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 (void)memset(&aDataBuffer[0u], 0u, pOPUnit->nDataCount);
                 adi_a2b_Concat_Addr_Data(&aDataWriteReadBuf[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
                 if (pOPUnit->nAddr == A2B_REG_INTTYPE && !a2b24xx->has_fault) {
-                    processInterrupt(a2b24xx, false);
+                    processInterrupt(a2b24xx, /* pOPUnit->nDeviceAddr, */false);
                 } else {
                     adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth,
                                 aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
