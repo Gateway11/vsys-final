@@ -392,7 +392,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-
     adi_a2b_I2C_Close(deviceHandle);
 
     return 0;
