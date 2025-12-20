@@ -962,15 +962,17 @@ static void a2b24xx_setup_work(struct work_struct *work)
 
     a2b24xx_setup(a2b24xx, &a2b24xx->bus, 0);
     for (uint8_t i = 0; i < a2b24xx->num_files; i++) {
-        bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
-        *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
-        *bus->id = i + 1;
+        if (CHECK_RANGE(a2b24xx->bus_parents[i], 0, a2b24xx->bus.num_nodes)) {
+            bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
+            *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
+            *bus->id = i + 1;
 
-        if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
-            a2b24xx_setup(a2b24xx, *bus, a2b24xx->bus_parents[i]);
-        } else {
-            devm_kfree(a2b24xx->dev, *bus);
-            *bus = NULL;
+            if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
+                a2b24xx_setup(a2b24xx, *bus, a2b24xx->bus_parents[i]);
+            } else {
+                devm_kfree(a2b24xx->dev, *bus);
+                *bus = NULL;
+            }
         }
     }
 
