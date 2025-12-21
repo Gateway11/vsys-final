@@ -1,5 +1,7 @@
 #!/bin/sh
 
+#./busconfig.sh adi_a2b_commandlist.xml; ./make_sub_bus.sh adi_a2b_commandlist.xml jj.xml 0; ./busconfig.sh jj.xml
+
 infile="$1"
 outfile="$2"
 parent="$3"
