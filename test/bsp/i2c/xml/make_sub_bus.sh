@@ -36,8 +36,8 @@ function emit(chip) {
 
     # 第一次 action：无条件插入
     if (!seen_action) {
-        emit(68)
         seen_action = 1
+        emit(68)
     }
     # i2caddr 发生变化
     else if (curr != prev) {
