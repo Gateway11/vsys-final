@@ -776,12 +776,12 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
     struct a2b24xx *a2b24xx = file->private_data;
     struct device *dev = a2b24xx->dev;
     struct a2b_bus *bus = &a2b24xx->bus;
+    uint8_t parent = 0;
 
     char command_buf[COMMAND_SIZE] = {0};
     int16_t argc = 0, params[4] = {0};
     uint8_t config[] = {0x11, 0x91};
     uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
-    uint8_t parent = 0;
 
     size_t len = min(count, sizeof(command_buf));
     if (copy_from_user(command_buf, buf, len)) {
