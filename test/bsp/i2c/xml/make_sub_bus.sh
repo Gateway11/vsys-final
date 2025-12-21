@@ -6,11 +6,8 @@ parent="$3"
 
 awk -v parent="$parent" '
 BEGIN {
-    # parent 视为十进制 0~15
-    p = parent + 0
-
-    node0  = sprintf("%02X", p)
-    node20 = sprintf("%02X", p + 32)
+    node0  = sprintf("%02X", parent)
+    node20 = sprintf("%02X", parent + 32)
 
     seen_action = 0
     prev = ""
@@ -51,7 +48,7 @@ function emit(chip) {
 
     # === 输出内容处理 ===
     if (curr == "104") {
-        sub(/i2caddr="104"/, "i2caddr=\"105\"", $0)
+        sub(/i2caddr="104"/, "i2caddr=\"105\"")
     }
 
     print $0
