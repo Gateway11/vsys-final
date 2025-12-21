@@ -23,6 +23,8 @@ function emit(chip) {
 }
 
 {
+    sub(/\r$/, "")
+
     # 非 i2c 行，原样输出
     if ($0 !~ /i2caddr="/) {
         print $0
