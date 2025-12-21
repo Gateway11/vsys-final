@@ -927,11 +927,11 @@ static void a2b24xx_setup(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t 
     adi_a2b_NetworkSetup(a2b24xx->dev, bus, parent);
 
     for (int32_t i = (bus->num_actions - 1); i >= 0; i--) {
-        if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT) {
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->master_fmt = bus->pA2BConfig[i].paConfigData[0];
             break;
         }
-        if (bus->pA2BConfig[i].nAddr == A2B_REG_NODEADR) {
+        if (bus->pA2BConfig[i].nAddr == A2B_REG_NODEADR && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->num_nodes = bus->pA2BConfig[i].paConfigData[0];
         }
     }
