@@ -16,15 +16,9 @@ BEGIN {
     prev = ""
 }
 
-function emit_104() {
+function emit(chip) {
     print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"1\" i2caddr=\"104\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_NODEADR\">" node0 "</action>"
-    print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"0\" i2caddr=\"105\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_CHIP\">68</action>"
-    print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"1\" i2caddr=\"104\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_NODEADR\">" node20 "</action>"
-}
-
-function emit_105() {
-    print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"1\" i2caddr=\"104\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_NODEADR\">" node0 "</action>"
-    print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"0\" i2caddr=\"105\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_CHIP\">69</action>"
+    print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"0\" i2caddr=\"105\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_CHIP\">" chip "</action>"
     print "    <action instr=\"writeXbytes\" SpiCmd=\"0\" SpiCmdWidth=\"0\" addr_width=\"1\" data_width=\"1\" len=\"2\" addr=\"1\" i2caddr=\"104\" AddrIncr=\"0\" Protocol=\"I2C\" ParamName=\"REG_A2B0_NODEADR\">" node20 "</action>"
 }
 
@@ -42,24 +36,22 @@ function emit_105() {
 
     # 第一次 action：无条件插入
     if (!seen_action) {
-        emit_104()
+        emit(68)
         seen_action = 1
     }
     # i2caddr 发生变化
     else if (curr != prev) {
         if (curr == "104")
-            emit_104()
+            emit(68)
         else if (curr == "105")
-            emit_105()
+            emit(69)
     }
 
     # === 输出内容处理 ===
-    out_line = $0
     if (curr == "104") {
         sub(/i2caddr="104"/, "i2caddr=\"105\"", $0)
     }
 
-    #print out_line
     print $0
     prev = curr
 }
