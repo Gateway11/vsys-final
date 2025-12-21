@@ -6,8 +6,11 @@ parent="$3"
 
 awk -v parent="$parent" '
 BEGIN {
-    node0  = sprintf("%02X", parent)
-    node20 = sprintf("%02X", parent + 32)
+    # parent 视为十进制 0~15
+    p = parent + 0
+
+    node0  = sprintf("%02X", p)
+    node20 = sprintf("%02X", p + 32)
 
     seen_action = 0
     prev = ""
