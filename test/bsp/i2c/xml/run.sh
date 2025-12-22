@@ -27,7 +27,7 @@ if [ -n "$1" ]; then
     #amixer cset name="ADMAIF5 Mux" "ADX1 TX1"
     #amixer cset name="ADMAIF6 Mux" "ADX1 TX2"
 else
-#: << 'EOF'
+: << 'EOF'
     i2ctransfer -f -y 16 w2@0x68 0x11 0x00
     i2ctransfer -f -y 16 w2@0x68 0x53 0x06
     sleep 1
@@ -35,7 +35,7 @@ else
     pkill -9 aplay
     aplay -D hw:0,0 48k_32bit_32ch.wav &
     sleep 1
-#EOF
+EOF
     arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
     #scp -J zhangcy52@192.168.1.100,xuwy@10.106.224.114 record.wav <>@10.106.250.32:/drives/c/Users/<>/record.wav
     #ssh xuwy@10.106.224.114 "echo '123456' | sudo -S bash /home/xuwy/run.sh $1"
