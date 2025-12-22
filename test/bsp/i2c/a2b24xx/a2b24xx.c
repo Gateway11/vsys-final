@@ -948,7 +948,8 @@ static void a2b24xx_setup_work(struct work_struct *work)
             break;
         }
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_NODEADR
-                && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
+                && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR
+                && bus->pA2BConfig[i + 1].nAddr != A2B_REG_CHIP) {
             a2b24xx->num_nodes = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
     }
