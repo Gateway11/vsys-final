@@ -963,7 +963,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
         if (CHECK_RANGE(a2b24xx->bus_parents[i], 0, a2b24xx->bus.num_nodes)) {
             struct a2b_bus **bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
             *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
-            *bus->id = i + 1;
+            (*bus)->id = i + 1;
 
             if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
                 a2b24xx_setup(a2b24xx, *bus, a2b24xx->bus_parents[i]);
@@ -1126,7 +1126,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 {
     struct a2b24xx *a2b24xx;
     int ret;
-    size_t size;
 
     if (IS_ERR(regmap))
         return PTR_ERR(regmap);
@@ -1181,8 +1180,8 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     const char *default_filename = "/lib/firmware/adi_a2b_commandlist.xml";
     of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
     if (!a2b24xx_load_config(a2b24xx, &a2b24xx->bus, filename ? filename : default_filename)) {
-        a2b24xx->pA2BConfig = gaA2BConfig;
-        a2b24xx->num_actions = CONFIG_LEN;
+        a2b24xx->bus.pA2BConfig = gaA2BConfig;
+        a2b24xx->bus.num_actions = CONFIG_LEN;
     }
 
     a2b24xx->work_allowed = true;
