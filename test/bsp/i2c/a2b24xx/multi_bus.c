@@ -780,7 +780,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
 
     char command_buf[COMMAND_SIZE] = {0};
     int16_t argc = 0, params[4] = {0};
-    uint8_t config[] = {0x11, 0x91};
+    uint8_t i2scfg[] = {0x11, 0x91};
     uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
 
     size_t len = min(count, sizeof(command_buf));
@@ -822,10 +822,10 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
     } else if (sscanf(command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
-        if (CHECK_RANGE(params[0], 0, bus->num_nodes) && CHECK_RANGE(params[1], 0, ARRAY_SIZE(config) - 1)) {
+        if (CHECK_RANGE(params[0], 0, bus->num_nodes) && CHECK_RANGE(params[1], 0, ARRAY_SIZE(i2scfg) - 1)) {
             mutex_lock(&a2b24xx->bus_lock);
             adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
-            adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SCFG, config[params[1]]});
+            adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SCFG, i2scfg[params[1]]});
             adi_a2b_I2CWrite(dev, BUS_SELECT(a2b24xx, bus->id, parent, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
