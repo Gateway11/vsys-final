@@ -938,7 +938,7 @@ static void a2b24xx_setup(struct a2b24xx *a2b24xx, struct a2b_bus *bus, uint8_t 
     }
 
     bus->nodes = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
-    for (uint32_t i = 0; i < bus->num_actions; i++) {
+    for (uint32_t i = 0; i < bus->num_actions && node_id <= bus->num_nodes; i++) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->nodes[node_id++].cycle = bus->pA2BConfig[i].paConfigData[0];
         }

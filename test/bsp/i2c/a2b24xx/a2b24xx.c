@@ -954,7 +954,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
         }
     }
 
-    for (uint32_t i = 0; i < a2b24xx->num_actions; i++) {
+    for (uint32_t i = 0; i < a2b24xx->num_actions && node_id <= a2b24xx->num_nodes; i++) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY &&
             node_id < ARRAY_SIZE(a2b24xx->node_cycles)) {
             a2b24xx->node_cycles[node_id++] = a2b24xx->pA2BConfig[i].paConfigData[0];
