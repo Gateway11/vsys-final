@@ -26,7 +26,9 @@ struct a2b_bus {
 
     struct a2b_node *nodes;
     uint8_t num_nodes;
+
     uint8_t id;
+    uint8_t parent;
     uint8_t master_fmt;
 };
 
@@ -201,28 +203,28 @@ const IntTypeInfo_t intTypeInfo[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING       , NULL,            "MSTR_RUNNING - Master Only "},
 };
 
-#define BUS_SELECT(__bus, __parent, __addr)                                                                    \
-({                                                                                                             \
-    uint8_t __ret = (__addr);                                                                                  \
-    if (__bus) {                                                                                               \
-        if (last_bus_id != __bus || last_addr != __addr) {                                                     \
-            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});        \
-            adi_a2b_I2C_Write(&deviceHandle, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, __addr});              \
-            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent | 0x20}); \
-         }                                                                                                     \
-        last_addr = __addr;                                                                                    \
-        __ret = A2B_BUS_ADDR;                                                                                  \
-    } else if (last_bus_id != __bus) {                                                                         \
-        adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, __parent});            \
-    }                                                                                                          \
-    last_bus_id = __bus;                                                                                       \
-    __ret;                                                                                                     \
+#define BUS_SELECT(bus, addr)                                                                                     \
+({                                                                                                                \
+    uint8_t __ret = (addr);                                                                                       \
+    if (bus->id) {                                                                                                \
+        if (last_bus_id != bus->id || last_addr != addr) {                                                        \
+            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent});        \
+            adi_a2b_I2C_Write(&deviceHandle, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});                   \
+            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent | 0x20}); \
+         }                                                                                                        \
+        last_addr = addr;                                                                                         \
+        __ret = A2B_BUS_ADDR;                                                                                     \
+    } else if (last_bus_id != bus->id) {                                                                          \
+        adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent});            \
+    }                                                                                                             \
+    last_bus_id = bus->id;                                                                                        \
+    __ret;                                                                                                        \
 })
 
-void processInterrupt(struct a2b_bus *bus, uint8_t parent, uint8_t addr) {
+void processInterrupt(struct a2b_bus *bus, uint8_t addr) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus->id, parent, addr), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus, addr), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
         adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
@@ -244,7 +246,7 @@ void processInterrupt(struct a2b_bus *bus, uint8_t parent, uint8_t addr) {
     }
 }
 
-void setupNetwork(struct a2b_bus *bus, uint8_t parent) {
+void adi_a2b_NetworkSetup(struct a2b_bus *bus) {
     ADI_A2B_DISCOVERY_CONFIG* pOpUnit;
     uint32_t index, innerIndex;
 
@@ -259,7 +261,7 @@ void setupNetwork(struct a2b_bus *bus, uint8_t parent) {
             case WRITE:
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
-                adi_a2b_I2C_Write(&deviceHandle, BUS_SELECT(bus->id, parent, (uint16_t)pOpUnit->nDeviceAddr),
+                adi_a2b_I2C_Write(&deviceHandle, BUS_SELECT(bus, (uint16_t)pOpUnit->nDeviceAddr),
                         (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
                 break;
 
@@ -267,10 +269,10 @@ void setupNetwork(struct a2b_bus *bus, uint8_t parent) {
                 (void)memset(&dataBuffer[0u], 0u, pOpUnit->nDataCount);
                 concatAddrData(&dataWriteReadBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 if (pOpUnit->nAddr == A2B_REG_INTTYPE) {
-                    processInterrupt(bus, parent, pOpUnit->nDeviceAddr);
+                    processInterrupt(bus, pOpUnit->nDeviceAddr);
                     continue;
                 }
-                adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus->id, parent, (uint16_t)pOpUnit->nDeviceAddr),
+                adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus, (uint16_t)pOpUnit->nDeviceAddr),
                         (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
                 break;
 
@@ -332,11 +334,11 @@ bool loadConfig(struct a2b_bus *bus, const char *filename) {
     return true;
 }
 
-void setup(struct a2b_bus *bus, uint8_t parent) {
+void setup(struct a2b_bus *bus) {
     uint8_t node_id = 0;
 
     /* Configure A2B system */
-    setupNetwork(bus, parent);
+    adi_a2b_NetworkSetup(bus);
 
     for (int32_t i = (bus->num_actions - 1); i >= 0; i--) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
@@ -377,14 +379,15 @@ int main(int argc, char* argv[]) {
     /* PAL call, open I2C driver */
     deviceHandle = adi_a2b_I2C_Open(A2B_BASE_ADDR);
     
-    setup(&bus, 0);
+    setup(&bus);
     for (uint8_t i = 0; i < num_files; i++) {
         if (CHECK_RANGE(bus_parents[i], 0, bus.num_nodes)) {
             bus.nodes[bus_parents[i]].sub_bus = calloc(1, sizeof(struct a2b_bus));
             bus.nodes[bus_parents[i]].sub_bus->id = i + 1;
+            bus.nodes[bus_parents[i]].sub_bus->id = bus_parents[i];
 
             if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, sub_bus_files[i])) {
-                setup(bus.nodes[bus_parents[i]].sub_bus, bus_parents[i]);
+                setup(bus.nodes[bus_parents[i]].sub_bus);
             } else {
                 free(bus.nodes[bus_parents[i]].sub_bus);
                 bus.nodes[bus_parents[i]].sub_bus = NULL;
