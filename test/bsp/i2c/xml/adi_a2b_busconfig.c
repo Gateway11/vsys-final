@@ -324,7 +324,7 @@ bool loadConfig(struct a2b_bus *bus, const char *filename) {
         }
 
         for (int j = 0; j < pA2BConfig[i].nDataCount; j++) {
-            printf("0x%02X ", pA2BConfig[i].paConfigData[j]);
+            printf(pA2BConfig[i].eOpCode != DELAY ? "0x%02X " : "0x%02Xms ", pA2BConfig[i].paConfigData[j]);
         }
         printf("\n");
     }
@@ -350,7 +350,7 @@ void setup(struct a2b_bus *bus, uint8_t parent) {
     }
 
     bus->nodes = calloc(bus->num_nodes + 1, sizeof(struct a2b_node));
-    for (uint32_t i = 0; i < bus->num_actions && node_id <= bus->num_nodes; i++) {
+    for (uint32_t i = 0; i < bus->num_actions; i++) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->nodes[node_id++].cycle = bus->pA2BConfig[i].paConfigData[0];
         }
