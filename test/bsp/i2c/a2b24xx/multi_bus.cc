@@ -663,8 +663,7 @@ static void checkFaultNode(struct a2b_bus *bus, int8_t inode)
     }
 }
 
-static int16_t processInterrupt(struct a2b_bus *bus, bool deepCheck)
-{
+static int16_t processInterrupt(struct a2b_bus *bus, bool deepCheck) {
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
