@@ -606,8 +606,8 @@ retry:
             break;
         }
     }
-    adi_a2b_I2CWrite(dev, BUS_SELECT(bus,
-                A2B_BASE_ADDR), 4, (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
+    adi_a2b_I2CWrite(dev,
+        BUS_SELECT(bus, A2B_BASE_ADDR), 4, (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
 
     kfree(aDataBuffer); // Free memory before returning
     return true;
@@ -616,7 +616,6 @@ retry:
 static void processFaultNode(struct a2b_bus *bus, int8_t inode)
 {
     struct device *dev = bus->priv->dev;
-
     if (inode <= 0) {
         /* Setting up A2B network */
         adi_a2b_NetworkSetup(dev, bus);
@@ -642,7 +641,6 @@ static void processFaultNode(struct a2b_bus *bus, int8_t inode)
 static void checkFaultNode(struct a2b_bus *bus, int8_t inode)
 {
     struct device *dev = bus->priv->dev;
-
     uint8_t dataBuffer[1] = {0}; // A2B_REG_NODE
     int8_t lastNode = A2B_MASTER_NODE;
 
@@ -820,7 +818,8 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
             adi_a2b_I2CWrite(dev, BUS_SELECT(bus, A2B_BUS_ADDR), 2, (uint8_t[]){A2B_REG_I2SGCFG, 0x12});
 
             adi_a2b_I2CWrite(dev, BUS_SELECT(bus, A2B_BASE_ADDR), 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02 /* 0xFF */});
-            adi_a2b_I2CWrite(dev, BUS_SELECT(bus, A2B_BASE_ADDR), 4, (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
+            adi_a2b_I2CWrite(dev,
+                    BUS_SELECT(bus, A2B_BASE_ADDR), 4, (uint8_t[]){A2B_REG_SLOTFMT, bus->master_fmt, 0x03, 0x81});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
     } else if (sscanf(command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
