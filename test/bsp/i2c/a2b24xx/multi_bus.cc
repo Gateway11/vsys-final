@@ -669,7 +669,7 @@ static int16_t processInterrupt(struct a2b_bus *bus, bool deepCheck)
     int8_t inode = A2B_MASTER_NODE;
 
     adi_a2b_I2CRead(bus->priv->dev,
-            BUS_SELECT(bus, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
+        BUS_SELECT(bus, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Master - ");
