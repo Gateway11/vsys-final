@@ -645,8 +645,7 @@ retry:
                 adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
                 memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
                 adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr,
-                             (pOPUnit->nAddrWidth + pOPUnit->nDataCount),
-                             (char *)aDataBuffer);
+                        (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
                 break;
             case A2B24XX_DELAY:
                 nDelayVal = 0u;
@@ -659,8 +658,8 @@ retry:
                 break;
         }
     }
-    adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4,
-                    (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+    adi_a2b_I2CWrite(dev,
+        A2B_BASE_ADDR, 4,  (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
 
     kfree(aDataBuffer); // Free memory before returning
     return true;
@@ -741,7 +740,8 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
                 return dataBuffer[1];
             }
         }
-        LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
+        LOG_PRINT_IF_ENABLED(cont,
+            "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
     } else if (deepCheck) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
@@ -778,8 +778,7 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
                 memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
                 adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr,
-                             (pOPUnit->nAddrWidth + pOPUnit->nDataCount),
-                             (char *)aDataBuffer);
+                        (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
                 break;
 
             /* Read */
@@ -789,8 +788,8 @@ static void adi_a2b_NetworkSetup(struct device* dev)
                 if (pOPUnit->nAddr == A2B_REG_INTTYPE && !a2b24xx->has_fault) {
                     processInterrupt(a2b24xx, /* pOPUnit->nDeviceAddr, */false);
                 } else {
-                    adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr, pOPUnit->nAddrWidth,
-                                aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
+                    adi_a2b_I2CRead(dev, pOPUnit->nDeviceAddr,
+                            pOPUnit->nAddrWidth, aDataWriteReadBuf, pOPUnit->nDataCount, aDataBuffer);
                 }
                 mdelay(2); // Couple of milliseconds should be OK
                 break;
@@ -869,8 +868,8 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
             adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SGCFG, 0x12});
 
             adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02 /* 0xFF */});
-            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 4,
-                    (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+            adi_a2b_I2CWrite(dev,
+                    A2B_BASE_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
             mutex_unlock(&a2b24xx->bus_lock); // Release lock
         }
     } else if (sscanf(command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
