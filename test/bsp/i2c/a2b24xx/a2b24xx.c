@@ -131,7 +131,7 @@ struct a2b24xx {
 };
 
 static void adi_a2b_NetworkSetup(struct device *dev);
-static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool rediscover);
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool partialDisc);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
 
@@ -713,7 +713,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     mutex_unlock(&a2b24xx->bus_lock); // Release lock
 }
 
-static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
+static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool partialDisc) {
     uint8_t dataBuffer[2] = {0}; // A2B_REG_INTSRC, A2B_REG_INTTYPE
     int8_t inode = A2B_MASTER_NODE;
 
@@ -733,7 +733,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool deepCheck) {
                 LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: %s\n", intTypeString[i].message);
                 a2b24xx->has_fault = true;
 
-                if (deepCheck) {
+                if (partialDisc) {
                     a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
                     checkFaultNode(a2b24xx, inode);
                 }
