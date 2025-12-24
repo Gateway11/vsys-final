@@ -667,15 +667,16 @@ static int16_t processInterrupt(struct a2b_bus *bus, bool deepCheck) {
     int8_t inode = A2B_MASTER_NODE;
 
     adi_a2b_I2CRead(bus->priv->dev,
-        BUS_SELECT(bus, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
+                BUS_SELECT(bus, A2B_BASE_ADDR), 1, (uint8_t[]){A2B_REG_INTSRC}, 2, dataBuffer);
     if (dataBuffer[0]) {
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Master - ");
-        } else {
+        } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
             inode = dataBuffer[0] & A2B_BITM_INTSRC_INODE;
             LOG_PRINT_IF_ENABLED(warn, "Interrupt Source: Slave%d - ", inode);
+        } else {
+            LOG_PRINT_IF_ENABLED(warn, "No recognized interrupt source: %d - ", dataBuffer[0]);
         }
-
         for (uint32_t i = 0; i < ARRAY_SIZE(intTypeString); i++) {
             if (intTypeString[i].type == dataBuffer[1]) {
                 LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: %s\n", intTypeString[i].message);
@@ -683,17 +684,13 @@ static int16_t processInterrupt(struct a2b_bus *bus, bool deepCheck) {
 
                 if (deepCheck) {
                     a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
-                    if (CHECK_RANGE(dataBuffer[1], A2B_ENUM_INTTYPE_IO0PND, A2B_ENUM_INTTYPE_IO7PND)) {
-                        if (CHECK_RANGE(inode, 0, bus->num_nodes) && bus->nodes[inode].sub_bus) {
-                            bus = bus->nodes[inode].sub_bus;
-                        }
-                    }
                     checkFaultNode(bus, inode);
                 }
                 return dataBuffer[1];
             }
         }
-        LOG_PRINT_IF_ENABLED(cont, "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
+        LOG_PRINT_IF_ENABLED(cont,
+            "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
     } else if (deepCheck) {
         checkFaultNode(bus, A2B_INVALID_NODE);
