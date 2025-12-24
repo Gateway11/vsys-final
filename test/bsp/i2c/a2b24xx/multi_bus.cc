@@ -622,8 +622,7 @@ static void processFaultNode(struct a2b_bus *bus, int8_t inode)
     } else {
         for (uint8_t i = inode; i <= bus->num_nodes; i++) {
             if (!processSingleNode(bus, i)) {
-                LOG_PRINT_IF_ENABLED(warn,
-                        "Bus %d (parent %d) node %d processing failed: stopping partial discovery\n",
+                LOG_PRINT_IF_ENABLED(warn, "Bus %d (parent %d) node %d processing failed: stopping partial discovery\n",
                         bus->id, bus->parent, i);
                 return;
             }
