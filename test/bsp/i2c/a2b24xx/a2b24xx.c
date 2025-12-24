@@ -614,7 +614,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool partialDisc) {
                 a2b24xx->has_fault = true;
 
                 if (partialDisc) {
-                    a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
+                    //a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
