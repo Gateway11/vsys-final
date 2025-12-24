@@ -563,7 +563,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     if (!CHECK_RANGE(inode, 1, a2b24xx->num_nodes)) return false;
 
     LOG_PRINT_IF_ENABLED(info,
-        "Processing node %d: master fmt=0x%02X, node cycle=0x%02X, node pos=%d 0x%02X\n",
+        "Node %d processing: master fmt=0x%02X, node cycle=0x%02X, node pos=%d 0x%02X\n",
         inode, a2b24xx->master_fmt, a2b24xx->node_cycles[inode],
         a2b24xx->node_pos[inode], a2b24xx->pA2BConfig[a2b24xx->node_pos[inode]].nAddr);
 
@@ -673,7 +673,7 @@ static void processFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
     } else {
         for (uint8_t i = inode; i <= a2b24xx->num_nodes; i++) {
             if (!processSingleNode(a2b24xx, i)) {
-                LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed. Stopping partial discovery\n", i);
+                LOG_PRINT_IF_ENABLED(warn, "Node %d processing failed: stopping partial discovery\n", i);
                 return;
             }
             mdelay(1);
