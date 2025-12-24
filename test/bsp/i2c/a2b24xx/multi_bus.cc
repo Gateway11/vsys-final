@@ -109,7 +109,7 @@ struct a2b24xx {
     uint8_t last_bus_id;
     uint8_t last_addr;
 
-    char sub_bus_files[5][128];
+    char include_files[5][128];
     uint8_t bus_parents[5];
     uint8_t num_files;
 
@@ -235,7 +235,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         config->eOpCode = A2B24XX_DELAY;
         config->nDataCount = 1;
     } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
-                a2b24xx->sub_bus_files[a2b24xx->num_files],
+                a2b24xx->include_files[a2b24xx->num_files],
                 &a2b24xx->bus_parents[a2b24xx->num_files]) == 2) {
         a2b24xx->num_files++;
         return;
@@ -970,7 +970,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
             (*bus)->priv = a2b24xx;
             (*bus)->parent = a2b24xx->bus_parents[i];
 
-            if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
+            if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->include_files[i])) {
                 a2b24xx_setup(*bus);
             } else {
                 devm_kfree(a2b24xx->dev, *bus);
