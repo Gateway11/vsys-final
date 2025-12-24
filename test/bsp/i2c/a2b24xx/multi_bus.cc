@@ -49,7 +49,7 @@
 #define CHECK_RANGE(val, lo, hi) (((val) >= (lo)) && ((val) <= (hi)))
 #define LOG_PRINT_IF_ENABLED(log_level, ...)                                      \
     ({                                                                            \
-        if (a2b24xx->log_enabled)                                                 \
+        if (bus->priv->log_enabled)                                               \
             pr_##log_level(__VA_ARGS__);                                          \
     })
 
@@ -966,9 +966,9 @@ static void a2b24xx_setup_work(struct work_struct *work)
         if (CHECK_RANGE(a2b24xx->bus_parents[i], 0, a2b24xx->bus.num_nodes)) {
             struct a2b_bus **bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
             *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
-            (*bus)->priv = a2b24xx;
-            (*bus)->parent = bus_parents[i];
             (*bus)->id = i + 1;
+            (*bus)->priv = a2b24xx;
+            (*bus)->parent = a2b24xx->bus_parents[i];
 
             if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->sub_bus_files[i])) {
                 a2b24xx_setup(*bus);
