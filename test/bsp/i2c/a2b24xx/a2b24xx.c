@@ -55,7 +55,40 @@
  * This ID is used when reporting errors to FSI via EPL.
  */
 #define A2B24XX_EPL_REPORTER_ID 0x8103
+
+/*
+ * Recommendation for BECCTL, for normal operation
+ *
+ * Do not enable reporting of individual bit errors (CRCERR, DPERR, DDERR,
+ * HDCNTERR, ICRCERR).
+ * - The A2B transceiver automatically takes action on these errors (like
+ * repeating last known sample, ignoring erroneous interrupt, and retrying).
+ * - Even if individual bit error reporting is enabled, the Host DSP may not
+ * need to do any corrective action.
+ *
+ * Instead, count the bit errors in the Bit Error Counter (BECNT) and take the
+ * required action if excessive bit errors. For example, in most systems,
+ * counting CRC errors in the BECNT register could be sufficient.
+ * - Mask all Bit Failure Interrupts, except for Bit Error Count Overflow.
+ *
+ * ---------------------------------------------------------------------------------
+ * |         | Master | Slave  | Comment                                           |
+ * ---------------------------------------------------------------------------------
+ * | INTMSKO | 0x70   | 0x70   | Interrupt enabled for SRFERR, BECOVF, and PWRERR  |
+ * ---------------------------------------------------------------------------------
+ * | INTMSK2 | 0x0B   |  --    | Interrupt enabled for SLVIRQ, I2CERR, and DSCDONE |
+ * ---------------------------------------------------------------------------------
+ * | BECCTL  | 0xE4   | 0xE4   | Configuration example: Threshold 256, ENCRC       |
+ * ---------------------------------------------------------------------------------
+ * Same settings should be used for all nodes
+ */
 // #define ENABLE_BECCTL_REG
+
+// https://ez.analog.com/a2b/f/q-a/534983/can-i-have-a2b-slave-nodes-operating-at-different-sync-frequencies
+// https://ez.analog.com/a2b/f/q-a/540266/a2b---drx-dtx-mux-or-switch
+// https://ez.analog.com/a2b/f/q-a/571688/49-152mhz-bick-on-tdm
+// https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
+// https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
 
 struct a2b24xx {
     struct regmap *regmap;
@@ -436,6 +469,91 @@ const IntTypeString_t intTypeString[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING         ,        "MSTR_RUNNING - Master Only "},
 };
 
+/*
+/dev/i2c-16 write device(0x68) reg=0x1C 028, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x1D 029, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1D 029, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x12 018, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16  read device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x10 (0001 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x68) reg=0x13 019, val=0x72 (0111 0010), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x12 018, val=0x82 (1000 0010), cnt=1
+
+Partial Discovery attempted and no new node found!
+
+########################################################################
+
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x12 018, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16  read device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x10 (0001 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x68) reg=0x13 019, val=0x72 (0111 0010), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x17 023, val=0x18 (0001 1000), cnt=1
+
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x21 (0010 0001), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x69) reg=0x02 002, val=0xAD (1010 1101), cnt=4
+/dev/i2c-16  read device(0x69) reg=0x03 003, val=0x28 (0010 1000), cnt=4
+/dev/i2c-16  read device(0x69) reg=0x04 004, val=0x02 (0000 0010), cnt=4
+/dev/i2c-16  read device(0x69) reg=0x05 005, val=0x01 (0000 0001), cnt=4
+
+/dev/i2c-16 write device(0x69) reg=0x0B 011, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x0C 012, val=0x02 (0000 0010), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x3F 063, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x41 065, val=0x10 (0001 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x42 066, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x47 071, val=0x15 (0001 0101), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x96 150, val=0x02 (0000 0010), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1E 030, val=0xEF (1110 1111), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x40 064, val=0x00 (0000 0000), cnt=1
+
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x10 016, val=0x22 (0010 0010), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x11 017, val=0x03 (0000 0011), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x12 018, val=0x81 (1000 0001), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x09 009, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x12 018, val=0x82 (1000 0010), cnt=1
+Discovery succeeded with 2 nodes discovered
+/dev/i2c-16 write device(0x68) reg=0x1B 027, val=0x77 (0111 0111), cnt=3
+/dev/i2c-16 write device(0x68) reg=0x1C 028, val=0x78 (0111 1000), cnt=3
+/dev/i2c-16 write device(0x68) reg=0x1D 029, val=0x0F (0000 1111), cnt=3
+/dev/i2c-16 write device(0x68) reg=0x1E 030, val=0xEF (1110 1111), cnt=1
+/dev/i2c-16 write device(0x68) reg=0x01 001, val=0x00 (0000 0000), cnt=1
+/dev/i2c-16 write device(0x69) reg=0x1B 027, val=0x10 (0001 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1C 028, val=0x00 (0000 0000), cnt=2
+/dev/i2c-16 write device(0x69) reg=0x1E 030, val=0xEF (1110 1111), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x17 023, val=0x01 (0000 0001), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x16 022, val=0x80 (1000 0000), cnt=1
+/dev/i2c-16  read device(0x68) reg=0x17 023, val=0x04 (0000 0100), cnt=1
+*/
+
 static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     struct device *dev = a2b24xx->dev;
     uint8_t retry_count = 0;
@@ -453,6 +571,7 @@ static bool processSingleNode(struct a2b24xx *a2b24xx, uint8_t inode) {
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_BECNT, 0x00});
 #endif
 
+    // https://ez.analog.com/a2b/f/q-a/536836/a2b-hotpluggable-or-how-to-resync-the-bus
     // 1. Open the Slave node0 switch (SWCTL=0) i.e next upstream node and clear interrupt pending bits (INTPEND=0xFF) and wait for 100ms
     adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, inode - 1});
     adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_SWCTL, 0x00});
@@ -511,6 +630,7 @@ retry:
     for (uint32_t i = a2b24xx->node_pos[inode]; i < a2b24xx->num_actions; i++) {
         pOPUnit = &a2b24xx->pA2BConfig[i];
 
+        // Simple Advanced Optimized Modified
         if ((pOPUnit->nAddr == A2B_REG_NODEADR && pOPUnit->nDeviceAddr == A2B_BASE_ADDR
                  && (pOPUnit->paConfigData[0] & A2B_BITM_NODEADR_NODE) != inode)
                 || (pOPUnit->nAddr == A2B_REG_DISCVRY && pOPUnit->nDeviceAddr == A2B_BASE_ADDR)
@@ -709,6 +829,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     char command_buf[COMMAND_SIZE] = {0};
     int16_t argc = 0, params[4] = {0};
     uint8_t i2scfg[] = {0x11, 0x91};
+    uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
 
     size_t len = min(count, sizeof(command_buf));
     if (copy_from_user(command_buf, buf, len)) {
@@ -725,8 +846,31 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
         a2b24xx->log_enabled = true;
     } else if (strcmp(command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
+    // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test
     } else if (sscanf(command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
-        //TODO
+        if (params[0] < 0) {
+            a2b24xx_disable_fault_check(a2b24xx);
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DATCTL, 0x00});
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
+        } else if (params[0] <= a2b24xx->num_nodes && CHECK_RANGE(params[1], 0, sizeof(i2stest) - 1)) {
+            mutex_lock(&a2b24xx->bus_lock);
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, params[0]});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_PDMCTL, 0x00});
+            //adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 3, (uint8_t[]){A2B_REG_LDNSLOTS, 0x80, 0x02});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SCFG, 0x11});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_DNMASK0, 0x03});
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2STEST, i2stest[params[1]]});
+            for (int16_t i = params[0]; i >= 0 && params[0] != 0; i--) {
+                adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
+                adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02});
+            }
+            adi_a2b_I2CWrite(dev, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_I2SGCFG, 0x12});
+
+            adi_a2b_I2CWrite(dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_DNSLOTS, 0x02 /* 0xFF */});
+            adi_a2b_I2CWrite(dev,
+                    A2B_BASE_ADDR, 4, (uint8_t[]){A2B_REG_SLOTFMT, a2b24xx->master_fmt, 0x03, 0x81});
+            mutex_unlock(&a2b24xx->bus_lock); // Release lock
+        }
     } else if (sscanf(command_buf, "RX Slave%hd %hd", &params[0], &params[1]) == 2) {
         bool valid_node = CHECK_RANGE(params[0], 0, a2b24xx->num_nodes);
         bool valid_index = CHECK_RANGE(params[1], 0, ARRAY_SIZE(i2scfg) - 1);
@@ -1067,7 +1211,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 #endif
 
     a2b24xx->work_allowed = true;
-    a2b24xx->log_enabled = true;
     mutex_init(&a2b24xx->bus_lock); // Initialize the mutex
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);
