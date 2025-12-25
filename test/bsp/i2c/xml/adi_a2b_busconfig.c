@@ -33,7 +33,7 @@ struct a2b_bus {
 };
 
 struct a2b_bus bus;
-char sub_bus_files[16][128];
+char include_files[16][128];
 uint8_t bus_parents[16];
 uint8_t num_files;
 
@@ -70,7 +70,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
         config->eOpCode = DELAY;
         config->nDataCount = 1;
     } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
-                sub_bus_files[num_files], &bus_parents[num_files]) == 2) {
+                include_files[num_files], &bus_parents[num_files]) == 2) {
         num_files++;
         return;
     } else {
@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
             bus.nodes[bus_parents[i]].sub_bus->id = i + 1;
             bus.nodes[bus_parents[i]].sub_bus->id = bus_parents[i];
 
-            if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, sub_bus_files[i])) {
+            if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, include_files[i])) {
                 setup(bus.nodes[bus_parents[i]].sub_bus);
             } else {
                 free(bus.nodes[bus_parents[i]].sub_bus);
