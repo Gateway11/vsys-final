@@ -384,7 +384,7 @@ int main(int argc, char* argv[]) {
         if (CHECK_RANGE(bus_parents[i], 0, bus.num_nodes)) {
             bus.nodes[bus_parents[i]].sub_bus = calloc(1, sizeof(struct a2b_bus));
             bus.nodes[bus_parents[i]].sub_bus->id = i + 1;
-            bus.nodes[bus_parents[i]].sub_bus->id = bus_parents[i];
+            bus.nodes[bus_parents[i]].sub_bus->parent = bus_parents[i];
 
             if (loadConfig(bus.nodes[bus_parents[i]].sub_bus, include_files[i])) {
                 setup(bus.nodes[bus_parents[i]].sub_bus);
