@@ -153,8 +153,7 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol,
     SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
 
 /* Example control */
-static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {
-    A2B24XX_CONTROL(1)};
+static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {A2B24XX_CONTROL(1)};
 
 static void a2b24xx_epl_report_error(uint32_t error_code)
 {
@@ -614,7 +613,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool partialDisc) {
                 a2b24xx->has_fault = true;
 
                 if (partialDisc) {
-                    //a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
+                    a2b24xx_epl_report_error(*(uint16_t *)dataBuffer);
                     checkFaultNode(a2b24xx, inode);
                 }
                 return dataBuffer[1];
@@ -623,7 +622,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool partialDisc) {
         LOG_PRINT_IF_ENABLED(cont,
             "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
-    } else if (deepCheck) {
+    } else if (partialDisc) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
     }
     return -1;
@@ -1068,6 +1067,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 #endif
 
     a2b24xx->work_allowed = true;
+    a2b24xx->log_enabled = true;
     mutex_init(&a2b24xx->bus_lock); // Initialize the mutex
 
     INIT_WORK(&a2b24xx->setup_work, a2b24xx_setup_work);

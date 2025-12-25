@@ -692,7 +692,7 @@ static int16_t processInterrupt(struct a2b_bus *bus, bool partialDisc) {
         LOG_PRINT_IF_ENABLED(cont,
             "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
-    } else if (deepCheck) {
+    } else if (partialDisc) {
         checkFaultNode(bus, A2B_INVALID_NODE);
     }
     return -1;

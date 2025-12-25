@@ -186,8 +186,7 @@ static int a2b24xx_reset_put(struct snd_kcontrol *kcontrol,
     SOC_SINGLE_BOOL_EXT("A2B" #x " Reset", 0, a2b24xx_reset_put, NULL),
 
 /* Example control */
-static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {
-    A2B24XX_CONTROL(1)};
+static const struct snd_kcontrol_new a2b24xx_snd_controls[] = {A2B24XX_CONTROL(1)};
 
 static void a2b24xx_epl_report_error(uint32_t error_code)
 {
@@ -743,7 +742,7 @@ static int16_t processInterrupt(struct a2b24xx *a2b24xx, bool partialDisc) {
         LOG_PRINT_IF_ENABLED(cont,
             "Interrupt Type: Ignorable interrupt (Code: %d)\n", dataBuffer[1]);
         return dataBuffer[1];
-    } else if (deepCheck) {
+    } else if (partialDisc) {
         checkFaultNode(a2b24xx, A2B_INVALID_NODE);
     }
     return -1;
