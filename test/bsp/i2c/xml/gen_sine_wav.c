@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     if (argc > 2) bit_depth    = atoi(argv[2]);
     if (argc > 3) channels     = atoi(argv[3]);
     if (argc > 4) duration_sec = atoi(argv[4]);
-    snprintf(filename, sizeof(filename), "gen_sine_%d_%dbit_%dch_%ds.wav",
+    snprintf(filename, sizeof(filename), "out_sine_%d_%dbit_%dch_%ds.wav",
          sample_rate, bit_depth, channels, duration_sec);
 
     if (bit_depth != 16 && bit_depth != 32) {
