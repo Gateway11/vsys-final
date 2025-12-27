@@ -7,7 +7,7 @@ LDFLAGS = -Wl,-s
 
 TARGET = adi_a2b_busconfig
 
-SRC = adi_a2b_busconfig.c a2b-pal-interface.c
+SRC = adi_a2b_busconfig.c #a2b-pal-interface.c
 OBJ = $(SRC:.c=.o)
 
 $(TARGET): $(OBJ)
