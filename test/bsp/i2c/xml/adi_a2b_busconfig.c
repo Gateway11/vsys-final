@@ -1,11 +1,10 @@
-#include <fcntl.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <unistd.h>
-
+#include <fcntl.h>
 #include <sys/ioctl.h>
 //#include <linux/i2c.h>
 //#include <linux/i2c-dev.h>
@@ -13,9 +12,37 @@
 #include "adi_a2b_commandlist.h"
 #include "regdefs.h"
 
+#define A2B_PRINT_CONSOLE
+
+#define I2C_DEV_PATH                    "/dev/i2c-16"
+#define A2B_BASE_ADDR                   0x68
+#define A2B_BUS_ADDR                    0x69
+
+#define I2C_TIMEOUT_DEFAULT             700             /*!< timeout: 700ms*/
+#define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
+
 #define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA MAX_ACTIONS << 6
 #define CHECK_RANGE(val, lo, hi) (((val) >= (lo)) && ((val) <= (hi)))
+
+#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
+#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
+    (((i) & 0x80ll) ? '1' : '0'), \
+    (((i) & 0x40ll) ? '1' : '0'), \
+    (((i) & 0x20ll) ? '1' : '0'), \
+    (((i) & 0x10ll) ? '1' : '0'), \
+    (((i) & 0x08ll) ? '1' : '0'), \
+    (((i) & 0x04ll) ? '1' : '0'), \
+    (((i) & 0x02ll) ? '1' : '0'), \
+    (((i) & 0x01ll) ? '1' : '0')
+
+#define PRINTF_BINARY_PATTERN_INT16 \
+      PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
+#define PRINTF_BYTE_TO_BINARY_INT16(i) \
+      PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 struct a2b_bus;
 struct a2b_node {
@@ -48,57 +75,7 @@ uint8_t last_addr;
 uint8_t config_buffer[MAX_CONFIG_DATA];
 size_t write_offset = 0;
 
-int32_t deviceHandle;
-
-#define A2B_PRINT_CONSOLE
-
-#define I2C_DEV_PATH                    "/dev/i2c-16"
-#define A2B_BASE_ADDR                   0x68
-#define A2B_BUS_ADDR                    0x69
-
-#define I2C_TIMEOUT_DEFAULT             700             /*!< timeout: 700ms*/
-#define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
-
-#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
-#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
-    (((i) & 0x80ll) ? '1' : '0'), \
-    (((i) & 0x40ll) ? '1' : '0'), \
-    (((i) & 0x20ll) ? '1' : '0'), \
-    (((i) & 0x10ll) ? '1' : '0'), \
-    (((i) & 0x08ll) ? '1' : '0'), \
-    (((i) & 0x04ll) ? '1' : '0'), \
-    (((i) & 0x02ll) ? '1' : '0'), \
-    (((i) & 0x01ll) ? '1' : '0')
-
-#define PRINTF_BINARY_PATTERN_INT16 \
-      PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
-#define PRINTF_BYTE_TO_BINARY_INT16(i) \
-      PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
-
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
-int32_t adi_a2b_I2C_Open(uint16_t deviceAddr) {
-    int32_t handle = -1;
-
-    handle = open(I2C_DEV_PATH, O_RDWR);
-    if (handle < 0) {
-        perror("Unable to open I2C device " I2C_DEV_PATH);
-        return -1;
-    }
-
-#if 0
-    /* Set timeout and retry count */
-    ioctl(handle, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
-    ioctl(handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
-#endif
-
-    return handle;
-}
-
-void adi_a2b_I2C_Close(int32_t handle) {
-    close(handle);
-}
+int32_t g_handle;
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
     int32_t result = 0;
@@ -357,30 +334,30 @@ const IntTypeInfo_t intTypeInfo[] = {
     //{A2B_ENUM_INTTYPE_MSTR_RUNNING       , NULL,            "MSTR_RUNNING - Master Only "},
 };
 
-#define BUS_SELECT(bus, addr)                                                                                     \
-({                                                                                                                \
-    uint8_t __ret = (addr);                                                                                       \
-    if (bus->id) {                                                                                                \
-        if (last_bus_id != bus->id || last_addr != addr) {                                                        \
-            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent});        \
-            adi_a2b_I2C_Write(&deviceHandle, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});                   \
-            adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent | 0x20}); \
-         }                                                                                                        \
-        last_addr = addr;                                                                                         \
-        __ret = A2B_BUS_ADDR;                                                                                     \
-    } else if (last_bus_id != bus->id) {                                                                          \
-        adi_a2b_I2C_Write(&deviceHandle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent});            \
-    }                                                                                                             \
-    last_bus_id = bus->id;                                                                                        \
-    __ret;                                                                                                        \
+#define BUS_SELECT(bus, addr)                                                                                 \
+({                                                                                                            \
+    uint8_t __ret = (addr);                                                                                   \
+    if (bus->id) {                                                                                            \
+        if (last_bus_id != bus->id || last_addr != addr) {                                                    \
+            adi_a2b_I2C_Write(&g_handle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent});        \
+            adi_a2b_I2C_Write(&g_handle, A2B_BUS_ADDR, 2, (uint8_t[]){A2B_REG_CHIP, addr});                   \
+            adi_a2b_I2C_Write(&g_handle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent | 0x20}); \
+         }                                                                                                    \
+        last_addr = addr;                                                                                     \
+        __ret = A2B_BUS_ADDR;                                                                                 \
+    } else if (last_bus_id != bus->id) {                                                                      \
+        adi_a2b_I2C_Write(&g_handle, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, bus->parent});            \
+    }                                                                                                         \
+    last_bus_id = bus->id;                                                                                    \
+    __ret;                                                                                                    \
 })
 
 void processInterrupt(struct a2b_bus *bus, uint8_t addr) {
     uint8_t dataBuffer[2] = {0}; //A2B_REG_INTSRC, A2B_REG_INTTYPE
 
-    adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus, addr), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
+    adi_a2b_I2C_WriteRead(&g_handle, BUS_SELECT(bus, addr), 1, (uint8_t[]){A2B_REG_INTSRC}, 1, dataBuffer);
     if (dataBuffer[0]) {
-        adi_a2b_I2C_WriteRead(&deviceHandle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
+        adi_a2b_I2C_WriteRead(&g_handle, A2B_BASE_ADDR, 1, (uint8_t[]){A2B_REG_INTTYPE}, 1, dataBuffer + 1);
         if (dataBuffer[0] & A2B_BITM_INTSRC_MSTINT) {
             printf("Interrupt Source: Master - ");
         } else if (dataBuffer[0] & A2B_BITM_INTSRC_SLVINT) {
@@ -415,7 +392,7 @@ void adi_a2b_NetworkSetup(struct a2b_bus *bus) {
             case WRITE:
                 concatAddrData(&dataBuffer[0u], pOpUnit->nAddrWidth, pOpUnit->nAddr);
                 (void)memcpy(&dataBuffer[pOpUnit->nAddrWidth], pOpUnit->paConfigData, pOpUnit->nDataCount);
-                adi_a2b_I2C_Write(&deviceHandle, BUS_SELECT(bus, (uint16_t)pOpUnit->nDeviceAddr),
+                adi_a2b_I2C_Write(&g_handle, BUS_SELECT(bus, (uint16_t)pOpUnit->nDeviceAddr),
                         (uint16_t)(pOpUnit->nAddrWidth + pOpUnit->nDataCount), &dataBuffer[0u]);
                 break;
 
@@ -426,8 +403,8 @@ void adi_a2b_NetworkSetup(struct a2b_bus *bus) {
                     processInterrupt(bus, pOpUnit->nDeviceAddr);
                     continue;
                 }
-                adi_a2b_I2C_WriteRead(&deviceHandle, BUS_SELECT(bus, (uint16_t)pOpUnit->nDeviceAddr),
-                        (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
+                adi_a2b_I2C_WriteRead(&g_handle, BUS_SELECT(bus, (uint16_t)pOpUnit->nDeviceAddr),
+                    (uint16_t)pOpUnit->nAddrWidth, &dataWriteReadBuffer[0u], (uint16_t)pOpUnit->nDataCount, &dataBuffer[0u]);
                 break;
 
             case DELAY:
@@ -525,14 +502,24 @@ void setup(struct a2b_bus *bus) {
 int main(int argc, char* argv[]) {
     const char* default_filename = "adi_a2b_commandlist.xml";
 
+    /* PAL call, open I2C driver */
+    g_handle = open(I2C_DEV_PATH, O_RDWR);
+    if (g_handle < 0) {
+        perror("Unable to open I2C device " I2C_DEV_PATH);
+        return -1;
+    }
+
+#if 0
+    /* Set timeout and retry count */
+    ioctl(g_handle, I2C_TIMEOUT, I2C_TIMEOUT_DEFAULT); // Set timeout
+    ioctl(g_handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
+#endif
+
     if (!loadConfig(&bus, argc == 2 ? argv[1] : default_filename)) {
         bus.pA2BConfig = gaA2BConfig;
         bus.num_actions = CONFIG_LEN;
     }
 
-    /* PAL call, open I2C driver */
-    deviceHandle = adi_a2b_I2C_Open(A2B_BASE_ADDR);
-    
     setup(&bus);
     for (uint8_t i = 0; i < num_files; i++) {
         if (CHECK_RANGE(bus_parents[i], 0, bus.num_nodes)) {
@@ -549,7 +536,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    adi_a2b_I2C_Close(deviceHandle);
-
+    close(g_handle);
     return 0;
 }
