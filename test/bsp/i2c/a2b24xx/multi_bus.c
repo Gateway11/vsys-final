@@ -123,7 +123,7 @@ struct a2b24xx {
     size_t write_offset;
 };
 
-static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus);
+static void adi_a2b_NetworkSetup(struct a2b_bus *bus);
 static int16_t processInterrupt(struct a2b_bus *bus, bool partialDisc);
 
 static const struct reg_default a2b24xx_reg_defaults[] = {{0x00, 0x50}};
@@ -160,10 +160,10 @@ static int a2b24xx_reset(struct a2b24xx *a2b24xx)
     regcache_cache_bypass(a2b24xx->regmap, true);
 
     /* A2B reset */
-    adi_a2b_NetworkSetup(a2b24xx->dev, &a2b24xx->bus);
+    adi_a2b_NetworkSetup(&a2b24xx->bus);
     for (uint8_t i = 0; i <= a2b24xx->bus.num_nodes; i++) {
         if (a2b24xx->bus.nodes[i].sub_bus) {
-            adi_a2b_NetworkSetup(a2b24xx->dev, a2b24xx->bus.nodes[i].sub_bus);
+            adi_a2b_NetworkSetup(a2b24xx->bus.nodes[i].sub_bus);
         }
     }
 
@@ -618,7 +618,7 @@ static void processFaultNode(struct a2b_bus *bus, int8_t inode)
     struct device *dev = bus->priv->dev;
     if (inode <= 0) {
         /* Setting up A2B network */
-        adi_a2b_NetworkSetup(dev, bus);
+        adi_a2b_NetworkSetup(bus);
     } else {
         for (uint8_t i = inode; i <= bus->num_nodes; i++) {
             if (!processSingleNode(bus, i)) {
@@ -705,14 +705,16 @@ static int16_t processInterrupt(struct a2b_bus *bus, bool partialDisc) {
  @return         None
  */
 /********************************************************************************/
-static void adi_a2b_NetworkSetup(struct device *dev, struct a2b_bus *bus)
+static void adi_a2b_NetworkSetup(struct a2b_bus *bus)
 {
+    struct device *dev = bus->priv->dev;
+    bus->has_fault = false;
+
     ADI_A2B_DISCOVERY_CONFIG *pOPUnit;
     unsigned int nIndex, nIndex1;
     unsigned char *aDataBuffer = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
     unsigned char aDataWriteReadBuf[4u];
     unsigned int nDelayVal;
-    bus->has_fault = false;
 
     /* Loop over all the configuration */
     for (nIndex = 0; nIndex < bus->num_actions; nIndex++) {
@@ -921,7 +923,7 @@ static void a2b24xx_setup(struct a2b_bus *bus) {
     uint8_t node_id = 0;
 
     /* Setting up A2B network */
-    adi_a2b_NetworkSetup(dev, bus);
+    adi_a2b_NetworkSetup(bus);
 
     for (int32_t i = (bus->num_actions - 1); i >= 0; i--) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_SLOTFMT && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
