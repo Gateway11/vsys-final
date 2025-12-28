@@ -961,8 +961,8 @@ static void a2b24xx_setup_work(struct work_struct *work)
         if (CHECK_RANGE(a2b24xx->bus_parents[i], 0, a2b24xx->bus.num_nodes)) {
             struct a2b_bus **bus = &a2b24xx->bus.nodes[a2b24xx->bus_parents[i]].sub_bus;
             *bus = devm_kzalloc(a2b24xx->dev, sizeof(struct a2b_bus), GFP_KERNEL);
-            (*bus)->id = i + 1;
             (*bus)->priv = a2b24xx;
+            (*bus)->id = i + 1;
             (*bus)->parent = a2b24xx->bus_parents[i];
 
             if (a2b24xx_load_config(*bus, a2b24xx->include_files[i])) {
