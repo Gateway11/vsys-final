@@ -977,7 +977,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
     }
 
     int32_t ret = devm_request_irq(a2b24xx->dev, client->irq,
-            a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
+                a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
     pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
 
     mdelay(5000);
