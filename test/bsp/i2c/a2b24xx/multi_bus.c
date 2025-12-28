@@ -213,8 +213,8 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
 
     if (sscanf(action, "<action instr=\"%s SpiCmd=\"%u\" SpiCmdWidth=\"%hhu\" addr_width\
                  =\"%hhu\" data_width=\"%hhu\" len=\"%hu\" addr=\"%u\" i2caddr=\"%hhu\" AddrIncr=\"%*s\" Protocol=\"%s",
-               instr, &config->nSpiCmd, &config->nSpiCmdWidth, &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr,
-               &config->nDeviceAddr, protocol) == 9) {
+                instr, &config->nSpiCmd, &config->nSpiCmdWidth,
+                &config->nAddrWidth, &config->nDataWidth, &config->nDataCount, &config->nAddr, &config->nDeviceAddr, protocol) == 9) {
 
 #ifndef ENABLE_BECCTL_REG
         if (config->nAddr == A2B_REG_BECCTL && config->nAddrWidth == 1) {
@@ -263,7 +263,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
     }
 }
 
-static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *xml)
+static void parseXML(struct a2b_bus *bus, const char *xml)
 {
     const char *actionStart = strstr(xml, "<action");
     char *action = kmalloc(6000, GFP_KERNEL); // Allocate 6000 bytes of memory for the data buffer
@@ -280,7 +280,7 @@ static void parseXML(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *x
         strncpy(action, actionStart, actionLength);
         action[actionLength] = '\0'; // Null-terminate
 
-        parseAction(a2b24xx, action, &bus->fileA2BConfig[bus->num_actions]);
+        parseAction(bus->priv, action, &bus->fileA2BConfig[bus->num_actions]);
         if ((actionStart = strstr(actionEnd, "<action"))) {
             bus->num_actions++;
         } else {
@@ -872,7 +872,7 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
     return IRQ_HANDLED;
 }
 
-static bool a2b24xx_load_config(struct a2b24xx *a2b24xx, struct a2b_bus *bus, const char *filename) {
+static bool a2b24xx_load_config(struct a2b_bus *bus, const char *filename) {
     size_t size;
 
     char *content = a2b_pal_File_Read(filename, &size);
@@ -881,11 +881,11 @@ static bool a2b24xx_load_config(struct a2b24xx *a2b24xx, struct a2b_bus *bus, co
     pr_info("File content (%zu bytes)\n", size);
 
     // Parse XML configuration
-    parseXML(a2b24xx, bus, content);
+    parseXML(bus, content);
     bus->pA2BConfig = bus->fileA2BConfig;
     kfree(content);
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", bus->num_actions, a2b24xx->write_offset);
+    pr_info("Action count: %zu, Buffer used: %zu\n", bus->num_actions, bus->priv->write_offset);
 
 #if 0
     // Print the results
@@ -956,7 +956,6 @@ static void a2b24xx_setup_work(struct work_struct *work)
     struct a2b24xx *a2b24xx = container_of(work, struct a2b24xx, setup_work);
     struct i2c_client *client = to_i2c_client(a2b24xx->dev);
 
-    a2b24xx->bus.priv = a2b24xx;
     a2b24xx_setup(&a2b24xx->bus);
     for (uint8_t i = 0; i < a2b24xx->num_files; i++) {
         if (CHECK_RANGE(a2b24xx->bus_parents[i], 0, a2b24xx->bus.num_nodes)) {
@@ -966,7 +965,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
             (*bus)->priv = a2b24xx;
             (*bus)->parent = a2b24xx->bus_parents[i];
 
-            if (a2b24xx_load_config(a2b24xx, *bus, a2b24xx->include_files[i])) {
+            if (a2b24xx_load_config(*bus, a2b24xx->include_files[i])) {
                 a2b24xx_setup(*bus);
             } else {
                 devm_kfree(a2b24xx->dev, *bus);
@@ -1145,6 +1144,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     a2b24xx->constraints.count = ARRAY_SIZE(a2b24xx_rates);
 
     dev_set_drvdata(dev, a2b24xx);
+    a2b24xx->bus.priv = a2b24xx;
 
 #ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
@@ -1180,7 +1180,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     const char *filename = NULL;
     const char *default_filename = "/lib/firmware/adi_a2b_commandlist.xml";
     of_property_read_string(dev->of_node, "adi,commandlist-file", &filename);
-    if (!a2b24xx_load_config(a2b24xx, &a2b24xx->bus, filename ? filename : default_filename)) {
+    if (!a2b24xx_load_config(&a2b24xx->bus, filename ? filename : default_filename)) {
         a2b24xx->bus.pA2BConfig = gaA2BConfig;
         a2b24xx->bus.num_actions = CONFIG_LEN;
     }
