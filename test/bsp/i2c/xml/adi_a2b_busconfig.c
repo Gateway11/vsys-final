@@ -22,7 +22,7 @@
 #define I2C_RETRY_DEFAULT               3               /*!< retry times: 3 */
 
 #define MAX_ACTIONS 256
-#define MAX_CONFIG_DATA MAX_ACTIONS << 6
+#define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 #define CHECK_RANGE(val, lo, hi) (((val) >= (lo)) && ((val) <= (hi)))
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c %c%c%c%c"
