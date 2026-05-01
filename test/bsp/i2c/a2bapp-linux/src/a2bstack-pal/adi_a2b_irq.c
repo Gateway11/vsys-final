@@ -112,7 +112,6 @@ static void* thread_loop(void *arg) {
         //printf("Waiting for GPIO event...\n");
         //poll(&pfd, 1, -1);
         poll(&pfd, 1, *value == '1' ? 10 : -1);
-        //poll(&pfd, 1, ((a2b_App_t *)param)->discoveryDone ? -1 : 10);
     
         lseek(fd, 0, SEEK_SET);
         read(fd, value, 8);
