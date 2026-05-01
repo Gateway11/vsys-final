@@ -75,7 +75,7 @@ void port_gpio_control(const char *path, const char *value) {
 //#include "a2bapp.h"
 static void* thread_loop(void *arg) {
     ThreadArgs* args = (ThreadArgs*)arg;
-    char str[64], value;
+    char str[64], value[8];
 
 #if 1
     snprintf(str, sizeof(str), "%d", args->nGPIONum);
@@ -109,14 +109,14 @@ static void* thread_loop(void *arg) {
 
     while (1) {
         //printf("Waiting for GPIO event...\n");
-        //poll(&pfd, 1, -1);
-        poll(&pfd, 1, value == '1' ? 10 : -1);
+        poll(&pfd, 1, -1);
+        //poll(&pfd, 1, *value == '1' ? 10 : -1);
         //poll(&pfd, 1, ((a2b_App_t *)param)->discoveryDone ? -1 : 10);
     
         lseek(fd, 0, SEEK_SET);
-        read(fd, &value, 1);
+        read(fd, value, 8);
     
-        if (value == (args->bFallingEdgeTrig ? '0' : '1')) {
+        if (*value == (args->bFallingEdgeTrig ? '0' : '1')) {
             adi_a2b_PinInterruptHandler(args->nGPIONum, args->nGPIONum, args->pUserCallBack);
         }
     }
