@@ -107,6 +107,7 @@ static void* thread_loop(void *arg) {
     pfd.fd = fd;
     pfd.events = POLLPRI;
 
+    read(fd, value, 8);
     while (1) {
         //printf("Waiting for GPIO event...\n");
         poll(&pfd, 1, -1);
