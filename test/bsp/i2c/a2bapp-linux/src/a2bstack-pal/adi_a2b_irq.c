@@ -75,8 +75,8 @@ void port_gpio_control(const char *path, const char *value) {
 //#include "a2bapp.h"
 static void* thread_loop(void *arg) {
     ThreadArgs* args = (ThreadArgs*)arg;
-    char trig_val = args->bFallingEdgeTrig ? '0' : '1';
     char str[64], value[8];
+    char trig_val = args->bFallingEdgeTrig ? '0' : '1';
 
 #if 1
     snprintf(str, sizeof(str), "%d", args->nGPIONum);
