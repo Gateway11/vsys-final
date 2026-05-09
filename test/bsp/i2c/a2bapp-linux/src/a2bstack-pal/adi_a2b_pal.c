@@ -398,7 +398,11 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
     }
 
 #ifdef A2B_PRINT_CONSOLE
+#ifdef ENABLE_INTERRUPT_PROCESS
+    for (uint16_t i = 0; i < nRead && nWrite == 1; i++) {
+#else
     for (uint16_t i = 0; i < nRead && nWrite == 1 && wBuf[0] != 0x16; i++) {
+#endif
         printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
                addr, wBuf[0] + i,
                wBuf[0] + i, rBuf[i], PRINTF_BYTE_TO_BINARY_INT8(rBuf[i]), nRead);
