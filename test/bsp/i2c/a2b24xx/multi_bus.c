@@ -34,12 +34,7 @@
 #include "adi_a2b_commandlist.h"
 #include "regdefs.h"
 
-// #define A2B_SETUP_ALSA
-
-#define DEVICE_NAME "a2b_ctrl" // Device name
-#define CLASS_NAME "a2b24xx"   // Device class name
 #define COMMAND_SIZE 128       // Buffer size for receiving commands
-
 #define MAX_ACTIONS 256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
 
@@ -116,7 +111,6 @@ struct a2b24xx {
 #ifndef A2B_SETUP_ALSA
     dev_t dev_num;           // Device number
     struct cdev cdev;        // cdev structure
-    struct class *dev_class; // Device class
 #endif
 
     uint8_t config_buffer[MAX_CONFIG_DATA];
@@ -1150,7 +1144,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
 #ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
-    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, DEVICE_NAME);
+    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, A2B_DEVICE_NAME);
     if (ret < 0) {
         pr_err("Failed to allocate device number\n");
         return ret;
@@ -1165,17 +1159,9 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
         return ret;
     }
 
-    // Create the device class
-    a2b24xx->dev_class = class_create(THIS_MODULE, CLASS_NAME);
-    if (IS_ERR(a2b24xx->dev_class)) {
-        cdev_del(&a2b24xx->cdev);
-        unregister_chrdev_region(a2b24xx->dev_num, 1);
-        pr_err("Failed to create device class\n");
-        return PTR_ERR(a2b24xx->dev_class);
-    }
-
     // Create the device node
-    device_create(a2b24xx->dev_class, NULL, a2b24xx->dev_num, NULL, DEVICE_NAME);
+    device_create(a2b24xx_class,
+        NULL, a2b24xx->dev_num, NULL, A2B_DEVICE_NAME "%d", client->adapter->nr);
     pr_info("Major: %d, Minor: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
@@ -1205,8 +1191,7 @@ int a2b24xx_remove(struct device *dev)
     struct a2b24xx *a2b24xx = dev_get_drvdata(dev);
 
 #ifndef A2B_SETUP_ALSA
-    device_destroy(a2b24xx->dev_class, a2b24xx->dev_num); // Destroy the device node
-    class_destroy(a2b24xx->dev_class);                    // Destroy the device class
+    device_destroy(a2b24xx_class, a2b24xx->dev_num); // Destroy the device node
     cdev_del(&a2b24xx->cdev);                             // Delete the cdev
     unregister_chrdev_region(a2b24xx->dev_num, 1);        // Free the device number
 #endif

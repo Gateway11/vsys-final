@@ -85,7 +85,7 @@ static int __init a2b24xx_init(void)
 {
     int ret;
 
-    a2b24xx_class = class_create(THIS_MODULE, CLASS_NAME);
+    a2b24xx_class = class_create(THIS_MODULE, A2B_CLASS_NAME);
     if (IS_ERR(a2b24xx_class))
         return PTR_ERR(a2b24xx_class);
 

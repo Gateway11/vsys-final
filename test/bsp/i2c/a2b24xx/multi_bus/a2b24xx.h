@@ -28,8 +28,8 @@ enum a2b24xx_type {
 };
 
 #ifndef A2B_SETUP_ALSA
-#define DEVICE_NAME "a2b_ctrl"  // Device name
-#define CLASS_NAME "a2b24xx"    // Device class name
+#define A2B_DEVICE_NAME "a2b_ctrl"  // Device name
+#define A2B_CLASS_NAME "a2b24xx"    // Device class name
 static struct class *a2b24xx_class;
 #endif
 
