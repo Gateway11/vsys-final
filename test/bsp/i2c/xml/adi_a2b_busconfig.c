@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,7 +15,6 @@
 
 #define A2B_PRINT_CONSOLE
 
-#define I2C_DEV_PATH                    "/dev/i2c-16"
 #define A2B_BASE_ADDR                   0x68
 #define A2B_BUS_ADDR                    0x69
 
@@ -75,6 +75,7 @@ uint8_t last_addr;
 uint8_t config_buffer[MAX_CONFIG_DATA];
 size_t write_offset = 0;
 
+char i2c_dev[32];
 int32_t g_handle;
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
@@ -94,14 +95,14 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     msg.buf   = writeBuffer;
 
     if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
-        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", deviceAddr, writeBuffer[0], writeLength - 1, result);
+        printf("%s write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], writeLength - 1, result);
         return -1;
     }
 #endif
 
 #ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < MIN(writeLength - 1, 5); i++) {
-        printf(I2C_DEV_PATH " write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
+        printf("%s write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n", i2c_dev,
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
 #endif
@@ -130,13 +131,13 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     msg[1].buf = readBuffer;
 
     if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
-        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", deviceAddr, writeBuffer[0], readLength, result);
+        printf("%s  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], readLength, result);
         return -1;
     }
 #endif
 
     for (uint16_t i = 0; i < readLength && writeLength == 1; i++) {
-        printf(I2C_DEV_PATH "  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n",
+        printf("%s  read device(%#x) reg=0x%02X %03d, val=\033[4m0x%02X\033[0m (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n", i2c_dev,
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, readBuffer[i], PRINTF_BYTE_TO_BINARY_INT8(readBuffer[i]), readLength);
     }
 
@@ -503,9 +504,10 @@ int main(int argc, char* argv[]) {
     const char* default_filename = "adi_a2b_commandlist.xml";
 
     /* PAL call, open I2C driver */
-    g_handle = open(I2C_DEV_PATH, O_RDWR);
+    sprintf(i2c_dev, "/dev/i2c-%s", argc > 2 ? argv[2] : "16");
+    g_handle = open(i2c_dev, O_RDWR);
     if (g_handle < 0) {
-        perror("Unable to open I2C device " I2C_DEV_PATH);
+        printf("Unable to open I2C device %s: %s\n", i2c_dev, strerror(errno));
         return -1;
     }
 
@@ -515,7 +517,7 @@ int main(int argc, char* argv[]) {
     ioctl(g_handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
 #endif
 
-    if (!loadConfig(&bus, argc == 2 ? argv[1] : default_filename)) {
+    if (!loadConfig(&bus, argc > 1 ? argv[1] : default_filename)) {
         bus.pA2BConfig = gaA2BConfig;
         bus.num_actions = CONFIG_LEN;
     }
