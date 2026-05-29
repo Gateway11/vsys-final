@@ -85,6 +85,7 @@
 // https://ez.analog.com/a2b/f/q-a/600757/consuming-32-downstream-32-upstream
 // https://ez.analog.com/a2b/f/q-a/550898/a2b-ad2428-tdm-issue
 
+extern struct class *a2b24xx_class;
 struct a2b24xx {
     struct regmap *regmap;
     unsigned int sysclk;

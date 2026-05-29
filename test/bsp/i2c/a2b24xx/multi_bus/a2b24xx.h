@@ -27,12 +27,6 @@ enum a2b24xx_type {
 
 };
 
-#ifndef A2B_SETUP_ALSA
-#define A2B_DEVICE_NAME "a2b_ctrl"  // Device name
-#define A2B_CLASS_NAME "a2b24xx"    // Device class name
-static struct class *a2b24xx_class;
-#endif
-
 int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 	enum a2b24xx_type type, void (*switch_mode)(struct device *dev));
 
