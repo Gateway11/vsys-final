@@ -791,9 +791,10 @@ static void adi_a2b_NetworkSetup(struct device* dev)
             case A2B24XX_DELAY:
                 nDelayVal = 0u;
                 for (nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++) {
-                    nDelayVal = pOPUnit->paConfigData[nIndex1] | nDelayVal << 8u;
+                    nDelayVal = (nDelayVal << 8u) | pOPUnit->paConfigData[nIndex1];
                 }
-                mdelay(nDelayVal);
+                if (nDelayVal > 0)
+                    mdelay(nDelayVal);
                 break;
 
             default:
@@ -826,6 +827,9 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     uint8_t i2stest[] = {0x06, 0x01, 0x10, 0xC0 /* AD243X only */};
 
     size_t len = min(count, sizeof(command_buf));
+    if (len == 0) {
+        return -EINVAL;
+    }
     if (copy_from_user(command_buf, buf, len)) {
         pr_err("Failed to receive command from user\n");
         return -EFAULT;
@@ -1130,7 +1134,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
 #ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
-    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, DEVICE_NAME);
+    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, A2B_DEVICE_NAME);
     if (ret < 0) {
         pr_err("Failed to allocate device number\n");
         return ret;
@@ -1147,7 +1151,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     // Create the device node
     device_create(a2b24xx_class,
-        NULL, a2b24xx->dev_num, NULL, DEVICE_NAME "%d", to_i2c_client(dev)->adapter->nr);
+        NULL, a2b24xx->dev_num, NULL, A2B_DEVICE_NAME "%d", to_i2c_client(dev)->adapter->nr);
     pr_info("MAJ: %d, MIN: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
