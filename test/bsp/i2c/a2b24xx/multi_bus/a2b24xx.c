@@ -34,6 +34,8 @@
 #include "a2b24xx.h"
 #include "regdefs.h"
 
+// #define A2B_SETUP_ALSA
+
 #define COMMAND_SIZE 128        // Buffer size for receiving commands
 #define MAX_ACTIONS  256
 #define MAX_CONFIG_DATA (MAX_ACTIONS << 6)
@@ -1135,7 +1137,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
 #ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
-    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, A2B_DEVICE_NAME);
+    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, "a2b_ctrl");
     if (ret < 0) {
         pr_err("Failed to allocate device number\n");
         return ret;
@@ -1152,7 +1154,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     // Create the device node
     device_create(a2b24xx_class,
-        NULL, a2b24xx->dev_num, NULL, A2B_DEVICE_NAME "%d", to_i2c_client(dev)->adapter->nr);
+        NULL, a2b24xx->dev_num, NULL, "a2b_ctrl%d", to_i2c_client(dev)->adapter->nr);
     pr_info("MAJ: %d, MIN: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
