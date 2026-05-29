@@ -948,7 +948,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
 
     for (uint32_t i = 0; i < a2b24xx->num_actions; i++) {
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_DISCVRY
-                && a2b24xx->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR)) {
+                && a2b24xx->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             a2b24xx->node_cycles[node_id++] = a2b24xx->pA2BConfig[i].paConfigData[0];
         }
         if (a2b24xx->pA2BConfig[i].nAddr == A2B_REG_LDNSLOTS &&
@@ -1147,7 +1147,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     // Create the device node
     device_create(a2b24xx_class,
-        NULL, a2b24xx->dev_num, NULL, DEVICE_NAME "%d", client->adapter->nr);
+        NULL, a2b24xx->dev_num, NULL, DEVICE_NAME "%d", to_i2c_client(dev)->adapter->nr);
     pr_info("MAJ: %d, MIN: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
