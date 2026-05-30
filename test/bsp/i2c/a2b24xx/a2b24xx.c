@@ -46,6 +46,13 @@
 #define CHECK_RANGE(val, lo, hi) (((val) >= (lo)) && ((val) <= (hi)))
 #define LOG_PRINT_IF_ENABLED(log_level, ...) \
     ({if (a2b24xx->log_enabled) pr_##log_level(__VA_ARGS__);})
+/**
+#define LOG_PRINT_IF_ENABLED(log_level, ...)                                    \
+    ({                                                                          \
+        if (a2b24xx->log_enabled)                                               \
+            dev_printk(KERN_##log_level, a2b24xx->dev, __VA_ARGS__);            \
+    })
+    */
 
 /**
  * @brief EPL reporter ID for A2B.
