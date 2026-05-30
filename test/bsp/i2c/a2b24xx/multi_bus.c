@@ -583,16 +583,11 @@ retry:
             break;
 
         dev_info(dev, "iiooooooooiiiii%s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
-
-        switch (pOPUnit->eOpCode) {
-        case A2B24XX_WRITE:
+        if(pOPUnit->eOpCode == A2B24XX_WRITE) {
             adi_a2b_Concat_Addr_Data(&aDataBuffer[0u], pOPUnit->nAddrWidth, pOPUnit->nAddr);
             memcpy(&aDataBuffer[pOPUnit->nAddrWidth], pOPUnit->paConfigData, pOPUnit->nDataCount);
             adi_a2b_I2CWrite(dev, BUS_SELECT(bus, pOPUnit->nDeviceAddr),
                     (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
-            break;
-        default:
-            break;
         }
     }
     adi_a2b_I2CWrite(dev,
