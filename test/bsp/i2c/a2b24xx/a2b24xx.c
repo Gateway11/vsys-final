@@ -1163,7 +1163,6 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
     // Create the device node
     device_create(a2b24xx_class, NULL, a2b24xx->dev_num, NULL, "a2b%d_ctrl", bus_id);
-    dev_info(dev, "MAJ: %d, MIN: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
     const char *filename = NULL;
