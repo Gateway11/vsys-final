@@ -650,6 +650,13 @@ retry:
                 adi_a2b_I2CWrite(dev, pOPUnit->nDeviceAddr,
                         (pOPUnit->nAddrWidth + pOPUnit->nDataCount), (char *)aDataBuffer);
                 break;
+            case A2B24XX_DELAY:
+                nDelayVal = 0u;
+                for (uint8_t nIndex1 = 0u; nIndex1 < pOPUnit->nDataCount; nIndex1++) {
+                    nDelayVal = pOPUnit->paConfigData[nIndex1] | nDelayVal << 8u;
+                }
+                mdelay(nDelayVal);
+                break;
             default:
                 break;
         }
