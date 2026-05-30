@@ -12,6 +12,8 @@
 
 #include <linux/regmap.h>
 
+// #define A2B_SETUP_ALSA
+
 #define A2B_BASE_ADDR                 0x68
 #define A2B_BUS_ADDR                  0x69
 

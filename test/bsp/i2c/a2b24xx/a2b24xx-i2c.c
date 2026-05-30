@@ -33,20 +33,6 @@ static void a2b24xx_i2c_remove(struct i2c_client *client)
 	//return 0;
 }
 
-static int __maybe_unused a2b24xx_i2c_suspend(struct device *dev)
-{
-    return 0;
-}
-
-static int __maybe_unused a2b24xx_i2c_resume(struct device *dev)
-{
-    return 0;
-}
-
-static const struct dev_pm_ops a2b24xx_i2c_pm_ops = {
-    SET_SYSTEM_SLEEP_PM_OPS(a2b24xx_i2c_suspend, a2b24xx_i2c_resume)
-};
-
 #ifdef CONFIG_OF
 static const struct of_device_id a2b24xx_dt_ids[] = {
 	{ .compatible = "adi,a2b24xx", },
@@ -66,7 +52,6 @@ static struct i2c_driver a2b24xx_i2c_driver = {
 		.name = "a2b24xx",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(a2b24xx_dt_ids),
-		.pm = &a2b24xx_i2c_pm_ops,
 	},
 #if defined(NV_I2C_DRIVER_STRUCT_HAS_PROBE_NEW) /* Dropped on Linux 6.6 */
 	.probe_new	= a2b24xx_i2c_probe,
@@ -76,7 +61,37 @@ static struct i2c_driver a2b24xx_i2c_driver = {
 	.remove = a2b24xx_i2c_remove,
 	.id_table = a2b24xx_i2c_ids,
 };
+#if 0
 module_i2c_driver(a2b24xx_i2c_driver);
+#else
+
+/* ================= init / exit ================= */
+static struct class *a2b24xx_class;
+static int __init a2b24xx_init(void)
+{
+    int ret;
+
+    a2b24xx_class = class_create(THIS_MODULE, "a2b24xx");
+    if (IS_ERR(a2b24xx_class))
+        return PTR_ERR(a2b24xx_class);
+
+    ret = i2c_add_driver(&a2b24xx_i2c_driver);
+    if (ret) {
+        class_destroy(a2b24xx_class);
+        return ret;
+    }
+    return 0;
+}
+
+static void __exit a2b24xx_exit(void)
+{
+    i2c_del_driver(&a2b24xx_i2c_driver);
+    class_destroy(a2b24xx_class);
+}
+
+module_init(a2b24xx_init);
+module_exit(a2b24xx_exit);
+#endif
 
 MODULE_DESCRIPTION("ASoC A2B24xx driver");
 MODULE_AUTHOR("ADI Automotive Software Team, Bangalore");
