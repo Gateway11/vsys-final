@@ -58,6 +58,8 @@
 // clang-format -i -lines=524:669 -style='{BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never,
 //    TabWidth: 8, ColumnLimit: 83, BreakBeforeBraces: Linux, AlignAfterOpenBracket: DontAlign}' multi_bus.c
 
+extern struct class *a2b24xx_class;
+
 struct a2b_bus;
 struct a2b_node {
     struct a2b_bus *sub_bus;
@@ -580,7 +582,7 @@ retry:
                 || (pOPUnit->nAddr == A2B_REG_SWCTL && pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
 
-        pr_info("iiooooooooiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
+        dev_info(dev, "iiooooooooiiiii%s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
 
         switch (pOPUnit->eOpCode) {
         case A2B24XX_WRITE:
@@ -776,12 +778,12 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
 
     size_t len = min(count, sizeof(command_buf));
     if (copy_from_user(command_buf, buf, len)) {
-        pr_err("Failed to receive command from user\n");
+        dev_err(dev, "Failed to receive command from user\n");
         return -EFAULT;
     }
 
     command_buf[len - 1] = '\0'; // Null-terminate the string
-    pr_info("Received data: %s\n", command_buf);
+    dev_info(dev, "Received data: %s\n", command_buf);
 
     if (strcmp(command_buf, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
@@ -860,7 +862,7 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
-    pr_info("%s: interrupt handled. %d\n", __func__, a2b24xx->work_allowed);
+    dev_info(a2b24xx->dev, "interrupt handled. %d\n", a2b24xx->work_allowed);
 
     disable_irq_nosync(irq);
     if (a2b24xx->work_allowed)
@@ -869,19 +871,21 @@ static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 }
 
 static bool a2b24xx_load_config(struct a2b_bus *bus, const char *filename) {
+    struct device *dev = bus->priv->dev;
     size_t size;
 
     char *content = a2b_pal_File_Read(filename, &size);
     if (!content) return false;
 
-    pr_info("File content (%zu bytes)\n", size);
+    dev_info(dev, "File content (%zu bytes)\n", size);
 
     // Parse XML configuration
     parseXML(bus, content);
     bus->pA2BConfig = bus->fileA2BConfig;
     kfree(content);
 
-    pr_info("Action count: %zu, Buffer used: %zu\n", bus->num_actions, bus->priv->write_offset);
+    dev_info(dev, "Action count: %zu, Buffer used: %zu\n",
+            bus->num_actions, bus->priv->write_offset);
 
 #if 0
     // Print the results
@@ -972,7 +976,7 @@ static void a2b24xx_setup_work(struct work_struct *work)
 
     int32_t ret = devm_request_irq(a2b24xx->dev, client->irq,
                 a2b24xx_irq_handler, IRQF_TRIGGER_RISING | IRQF_NO_AUTOEN, __func__, a2b24xx);
-    pr_info("Requested IRQ %d, result: %d\n", client->irq, ret);
+    dev_info(a2b24xx->dev, "Requested IRQ %d, result: %d\n", client->irq, ret);
 
     mdelay(5000);
     schedule_delayed_work(&a2b24xx->fault_check_work, A2B24XX_FAULT_CHECK_INTERVAL);
@@ -1144,9 +1148,9 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 
 #ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
-    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, A2B_DEVICE_NAME);
+    ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, "a2b_ctrl");
     if (ret < 0) {
-        pr_err("Failed to allocate device number\n");
+        dev_err(dev, "Failed to allocate device number\n");
         return ret;
     }
 
@@ -1155,14 +1159,14 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     ret = cdev_add(&a2b24xx->cdev, a2b24xx->dev_num, 1);
     if (ret < 0) {
         unregister_chrdev_region(a2b24xx->dev_num, 1);
-        pr_err("Failed to add cdev\n");
+        dev_err(dev, "Failed to add cdev\n");
         return ret;
     }
 
     // Create the device node
     device_create(a2b24xx_class,
-        NULL, a2b24xx->dev_num, NULL, A2B_DEVICE_NAME "%d", client->adapter->nr);
-    pr_info("Major: %d, Minor: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
+        NULL, a2b24xx->dev_num, NULL, "a2b_ctrl%d", to_i2c_client(dev)->adapter->nr);
+    dev_info(dev, "MAJ: %d, MIN: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
     const char *filename = NULL;
@@ -1199,7 +1203,7 @@ int a2b24xx_remove(struct device *dev)
     cancel_work_sync(&a2b24xx->setup_work);
     a2b24xx_disable_fault_check(a2b24xx);
 
-    pr_info("A2B24xx driver exited\n");
+    dev_info(a2b24xx->dev, "A2B24xx driver exited\n");
     return 0;
 }
 EXPORT_SYMBOL_GPL(a2b24xx_remove);

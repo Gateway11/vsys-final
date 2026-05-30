@@ -641,7 +641,7 @@ retry:
                 || (pOPUnit->nAddr == A2B_REG_SWCTL && pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
 
-        dev_info(dev, "iiooooooooiiiiiiiii %s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
+        dev_info(dev, "iiooooooooiiiii%s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
 
         switch (pOPUnit->eOpCode) {
             case A2B24XX_WRITE:
@@ -928,7 +928,7 @@ static const struct file_operations a2b24xx_ctrl_fops = {
 static irqreturn_t a2b24xx_irq_handler(int irq, void *dev_id)
 {
     struct a2b24xx *a2b24xx = dev_id;
-    dev_info(a2b24xx->dev, "%s: interrupt handled. %d\n", __func__, a2b24xx->work_allowed);
+    dev_info(a2b24xx->dev, "interrupt handled. %d\n", a2b24xx->work_allowed);
 
     disable_irq_nosync(irq);
     if (a2b24xx->work_allowed) {
