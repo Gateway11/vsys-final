@@ -699,7 +699,7 @@ static void checkFaultNode(struct a2b24xx *a2b24xx, int8_t inode) {
         adi_a2b_I2CWrite(a2b24xx->dev, A2B_BASE_ADDR, 2, (uint8_t[]){A2B_REG_NODEADR, i});
         if (adi_a2b_I2CRead(a2b24xx->dev, A2B_BUS_ADDR, 1, (uint8_t[]){A2B_REG_NODE}, 1, dataBuffer)) {
             // If discovery is not completed during system boot, the A2B_NODE.LAST
-            //  bit for the last node will not be set
+            //  bit of the last node will not be set
             lastNode = i - 1;
             break;
         }
