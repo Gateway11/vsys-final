@@ -851,7 +851,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file,
     if (strcmp(command_buf, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
     } else if (strcmp(command_buf, "Log Enable") == 0) {
-        a2b24xx->log_enabled = true;
+        a2b24xx->log_enabled ^= true;
     } else if (strcmp(command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
     // https://ez.analog.com/a2b/f/q-a/541883/ad2428-loopback-test

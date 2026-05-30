@@ -786,7 +786,7 @@ static ssize_t a2b24xx_ctrl_write(struct file *file, const char __user *buf, siz
     if (strcmp(command_buf, "Reset") == 0) {
         a2b24xx_reset(a2b24xx); // Perform reset operation
     } else if (strcmp(command_buf, "Log Enable") == 0) {
-        a2b24xx->log_enabled = true;
+        a2b24xx->log_enabled ^= true;
     } else if (strcmp(command_buf, "Disable Fault Check") == 0) {
         a2b24xx_disable_fault_check(a2b24xx);
     } else if (sscanf(command_buf, "Loopback Slave%hd %hd", &params[0], &params[1]) >= 1) {
