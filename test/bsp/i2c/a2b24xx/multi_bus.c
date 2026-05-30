@@ -1126,6 +1126,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
 {
     struct a2b24xx *a2b24xx;
     int ret;
+    uint32_t bus_id = 1; //bus-id = <1>;
 
     if (IS_ERR(regmap))
         return PTR_ERR(regmap);
@@ -1146,6 +1147,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     dev_set_drvdata(dev, a2b24xx);
     a2b24xx->bus.priv = a2b24xx;
 
+    of_property_read_u32(dev->of_node, "bus-id", &bus_id);
 #ifndef A2B_SETUP_ALSA
     // Allocate a device number dynamically
     ret = alloc_chrdev_region(&a2b24xx->dev_num, 0, 1, "a2b_ctrl");
@@ -1164,8 +1166,7 @@ int a2b24xx_probe(struct device *dev, struct regmap *regmap,
     }
 
     // Create the device node
-    device_create(a2b24xx_class,
-        NULL, a2b24xx->dev_num, NULL, "a2b_ctrl%d", to_i2c_client(dev)->adapter->nr);
+    device_create(a2b24xx_class, NULL, a2b24xx->dev_num, NULL, "a2b%d_ctrl", bus_id);
     dev_info(dev, "MAJ: %d, MIN: %d\n", MAJOR(a2b24xx->dev_num), MINOR(a2b24xx->dev_num));
 #endif
 
