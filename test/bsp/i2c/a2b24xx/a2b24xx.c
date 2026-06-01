@@ -641,7 +641,7 @@ retry:
                 || (pOPUnit->nAddr == A2B_REG_SWCTL && pOPUnit->paConfigData[0] & A2B_BITM_SWCTL_MODE))
             break;
 
-        dev_info(dev, "iiooooooooiiiii%s, 0x%02X, %02d\n", __func__, pOPUnit->nAddr, pOPUnit->nAddr);
+        dev_info(dev, "iiooooooooiiiiiiiii, 0x%02X, %02d\n", pOPUnit->nAddr, pOPUnit->nAddr);
 
         switch (pOPUnit->eOpCode) {
             case A2B24XX_WRITE:
