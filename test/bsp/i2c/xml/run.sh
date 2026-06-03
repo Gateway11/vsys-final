@@ -41,6 +41,8 @@ EOF
     #scp -J zhangcy52@192.168.1.100,xuwy@10.106.224.114 record.wav <>@10.106.250.32:/drives/c/Users/<>/record.wav
     #ssh xuwy@10.106.224.114 "echo '123456' | sudo -S bash /home/xuwy/run.sh $1"
     tar -cf - record.wav | xz -9 --extreme | base64 -w 0 | split -b $((800 * 1024)) - part_
+    xxd record.wav | head -n 20
+
     #minicom -D /dev/ttyUSB2 -C /tmp/minicom.log
     #script -c "minicom -D /dev/ttyUSB2" /tmp/minicom.log
     #minicom -D /dev/ttyUSB0 | tee output.txt
