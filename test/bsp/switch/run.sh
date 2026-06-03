@@ -12,6 +12,7 @@ $CfgPrefix = "5192A-cpu0-swicth-cfg"
 & $SecureImageTool -imagefile="88Q5152_flash_7_5_base.bin" -partitionoffset=0x100000 -partitionsize=0x0F0000 -cfgimagefile="${CfgPrefix}.bin" -acceptanycfg
 & $SecureImageTool -imagefile="88Q5152_flash_7_5_base.bin" -partitionoffset=0x010000 -partitionsize=0x0F0000 -cfgimagefile="${CfgPrefix}.bin" -acceptanycfg
 mv 88Q5152_flash_7_5_base.bin ${DirName}\5192A-cpu0-${Version}.bin
+pause
 
 cp ..\88Q5152_flash_7_5_base.bin .
 $CfgPrefix = "5192A-cpu1-swicth-cfg"
