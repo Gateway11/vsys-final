@@ -49,5 +49,6 @@ foreach ($config in $configs) {
     & $SwitchTool -switchcfg="..\eabot\$($config.CfgPrefix)-${CompanyName}.xml" -productioncfg="$($config.CfgPrefix).bin" -targetid="$($config.TargetId)"
     & $SecureImageTool -imagefile="$BaseImage" -partitionoffset=0x100000 -partitionsize=0x0F0000 -cfgimagefile="$($config.CfgPrefix).bin" -acceptanycfg
     & $SecureImageTool -imagefile="$BaseImage" -partitionoffset=0x010000 -partitionsize=0x0F0000 -cfgimagefile="$($config.CfgPrefix).bin" -acceptanycfg
+    rm "$($config.CfgPrefix).bin"
     mv ${BaseImage} "${DirName}\$($config.ChipCpu)-${Version}.bin" -Force
 }
