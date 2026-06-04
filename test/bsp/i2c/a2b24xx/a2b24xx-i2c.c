@@ -66,7 +66,7 @@ module_i2c_driver(a2b24xx_i2c_driver);
 #else
 
 /* ================= init / exit ================= */
-static struct class *a2b24xx_class;
+struct class *a2b24xx_class;
 static int __init a2b24xx_init(void)
 {
     int ret;
