@@ -21,7 +21,6 @@ Arguments:
   duration_sec    Duration in seconds (default: {DEFAULT_DURATION} = 5 minutes)
 
 Examples:
-  {prog}
   {prog} 48000 16 32 300
   {prog} 48000 32 8 10
 """)
