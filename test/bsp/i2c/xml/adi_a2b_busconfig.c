@@ -650,16 +650,7 @@ int main(int argc, char* argv[]) {
     const char* default_filename = "adi_a2b_commandlist.xml";
 
     if (argc > 1 && (strcmp(argv[1], "-h") == 0
-                || strcmp(argv[1], "--help") == 0)) {
-        printf(
-            "Usage:\n"
-            "  %s adi_a2b_commandlist.xml\n"
-            "  %s adi_a2b_commandlist.xml 3\n"
-            "  %s --gen-sine\n", argv[0], argv[0], argv[0]);
-        return 0;
-    }
-
-    if (argc > 1 && strcmp(argv[1], "--gen-sine") == 0) {
+                || strcmp(argv[1], "--gen-sine") == 0)) {
         return run_gen_sine_wav(argc, argv);
     }
 
