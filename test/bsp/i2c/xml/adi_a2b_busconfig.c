@@ -122,7 +122,7 @@ static void print_gen_sine_usage(const char *prog)
         "Examples:\n"
         "  %s --gen-sine 48000 16 32 300\n"
         "  %s --gen-sine 48000 32 8 10\n",
-        prog, 
+        prog,
         DEFAULT_SAMPLE_RATE,
         DEFAULT_BIT_DEPTH,
         DEFAULT_CHANNELS,
