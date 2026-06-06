@@ -917,7 +917,6 @@ static bool a2b24xx_load_config(struct a2b_bus *bus, const char *filename) {
 }
 
 static void a2b24xx_setup(struct a2b_bus *bus) {
-    struct device *dev = bus->priv->dev;
     uint8_t node_id = 0;
 
     /* Setting up A2B network */
@@ -934,7 +933,7 @@ static void a2b24xx_setup(struct a2b_bus *bus) {
         }
     }
 
-    bus->nodes = devm_kzalloc(dev, sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
+    bus->nodes = devm_kzalloc(bus->priv->dev, sizeof(struct a2b_node) * (bus->num_nodes + 1), GFP_KERNEL);
     for (uint32_t i = 0; i < bus->num_actions; i++) {
         if (bus->pA2BConfig[i].nAddr == A2B_REG_DISCVRY && bus->pA2BConfig[i].nDeviceAddr == A2B_BASE_ADDR) {
             bus->nodes[node_id++].cycle = bus->pA2BConfig[i].paConfigData[0];
