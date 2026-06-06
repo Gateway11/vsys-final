@@ -647,8 +647,6 @@ void setup(struct a2b_bus *bus) {
 }
 
 int main(int argc, char* argv[]) {
-    const char* default_filename = "adi_a2b_commandlist.xml";
-
     if (argc > 1 && (strcmp(argv[1], "-h") == 0
                 || strcmp(argv[1], "--gen-sine") == 0)) {
         return run_gen_sine_wav(argc, argv);
@@ -668,7 +666,7 @@ int main(int argc, char* argv[]) {
     ioctl(g_handle, I2C_RETRIES, I2C_RETRY_DEFAULT);   // Set retry times
 #endif
 
-    if (!loadConfig(&bus, argc > 1 ? argv[1] : default_filename)) {
+    if (!loadConfig(&bus, argc > 1 ? argv[1] : "adi_a2b_commandlist.xml")) {
         bus.pA2BConfig = gaA2BConfig;
         bus.num_actions = CONFIG_LEN;
     }
