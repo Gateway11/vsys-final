@@ -21,5 +21,4 @@ foreach ($config in $configs) {
     & $SecureImageTool -imagefile="$BaseImage" -partitionoffset=0x010000 -partitionsize=0x0F0000 -cfgimagefile="$($config.CfgPrefix).bin" -acceptanycfg
     rm "$($config.CfgPrefix).bin"
     mv ${BaseImage} "${DirName}\$($config.ChipCpu)-${Version}.bin" -Force
-    sleep 1
 }
