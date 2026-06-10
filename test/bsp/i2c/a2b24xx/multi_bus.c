@@ -227,7 +227,7 @@ static void parseAction(struct a2b24xx *a2b24xx, const char *action, ADI_A2B_DIS
         }
         config->eProtocol = strstr(protocol, "SPI") ? SPI : I2C;
         config->nDataCount -= config->nAddrWidth;
-    } else if (strstr(action, "instr=\"delay\"") != NULL) {
+    } else if (strstr(instr, "delay")) {
         config->eOpCode = A2B24XX_DELAY;
         config->nDataCount = 1;
     } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",

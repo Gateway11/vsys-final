@@ -335,7 +335,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
     } else if (strcmp(instr, "delay") == 0) {
         config->eOpCode = DELAY;
         config->nDataCount = 1;
-    } else if (sscanf(action, "<include file=\"%[^\"]\" parent=\"%hhu\"",
+    } else if (sscanf(action, "<include file=%s parent=\"%hhu\"", //<include file=adi_a2b_commandlist_acc.xml parent="0"/>
                 include_files[num_files], &bus_parents[num_files]) == 2) {
         num_files++;
         return;
