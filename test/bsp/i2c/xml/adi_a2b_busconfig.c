@@ -223,8 +223,6 @@ static int run_gen_sine_wav(int argc, char *argv[])
 }
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
-    int32_t fd = *(int32_t *)handle;
-
 #if 0
     struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg;
@@ -237,8 +235,8 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     msg.len   = writeLength;
     msg.buf   = writeBuffer;
 
-    if ((int result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
-        printf("%s write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], writeLength - 1, result);
+    if ((int ret = ioctl(*(int *)handle, I2C_RDWR, &msgRdwr)) < 0) {
+        printf("%s write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], writeLength - 1, ret);
         return -1;
     }
 #endif
@@ -252,8 +250,6 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
 }
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
-    int32_t fd = *(int32_t *)handle;
-
 #if 0
     struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg[2];
@@ -270,8 +266,8 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     msg[1].len = readLength;
     msg[1].buf = readBuffer;
 
-    if ((int result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
-        printf("%s  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], readLength, result);
+    if ((int ret = ioctl(*(int *)handle, I2C_RDWR, &msgRdwr)) < 0) {
+        printf("%s  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], readLength, ret);
         return -1;
     }
 #endif
