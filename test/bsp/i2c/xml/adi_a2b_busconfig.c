@@ -14,8 +14,6 @@
 #include "adi_a2b_commandlist.h"
 #include "regdefs.h"
 
-#define A2B_PRINT_CONSOLE
-
 #define A2B_BASE_ADDR                   0x68
 #define A2B_BUS_ADDR                    0x69
 
@@ -225,7 +223,6 @@ static int run_gen_sine_wav(int argc, char *argv[])
 }
 
 int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer) {
-    int32_t result = 0;
     int32_t fd = *(int32_t *)handle;
 
 #if 0
@@ -240,24 +237,21 @@ int32_t adi_a2b_I2C_Write(void* handle, uint16_t deviceAddr, uint16_t writeLengt
     msg.len   = writeLength;
     msg.buf   = writeBuffer;
 
-    if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
+    if ((int result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf("%s write device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], writeLength - 1, result);
         return -1;
     }
 #endif
 
-#ifdef A2B_PRINT_CONSOLE
     for (uint16_t i = 0; i < MIN(writeLength - 1, 5); i++) {
         printf("%s write device(%#x) reg=0x%02X %03d, val=0x%02X (" PRINTF_BINARY_PATTERN_INT8 "), cnt=%d\n", i2c_dev,
                deviceAddr, writeBuffer[0] + i, writeBuffer[0] + i, writeBuffer[i + 1], PRINTF_BYTE_TO_BINARY_INT8(writeBuffer[i + 1]), writeLength - 1);
     }
-#endif
 
     return 0;
 }
 
 int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeLength, uint8_t* writeBuffer, uint16_t readLength, uint8_t* readBuffer) {
-    int32_t result = 0;
     int32_t fd = *(int32_t *)handle;
 
 #if 0
@@ -276,7 +270,7 @@ int32_t adi_a2b_I2C_WriteRead(void* handle, uint16_t deviceAddr, uint16_t writeL
     msg[1].len = readLength;
     msg[1].buf = readBuffer;
 
-    if ((result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
+    if ((int result = ioctl(fd, I2C_RDWR, &msgRdwr)) < 0) {
         printf("%s  read device(%#x) reg=0x%02X error, cnt=%d, ret=%d\n", i2c_dev, deviceAddr, writeBuffer[0], readLength, result);
         return -1;
     }
