@@ -332,7 +332,7 @@ void parseAction(const char* action, ADI_A2B_DISCOVERY_CONFIG* config, uint8_t d
         }
         config->eProtocol = (strcmp(protocol, "SPI") == 0) ? SPI : I2C;
         config->nDataCount -= config->nAddrWidth;
-    } else if (strstr(action, "instr=\"delay\"") != NULL) {
+    } else if (strcmp(instr, "delay") == 0) {
         config->eOpCode = DELAY;
         config->nDataCount = 1;
     } else if (sscanf(action, "<include file=%s parent=\"%hhu\"",
