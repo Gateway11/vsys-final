@@ -2,7 +2,7 @@
 CC = $(CROSSBIN)gcc
 SHELL = /bin/bash
 
-CFLAGS = -Ia2b-commandlist -Wall -fvisibility=hidden -Os -flto# -g
+CFLAGS = -Wall -fvisibility=hidden -Os -flto -fomit-frame-pointer -fno-unwind-tables #-ffreestanding
 LDFLAGS = -Wl,-s -lm
 
 TARGET = adi_a2b_busconfig
