@@ -16,7 +16,7 @@ i2ctransfer -f -y ${BUS_MAP[${I2S_DEV}]} w2@0x68 0x11 0x00
 i2ctransfer -f -y ${BUS_MAP[${I2S_DEV}]} w2@0x68 0x53 0x06
 
 pkill -9 aplay
-aplay -D hw:0,0 out_sine_48000_16bit_32ch_10s.wav &
+aplay -D hw:0,0 out_sine_48000_16bit_32ch_300s.wav &
 sleep 1
 arecord -D hw:0,4 -f S16_LE -c 32 -r 48000 -d 2 record.wav
 xxd record.wav | head -n 20
