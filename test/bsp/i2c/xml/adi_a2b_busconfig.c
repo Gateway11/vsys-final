@@ -164,13 +164,13 @@ static int run_gen_sine_wav(int argc, char *argv[])
 
     if (sample_rate <= 0 || channels <= 0 || duration_sec <= 0) {
         fprintf(stderr, "Error: sample_rate, channels, and duration_sec must be positive\n");
-        print_gen_sine_usage("adi_a2b_busconfig");
+        print_gen_sine_usage(argv[0]);
         return -1;
     }
 
     if (bit_depth != 16 && bit_depth != 32) {
         fprintf(stderr, "Error: only 16-bit and 32-bit PCM are supported\n");
-        print_gen_sine_usage("adi_a2b_busconfig");
+        print_gen_sine_usage(argv[0]);
         return -1;
     }
 
