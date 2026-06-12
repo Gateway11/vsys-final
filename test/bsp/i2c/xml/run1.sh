@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-echo "Disable Fault Check" > /dev/a2b1_ctrl
 
 I2S_DEV=${1:-7}
 amixer cset name="I2S${I2S_DEV} Mux" ADMAIF1
 amixer cset name="ADMAIF5 Mux" I2S${I2S_DEV}
+
+declare -A BUS_INDEX=(["1"]="1" ["4"]="2" ["7"]="")
+echo "Disable Fault Check" > /dev/a2b${BUS_INDEX[${I2S_DEV}]}_ctrl
 
 # Mapping between I2S device number and I2C bus number
 # I2S1 -> I2C bus 2
