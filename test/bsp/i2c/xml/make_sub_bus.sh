@@ -45,17 +45,10 @@ function emit(chip) {
     }
     # i2caddr 发生变化
     else if (curr != prev) {
-        if (curr == "104")
-            emit(68)
-        else if (curr == "105")
-            emit(69)
+        emit(curr - 36)
     }
 
-    # === 输出内容处理 ===
-    if (curr == "104") {
-        sub(/i2caddr="104"/, "i2caddr=\"105\"")
-    }
-
+    sub(/i2caddr="104"/, "i2caddr=\"105\"")
     print $0
     prev = curr
 }
