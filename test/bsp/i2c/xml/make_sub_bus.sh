@@ -14,7 +14,6 @@ BEGIN {
     node0  = sprintf("%02X", p)
     node20 = sprintf("%02X", p + 32)
 
-    seen_action = 0
     prev = ""
 }
 
@@ -38,13 +37,9 @@ function emit(chip) {
     sub(/.*i2caddr="/, "", curr)
     sub(/".*/, "", curr)
 
-    # 第一次 action：无条件插入
-    if (!seen_action) {
-        seen_action = 1
-        emit(68)
-    }
-    # i2caddr 发生变化
-    else if (curr != prev) {
+    # 1. 第一次 action(prev="")：无条件插入
+    # 2. i2caddr 发生变化
+    if (curr != prev) {
         emit(curr - 36)
     }
 
