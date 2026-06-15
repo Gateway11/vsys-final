@@ -13,7 +13,6 @@ BEGIN {
 
     node0  = sprintf("%02X", p)
     node20 = sprintf("%02X", p + 32)
-
     prev = ""
 }
 
@@ -25,26 +24,22 @@ function emit(chip) {
 
 {
     sub(/\r$/, "")
+    if ($0 ~ /i2caddr="/) {
+        # 提取原始 i2caddr（用于逻辑判断）
+        curr = $0
+        sub(/.*i2caddr="/, "", curr)
+        sub(/".*/, "", curr)
 
-    # 非 i2c 行，原样输出
-    if ($0 !~ /i2caddr="/) {
-        print $0
-        next
+        # 1. 第一次 action(prev="")：无条件插入
+        # 2. i2caddr 发生变化
+        if (curr != prev) {
+            emit(curr - 36)
+        }
+
+        sub(/i2caddr="104"/, "i2caddr=\"105\"")
+        prev = curr
     }
 
-    # 提取原始 i2caddr（用于逻辑判断）
-    curr = $0
-    sub(/.*i2caddr="/, "", curr)
-    sub(/".*/, "", curr)
-
-    # 1. 第一次 action(prev="")：无条件插入
-    # 2. i2caddr 发生变化
-    if (curr != prev) {
-        emit(curr - 36)
-    }
-
-    sub(/i2caddr="104"/, "i2caddr=\"105\"")
     print $0
-    prev = curr
 }
 ' "$infile" > "$outfile"
