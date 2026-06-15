@@ -1,10 +1,10 @@
 #!/bin/sh
 
-#./busconfig.sh adi_a2b_commandlist.xml; ./make_sub_bus.sh adi_a2b_commandlist.xml output.xml 0; ./busconfig.sh output.xml
+#./busconfig.sh adi_a2b_commandlist.xml; ./make_sub_bus.sh adi_a2b_commandlist.xml 0; ./busconfig.sh output.xml
 
-infile="$1"
-outfile="$2"
-parent="$3"
+infile=${1:-"adi_a2b_commandlist_acc.xml"}
+outfile="output.xml"
+parent=${2:-0}
 
 awk -v parent="$parent" '
 BEGIN {
