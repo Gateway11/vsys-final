@@ -1,5 +1,4 @@
 #!/bin/sh
-
 #./busconfig.sh adi_a2b_commandlist.xml; ./make_sub_bus.sh adi_a2b_commandlist.xml 0; ./busconfig.sh output.xml
 
 infile=${1:-"adi_a2b_commandlist_acc.xml"}
@@ -24,20 +23,16 @@ function emit(chip) {
 
 {
     sub(/\r$/, "")
-    if ($0 ~ /i2caddr="/) {
-        # 提取原始 i2caddr（用于逻辑判断）
-        curr = $0
-        sub(/.*i2caddr="/, "", curr)
-        sub(/".*/, "", curr)
+    if (match($0, /i2caddr="[^"]+"/)) {
+        curr = substr($0, RSTART + 9, RLENGTH - 10)
 
-        # 1. 第一次 action(prev="")：无条件插入
-        # 2. i2caddr 发生变化
+        # 1. 第一次 action(prev="")：无条件插入; 2. i2caddr 发生变化
         if (curr != prev) {
             emit(curr - 36)
+            prev = curr
         }
 
         sub(/i2caddr="104"/, "i2caddr=\"105\"")
-        prev = curr
     }
 
     print $0
