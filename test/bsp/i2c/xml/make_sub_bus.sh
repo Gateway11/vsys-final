@@ -5,12 +5,9 @@ infile=${1:-"adi_a2b_commandlist_acc.xml"}
 outfile="output.xml"
 parent=${2:-0}
 
-awk -v parent="$parent" '
+awk -v p="$parent" '
 BEGIN {
-    # parent 视为十进制 0~15
-    p = parent + 0
-
-    node0  = sprintf("%02X", p)
+    node0  = sprintf("%02X", p + 0)
     node20 = sprintf("%02X", p + 32)
     prev = ""
 }
