@@ -8,6 +8,7 @@ $DirName = "SwitchConfig_${CompanyName}_$(Get-Date -Format 'yyyyMMdd')_${Version
 New-Item -ItemType Directory -Path $DirName -Force
 
 $configs = @(
+    @{ChipCpu = "5152-cpu0"; CfgPrefix = "5152-cpu0-switch-cfg"; TargetId = 7},
     @{ChipCpu = "5192A-cpu0"; CfgPrefix = "5192A-cpu0-switch-cfg"; TargetId = 6},
     @{ChipCpu = "5192A-cpu1"; CfgPrefix = "5192A-cpu1-switch-cfg"; TargetId = 7},
     @{ChipCpu = "5192B-cpu0"; CfgPrefix = "5192B-cpu0-switch-cfg"; TargetId = 8},
