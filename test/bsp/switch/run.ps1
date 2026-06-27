@@ -1,4 +1,4 @@
-#.\run.ps1 -TargetChip 5192 -Version "v1.5" -ProductName "acme"
+#.\run.ps1 -TargetChip 5152 -ProductName "ah1_s" -Version "v2.0"
 param(
     [ValidateSet('5152', '5192')]
     [string]$TargetChip = '5192',
