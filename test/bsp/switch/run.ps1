@@ -1,9 +1,9 @@
-#.\run.ps1 -TargetChip 5152 -ProductName "ah1_s" -Version "v2.0"
+#.\run.ps1 -ProductName "ah1_s" -Version "v2.0" -TargetChip 5152
 param(
-    [ValidateSet('5152', '5192')]
-    [string]$TargetChip = '5192',
     [string]$ProductName = 'eabot',
-    [string]$Version = 'v1.0'
+    [string]$Version = 'v1.0',
+    [ValidateSet('5152', '5192')]
+    [string]$TargetChip = '5192'
 )
 
 $SwitchTool = ".\AutomotiveSwitchV4.exe"
