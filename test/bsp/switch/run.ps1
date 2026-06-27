@@ -2,8 +2,8 @@
 param(
     [ValidateSet('5152', '5192')]
     [string]$TargetChip = '5192',
-    [string]$Version = 'v1.0',
     [string]$ProductName = 'eabot'
+    [string]$Version = 'v1.0',
 )
 
 $SwitchTool = ".\AutomotiveSwitchV4.exe"
