@@ -3,8 +3,7 @@ param(
     [ValidateSet('5152', '5192')]
     [string]$TargetChip = '5192',
     [string]$ProductName = 'eabot',
-    [string]$Version = 'v1.0',
-    [int]$TargetId = 6
+    [string]$Version = 'v1.0'
 )
 
 $SwitchTool = ".\AutomotiveSwitchV4.exe"
@@ -26,7 +25,6 @@ foreach ($config in $configs) {
     if ($config.ChipCpu -notlike "*$TargetChip*") { continue }
     cp ..\${BaseImage} .
     & $SwitchTool -switchcfg="..\eabot\$($config.CfgPrefix)-${ProductName}.xml" -productioncfg="$($config.CfgPrefix).bin" -targetid="$($config.TargetId)"
-#& $SwitchTool -switchcfg="..\eabot\$($config.CfgPrefix)-${ProductName}.xml" -productioncfg="$($config.CfgPrefix).bin" -targetid="$($TargetId++)"
     & $SecureImageTool -imagefile="$BaseImage" -partitionoffset=0x100000 -partitionsize=0x0F0000 -cfgimagefile="$($config.CfgPrefix).bin" -acceptanycfg
     & $SecureImageTool -imagefile="$BaseImage" -partitionoffset=0x010000 -partitionsize=0x0F0000 -cfgimagefile="$($config.CfgPrefix).bin" -acceptanycfg
     rm "$($config.CfgPrefix).bin"
