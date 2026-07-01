@@ -3,7 +3,7 @@ param(
     [string]$ProductName = 'eabot',
     [string]$Version = 'v1.0',
     [ValidateSet('5152', '5192')]
-    [string]$TargetChip = '5192'
+    [string]$TargetChip = $(if ($ProductName -like 'ah1_s*') { '5152' } else { '5192' })
 )
 
 $SwitchTool = ".\AutomotiveSwitchV4.exe"
