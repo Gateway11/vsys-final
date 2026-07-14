@@ -12,6 +12,7 @@ i2ctransfer -f -y ${BUS_MAP[$I2S_DEV]} w2@0x68 0x11 0x00
 i2ctransfer -f -y ${BUS_MAP[$I2S_DEV]} w2@0x68 0x53 0x06
 
 pkill -9 aplay
+#pkill -9 -f "aplay|python3 -"
 python3 - <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 &
 
 import sys, math, struct
