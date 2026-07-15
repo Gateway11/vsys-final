@@ -94,8 +94,51 @@
             </ptp_port_autocds>
         </ptp_entity_autocds>
     </ptp>
-    <reg_list>
+    <vtu>
         <entity_order_no>0x0002</entity_order_no>
+        <entity_enabled>true</entity_enabled>
+        <vtu_entry>
+            <vlan_id>0x0042</vlan_id>
+            <fid>0x0042</fid>
+            <f_prio>0x0000</f_prio>
+            <tagging_mode_entry>
+                <port>0x0003</port>
+                <mode>tagged</mode>
+            </tagging_mode_entry>
+            <tagging_mode_entry>
+                <port>0x0008</port>
+                <mode>tagged</mode>
+            </tagging_mode_entry>
+        </vtu_entry>
+    </vtu>
+    <reg_list>
+        <entity_order_no>0x0003</entity_order_no>
+        <entity_enabled>true</entity_enabled>
+        <op_list_name>8021Q-ingress-secure</op_list_name>
+        <register_operation>
+            <op_name>port3_ingress_secure</op_name>
+            <operation>Write16</operation>
+            <smiAddress>0x0003</smiAddress>
+            <offset>0x0008</offset>
+            <data16>0x2C80</data16>
+        </register_operation>
+        <register_operation>
+            <op_name>port7_ingress_secure</op_name>
+            <operation>Write16</operation>
+            <smiAddress>0x0007</smiAddress>
+            <offset>0x0008</offset>
+            <data16>0x2C80</data16>
+        </register_operation>
+        <register_operation>
+            <op_name>port8_ingress_secure</op_name>
+            <operation>Write16</operation>
+            <smiAddress>0x0008</smiAddress>
+            <offset>0x0008</offset>
+            <data16>0x2C80</data16>
+        </register_operation>
+    </reg_list>
+    <reg_list>
+        <entity_order_no>0x0004</entity_order_no>
         <entity_enabled>true</entity_enabled>
         <op_list_name>internel_phy_mode</op_list_name>
         <phy_operation>
@@ -127,7 +170,7 @@
         </phy_operation>
     </reg_list>
     <reg_list>
-        <entity_order_no>0x0003</entity_order_no>
+        <entity_order_no>0x0005</entity_order_no>
         <entity_enabled>true</entity_enabled>
         <op_list_name>externel_phy_mode</op_list_name>
         <phy_operation>
@@ -140,53 +183,13 @@
             <smi_device>0x0001</smi_device>
         </phy_operation>
     </reg_list>
-    <reg_list>
-        <entity_order_no>0x004</entity_order_no>
-        <entity_enabled>true</entity_enabled>
-        <op_list_name>New Operation List_#1782713403134</op_list_name>
-        <register_operation>
-            <op_name>P1</op_name>
-            <operation>Write16</operation>
-            <smiAddress>0x0001</smiAddress>
-            <offset>0x0006</offset>
-            <data16>0x0301</data16>
-        </register_operation>
-        <register_operation>
-            <op_name>P2</op_name>
-            <operation>Write16</operation>
-            <smiAddress>0x0002</smiAddress>
-            <offset>0x0006</offset>
-            <data16>0x0301</data16>
-        </register_operation>
-        <register_operation>
-            <op_name>P3</op_name>
-            <operation>Write16</operation>
-            <smiAddress>0x0003</smiAddress>
-            <offset>0x0006</offset>
-            <data16>0x0301</data16>
-        </register_operation>
-        <register_operation>
-            <op_name>P6</op_name>
-            <operation>Write16</operation>
-            <smiAddress>0x0006</smiAddress>
-            <offset>0x0006</offset>
-            <data16>0x0301</data16>
-        </register_operation>
-        <register_operation>
-            <op_name>P7</op_name>
-            <operation>Write16</operation>
-            <smiAddress>0x0007</smiAddress>
-            <offset>0x0006</offset>
-            <data16>0x0301</data16>
-        </register_operation>
-    </reg_list>
     <firmware>
-        <entity_order_no>0x0005</entity_order_no>
+        <entity_order_no>0x0006</entity_order_no>
         <entity_enabled>true</entity_enabled>
     </firmware>
     <cui>
-        <entity_order_no>0x0006</entity_order_no>
+        <entity_order_no>0x0007</entity_order_no>
         <entity_enabled>true</entity_enabled>
-        <version_information>lenovo-xxxx-a-die0-v3-0</version_information>
+        <version_information>lenovo-xxxx-a-die0-v2-1</version_information>
     </cui>
 </switch_config_1>
