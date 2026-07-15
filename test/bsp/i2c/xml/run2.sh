@@ -11,7 +11,6 @@ declare -A BUS_MAP=(["1"]="2" ["4"]="3" ["7"]="16")
 #i2ctransfer -f -y ${BUS_MAP[$I2S_DEV]} w2@0x68 0x11 0x00
 i2ctransfer -f -y ${BUS_MAP[$I2S_DEV]} w2@0x68 0x53 0x06
 
-pkill -9 -f "aplay|python3 -"
 python3 - <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 &
 
 import sys, math, struct
@@ -35,3 +34,4 @@ PY
 sleep 1
 arecord -D hw:0,4 -f S16_LE -c 32 -r 48000 -d 2 record.wav
 xxd record.wav | head -20
+pkill -9 -f "aplay|python3 -"
