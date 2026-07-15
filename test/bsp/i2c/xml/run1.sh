@@ -1,37 +1,43 @@
 #!/usr/bin/env bash
 
-I2S_DEV=${1:-7}
-amixer cset name="I2S${I2S_DEV} Mux" ADMAIF1
-amixer cset name="ADMAIF5 Mux" I2S${I2S_DEV}
+if [[ $1 =~ ^[0-9]+$ ]]; then I2S_DEV=$1; else I2S_DEV=7; fi
+if [ -n "$1" ]; then
+    resize
 
-declare -A BUS_INDEX=(["1"]="1" ["4"]="2" ["7"]="")
-echo "Disable Fault Check" > /dev/a2b${BUS_INDEX[$I2S_DEV]}_ctrl
+    amixer cset name="MVC1 Mux" ADMAIF1
+    amixer cset name="MVC1 Volume" 10
 
-declare -A BUS_MAP=(["1"]="2" ["4"]="3" ["7"]="16")
-#i2ctransfer -f -y ${BUS_MAP[$I2S_DEV]} w2@0x68 0x11 0x00
-i2ctransfer -f -y ${BUS_MAP[$I2S_DEV]} w2@0x68 0x53 0x06
+    #amixer cset name="SFC1 Mux" ADMAIF1
+    amixer cset name="SFC1 Mux" MVC1
+    amixer cset name="AMX1 RX3 Mux" SFC1
+    amixer cset name="I2S${I2S_DEV} Mux" AMX1
+    amixer cset name="SFC1 Input Sample Rate" 44100
+    amixer cset name="SFC1 Output Sample Rate" 48000
+    #aplay -D hw:0,0 44100_2ch_32bit.wav
 
-pkill -9 -f "aplay|python3 -"
-python3 - <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 &
+    #amixer cset name="I2S7 Mux" ADMAIF1
+    #aplay -D hw:0,0 /usr/share/sounds/alsa/Rear_Right.wav
 
-import sys, math, struct
+    amixer cset name="ADMAIF5 Mux" I2S${I2S_DEV}
+    #amixer cset name="MVC2 Mux" I2S7
+    #amixer cset name="MVC2 Volume" 1000
+    #amixer cset name="ADMAIF5 Mux" MVC2
 
-sr, ch, freq = 48000, 32, 1000
+    #amixer cset name="ADX1 Mux" I2S7
+    #amixer cset name="ADMAIF5 Mux" "ADX1 TX1"
+    #amixer cset name="ADMAIF6 Mux" "ADX1 TX2"
+else
+    arecord -D hw:0,4 -f S32_LE -c 8 -r 48000 -d 1 record.wav
+    tar -cf - record.wav | xz -9 --extreme | base64 -w 0 | split -b $((800 * 1024)) - part_
+    xxd record.wav | head -n 20
 
-# 生成一个周期的正弦波
-period = sr // freq
+    #minicom -D /dev/ttyUSB2 -C /tmp/minicom.log
+    #script -c "minicom -D /dev/ttyUSB2" /tmp/minicom.log
+    #minicom -D /dev/ttyUSB0 | tee output.txt
 
-data=b''.join(
-    struct.pack("<h", int(32767 * math.sin(2 * math.pi * freq * i / sr))) * ch
-    # struct.pack("<i", int(2147483647 * math.sin(2 * math.pi * freq * i / sr))) * ch
-    for i in range(period)
-)
-
-while True:
-    sys.stdout.buffer.write(data)
-
-PY
-
-sleep 1
-arecord -D hw:0,4 -f S16_LE -c 32 -r 48000 -d 2 record.wav
-xxd record.wav | head -20
+    for part in part_*; do
+        cat "$part" && printf "\n($((++count)) / $(ls part_* | wc -l | tr -d ' '))"
+        read -n1 -r -p "Press any key to continue..." && for ((i = 0; i < 100; i++)); do echo; done
+    done
+    rm -f part_* output.txt && echo "All parts processed and deleted."
+fi
