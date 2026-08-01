@@ -261,6 +261,7 @@ static void hex_dump(const void *src, size_t length, size_t line_size,
 
 static a2b_HResult transfer(int fd, uint8_t const *tx, uint8_t *rx, size_t len)
 {
+#if 0
     struct spi_ioc_transfer tr = {
         .tx_buf = (unsigned long)tx,
         .rx_buf = (unsigned long)rx,
@@ -277,6 +278,7 @@ static a2b_HResult transfer(int fd, uint8_t const *tx, uint8_t *rx, size_t len)
 
     if (verbose && rx)
         hex_dump(rx, len, 32, "RX");
+#endif
 
     return A2B_RESULT_SUCCESS;
 }
@@ -284,7 +286,6 @@ static a2b_HResult transfer(int fd, uint8_t const *tx, uint8_t *rx, size_t len)
 a2b_UInt32 adi_a2b_spiInit(A2B_ECB* ecb)
 {
 	A2B_UNUSED( ecb );
-
 	return A2B_RESULT_SUCCESS;
 }
 
