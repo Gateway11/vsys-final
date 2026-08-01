@@ -256,7 +256,7 @@ A2B_PAL_L3_CODE
 a2b_Handle a2b_pal_I2cOpenFunc(a2b_I2cAddrFmt fmt,
         a2b_I2cBusSpeed speed, A2B_ECB* ecb)
 {
-    static int32_t fd = -1;
+    static int fd = -1;
     fd = open(I2C_DEV_PATH, O_RDWR);
 
     if (fd < 0) {
@@ -318,7 +318,7 @@ a2b_HResult a2b_pal_I2cWriteFunc(a2b_Handle hnd,
         const a2b_Byte* wBuf)
 {
     a2b_Int32 nReturnValue = A2B_RESULT_SUCCESS;
-    int32_t fd = *(int32_t *)hnd;
+    int fd = *(int *)hnd;
 
     struct i2c_rdwr_ioctl_data msgRdwr;
     struct i2c_msg msg;
@@ -373,7 +373,7 @@ a2b_HResult a2b_pal_I2cWriteReadFunc(a2b_Handle hnd,
         a2b_Byte* rBuf)
 {
     a2b_Int32 nReturnValue = A2B_RESULT_SUCCESS;
-    int32_t fd = *(int32_t *)hnd;
+    int fd = *(int *)hnd;
 
     memset(rBuf, 0, nRead);
 
@@ -431,7 +431,7 @@ A2B_PAL_L3_CODE
 a2b_UInt32 a2b_pal_I2cShutdownFunc(A2B_ECB* ecb)
 {
     a2b_UInt32 nReturnValue = (a2b_UInt32)0;
-    int32_t fd = *(int32_t *)ecb->palEcb.i2chnd;
+    int fd = *(int *)ecb->palEcb.i2chnd;
 
     close(fd);
     ecb->palEcb.i2chnd = NULL;
