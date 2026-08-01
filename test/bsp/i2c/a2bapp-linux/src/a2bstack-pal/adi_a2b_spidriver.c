@@ -268,7 +268,6 @@ static a2b_HResult transfer(int fd, uint8_t const *tx, uint8_t *rx, size_t len)
         .speed_hz = SPI_SPEED_HZ,
         .bits_per_word = SPI_BITS_PER_WORD,
     };
-    int ret;
 
     if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) < 0)
         perror("can't send spi message");
