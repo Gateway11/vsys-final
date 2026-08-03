@@ -4,7 +4,6 @@ spi_dev=${2:-"/dev/spidev7.0"}
 xml_content=$(cat "$1" 2>/dev/null || cat "adi_a2b_commandlist_spi.xml")
 actions=$(echo "$xml_content" | grep -Eo '<action[^>]*>.*?</action>|<action[^>]*\s*/>')
 
-line_count=0
 debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; printf '\n'; "$@"; }
 
 echo "$actions" | while read -r action; do
@@ -30,7 +29,6 @@ echo "$actions" | while read -r action; do
             01|04)
                 #sleep 0.002
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len-1-addr_width))")$dummy"
-                exit
                 ;;
             05)
                 # Slave register read request
