@@ -25,7 +25,7 @@ echo "$actions" | while read -r action; do
 
         case "$spiCmd" in
             00|02|06|02*|C*)
-                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo $content | sed 's/\([^ ]*\)/\\\x\1/g')"
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})"
                 ;;
             01|04)
                 #sleep 0.02
