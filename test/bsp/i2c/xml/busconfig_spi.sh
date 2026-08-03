@@ -21,7 +21,7 @@ echo "$actions" | while read -r action; do
 
         addr_bytes=""; for ((i = 0; i < $addr_width; i++)); do addr_bytes+="\x${addr:$((i * 2)):2}"; done
         spi_cmd_bytes=""; for ((i = 0; i < $spiCmdWidth; i++)); do spi_cmd_bytes+="\x${spiCmd:$((i * 2)):2}"; done
-        dummy=""; for i in $(seq 1 "$len"); do dummy="${dummy}\\x00"; done
+        dummy=""; for ((i=0; i<len-addr_width; i++)); do dummy="${dummy}\\x00"; done
 
         case "$spiCmd" in
             00|02|06|02*|C*)
