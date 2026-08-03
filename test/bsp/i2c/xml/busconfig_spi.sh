@@ -25,7 +25,8 @@ echo "$actions" | while read -r action; do
             00|02|06)
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "\x$spiCmd$addr_bytes$(echo $content | sed 's/\([^ ]*\)/\\\x\1/g')"
                 ;;
-            01)
+            01|04)
+                sleep 0.02
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "\x$spiCmd$addr_bytes\\x$(printf '%02X' "$((len - 1))")$dummy"
                 ;;
             05)
