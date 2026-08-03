@@ -17,8 +17,8 @@ echo "$actions" | while read -r action; do
         addr=$(printf "%0$((addr_width * 2))X" "$(echo "${action#* addr=\"}" | cut -d'"' -f1)")
         len=$(echo "${action#*len=\"}" | cut -d'"' -f1)
 
-        addr_bytes=""; for ((i = 0; i < $addr_width; i++)); do addr_bytes+="\x${addr:$((i * 2)):2}"; done
         spi_cmd_bytes=""; for ((i = 0; i < $spiCmdWidth; i++)); do spi_cmd_bytes+="\x${spiCmd:$((i * 2)):2}"; done
+        addr_bytes=""; for ((i = 0; i < $addr_width; i++)); do addr_bytes+="\x${addr:$((i * 2)):2}"; done
         dummy=""; for ((i=0; i<len-addr_width; i++)); do dummy="${dummy}\\x00"; done
 
         case "$spiCmd" in
