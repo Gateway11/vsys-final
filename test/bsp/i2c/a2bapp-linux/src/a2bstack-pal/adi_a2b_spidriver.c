@@ -89,9 +89,13 @@ and its licensors.
  * Master register examples.
  *
  * Write master register 0x12 = 0x00:
+ *   MOSI  | 0x00 | ADDR | DATA[0] | ... | DATA[N-1] |
+ *   MISO  | ---- | ---- |   ----  | ... |    ----   |
  *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x00\x12\x00'
  *
  * Read 3 bytes from master register 0x02:
+ *   MOSI  | 0x01 | ADDR | LEN-1 | DUMMY   | ... | DUMMY     |
+ *   MISO  | ---- | ---- |  ---- | DATA[0] | ... | DATA[N-1] |
  *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x01\x02\x02\x00\x00\x00'
  */
 
@@ -99,10 +103,8 @@ and its licensors.
  * Slave register examples.
  *
  * Write slave0 register 0x41 = 0x01:
- *   0x02  remote register write command
- *   0x00  NODE slave0
- *   0x41  register
- *   0x01  data
+ *   MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
+ *   MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
  *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x00\x41\x01'
  *
  * Read 3 bytes from slave0 register 0x02:
@@ -110,16 +112,18 @@ and its licensors.
  *     cmd bit[7:5] = 110b
  *     cmd bit[4:0] = LEN - 1
  *     cmd          = A2B_CMD_SPI_SLAVE_REG_READ_REQUEST | (LEN - 1)
+ *     MOSI  | 110b:LEN-1 | NODE | ADDR |
+ *     MISO  |    ----    | ---- | ---- |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\xC2\x00\x02'
  *
  *   step 2: read bus FIFO. The bytes after 0x05 are dummy clocks.
+ *     MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
+ *     MISO  | ---- | DATA[0] | ... | DATA[N-1] |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x05\x00\x00\x00'
  *
  * Broadcast write, register 0x41 = 0x01:
- *   0x02  remote register write command
- *   0x80  broadcast node address
- *   0x41  register
- *   0x01  data
+ *   MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
+ *   MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
  *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x80\x41\x01'
  */
 
@@ -128,6 +132,8 @@ and its licensors.
  *
  * Write slave0 I2C peripheral, peripheral register 0x10 = 0x55:
  *   step 1: set slave0 A2B_CHIP = 0x1A
+ *     MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
+ *     MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x00\x00\x1A'
  *
  *   step 2: write remote I2C peripheral
@@ -135,19 +141,29 @@ and its licensors.
  *     0x00  NODE slave0
  *     0x10  peripheral register address
  *     0x55  data
+ *     MOSI  | 0x07 | NODE | I2C_BYTE[0] | ... | I2C_BYTE[N-1] |
+ *     MISO  | ---- | ---- |     ----    | ... |      ----     |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x07\x00\x10\x55'
  *
  * Read 1 byte from slave0 I2C peripheral register 0x10:
  *   step 1: set slave0 A2B_CHIP = 0x1A
+ *     MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
+ *     MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x00\x00\x1A'
  *
  *   step 2: set remote I2C peripheral register pointer to 0x10
+ *     MOSI  | 0x07 | NODE | I2C_BYTE[0] | ... | I2C_BYTE[N-1] |
+ *     MISO  | ---- | ---- |     ----    | ... |      ----     |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x07\x00\x10'
  *
  *   step 3: issue remote I2C read request, LEN - 1 = 0
+ *     MOSI  | 0x08 | NODE | LEN-1 |
+ *     MISO  | ---- | ---- |  ---- |       LEN is 1 through 32
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x08\x00\x00'
  *
  *   step 4: read bus FIFO
+ *     MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
+ *     MISO  | ---- | DATA[0] | ... | DATA[N-1] |
  *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x05\x00'
  *
  * Read 2 bytes:
