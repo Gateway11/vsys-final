@@ -29,12 +29,12 @@ echo "$actions" | while read -r action; do
                 ;;
             01|04)
                 #sleep 0.02
-                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len - 1))")$dummy"
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len - 1))")$dummy"
                 ;;
             05)
                 # Slave register read request
                 #sleep 0.02
-                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy"
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy"
                 ;;
             *)
                 echo "Unknown read command: $spiCmd"
@@ -44,6 +44,6 @@ echo "$actions" | while read -r action; do
         delay_value=0
         for byte in $content; do delay_value=$(( (delay_value << 8) | (16#$byte) )); done
         delay_sec=$(bc <<< "scale=3; $delay_value / 1000")
-        #debug sleep "$delay_sec"
+        debug sleep "$delay_sec"
     fi
 done
