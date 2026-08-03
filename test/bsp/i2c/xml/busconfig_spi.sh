@@ -29,8 +29,7 @@ echo "$actions" | while read -r action; do
                 ;;
             01|04)
                 #sleep 0.02
-                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len-1-addr_width))")$dummy"
-                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len-addr_width))")$dummy"
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len-1-addr_width))")$dummy"
                 ;;
             05)
                 # Slave register read request
