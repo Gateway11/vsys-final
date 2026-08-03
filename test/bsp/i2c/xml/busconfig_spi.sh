@@ -11,11 +11,11 @@ echo "$actions" | while read -r action; do
     content=$(echo "${action#*\">}" | cut -d'<' -f1)
 
     if [[ "$instr" != "delay" ]]; then
-        addr_width=$(echo "${action#*addr_width=\"}" | cut -d'"' -f1)
-        len=$(echo "${action#*len=\"}" | cut -d'"' -f1)
-        addr=$(printf "%0$((addr_width * 2))X" "$(echo "${action#* addr=\"}" | cut -d'"' -f1)")
         spiCmdWidth=$(echo "${action#*SpiCmdWidth=\"}" | cut -d'"' -f1)
         spiCmd=$(printf "%0$((spiCmdWidth * 2))X" "$(echo "${action#*SpiCmd=\"}" | cut -d'"' -f1)")
+        addr_width=$(echo "${action#*addr_width=\"}" | cut -d'"' -f1)
+        addr=$(printf "%0$((addr_width * 2))X" "$(echo "${action#* addr=\"}" | cut -d'"' -f1)")
+        len=$(echo "${action#*len=\"}" | cut -d'"' -f1)
 
         addr_bytes=""; for ((i = 0; i < $addr_width; i++)); do addr_bytes+="\x${addr:$((i * 2)):2}"; done
         spi_cmd_bytes=""; for ((i = 0; i < $spiCmdWidth; i++)); do spi_cmd_bytes+="\x${spiCmd:$((i * 2)):2}"; done
