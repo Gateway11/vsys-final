@@ -14,7 +14,6 @@ echo "$actions" | while read -r action; do
         addr_width=$(echo "${action#*addr_width=\"}" | cut -d'"' -f1)
         len=$(echo "${action#*len=\"}" | cut -d'"' -f1)
         addr=$(printf "%0$((addr_width * 2))X" "$(echo "${action#* addr=\"}" | cut -d'"' -f1)")
-        i2caddr=$(printf "0x%02X" "$(echo "${action#*i2caddr=\"}" | cut -d'"' -f1)")
         spiCmdWidth=$(echo "${action#*SpiCmdWidth=\"}" | cut -d'"' -f1)
         spiCmd=$(printf "%0$((spiCmdWidth * 2))X" "$(echo "${action#*SpiCmd=\"}" | cut -d'"' -f1)")
 
