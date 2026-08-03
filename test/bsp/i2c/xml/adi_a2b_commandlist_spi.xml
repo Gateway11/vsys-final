@@ -67,8 +67,7 @@
     <action instr="read" SpiCmd="4" SpiCmdWidth="1" addr_width="0" data_width="1" len="1" addr="0" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="SPI_BUSY_STAT_CHECK : Read in loop" />
     <action instr="writeXbytes" SpiCmd="512" SpiCmdWidth="2" addr_width="1" data_width="1" len="2" addr="9" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="REG_A2B0_SWCTL        ">01</action>
     <action instr="read" SpiCmd="4" SpiCmdWidth="1" addr_width="0" data_width="1" len="1" addr="0" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="SPI_BUSY_STAT_CHECK : Read in loop" />
-    <action instr="writeXbytes" SpiCmd="49408" SpiCmdWidth="2" addr_width="1" data_width="1" len="1" addr="27" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="REG_A2B0_INTMSK0      ">
-    </action>
+    <action instr="writeXbytes" SpiCmd="49408" SpiCmdWidth="2" addr_width="1" data_width="1" len="1" addr="27" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="REG_A2B0_INTMSK0      " />
     <action instr="read" SpiCmd="4" SpiCmdWidth="1" addr_width="0" data_width="1" len="1" addr="0" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="SPI_BUSY_STAT_CHECK : Read in loop" />
     <action instr="read" SpiCmd="4" SpiCmdWidth="1" addr_width="0" data_width="1" len="1" addr="0" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="SPI_BUSY_STAT_CHECK : Read in loop" />
     <action instr="writeXbytes" SpiCmd="512" SpiCmdWidth="2" addr_width="1" data_width="1" len="3" addr="27" i2caddr="0" AddrIncr="0" Protocol="SPI" ParamName="REG_A2B0_INTMSK0      ">10 00</action>
