@@ -20,21 +20,21 @@ echo "$actions" | while read -r action; do
         spiCmd=$(printf "%0$((spiCmdWidth * 2))X" "$(echo "${action#*SpiCmd=\"}" | cut -d'"' -f1)")
 
         addr_bytes=""; for ((i = 0; i < $addr_width; i++)); do addr_bytes+="\x${addr:$((i * 2)):2}"; done
-        cmd_bytes=""; for ((i = 0; i < $spiCmdWidth; i++)); do cmd_bytes+="\x${spiCmd:$((i * 2)):2}"; done
+        spi_cmd_bytes=""; for ((i = 0; i < $spiCmdWidth; i++)); do spi_cmd_bytes+="\x${spiCmd:$((i * 2)):2}"; done
         dummy=""; for i in $(seq 1 "$len"); do dummy="${dummy}\\x00"; done
 
         case "$spiCmd" in
             00|02|06|02*|C*)
-                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$cmd_bytes$addr_bytes$(echo $content | sed 's/\([^ ]*\)/\\\x\1/g')"
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo $content | sed 's/\([^ ]*\)/\\\x\1/g')"
                 ;;
             01|04)
                 #sleep 0.02
-                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len - 1))")$dummy"
+                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes\\x$(printf '%02X' "$((len - 1))")$dummy"
                 ;;
             05)
                 # Slave register read request
                 #sleep 0.02
-                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$cmd_bytes$dummy"
+                #debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy"
                 ;;
             *)
                 echo "Unknown read command: $spiCmd"
