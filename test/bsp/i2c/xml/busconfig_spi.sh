@@ -34,7 +34,7 @@ echo "$actions" | while read -r action; do
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy"
                 ;;
             *)
-                echo "Unknown read command: $spiCmd"
+                echo "Unknown spi proto: $spiCmd"
                 ;;
         esac
     else
