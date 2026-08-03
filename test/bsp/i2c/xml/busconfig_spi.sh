@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 
 spi_dev=${2:-"/dev/spidev7.0"}
-xml_content=$(cat "$1" 2>/dev/null || cat "adi_a2b_commandlist_spi.xml")
-actions=$(echo "$xml_content" | grep -Eo '<action[^>]*>.*?</action>|<action[^>]*\s*/>')
-
 debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; printf '\n'; "$@"; }
 
-echo "$actions" | while read -r action; do
+grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
     instr=$(echo "${action#*instr=\"}" | cut -d'"' -f1)
     content=$(echo "${action#*\">}" | cut -d'<' -f1)
 
