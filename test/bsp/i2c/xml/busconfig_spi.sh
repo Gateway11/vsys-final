@@ -23,19 +23,13 @@ echo "$actions" | while read -r action; do
 
         case "$spiCmd" in
             00|02|06|02*|C*)
-                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})"
-                ;;
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})" ;;
             01|04)
-                #sleep 0.002
-                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$dummy"
-                ;;
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$dummy" ;;
             05)
-                # Slave register read request
-                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy"
-                ;;
+                debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy" ;;
             *)
-                echo "Unknown spi proto: $spiCmd"
-                ;;
+                echo "Unknown spi protocol: $spiCmd" ;;
         esac
     else
         delay_value=0
