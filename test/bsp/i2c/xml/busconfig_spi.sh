@@ -19,11 +19,11 @@ grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
         dummy=""; for ((i=0; i<len-addr_width; i++)); do dummy="${dummy}\\x00"; done
 
         case "$spiCmd" in
-            00|02|06|07|02*|C*)
+            00|02|06|07|02*|C*) #MOSI  | 0x00 | ADDR | DATA[0] | ... | DATA[N-1] |      #MOSI  | 110b:LEN-1 | NODE | ADDR |
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})" ;;
-            01|04)
+            01|04)  #MOSI  | 0x01 | ADDR | LEN-1 | DUMMY   | ... | DUMMY     |
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$dummy" ;;
-            05)
+            05)     #MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
                 debug spidev_test -D "$spi_dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy" ;;
             *)
                 echo "Unknown spi protocol: $spiCmd" ;;
