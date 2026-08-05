@@ -17,7 +17,7 @@ grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
         i2caddr=$(printf "0x%02X" "$(echo "${action#*i2caddr=\"}" | cut -d'"' -f1)")
         [[ "$instr" == "read" ]] && { \
             debug i2ctransfer -f -y $dev w$addr_width@$i2caddr${addr_bytes//\\x/ 0x} r$((len - addr_width)) || true; } || \
-            debug i2ctransfer -f -y $dev w$len@$i2caddr${addr_bytes//\\x/ 0x} $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")
+            debug i2ctransfer -f -y $dev w$len@$i2caddr${addr_bytes//\\x/ 0x} $(echo ${content:+0x${content// / 0x}})
     else
         spiCmdWidth=$(echo "${action#*SpiCmdWidth=\"}" | cut -d'"' -f1)
         spiCmd=$(printf "%0$((spiCmdWidth * 2))X" "$(echo "${action#*SpiCmd=\"}" | cut -d'"' -f1)")
