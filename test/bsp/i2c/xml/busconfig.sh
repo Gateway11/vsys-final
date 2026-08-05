@@ -5,7 +5,7 @@ debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; p
 
 grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
     instr=$(echo "${action#*instr=\"}" | cut -d'"' -f1)
-    content=$(echo "${action#*\">}" | cut -d'<' -f1)
+    content=$(echo "${action#*\">}" | cut -d'<' -f1 | tr -d '\r')
     [[ "$instr" == "delay" ]] && { debug sleep "$(bc <<< "scale=3; $((16#${content// /})) / 1000")"; continue; }
 
     addr_width=$(echo "${action#*addr_width=\"}" | cut -d'"' -f1)
