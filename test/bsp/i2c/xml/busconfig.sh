@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 dev=${2:-"/dev/spidev3.0"}
-debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; printf '\n'; eval "$@"; }
+debug() { echo "Running command $((++line_count)): $@"; "$@"; }
 
 grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
     instr=$(echo "${action#*instr=\"}" | cut -d'"' -f1)
@@ -16,8 +16,8 @@ grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
         i2caddr=$(printf "0x%02X" "$(echo "${action#*i2caddr=\"}" | cut -d'"' -f1)")
         addr_bytes=""; for ((i = 0; i < $addr_width; i++)); do addr_bytes+=" 0x${addr:$((i * 2)):2}"; done
         [[ "$instr" == "read" ]] && { \
-            debug i2ctransfer -f -y "$dev" "w$addr_width@$i2caddr$addr_bytes r$((len - addr_width))" || true; } || \
-            debug i2ctransfer -f -y "$dev" "w$len@$i2caddr$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")"
+            debug i2ctransfer -f -y $dev w$addr_width@$i2caddr$addr_bytes r$((len - addr_width)) || true; } || \
+            debug i2ctransfer -f -y $dev w$len@$i2caddr$addr_bytes $(echo "$content" | sed "s/\([^ ]*\)/0x\1/g")
     else
         spiCmdWidth=$(echo "${action#*SpiCmdWidth=\"}" | cut -d'"' -f1)
         spiCmd=$(printf "%0$((spiCmdWidth * 2))X" "$(echo "${action#*SpiCmd=\"}" | cut -d'"' -f1)")
@@ -26,11 +26,11 @@ grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
         dummy=""; for ((i=0; i<len-addr_width; i++)); do dummy="${dummy}\\x00"; done
         case "$spiCmd" in  #2/7  MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
             00|02*|07|C*)  #0    MOSI  | 0x00 | ADDR | DATA[0] | ... | DATA[N-1] |          #C* MOSI  | 110b:LEN-1 | NODE | ADDR |
-                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "'$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})'" ;;
+                debug spidev_test -D $dev -s 1000000 -b 8 -v -p $spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}}) ;;
             01|04)  #MOSI  | 0x01 | ADDR | LEN-1 | DUMMY   | ... | DUMMY     |
-                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "'$spi_cmd_bytes$addr_bytes$dummy'" ;;
+                debug spidev_test -D $dev -s 1000000 -b 8 -v -p $spi_cmd_bytes$addr_bytes$dummy ;;
             05)     #MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
-                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "'$spi_cmd_bytes$dummy'" ;;
+                debug spidev_test -D $dev -s 1000000 -b 8 -v -p $spi_cmd_bytes$dummy ;;
             *)
                 echo "Unknown spi protocol: $spiCmd" ;;
         esac
