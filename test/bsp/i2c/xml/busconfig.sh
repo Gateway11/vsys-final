@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-dev=${2:-"/dev/spidev7.0"}
+dev=${2:-"/dev/spidev3.0"}
 debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; printf '\n'; eval "$@"; }
 
 grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
