@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 dev=${2:-"/dev/spidev7.0"}
-debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; printf '\n'; "$@"; }
+debug() { printf 'Running command %d:' "$((++line_count))"; printf ' %s' "$@"; printf '\n'; eval "$@"; }
 
 grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
     instr=$(echo "${action#*instr=\"}" | cut -d'"' -f1)
@@ -26,11 +26,11 @@ grep '<action' "${1:-adi_a2b_commandlist_spi.xml}" | while read -r action; do
         dummy=""; for ((i=0; i<len-addr_width; i++)); do dummy="${dummy}\\x00"; done
         case "$spiCmd" in  #2/7  MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
             00|02*|07|C*)  #0    MOSI  | 0x00 | ADDR | DATA[0] | ... | DATA[N-1] |          #C* MOSI  | 110b:LEN-1 | NODE | ADDR |
-                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})" ;;
+                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "'$spi_cmd_bytes$addr_bytes$(echo ${content:+\\x${content// /\\x}})'" ;;
             01|04)  #MOSI  | 0x01 | ADDR | LEN-1 | DUMMY   | ... | DUMMY     |
-                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$addr_bytes$dummy" ;;
+                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "'$spi_cmd_bytes$addr_bytes$dummy'" ;;
             05)     #MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
-                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "$spi_cmd_bytes$dummy" ;;
+                debug spidev_test -D "$dev" -s 1000000 -b 8 -v -p "'$spi_cmd_bytes$dummy'" ;;
             *)
                 echo "Unknown spi protocol: $spiCmd" ;;
         esac
