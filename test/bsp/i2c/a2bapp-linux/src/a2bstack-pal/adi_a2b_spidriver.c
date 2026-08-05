@@ -91,12 +91,12 @@ and its licensors.
  * Write master register 0x12 = 0x00:
  *   MOSI  | 0x00 | ADDR | DATA[0] | ... | DATA[N-1] |
  *   MISO  | ---- | ---- |   ----  | ... |    ----   |
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x00\x12\x00'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x00\x12\x00'
  *
  * Read 3 bytes from master register 0x02:
  *   MOSI  | 0x01 | ADDR | LEN-1 | DUMMY   | ... | DUMMY     |
  *   MISO  | ---- | ---- |  ---- | DATA[0] | ... | DATA[N-1] |
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x01\x02\x02\x00\x00\x00'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x01\x02\x02\x00\x00\x00'
  */
 
 /*
@@ -105,7 +105,7 @@ and its licensors.
  * Write slave0 register 0x41 = 0x01:
  *   MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
  *   MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x00\x41\x01'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x02\x00\x41\x01'
  *
  * Read 3 bytes from slave0 register 0x02:
  *   step 1: issue read request
@@ -114,17 +114,17 @@ and its licensors.
  *     cmd          = A2B_CMD_SPI_SLAVE_REG_READ_REQUEST | (LEN - 1)
  *     MOSI  | 110b:LEN-1 | NODE | ADDR |
  *     MISO  |    ----    | ---- | ---- |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\xC2\x00\x02'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\xC2\x00\x02'
  *
  *   step 2: read bus FIFO. The bytes after 0x05 are dummy clocks.
  *     MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
  *     MISO  | ---- | DATA[0] | ... | DATA[N-1] |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x05\x00\x00\x00'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x05\x00\x00\x00'
  *
  * Broadcast write, register 0x41 = 0x01:
  *   MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
  *   MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x80\x41\x01'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x02\x80\x41\x01'
  */
 
 /*
@@ -134,7 +134,7 @@ and its licensors.
  *   step 1: set slave0 A2B_CHIP = 0x1A
  *     MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
  *     MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x00\x00\x1A'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x02\x00\x00\x1A'
  *
  *   step 2: write remote I2C peripheral
  *     0x07  remote I2C peripheral write command
@@ -143,32 +143,32 @@ and its licensors.
  *     0x55  data
  *     MOSI  | 0x07 | NODE | I2C_BYTE[0] | ... | I2C_BYTE[N-1] |
  *     MISO  | ---- | ---- |     ----    | ... |      ----     |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x07\x00\x10\x55'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x07\x00\x10\x55'
  *
  * Read 1 byte from slave0 I2C peripheral register 0x10:
  *   step 1: set slave0 A2B_CHIP = 0x1A
  *     MOSI  | 0x02 | NODE | ADDR | DATA[0] | ... | DATA[N-1] |
  *     MISO  | ---- | ---- | ---- |   ----  | ... |    ----   |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x02\x00\x00\x1A'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x02\x00\x00\x1A'
  *
  *   step 2: set remote I2C peripheral register pointer to 0x10
  *     MOSI  | 0x07 | NODE | I2C_BYTE[0] | ... | I2C_BYTE[N-1] |
  *     MISO  | ---- | ---- |     ----    | ... |      ----     |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x07\x00\x10'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x07\x00\x10'
  *
  *   step 3: issue remote I2C read request, LEN - 1 = 0
  *     MOSI  | 0x08 | NODE | LEN-1 |
  *     MISO  | ---- | ---- |  ---- |       LEN is 1 through 32
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x08\x00\x00'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x08\x00\x00'
  *
  *   step 4: read bus FIFO
  *     MOSI  | 0x05 | DUMMY   | ... | DUMMY     |
  *     MISO  | ---- | DATA[0] | ... | DATA[N-1] |
- *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x05\x00'
+ *     spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x05\x00'
  *
  * Read 2 bytes:
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x08\x00\x01'
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x05\x00\x00'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x08\x00\x01'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x05\x00\x00'
  */
 
 /*
@@ -185,20 +185,20 @@ and its licensors.
  *   0x01  LEN - 1, two bytes follow
  *   0x10  first byte sent to remote SPI peripheral
  *   0x55  second byte sent to remote SPI peripheral
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x06\x00\x01\x10\x55'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x06\x00\x01\x10\x55'
  *
  * Atomic read, read 1 byte from slave0 + SPISSEL0:
  *   0x0D  SPI data tunnel atomic large read request
  *   0x00  NODE/SS, slave0 + SPISSEL0
  *   0x00  LEN - 1, read 1 byte
  *   0x90  command/register byte sent to remote SPI peripheral, for example 0x80 | 0x10
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0D\x00\x00\x90'
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0B\x00'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0D\x00\x00\x90'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0B\x00'
  *
  * Atomic read, read 2 bytes:
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0D\x00\x01\x90'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0D\x00\x01\x90'
  *   sleep 0.02
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0B\x00\x00'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0B\x00\x00'
  *
  * Command-based full duplex, write 2 bytes and read 2 bytes:
  *   0x09  full duplex command-based
@@ -206,7 +206,7 @@ and its licensors.
  *   0x01  READ_LEN - 1, read 2 bytes
  *   0xAA  first byte sent to remote SPI peripheral
  *   0x55  second byte sent to remote SPI peripheral
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x09\x00\x01\xAA\x55'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x09\x00\x01\xAA\x55'
  *
  * Register-based full duplex, 0x99:
  *   0x99 is a stack-internal marker. Do not send 0x99 with spidev_test.
@@ -219,20 +219,20 @@ and its licensors.
  *   middle packet: 0x0E, NODE/SS, LEN - 1, DATA...
  *   final packet:  0x09, NODE/SS, LEN - 1, DATA...
  *   # 第 1 段，继续保持远端 CS
- *      spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0E\x00\xFF ...256字节数据...'
+ *      spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0E\x00\xFF ...256字节数据...'
  *
  *   # 第 2 段，继续保持远端 CS
- *      spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0E\x00\xFF ...256字节数据...'
+ *      spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0E\x00\xFF ...256字节数据...'
  *
  *   # 最后一段，用普通 full duplex 结束，释放远端 CS
- *      spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x09\x00\x0F ...16字节数据...'
+ *      spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x09\x00\x0F ...16字节数据...'
  *
  * Extended bulk write, more than 256 bytes while keeping remote CS low:
  *   middle packet: 0x0F, NODE/SS, LEN - 1, DATA...
  *   final packet:  0x06, NODE/SS, LEN - 1, DATA...
  *
  * Abort data tunnel transaction:
- *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p $'\x0A'
+ *   spidev_test -D /dev/spidev7.0 -s 1000000 -b 8 -v -p '\x0A'
  */
 
 
