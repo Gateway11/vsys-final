@@ -176,12 +176,35 @@
             <smi_device>0x0001</smi_device>
         </phy_operation>
     </reg_list>
-    <firmware>
+    <reg_list>
         <entity_order_no>0x0006</entity_order_no>
+        <entity_enabled>true</entity_enabled>
+        <op_list_name>automatic_polarity_detection</op_list_name>
+        <phy_operation>
+            <op_name>P1</op_name>
+            <smi_address>0x0001</smi_address>
+            <smi_external>false</smi_external>
+            <offset>0x8100</offset>
+            <value>0x0200</value>
+            <clause>0x002D</clause>
+            <smi_device>0x0003</smi_device>
+        </phy_operation>
+        <phy_operation>
+            <op_name>P2</op_name>
+            <smi_address>0x0002</smi_address>
+            <smi_external>false</smi_external>
+            <offset>0x8100</offset>
+            <value>0x0200</value>
+            <clause>0x002D</clause>
+            <smi_device>0x0003</smi_device>
+        </phy_operation>
+    </reg_list>
+    <firmware>
+        <entity_order_no>0x0007</entity_order_no>
         <entity_enabled>true</entity_enabled>
     </firmware>
     <cui>
-        <entity_order_no>0x0007</entity_order_no>
+        <entity_order_no>0x0008</entity_order_no>
         <entity_enabled>true</entity_enabled>
         <version_information>lenovo-xxxx-a-die1-v2-1</version_information>
     </cui>
