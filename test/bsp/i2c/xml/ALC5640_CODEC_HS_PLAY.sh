@@ -1,7 +1,6 @@
 #!/vendor/bin/sh
 
 i2c_dev=${1:-1}
-
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x00 0x00 0x00 #MX-00h: Software Reset
 sleep 0.1
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x6A 0x00 0x3D #PR-3Dh: ADC/DAC RESET Control, Enable ADC and DAC Clock Generators
@@ -20,7 +19,7 @@ i2ctransfer -f -y $i2c_dev w3@0x1C 0xFA 0x3C 0x00 #MX-FAh: General Control 1, MC
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x8D 0xA8 0x00 #MX-8Dh: Class-D Amp Output Control, AC+DC ratio gain = 3.3x
 i2ctransfer -f -y $i2c_dev w3@0x1C 0xFA 0x34 0x01 #MX-FAh: General Control 1, I2S Clock Gating enable
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x2E 0x0C 0x00 #MX-2Eh: DSP_PATH2
-i2ctransfer -f -y $i2c_dev w3@0x1C 0x63 0xE8 0x1C #MX-63h: Power Management Control 3, VREF1 Power and fastmode, MBIAS, VREF2 Power and fastmode, LD02 Controls enable
+i2ctransfer -f -y $i2c_dev w3@0x1C 0x63 0xE8 0x1C #MX-63h: VREF1/VREF2, MBIAS, Bandgap and LDO2 Power
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x80 0x00 0x00 #MX-80h: SYSCLK Source = External MCLK
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x70 0x00 0x00 #MX-70h: MX-70h: I2S1 Digital Interface Control, Slave Mode and I2S1 <= BCLK1/LRCK1/DACDAT1
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x73 0x01 0x14 #MX-73h: BCLK = 32 * LRCK, DAC OSR = 64fs; 48kHz: LRCK = 48kHz, BCLK = 1.536MHz
