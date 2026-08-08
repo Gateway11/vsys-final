@@ -21,13 +21,12 @@ i2ctransfer -f -y $i2c_dev w3@0x1C 0xFA 0x34 0x01 #MX-FAh: General Control 1, I2
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x2E 0x0C 0x00 #MX-2Eh: DSP_PATH2
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x63 0xE8 0x1C #MX-63h: VREF1/VREF2, MBIAS, Bandgap and LDO2 Power
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x80 0x00 0x00 #MX-80h: SYSCLK Source = External MCLK
-i2ctransfer -f -y $i2c_dev w3@0x1C 0x70 0x00 0x00 #MX-70h: MX-70h: I2S1 Digital Interface Control, Slave Mode and I2S1 <= BCLK1/LRCK1/DACDAT1
+i2ctransfer -f -y $i2c_dev w3@0x1C 0x70 0x00 0x00 #MX-70h: RT5640 I2S1 Master, 16-bit I2S; BCLK1/LRCK1 output, DACDAT1 input
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x73 0x01 0x14 #MX-73h: BCLK = 32 * LRCK, DAC OSR = 64fs; 48kHz: LRCK = 48kHz, BCLK = 1.536MHz
 
-################################################
-# I2S -> IF1_DAC_L/R(VOL MX-19[15:8]) -> MX-29[14:15/6:7] -> 
-################################################
-
+################################################################################
+# Playback: I2S1 -> DAC1 L/R -> SPKMIXL/R -> SPKVOLL/R -> Class-D -> SPO L/R
+################################################################################
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x19 0xAF 0xAF #MX-19h: DAC1 Left/Right Digital Volume
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x29 0x80 0x80 #MX-29h: I2S1 to Stereo DAC Mixer
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x2A 0x14 0x14 #MX-2Ah: Stereo DAC1 Mixer
@@ -41,4 +40,3 @@ i2ctransfer -f -y $i2c_dev w3@0x1C 0x65 0x30 0x00 #MX-65h: SPK MIXL/R Power; REC
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x66 0xC0 0x00 #MX-66h: SPKVOLL/R Power; Headphone and other output volume blocks remain powered off
 sleep 0.1
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x01 0x18 0x18 #MX-01h: Enable and Unmute SPOL/SPOR
-i2ctransfer -f -y $i2c_dev w3@0x1C 0x73 0x01 0x15 #MX-73h: ADC/DAC Clock Control 1, ADC Over sample rate to 64Fs
