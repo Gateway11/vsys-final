@@ -1,6 +1,6 @@
 #!/vendor/bin/sh
 
-i2c_dev=${1:-1}
+i2c_dev=${1:-9}
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x00 0x00 0x00 #MX-00h: Software Reset
 sleep 0.1
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x6A 0x00 0x3D #PR-3Dh: ADC/DAC RESET Control, Enable ADC and DAC Clock Generators
