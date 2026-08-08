@@ -40,3 +40,42 @@ i2ctransfer -f -y $i2c_dev w3@0x1C 0x65 0x30 0x00 #MX-65h: SPK MIXL/R Power; REC
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x66 0xC0 0x00 #MX-66h: SPKVOLL/R Power; Headphone and other output volume blocks remain powered off
 sleep 0.1
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x01 0x18 0x18 #MX-01h: Enable and Unmute SPOL/SPOR
+
+#sound {
+#		fixed-pll;
+#		clocks = <&bpmp_clks TEGRA234_CLK_PLLA>,
+#				<&bpmp_clks TEGRA234_CLK_PLLA_OUT0>,
+#				<&bpmp_clks TEGRA234_CLK_AUD_MCLK>;
+#		clock-names = "pll_a", "pll_a_out0", "extern1";
+#		assigned-clocks = <&bpmp_clks TEGRA234_CLK_AUD_MCLK>;
+#		assigned-clock-parents = <&bpmp_clks TEGRA234_CLK_PLLA_OUT0>;
+#		assigned-clock-rates = <12288000>;
+#		/delete-property/ nvidia-audio-card,mclk-fs;
+#	};
+
+#nvidia@tegra-ubuntu:~$ sudo su
+#[sudo] password for nvidia:
+#root@tegra-ubuntu:/home/nvidia# cd /sys/kernel/debug/bpmp/debug/clk/
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat aud_mclk/parent
+#plla_out0
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat plla_out0/parent
+#pll_a
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat pll_a/rate
+#294911718
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat pll_a/state
+#0
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat plla_out0/rate
+#49151953
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat plla_out0/state
+#0
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat aud_mclk/rate
+#49151953
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat aud_mclk/state
+#0
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# echo 1 > pll_a/state
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# echo 1 > plla_out0/state
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# echo 12288000 > aud_mclk/rate
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# echo 1 > aud_mclk/state
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk# cat aud_mclk/rate
+#12287988
+#root@tegra-ubuntu:/sys/kernel/debug/bpmp/debug/clk#
