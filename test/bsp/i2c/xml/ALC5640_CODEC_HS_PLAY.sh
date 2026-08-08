@@ -41,8 +41,9 @@ i2ctransfer -f -y $i2c_dev w3@0x1C 0x66 0xC0 0x00 #MX-66h: SPKVOLL/R Power; Head
 sleep 0.1
 i2ctransfer -f -y $i2c_dev w3@0x1C 0x01 0x18 0x18 #MX-01h: Enable and Unmute SPOL/SPOR
 
+#https://developer.nvidia.com/docs/drive/drive-os/7.0.3/public/drive-os-linux-sdk/embedded-software-components/DRIVE_AGX_SoC/Audio/DebugInfo.html
+#https://developer.nvidia.com/docs/drive/drive-os/7.0.3/public/drive-os-linux-sdk/platform-customization/Device_Tree/Audio_Device_Tree/i2s_properties.html
 #sound {
-#		fixed-pll;
 #		clocks = <&bpmp_clks TEGRA234_CLK_PLLA>,
 #				<&bpmp_clks TEGRA234_CLK_PLLA_OUT0>,
 #				<&bpmp_clks TEGRA234_CLK_AUD_MCLK>;
