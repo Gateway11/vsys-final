@@ -244,6 +244,8 @@ and its licensors.
 
 /*============= D A T A =============*/
 static int verbose = 1;
+uint8_t default_tx[SPI_MAX_XFER] = {0, };
+uint8_t default_rx[SPI_MAX_XFER] = {0, };
 
 /*============= C O D E =============*/
 
@@ -414,15 +416,12 @@ a2b_UInt32 adi_a2b_spiWriteRead(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWri
 {
 	A2B_UNUSED( addr );
 
-    uint8_t tx[SPI_MAX_XFER];
-    uint8_t rx[SPI_MAX_XFER];
-
-    memset(tx, 0, sizeof(tx));
-    memset(rx, 0, sizeof(rx));
-    memcpy(tx, wBuf, nWrite);
-    transfer(*(int *)hnd, tx, rx, nWrite + nRead);
+    memset(default_tx, 0, sizeof(default_tx));
+    memset(default_rx, 0, sizeof(default_rx));
+    memcpy(default_tx, wBuf, nWrite);
+    transfer(*(int *)hnd, default_tx, default_rx, nWrite + nRead);
     
-    memcpy(rBuf, &rx[nWrite], nRead);
+    memcpy(rBuf, &default_rx[nWrite], nRead);
     return A2B_RESULT_SUCCESS;
 }
 
@@ -431,9 +430,6 @@ a2b_UInt32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, con
 {
 	A2B_UNUSED( addr );
 
-    uint8_t tx[SPI_MAX_XFER];
-    uint8_t rx[SPI_MAX_XFER];
-
     /*
      * Full-duplex SPI exchanges one byte on MISO for each byte sent on MOSI.
      * For command-based A2B full-duplex, the stack passes protocol header +
@@ -441,13 +437,13 @@ a2b_UInt32 adi_a2b_spiFd(a2b_Handle hnd, a2b_UInt16 addr, a2b_UInt16 nWrite, con
      * register-based mode, wBuf/rBuf are the direct payload buffers.
      * Use local RX storage because rBuf is only guaranteed to hold nRead bytes.
      */
-    memset(tx, 0, sizeof(tx));
-    memset(rx, 0, sizeof(rx));
-    memcpy(tx, wBuf, nWrite);
-    transfer(*(int *)hnd, tx, rx, nWrite > nRead ? nWrite : nRead);
+    memset(default_tx, 0, sizeof(default_tx));
+    memset(default_rx, 0, sizeof(default_rx));
+    memcpy(default_tx, wBuf, nWrite);
+    transfer(*(int *)hnd, default_tx, default_rx, nWrite > nRead ? nWrite : nRead);
 
     if (nRead != 0u)
-        memcpy(rBuf, rx, nRead);
+        memcpy(rBuf, default_rx, nRead);
 
     return A2B_RESULT_SUCCESS;
 }
