@@ -28,10 +28,10 @@ debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x63 0xE8 0x1C #MX-63h: VREF1/VREF2, MB
 debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x80 0x00 0x00 #MX-80h: SYSCLK Source = External MCLK
 debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x70 0x00 0x00 #MX-70h: RT5640 I2S1 Master, 16-bit I2S; BCLK1/LRCK1 output, DACDAT1 input
 debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x73 0x01 0x14 #MX-73h: BCLK = 32 * LRCK, DAC OSR = 64fs; 48kHz: LRCK = 48kHz, BCLK = 1.536MHz
-debug 
-debug ################################################################################
-debug # Playback: I2S1 -> DAC1 L/R -> SPKMIXL/R -> SPKVOLL/R -> Class-D -> SPO L/R
-debug ################################################################################
+
+################################################################################
+# Playback: I2S1 -> DAC1 L/R -> SPKMIXL/R -> SPKVOLL/R -> Class-D -> SPO L/R
+################################################################################
 debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x19 0xAF 0xAF #MX-19h: DAC1 Left/Right Digital Volume
 debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x29 0x80 0x80 #MX-29h: I2S1 to Stereo DAC Mixer
 debug i2ctransfer -f -y $i2c_dev w3@0x1C 0x2A 0x14 0x14 #MX-2Ah: Stereo DAC1 Mixer
