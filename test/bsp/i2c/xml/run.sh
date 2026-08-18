@@ -14,7 +14,7 @@ i2ctransfer -f -y ${I2C_MAP[$I2S_DEV]} w2@0x68 0x53 0x06
 pkill -9 -f "aplay|python3 -"
 python3 - <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 &
 #python3 -u <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 &
-#python3 <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 --start-delay=1 &
+#python3 <<'PY' | aplay -D hw:0,0 -f S16_LE -r 48000 -c 32 --start-delay=50000 &
 
 import sys, math, struct
 
