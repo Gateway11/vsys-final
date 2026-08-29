@@ -4,7 +4,7 @@ I2S_DEV=${1:-7}
 amixer cset name="I2S${I2S_DEV} Mux" ADMAIF1
 amixer cset name="ADMAIF5 Mux" I2S${I2S_DEV}
 
-declare -A A2B_BUS=(["1"]="1" ["4"]="2" ["7"]="")
+declare -A A2B_BUS=(["1"]="1" ["4"]="2" ["7"]="1")
 echo "Disable Fault Check" > /dev/a2b${A2B_BUS[$I2S_DEV]}_ctrl
 
 declare -A I2C_MAP=(["1"]="2" ["4"]="3" ["7"]="16")
