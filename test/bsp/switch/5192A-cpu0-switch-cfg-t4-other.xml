@@ -149,8 +149,6 @@
             <mask>00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</mask>
             <spv>0x0100</spv>
             <name>Port8_To_Port9</name>
-            <FrameType>0x0000</FrameType>
-            <FrameTypeMask>0x0003</FrameTypeMask>
             <tcam_actions>
                 <ingress_actions>
                     <dpv_override>0x0200</dpv_override>
