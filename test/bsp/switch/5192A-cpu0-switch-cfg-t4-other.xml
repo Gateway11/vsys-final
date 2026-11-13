@@ -151,7 +151,7 @@
             <name>Port8_To_Port9</name>
             <tcam_actions>
                 <ingress_actions>
-                    <dpv_override>0x0200</dpv_override>
+                    <dpv_override>0x0201</dpv_override>
                     <dpv_mode>0x0003</dpv_mode>
                     <SourcePortFilter>true</SourcePortFilter>
                 </ingress_actions>
